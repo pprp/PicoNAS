@@ -1,3 +1,7 @@
 *.pyc
 *.pth.tar
 *.tar
+*.pth
+*.csv
+*.txt
+*.pkl
