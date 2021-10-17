@@ -1,4 +1,5 @@
 from enum import auto
+import enum
 import os
 import argparse
 import numpy as np
@@ -21,6 +22,8 @@ from wide_resnet import *
 # from torchstat import stat 
 from torch.cuda.amp import autocast as autocast
 from torch.cuda.amp import GradScaler as GradScaler
+
+torch.backends.cudnn.benchmark = False
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -72,7 +75,10 @@ def train(args, train_loader, model, criterion, optimizer, epoch, scheduler=None
 
     model.train()
 
-    for i, (input, target) in tqdm(enumerate(train_loader), total=len(train_loader)):
+    train_tqdm = tqdm(train_loader, total=len(train_loader))
+    train_tqdm.set_description(
+        '[%s%03d/%03d %s%f]' % ('Epoch:', epoch + 1, args.epochs, 'lr:', scheduler.get_last_lr()[0]))
+    for i, (input, target) in enumerate(train_tqdm):
         # from original paper's appendix
         if args.ricap:
             I_x, I_y = input.size()[2:]
@@ -135,22 +141,26 @@ def train(args, train_loader, model, criterion, optimizer, epoch, scheduler=None
             loss = criterion(output, target)
 
             acc = accuracy(output, target)[0]
+        
+        postfix = {'train_loss': '%.3f' % (
+            loss.item()), 'train_acc': '%.3f' % acc}
 
-
-
-        losses.update(loss.item(), input.size(0))
-        scores.update(acc.item(), input.size(0))
-
+        train_tqdm.set_postfix(log=postfix)
         # compute gradient and do optimizing step
         if args.amp:
+            optimizer.zero_grad()
             args.scaler.scale(loss).backward()
             args.scaler.step(optimizer)
             args.scaler.update()
+
         else:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
+        losses.update(loss.item(), input.size(0))
+        scores.update(acc.item(), input.size(0))
+    
     log = OrderedDict([
         ('loss', losses.avg),
         ('acc', scores.avg),
@@ -348,7 +358,7 @@ def main():
         scheduler.step()
 
         # train for one epoch
-        train_log = train(args, train_loader, model, criterion, optimizer, epoch)
+        train_log = train(args, train_loader, model, criterion, optimizer, epoch, scheduler=scheduler)
         # evaluate on validation set
         val_log = validate(args, test_loader, model, criterion)
 
