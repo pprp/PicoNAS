@@ -1,13 +1,13 @@
 import os
 import time
-import torch
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
 import torchvision.transforms as transforms
 
 
 class AvgrageMeter(object):
-
     def __init__(self):
         self.reset()
 
@@ -22,7 +22,7 @@ class AvgrageMeter(object):
         self.avg = self.sum / self.cnt
 
 
-def accuracy(output, label, topk=(1,)):
+def accuracy(output, label, topk=(1, )):
     maxk = max(topk)
     batch_size = label.size(0)
 
@@ -38,9 +38,10 @@ def accuracy(output, label, topk=(1,)):
 
 
 def save_checkpoint(state, iters, tag=''):
-    if not os.path.exists("./snapshots"):
-        os.makedirs("./snapshots")
-    filename = os.path.join("./snapshots/{}_ckpt_{:04}.pth.tar".format(tag, iters))
+    if not os.path.exists('./snapshots'):
+        os.makedirs('./snapshots')
+    filename = os.path.join('./snapshots/{}_ckpt_{:04}.pth.tar'.format(
+        tag, iters))
     torch.save(state, filename)
 
 
@@ -59,7 +60,7 @@ class Cutout(object):
         x1 = np.clip(x - self.length // 2, 0, w)
         x2 = np.clip(x + self.length // 2, 0, w)
 
-        mask[y1: y2, x1: x2] = 0.
+        mask[y1:y2, x1:x2] = 0.
         mask = torch.from_numpy(mask)
         mask = mask.expand_as(img)
         img *= mask
@@ -96,10 +97,9 @@ def data_transforms(args):
             transforms.ToTensor(),
             transforms.Normalize(MEAN, STD)
         ])
-        valid_transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(MEAN, STD)
-        ])
+        valid_transform = transforms.Compose(
+            [transforms.ToTensor(),
+             transforms.Normalize(MEAN, STD)])
 
     if args.cutout:
         train_transform.transforms.append(Cutout(args.cutout_length))
@@ -125,4 +125,5 @@ def time_record(start):
     hour = duration // 3600
     minute = (duration - hour * 3600) // 60
     second = duration - hour * 3600 - minute * 60
-    print('Elapsed time: hour: %d, minute: %d, second: %f' % (hour, minute, second))
+    print('Elapsed time: hour: %d, minute: %d, second: %f' %
+          (hour, minute, second))
