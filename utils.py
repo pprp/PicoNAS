@@ -75,11 +75,13 @@ def data_transforms(args):
         MEAN = [0.485, 0.456, 0.406]
         STD = [0.229, 0.224, 0.225]
 
-    if args.resize or args.dataset == 'imagenet':  # cifar10 resize or imagenet
+    if args.resize or args.dataset == 'imagenet':
+        # cifar10 resize or imagenet
         train_transform = transforms.Compose([
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
-            # transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
+            # transforms.ColorJitter(brightness=0.4, contrast=0.4,
+            #                         saturation=0.4, hue=0.2),
             transforms.ToTensor(),
             transforms.Normalize(MEAN, STD)
         ])
@@ -93,7 +95,8 @@ def data_transforms(args):
         train_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
-            # transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
+            # transforms.ColorJitter(brightness=0.4, contrast=0.4,
+            #                        saturation=0.4, hue=0.2),
             transforms.ToTensor(),
             transforms.Normalize(MEAN, STD)
         ])
