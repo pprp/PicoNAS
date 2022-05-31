@@ -9,7 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import Compose, Normalize, ToTensor
 from tqdm import tqdm
 
-from utils import setup_seed
+from utils.utils import setup_seed
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -10,9 +10,9 @@ from torchsummary import summary
 from torchvision import datasets
 from tqdm import tqdm
 
-import utils
-from network import SinglePathOneShotSuperNet
-from utils import data_transforms
+import utils.utils as utils
+from models.spos_network import SinglePathOneShotSuperNet
+from utils.utils import data_transforms
 
 
 def get_args():
