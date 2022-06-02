@@ -3,11 +3,11 @@ import math
 import os
 import random
 
+import init_paths  # noqa: F401
 import numpy as np
 import torch
 import torchvision
 from einops import rearrange
-import init_paths
 from models import MAE_ViT
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import Compose, Normalize, ToTensor
@@ -54,27 +54,24 @@ if __name__ == '__main__':
         train=False,
         download=True,
         transform=Compose([ToTensor(), Normalize(0.5, 0.5)]))
-    dataloader = torch.utils.data.DataLoader(train_dataset,
-                                             load_batch_size,
-                                             shuffle=True,
-                                             num_workers=4)
+    dataloader = torch.utils.data.DataLoader(
+        train_dataset, load_batch_size, shuffle=True, num_workers=4)
     writer = SummaryWriter(os.path.join('logs', 'cifar10', 'mae-pretrain'))
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     model = MAE_ViT(mask_ratio=args.mask_ratio).to(device)
-    optim = torch.optim.AdamW(model.parameters(),
-                              lr=args.base_learning_rate * args.batch_size /
-                              256,
-                              betas=(0.9, 0.95),
-                              weight_decay=args.weight_decay)
+    optim = torch.optim.AdamW(
+        model.parameters(),
+        lr=args.base_learning_rate * args.batch_size / 256,
+        betas=(0.9, 0.95),
+        weight_decay=args.weight_decay)
 
     def lr_func(epoch):
         return min((epoch + 1) / (args.warmup_epoch + 1e-8),
                    0.5 * (math.cos(epoch / args.total_epoch * math.pi) + 1))
 
-    lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optim,
-                                                     lr_lambda=lr_func,
-                                                     verbose=True)
+    lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
+        optim, lr_lambda=lr_func, verbose=True)
 
     step_count = 0
     optim.zero_grad()
@@ -105,10 +102,8 @@ if __name__ == '__main__':
             predicted_val_img = predicted_val_img * mask + val_img * (1 - mask)
             img = torch.cat([val_img * (1 - mask), predicted_val_img, val_img],
                             dim=0)
-            img = rearrange(img,
-                            '(v h1 w1) c h w -> c (h1 h) (w1 v w)',
-                            w1=2,
-                            v=3)
+            img = rearrange(
+                img, '(v h1 w1) c h w -> c (h1 h) (w1 v w)', w1=2, v=3)
             writer.add_image('mae_image', (img + 1) / 2, global_step=e)
         ''' save model '''
         torch.save(model, args.model_path)

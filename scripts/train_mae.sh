@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 
 PYTHONPATH="$(dirname $0)/..":$PYTHONPATH \

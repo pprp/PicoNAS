@@ -6,3 +6,8 @@
 *.txt
 *.pkl
 datasets/*
+data/*
+*.egg-info
+build/*
+dist/*
+*.json 
