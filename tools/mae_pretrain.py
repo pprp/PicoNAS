@@ -7,7 +7,8 @@ import numpy as np
 import torch
 import torchvision
 from einops import rearrange
-from mae_model import MAE_ViT
+import init_paths
+from models import MAE_ViT
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import Compose, Normalize, ToTensor
 from tqdm import tqdm
@@ -44,12 +45,12 @@ if __name__ == '__main__':
     steps_per_update = batch_size // load_batch_size
 
     train_dataset = torchvision.datasets.CIFAR10(
-        'data',
+        'data/cifar',
         train=True,
         download=True,
         transform=Compose([ToTensor(), Normalize(0.5, 0.5)]))
     val_dataset = torchvision.datasets.CIFAR10(
-        'data',
+        'data/cifar',
         train=False,
         download=True,
         transform=Compose([ToTensor(), Normalize(0.5, 0.5)]))

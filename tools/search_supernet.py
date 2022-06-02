@@ -2,17 +2,19 @@ import argparse
 import os
 import time
 
+import init_paths
+
 import torch
 import torch.nn as nn
 import torchvision
+import utils.utils as utils
+from models import SinglePathOneShotSuperNet
 from thop import profile
-from torchsummary import summary
+# from torchsummary import summary
 from torchvision import datasets
 from tqdm import tqdm
-
-import utils.utils as utils
-from models.spos_network import SinglePathOneShotSuperNet
 from utils.utils import data_transforms
+
 
 
 def get_args():
@@ -24,7 +26,7 @@ def get_args():
                         help='experiment name')
     parser.add_argument('--data_dir',
                         type=str,
-                        default='./datasets/',
+                        default='./data/',
                         help='path to the dataset')
     parser.add_argument('--classes',
                         type=int,
@@ -216,7 +218,7 @@ def main():
     print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' %
           ((params / 1e6), (flops / 1e6)))
     model = model.to(device)
-    summary(model, (3, 32, 32) if args.dataset == 'cifar10' else (3, 224, 224))
+    # summary(model, (3, 32, 32) if args.dataset == 'cifar10' else (3, 224, 224))
 
     # train supernet
     start = time.time()

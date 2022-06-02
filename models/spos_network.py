@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+from .modules import ShuffleXModule, ShuffleModule
 
 
 class SinglePathOneShotSuperNet(nn.Module):
