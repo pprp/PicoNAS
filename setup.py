@@ -11,6 +11,7 @@ def readme():
         content = f.read()
     return content
 
+
 def parse_requirements(fname='requirements.txt', with_version=True):
     """Parse the package dependencies listed in a requirements file but strips
     specific versioning information.
@@ -151,7 +152,7 @@ if __name__ == '__main__':
     add_mim_extension()
     setup(
         name='pplib',
-        version="1.0",
+        version='1.0',
         description='library for pprp',
         long_description=readme(),
         long_description_content_type='text/markdown',

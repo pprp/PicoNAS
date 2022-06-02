@@ -19,6 +19,7 @@ def take_indexes(sequences, indexes):
 
 
 class PatchShuffle(torch.nn.Module):
+
     def __init__(self, ratio) -> None:
         super().__init__()
         self.ratio = ratio
@@ -28,12 +29,12 @@ class PatchShuffle(torch.nn.Module):
         remain_T = int(T * (1 - self.ratio))
 
         indexes = [random_indexes(T) for _ in range(B)]
-        forward_indexes = torch.as_tensor(np.stack([i[0] for i in indexes],
-                                                   axis=-1),
-                                          dtype=torch.long).to(patches.device)
-        backward_indexes = torch.as_tensor(np.stack([i[1] for i in indexes],
-                                                    axis=-1),
-                                           dtype=torch.long).to(patches.device)
+        forward_indexes = torch.as_tensor(
+            np.stack([i[0] for i in indexes], axis=-1),
+            dtype=torch.long).to(patches.device)
+        backward_indexes = torch.as_tensor(
+            np.stack([i[1] for i in indexes], axis=-1),
+            dtype=torch.long).to(patches.device)
 
         patches = take_indexes(patches, forward_indexes)
         patches = patches[:remain_T]
@@ -42,6 +43,7 @@ class PatchShuffle(torch.nn.Module):
 
 
 class MAE_Encoder(torch.nn.Module):
+
     def __init__(
         self,
         image_size=32,
@@ -88,6 +90,7 @@ class MAE_Encoder(torch.nn.Module):
 
 
 class MAE_Decoder(torch.nn.Module):
+
     def __init__(
         self,
         image_size=32,
@@ -106,10 +109,11 @@ class MAE_Decoder(torch.nn.Module):
             *[Block(emb_dim, num_head) for _ in range(num_layer)])
 
         self.head = torch.nn.Linear(emb_dim, 3 * patch_size**2)
-        self.patch2img = Rearrange('(h w) b (c p1 p2) -> b c (h p1) (w p2)',
-                                   p1=patch_size,
-                                   p2=patch_size,
-                                   h=image_size // patch_size)
+        self.patch2img = Rearrange(
+            '(h w) b (c p1 p2) -> b c (h p1) (w p2)',
+            p1=patch_size,
+            p2=patch_size,
+            h=image_size // patch_size)
 
         self.init_weight()
 
@@ -150,6 +154,7 @@ class MAE_Decoder(torch.nn.Module):
 
 
 class MAE_ViT(torch.nn.Module):
+
     def __init__(
         self,
         image_size=32,
@@ -175,6 +180,7 @@ class MAE_ViT(torch.nn.Module):
 
 
 class ViT_Classifier(torch.nn.Module):
+
     def __init__(self, encoder: MAE_Encoder, num_classes=10) -> None:
         super().__init__()
         self.cls_token = encoder.cls_token

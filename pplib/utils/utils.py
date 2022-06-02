@@ -8,6 +8,7 @@ import torchvision.transforms as transforms
 
 
 class AvgrageMeter(object):
+
     def __init__(self):
         self.reset()
 
@@ -46,6 +47,7 @@ def save_checkpoint(state, iters, tag=''):
 
 
 class Cutout(object):
+
     def __init__(self, length):
         self.length = length
 

@@ -12,6 +12,7 @@ def channel_shuffle(x):
 
 
 class ShuffleModule(nn.Module):
+
     def __init__(self, inc, ouc, kernel, stride, supernet=True):
         super(ShuffleModule, self).__init__()
         self.affine = supernet
@@ -24,54 +25,59 @@ class ShuffleModule(nn.Module):
 
         self.branch = nn.Sequential(
             # point wise conv2d
-            nn.Conv2d(self.inc,
-                      self.midc,
-                      kernel_size=1,
-                      stride=1,
-                      padding=0,
-                      bias=False),
+            nn.Conv2d(
+                self.inc,
+                self.midc,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=False),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             nn.ReLU(inplace=True),
 
             # depth wise conv2d
-            nn.Conv2d(self.midc,
-                      self.midc,
-                      kernel_size=self.kernel,
-                      stride=self.stride,
-                      padding=self.padding,
-                      bias=False,
-                      groups=self.midc),
+            nn.Conv2d(
+                self.midc,
+                self.midc,
+                kernel_size=self.kernel,
+                stride=self.stride,
+                padding=self.padding,
+                bias=False,
+                groups=self.midc),
             nn.BatchNorm2d(self.midc, affine=self.affine),
 
             # point wise conv2d
-            nn.Conv2d(self.midc,
-                      self.ouc,
-                      kernel_size=1,
-                      stride=1,
-                      padding=0,
-                      bias=False),
+            nn.Conv2d(
+                self.midc,
+                self.ouc,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=False),
             nn.BatchNorm2d(self.ouc, affine=self.affine),
             nn.ReLU(inplace=True))
 
         if self.stride == 2:
             self.proj = nn.Sequential(
                 # depth wise conv2d
-                nn.Conv2d(self.inc,
-                          self.inc,
-                          kernel_size=self.kernel,
-                          stride=2,
-                          padding=self.padding,
-                          bias=False,
-                          groups=self.inc),
+                nn.Conv2d(
+                    self.inc,
+                    self.inc,
+                    kernel_size=self.kernel,
+                    stride=2,
+                    padding=self.padding,
+                    bias=False,
+                    groups=self.inc),
                 nn.BatchNorm2d(self.inc, affine=self.affine),
 
                 # point wise conv2d
-                nn.Conv2d(self.inc,
-                          self.inc,
-                          kernel_size=1,
-                          stride=1,
-                          padding=0,
-                          bias=False),
+                nn.Conv2d(
+                    self.inc,
+                    self.inc,
+                    kernel_size=1,
+                    stride=1,
+                    padding=0,
+                    bias=False),
                 nn.BatchNorm2d(self.inc, affine=self.affine),
                 nn.ReLU(inplace=True))
 
@@ -85,6 +91,7 @@ class ShuffleModule(nn.Module):
 
 
 class ShuffleXModule(nn.Module):
+
     def __init__(self, inc, ouc, stride, supernet=True):
         super(ShuffleXModule, self).__init__()
         if supernet:
@@ -98,77 +105,85 @@ class ShuffleXModule(nn.Module):
 
         self.cb_main = nn.Sequential(
             # dw
-            nn.Conv2d(self.inc,
-                      self.inc,
-                      kernel_size=3,
-                      stride=stride,
-                      padding=1,
-                      bias=False,
-                      groups=self.inc),
+            nn.Conv2d(
+                self.inc,
+                self.inc,
+                kernel_size=3,
+                stride=stride,
+                padding=1,
+                bias=False,
+                groups=self.inc),
             nn.BatchNorm2d(self.inc, affine=self.affine),
             # pw
-            nn.Conv2d(self.inc,
-                      self.midc,
-                      kernel_size=1,
-                      stride=1,
-                      padding=0,
-                      bias=False),
+            nn.Conv2d(
+                self.inc,
+                self.midc,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=False),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             nn.ReLU(inplace=True),
             # dw
-            nn.Conv2d(self.midc,
-                      self.midc,
-                      kernel_size=3,
-                      stride=1,
-                      padding=1,
-                      bias=False,
-                      groups=self.midc),
+            nn.Conv2d(
+                self.midc,
+                self.midc,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False,
+                groups=self.midc),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             # pw
-            nn.Conv2d(self.midc,
-                      self.midc,
-                      kernel_size=1,
-                      stride=1,
-                      padding=0,
-                      bias=False),
+            nn.Conv2d(
+                self.midc,
+                self.midc,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=False),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             nn.ReLU(inplace=True),
             # dw
-            nn.Conv2d(self.midc,
-                      self.midc,
-                      kernel_size=3,
-                      stride=1,
-                      padding=1,
-                      bias=False,
-                      groups=self.midc),
+            nn.Conv2d(
+                self.midc,
+                self.midc,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False,
+                groups=self.midc),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             # pw
-            nn.Conv2d(self.midc,
-                      self.ouc,
-                      kernel_size=1,
-                      stride=1,
-                      padding=0,
-                      bias=False),
+            nn.Conv2d(
+                self.midc,
+                self.ouc,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=False),
             nn.BatchNorm2d(self.ouc, affine=self.affine),
             nn.ReLU(inplace=True))
         if stride == 2:
             self.cb_proj = nn.Sequential(
                 # dw
-                nn.Conv2d(self.inc,
-                          self.inc,
-                          kernel_size=3,
-                          stride=2,
-                          padding=1,
-                          groups=self.inc,
-                          bias=False),
+                nn.Conv2d(
+                    self.inc,
+                    self.inc,
+                    kernel_size=3,
+                    stride=2,
+                    padding=1,
+                    groups=self.inc,
+                    bias=False),
                 nn.BatchNorm2d(self.inc, affine=self.affine),
                 # pw
-                nn.Conv2d(self.inc,
-                          self.inc,
-                          kernel_size=1,
-                          stride=1,
-                          padding=0,
-                          bias=False),
+                nn.Conv2d(
+                    self.inc,
+                    self.inc,
+                    kernel_size=1,
+                    stride=1,
+                    padding=0,
+                    bias=False),
                 nn.BatchNorm2d(self.inc, affine=self.affine),
                 nn.ReLU(inplace=True))
 

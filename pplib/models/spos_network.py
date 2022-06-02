@@ -6,6 +6,7 @@ from .modules import ShuffleModule, ShuffleXModule
 
 
 class SinglePathOneShotSuperNet(nn.Module):
+
     def __init__(self,
                  dataset='cifar10',
                  input_size=32,
@@ -26,12 +27,13 @@ class SinglePathOneShotSuperNet(nn.Module):
         self.kernel_list = [3, 5, 7, 'x']
 
         self.first_conv = nn.Sequential(
-            nn.Conv2d(3,
-                      self.channel[0],
-                      kernel_size=3,
-                      stride=first_stride,
-                      padding=1,
-                      bias=False),  # bias ?
+            nn.Conv2d(
+                3,
+                self.channel[0],
+                kernel_size=3,
+                stride=first_stride,
+                padding=1,
+                bias=False),  # bias ?
             nn.BatchNorm2d(self.channel[0], affine=False),  # affine ?
             nn.ReLU6(inplace=True))
 
@@ -54,8 +56,8 @@ class SinglePathOneShotSuperNet(nn.Module):
             self.features.append(layer)
 
         self.last_conv = nn.Sequential(
-            nn.Conv2d(self.channel[-1], self.last_channel, 1, 1, 0,
-                      bias=False),
+            nn.Conv2d(
+                self.channel[-1], self.last_channel, 1, 1, 0, bias=False),
             nn.BatchNorm2d(self.last_channel, affine=False),
             nn.ReLU6(inplace=True))
 
@@ -103,6 +105,7 @@ class SinglePathOneShotSuperNet(nn.Module):
 
 
 class SinglePathOneShotSubNet(nn.Module):
+
     def __init__(self,
                  dataset='cifar10',
                  input_size=32,
@@ -114,8 +117,8 @@ class SinglePathOneShotSubNet(nn.Module):
             first_stride = 1
             self.downsample_layers = [4, 8]
 
-        self.choice = np.random.randint(4,
-                                        size=20) if choice is None else choice
+        self.choice = np.random.randint(
+            4, size=20) if choice is None else choice
 
         # ShuffleNet config
         self.last_channel = 1024
@@ -127,12 +130,13 @@ class SinglePathOneShotSubNet(nn.Module):
         self.kernel_list = [3, 5, 7, 'x']
 
         self.first_conv = nn.Sequential(
-            nn.Conv2d(3,
-                      self.channel[0],
-                      kernel_size=3,
-                      stride=first_stride,
-                      padding=1,
-                      bias=False),  # bias ?
+            nn.Conv2d(
+                3,
+                self.channel[0],
+                kernel_size=3,
+                stride=first_stride,
+                padding=1,
+                bias=False),  # bias ?
             nn.BatchNorm2d(self.channel[0], affine=False),  # affine ?
             nn.ReLU6(inplace=True))
 
@@ -158,8 +162,8 @@ class SinglePathOneShotSubNet(nn.Module):
             self.features.append(layer)
 
         self.last_conv = nn.Sequential(
-            nn.Conv2d(self.channel[-1], self.last_channel, 1, 1, 0,
-                      bias=False),
+            nn.Conv2d(
+                self.channel[-1], self.last_channel, 1, 1, 0, bias=False),
             nn.BatchNorm2d(self.last_channel, affine=False),
             nn.ReLU6(inplace=True))
 
