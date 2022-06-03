@@ -1,7 +1,6 @@
 import os
 import time
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms as transforms
@@ -114,14 +113,6 @@ def data_transforms(args):
 
 def random_choice(num_choice, layers):
     return list(np.random.randint(num_choice, size=layers))
-
-
-def plot_hist(acc_list, min=0, max=101, interval=5, name='search'):
-    plt.hist(acc_list, bins=max - min, range=(min, max), histtype='bar')
-    plt.xticks(np.arange(min, max, interval))
-    img_path = name + '.png'
-    plt.savefig(img_path)
-    plt.show()
 
 
 def time_record(start):

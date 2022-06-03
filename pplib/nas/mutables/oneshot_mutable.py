@@ -8,7 +8,6 @@ import numpy as np
 import torch.nn as nn
 from torch import Tensor
 
-from mmrazor.registry import MODELS
 from .base_mutable import CHOICE_TYPE, CHOSEN_TYPE, BaseMutable
 
 
@@ -90,7 +89,6 @@ class OneShotMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         setattr(self, 'forward', forward_with_default_args)
 
 
-@MODELS.register_module()
 class OneShotOP(OneShotMutable[str, str]):
     """A type of ``MUTABLES`` for single path supernet, such as Single Path One
     Shot. In single path supernet, each choice block only has one choice
@@ -107,55 +105,11 @@ class OneShotOP(OneShotMutable[str, str]):
             ``BaseModule``. OpenMMLab has implement 5 initializer including
             `Constant`, `Xavier`, `Normal`, `Uniform`, `Kaiming`,
             and `Pretrained`.
-
-    Examples:
-        >>> import mmrazor.models
-        >>> from mmrazor.registry import MODELS
-        >>> import torch
-        >>> norm_cfg = dict(type='BN', requires_grad=True)
-        >>> op_cfg = dict(
-        ...     type='OneShotOP',
-        ...     candidate_ops=dict(
-        ...         shuffle_3x3=dict(
-        ...             type='ShuffleBlock', norm_cfg=norm_cfg, kernel_size=3),
-        ...         shuffle_5x5=dict(
-        ...             type='ShuffleBlock', norm_cfg=norm_cfg, kernel_size=5),
-        ...         shuffle_7x7=dict(
-        ...             type='ShuffleBlock', norm_cfg=norm_cfg, kernel_size=7),
-        ...         shuffle_xception=dict(
-        ...             type='ShuffleXception',
-        ...             norm_cfg=norm_cfg,
-        ...         ),
-        ...     ),
-        ...     module_kwargs=dict(in_channels=32, out_channels=32, stride=1))
-        >>> op = MODELS.build(op_cfg)
-
-        >>> input = torch.randn(4, 32, 64, 64)
-        >>> op = MODELS.build(op_cfg)
-
-        >>> op.set_forward_args('shuffle_3x3')
-        >>> unfix_output = op.forward(input)
-
-        >>> op.choices
-        ['shuffle_3x3', 'shuffle_5x5', 'shuffle_7x7', 'shuffle_xception']
-        >>> op.num_choices
-        4
-
-        >>> op.fix_chosen('shuffle_3x3')
-        >>> fix_output = op.forward(input)
-        >>> torch.all(fix_output == unfix_output)
-        True
-
-        >>> op.is_fixed
-        True
-        >>> op.choices
-        ['shuffle_3x3']
-        >>> op.num_choices
     """
 
     def __init__(
         self,
-        candidate_ops: Union[Dict[str, Dict], nn.ModuleDict],
+        candidate_ops: nn.ModuleDict,
         module_kwargs: Optional[Dict[str, Dict]] = None,
         alias: Optional[str] = None,
         init_cfg: Optional[Dict] = None,
@@ -168,13 +122,11 @@ class OneShotOP(OneShotMutable[str, str]):
 
         self._is_fixed = False
         self._chosen: Optional[str] = None
-        self._candidate_ops = self._build_ops(candidate_ops,
-                                              self.module_kwargs)
+        self._candidate_ops = self._build_ops(candidate_ops)
 
     @staticmethod
     def _build_ops(
-            candidate_ops: Union[Dict[str, Dict], nn.ModuleDict],
-            module_kwargs: Optional[Dict[str, Dict]] = None) -> nn.ModuleDict:
+            candidate_ops: nn.ModuleDict) -> nn.ModuleDict:
         """Build candidate operations based on choice configures.
 
         Args:
@@ -190,14 +142,8 @@ class OneShotOP(OneShotMutable[str, str]):
         """
         if isinstance(candidate_ops, nn.ModuleDict):
             return candidate_ops
-
-        ops = nn.ModuleDict()
-        for name, op_cfg in candidate_ops.items():
-            assert name not in ops
-            if module_kwargs is not None:
-                op_cfg.update(module_kwargs)
-            ops[name] = MODELS.build(op_cfg)
-        return ops
+        else:
+            raise NotImplementedError
 
     def forward_fixed(self, x: Any) -> Tensor:
         """Forward when the mutable is in `fixed` mode.
@@ -274,7 +220,6 @@ class OneShotOP(OneShotMutable[str, str]):
         return list(self._candidate_ops.keys())
 
 
-@MODELS.register_module()
 class OneShotProbOP(OneShotOP):
     """Sampling candidate operation according to probability.
 

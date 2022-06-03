@@ -8,7 +8,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from mmrazor.registry import MODELS
 from .base_mutable import CHOICE_TYPE, CHOSEN_TYPE, BaseMutable
 
 PartialType = Callable[[Any, Optional[nn.Parameter]], Any]
@@ -96,7 +95,6 @@ class DiffMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         setattr(self, 'forward', forward_with_default_args)
 
 
-@MODELS.register_module()
 class DiffOP(DiffMutable[str, str]):
     """A type of ``MUTABLES`` for differentiable architecture search, such as
     DARTS. Search the best module by learnable parameters `arch_param`.
@@ -127,12 +125,10 @@ class DiffOP(DiffMutable[str, str]):
             f'but got: {len(candidate_ops)}'
 
         self._is_fixed = False
-        self._candidate_ops = self._build_ops(candidate_ops,
-                                              self.module_kwargs)
+        self._candidate_ops = self._build_ops(candidate_ops)
 
     @staticmethod
-    def _build_ops(candidate_ops: Dict[str, Dict],
-                   module_kwargs: Optional[Dict[str, Dict]]) -> nn.ModuleDict:
+    def _build_ops(candidate_ops: nn.ModuleDict) -> nn.ModuleDict:
         """Build candidate operations based on candidate_ops configures.
 
         Args:
@@ -146,13 +142,10 @@ class DiffOP(DiffMutable[str, str]):
                 the name of each choice in configs and the value of ``ops``
                 is the corresponding candidate operation.
         """
-        ops = nn.ModuleDict()
-        for name, op_cfg in candidate_ops.items():
-            assert name not in ops
-            if module_kwargs is not None:
-                op_cfg.update(module_kwargs)
-            ops[name] = MODELS.build(op_cfg)
-        return ops
+        if isinstance(candidate_ops, nn.ModuleDict):
+            return candidate_ops
+        else:
+            raise NotImplementedError
 
     def forward_fixed(self, x: Any) -> Tensor:
         """Forward when the mutable is in `fixed` mode.
@@ -238,7 +231,6 @@ class DiffOP(DiffMutable[str, str]):
         return list(self._candidate_ops.keys())
 
 
-@MODELS.register_module()
 class DiffChoiceRoute(DiffMutable[str, List[str]]):
     """A type of ``MUTABLES`` for Neural Architecture Search, which can select
     inputs from different edges in a differentiable or non-differentiable way.
@@ -394,7 +386,6 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
         return list(self._edges.keys())
 
 
-@MODELS.register_module()
 class GumbelChoiceRoute(DiffChoiceRoute):
     """A type of ``MUTABLES`` for Neural Architecture Search using Gumbel-Max
     trick, which can select inputs from different edges in a differentiable or

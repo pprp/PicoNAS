@@ -2,11 +2,9 @@
 from typing import Any, Dict, Type
 
 from mmrazor.models.mutables import OneShotMutable
-from mmrazor.registry import MODELS
 from .base_mutator import ArchitectureMutator
 
 
-@MODELS.register_module()
 class OneShotMutator(ArchitectureMutator[OneShotMutable]):
     """One-shot mutable based mutator.
 

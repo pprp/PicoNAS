@@ -169,7 +169,9 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
         current_group_nums = len(self._custom_group)
 
         for name, module in module_name2module.items():
+            print(isinstance(module, self.mutable_class_type))
             if isinstance(module, self.mutable_class_type):
+                import pdb; pdb.set_trace()
                 group_id = self.module_name2group_id.get(name)
 
                 if group_id is None:

@@ -4,11 +4,9 @@ from typing import Dict, List, Optional, Type
 import torch.nn as nn
 
 from mmrazor.models.mutables import DiffMutable
-from mmrazor.registry import MODELS
 from .base_mutator import ArchitectureMutator
 
 
-@MODELS.register_module()
 class DiffMutator(ArchitectureMutator[DiffMutable]):
     """Differentiable mutable based mutator.
 
