@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Type
 
 import torch.nn as nn
 
-from mmrazor.models.mutables import DiffMutable
+from pplib.nas.mutables import DiffMutable
 from .base_mutator import ArchitectureMutator
 
 
@@ -75,7 +75,7 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
     def modify_supernet_forward(self):
         """Modify the DiffMutable's default arch_param in forward.
 
-        In MMRazor, the `arch_param` is along to `DiffMutator`, while the
+        The `arch_param` is along to `DiffMutator`, while the
         `DiffMutable` needs `arch_param` in the forward. Here we use partial
         function to assign the corresponding `arch_param` to each
         `DiffMutable`.

@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Any, Dict, Type
 
-from mmrazor.models.mutables import OneShotMutable
+from pplib.nas.mutables import OneShotMutable
 from .base_mutator import ArchitectureMutator
 
 
@@ -22,7 +22,6 @@ class OneShotMutator(ArchitectureMutator[OneShotMutable]):
         ['op1', 'op2', 'op3']
         >>> mutator1 = OneShotMutator()
         >>> mutator1.mutable_class_type
-        <class 'mmrazor.models.mutables.oneshot_mutable.OneShotMutable'>
         >>> mutator1.prepare_from_supernet(supernet)
         >>> mutator1.search_group.keys()
         dict_keys([0, 1, 2])

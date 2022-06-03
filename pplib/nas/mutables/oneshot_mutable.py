@@ -2,7 +2,7 @@
 import random
 from abc import abstractmethod
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import torch.nn as nn
@@ -125,8 +125,7 @@ class OneShotOP(OneShotMutable[str, str]):
         self._candidate_ops = self._build_ops(candidate_ops)
 
     @staticmethod
-    def _build_ops(
-            candidate_ops: nn.ModuleDict) -> nn.ModuleDict:
+    def _build_ops(candidate_ops: nn.ModuleDict) -> nn.ModuleDict:
         """Build candidate operations based on choice configures.
 
         Args:

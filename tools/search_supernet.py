@@ -6,13 +6,14 @@ import init_paths  # noqa: F401
 import torch
 import torch.nn as nn
 import torchvision
-import utils.utils as utils
-from models import SinglePathOneShotSuperNet
 from thop import profile
 # from torchsummary import summary
 from torchvision import datasets
 from tqdm import tqdm
-from utils.utils import data_transforms
+
+import pplib.utils.utils as utils
+from pplib.models import SinglePathOneShotSuperNet
+from pplib.utils.utils import data_transforms
 
 
 def get_args():

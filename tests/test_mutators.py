@@ -37,12 +37,29 @@ class OneShotMutableModel(nn.Module):
 
 
 class TestOneShot(TestCase):
-    supernet = OneShotMutableModel()
 
-    custom_group = [['op1', 'op2', 'op3']]
+    def test_case1(self):
+        supernet = OneShotMutableModel()
 
-    mutator = OneShotMutator(custom_group=custom_group)
-    mutator.prepare_from_supernet(supernet)
-    print(mutator.search_group)
+        custom_group = [['op1', 'op2', 'op3']]
 
-    print(mutator.random_subnet)
+        mutator = OneShotMutator(custom_group=custom_group)
+        mutator.prepare_from_supernet(supernet)
+        print(mutator.search_group)
+
+        print(mutator.random_subnet)
+
+    def test_case2(self):
+        supernet = OneShotMutableModel()
+
+        custom_group = [['op1'], ['op2'], ['op3']]
+
+        mutator = OneShotMutator(custom_group=custom_group)
+        mutator.prepare_from_supernet(supernet)
+        print(mutator.search_group)
+        print(mutator.random_subnet)
+
+
+if __name__ == '__main__':
+    import unittest
+    unittest.main()
