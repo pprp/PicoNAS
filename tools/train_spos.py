@@ -157,13 +157,14 @@ def main():
         optimizer=optimizer,
         criterion=criterion,
         scheduler=scheduler,
-        searching=True)
+        searching=True,
+        epochs=args.epochs,
+        device=device)
 
     start = time.time()
 
-    for epoch in range(args.epoch):
+    for epoch in range(args.epochs):
         trainer.train(epoch)
-
         if (epoch + 1) % args.val_interval == 0:
             trainer.valid(epoch)
 

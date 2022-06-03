@@ -17,22 +17,25 @@ class SPOSTrainer(BaseTrainer):
         optimizer,
         criterion,
         scheduler,
+        epochs: int,
         searching: bool = True,
         num_choices: int = 4,
         num_layers: int = 20,
+        device: torch.device = None,
     ):
         """_summary_
 
         Args:
             model (_type_): _description_
         """
+        self.epochs = epochs
         self.model = model
         self.searching = searching
         self.criterion = criterion
         self.scheduler = scheduler
         self.optimizer = optimizer
         self.dataloader = dataloader
-
+        self.device = device
         self.num_choices = num_choices
         self.num_layers = num_layers
 
@@ -45,6 +48,7 @@ class SPOSTrainer(BaseTrainer):
             '[%s%04d/%04d %s%f]' % ('Epoch:', epoch + 1, self.epochs, 'lr:',
                                     self.scheduler.get_lr()[0]))
         for step, (inputs, targets) in enumerate(train_dataloader):
+            inputs, targets = inputs.to(self.device), targets.to(self.device)
             self.optimizer.zero_grad()
             if self.searching:
                 choice = random_choice(self.num_choices, self.num_layers)
@@ -72,6 +76,8 @@ class SPOSTrainer(BaseTrainer):
         val_dataloader = self.dataloader['val']
         with torch.no_grad():
             for step, (inputs, targets) in enumerate(val_dataloader):
+                inputs, targets = inputs.to(self.device), targets.to(
+                    self.device)
                 if self.searching:
                     if choice is None:
                         choice = random_choice(self.num_choices,
