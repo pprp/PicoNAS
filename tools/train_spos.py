@@ -166,7 +166,7 @@ def main():
     for epoch in range(args.epochs):
         trainer.train(epoch)
         if (epoch + 1) % args.val_interval == 0:
-            trainer.valid(epoch)
+            trainer.valid(epoch=epoch)
 
     utils.time_record(start)
 

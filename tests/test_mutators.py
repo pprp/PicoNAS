@@ -59,6 +59,16 @@ class TestOneShot(TestCase):
         print(mutator.search_group)
         print(mutator.random_subnet)
 
+    def test_case3(self):
+        supernet = OneShotMutableModel()
+
+        custom_group = None
+
+        mutator = OneShotMutator(custom_group=custom_group)
+        mutator.prepare_from_supernet(supernet)
+        print('test case3: ', mutator.search_group)
+        print('test case3: ', mutator.random_subnet)
+
 
 if __name__ == '__main__':
     import unittest
