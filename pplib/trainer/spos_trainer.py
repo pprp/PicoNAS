@@ -1,3 +1,4 @@
+from typing import Dict
 
 import torch
 import torch.nn as nn
@@ -5,21 +6,21 @@ from tqdm import tqdm
 
 from pplib.utils.utils import AvgrageMeter, accuracy, random_choice
 from .base import BaseTrainer
-from typing import Dict
 
 
 class SPOSTrainer(BaseTrainer):
 
-    def __init__(self,
-                 model: nn.Module,
-                 dataloader: Dict,
-                 optimizer,
-                 criterion,
-                 scheduler,
-                 searching: bool = True,
-                 num_choices: int = 4,
-                 num_layers: int = 20,
-                 ):
+    def __init__(
+        self,
+        model: nn.Module,
+        dataloader: Dict,
+        optimizer,
+        criterion,
+        scheduler,
+        searching: bool = True,
+        num_choices: int = 4,
+        num_layers: int = 20,
+    ):
         """_summary_
 
         Args:
@@ -39,10 +40,10 @@ class SPOSTrainer(BaseTrainer):
         self.model.train()
         train_loss = 0.0
         top1 = AvgrageMeter()
-        train_dataloader = tqdm(self.dataloader["train"])
+        train_dataloader = tqdm(self.dataloader['train'])
         train_dataloader.set_description(
-            '[%s%04d/%04d %s%f]' %
-            ('Epoch:', epoch + 1, self.epochs, 'lr:', self.scheduler.get_lr()[0]))
+            '[%s%04d/%04d %s%f]' % ('Epoch:', epoch + 1, self.epochs, 'lr:',
+                                    self.scheduler.get_lr()[0]))
         for step, (inputs, targets) in enumerate(train_dataloader):
             self.optimizer.zero_grad()
             if self.searching:
@@ -68,13 +69,13 @@ class SPOSTrainer(BaseTrainer):
         self.model.eval()
         val_loss = 0.0
         val_top1 = AvgrageMeter()
-        val_dataloader = self.dataloader["val"]
+        val_dataloader = self.dataloader['val']
         with torch.no_grad():
             for step, (inputs, targets) in enumerate(val_dataloader):
                 if self.searching:
                     if choice is None:
-                        choice = random_choice(
-                            self.num_choices, self.num_layers)
+                        choice = random_choice(self.num_choices,
+                                               self.num_layers)
                     outputs = self.model(inputs, choice)
                 else:
                     outputs = self.model(inputs)
@@ -86,4 +87,3 @@ class SPOSTrainer(BaseTrainer):
             print('[Val_Accuracy epoch:%d] val_loss:%f, val_acc:%f' %
                   (epoch + 1, val_loss / (step + 1), val_top1.avg))
             return val_top1.avg
-

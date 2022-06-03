@@ -12,8 +12,8 @@ from torchvision import datasets
 
 import pplib.utils.utils as utils
 from pplib.models import SinglePathOneShotSuperNet
-from pplib.utils.utils import data_transforms
 from pplib.trainer import SPOSTrainer
+from pplib.utils.utils import data_transforms
 
 
 def get_args():
@@ -127,8 +127,8 @@ def main():
             pin_memory=True)
 
     dataloader = {
-        "train": train_loader,
-        "val": val_loader,
+        'train': train_loader,
+        'val': val_loader,
     }
 
     # SinglePath_OneShot
@@ -151,8 +151,13 @@ def main():
           ((params / 1e6), (flops / 1e6)))
     model = model.to(device)
 
-    trainer = SPOSTrainer(model, dataloader=dataloader, optimizer=optimizer,
-                          criterion=criterion, scheduler=scheduler, searching=True)
+    trainer = SPOSTrainer(
+        model,
+        dataloader=dataloader,
+        optimizer=optimizer,
+        criterion=criterion,
+        scheduler=scheduler,
+        searching=True)
 
     start = time.time()
 
