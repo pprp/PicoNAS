@@ -24,4 +24,9 @@ def pearson(vector1, vector2):
 
 def kendalltau(vector1, vector2):
     tau, p_value = scipy.stats.kendalltau(vector1, vector2)
-    return
+    return tau
+
+
+def spearman(vector1, vector2):
+    coef, p_value = scipy.stats.spearmanr(vector1, vector2)
+    return coef

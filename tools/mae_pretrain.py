@@ -56,7 +56,7 @@ if __name__ == '__main__':
         transform=Compose([ToTensor(), Normalize(0.5, 0.5)]))
     dataloader = torch.utils.data.DataLoader(
         train_dataset, load_batch_size, shuffle=True, num_workers=4)
-    writer = SummaryWriter(os.path.join('logs', 'cifar10', 'mae-pretrain'))
+    writer = SummaryWriter(os.path.join('logdir', 'cifar10', 'mae-pretrain'))
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     model = MAE_ViT(mask_ratio=args.mask_ratio).to(device)

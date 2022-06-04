@@ -11,7 +11,7 @@ from thop import profile
 from torchvision import datasets
 
 import pplib.utils.utils as utils
-from pplib.models import SinglePathOneShotSuperNet
+from pplib.models import MacroBenchmarkSuperNet
 from pplib.nas.mutators import OneShotMutator
 from pplib.trainer import MacroTrainer
 from pplib.utils.utils import data_transforms
@@ -34,7 +34,7 @@ def get_args():
         '--num_choices', type=int, default=4, help='number choices per layer')
     parser.add_argument(
         '--batch_size', type=int, default=96, help='batch size')
-    parser.add_argument('--epochs', type=int, default=600, help='batch size')
+    parser.add_argument('--epochs', type=int, default=100, help='batch size')
     parser.add_argument(
         '--learning_rate',
         type=float,
@@ -132,9 +132,7 @@ def main():
         'val': val_loader,
     }
 
-    # SinglePath_OneShot
-    model = SinglePathOneShotSuperNet(args.dataset, args.resize, args.classes,
-                                      args.layers)
+    model = MacroBenchmarkSuperNet()
     mutator = OneShotMutator(custom_group=None)
     mutator.prepare_from_supernet(model)
 
@@ -172,6 +170,11 @@ def main():
         trainer.train(epoch)
         if (epoch + 1) % args.val_interval == 0:
             trainer.valid(epoch=epoch)
+            utils.save_checkpoint({
+                'state_dict': model.state_dict(),
+            },
+                                  epoch + 1,
+                                  tag=args.exp_name + '_super')
 
     utils.time_record(start)
 

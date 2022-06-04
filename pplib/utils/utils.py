@@ -38,9 +38,9 @@ def accuracy(output, label, topk=(1, )):
 
 
 def save_checkpoint(state, iters, tag=''):
-    if not os.path.exists('./snapshots'):
-        os.makedirs('./snapshots')
-    filename = os.path.join('./snapshots/{}_ckpt_{:04}.pth.tar'.format(
+    if not os.path.exists('./checkpoints'):
+        os.makedirs('./checkpoints')
+    filename = os.path.join('./checkpoints/{}_ckpt_{:04}.pth.tar'.format(
         tag, iters))
     torch.save(state, filename)
 

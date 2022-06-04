@@ -167,6 +167,11 @@ def main():
         trainer.train(epoch)
         if (epoch + 1) % args.val_interval == 0:
             trainer.valid(epoch=epoch)
+            utils.save_checkpoint({
+                'state_dict': model.state_dict(),
+            },
+                                  epoch + 1,
+                                  tag=args.exp_name + '_super')
 
     utils.time_record(start)
 

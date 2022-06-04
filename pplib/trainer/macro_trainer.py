@@ -26,28 +26,28 @@ class MacroTrainer(BaseTrainer):
     """
 
     def __init__(
-        self,
-        model: nn.Module,
-        mutator: OneShotMutator,
-        dataloader: Dict,
-        optimizer,
-        criterion,
-        scheduler,
-        epochs: int,
-        searching: bool = True,
-        num_choices: int = 4,
-        num_layers: int = 20,
-        device: torch.device = None,
+            self,
+            model: nn.Module,
+            mutator: OneShotMutator,
+            dataloader: Dict,
+            optimizer=None,
+            criterion=None,
+            scheduler=None,
+            epochs: int = 200,
+            searching: bool = True,
+            num_choices: int = 4,
+            num_layers: int = 20,
+            device: torch.device = torch.device('cuda'),
     ):
-
+        self.device = device
         self.epochs = epochs
-        self.model = model
+        self.model = model.to(self.device)
         self.searching = searching
-        self.criterion = criterion
+        self.criterion = criterion if criterion is not None \
+            else nn.CrossEntropyLoss()
         self.scheduler = scheduler
         self.optimizer = optimizer
         self.dataloader = dataloader
-        self.device = device
         self.num_choices = num_choices
         self.num_layers = num_layers
         self.mutator = mutator
@@ -88,7 +88,7 @@ class MacroTrainer(BaseTrainer):
             }
             train_dataloader.set_postfix(log=postfix)
 
-    def valid(self, epoch):
+    def valid(self, epoch: int = 0, subnet_dict: Dict = None):
         self.model.eval()
         val_loss = 0.0
         val_top1 = AvgrageMeter()
@@ -98,10 +98,13 @@ class MacroTrainer(BaseTrainer):
                 inputs, targets = inputs.to(self.device), targets.to(
                     self.device)
                 if self.searching:
+                    # during searching phase, test random subnet
                     rand_subnet = self.mutator.random_subnet
                     self.mutator.set_subnet(rand_subnet)
                     outputs = self.model(inputs)
                 else:
+                    # during evaluation phase, test specific subnet
+                    self.mutator.set_subnet(subnet_dict)
                     outputs = self.model(inputs)
                 loss = self.criterion(outputs, targets)
                 val_loss += loss.item()

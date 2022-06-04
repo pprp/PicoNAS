@@ -236,11 +236,13 @@ def main():
                 model,
                 criterion,
                 supernet=True)
+
             utils.save_checkpoint({
                 'state_dict': model.state_dict(),
             },
                                   epoch + 1,
                                   tag=args.exp_name + '_super')
+
     utils.time_record(start)
 
 

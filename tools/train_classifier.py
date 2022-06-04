@@ -4,11 +4,12 @@ import os
 
 import torch
 import torchvision
-from mae_model import MAE_ViT, ViT_Classifier
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import Compose, Normalize, ToTensor
 from tqdm import tqdm
-from utils.utils import setup_seed
+
+from pplib.models.mae_model import MAE_ViT, ViT_Classifier
+from pplib.utils.utils import setup_seed
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -53,10 +54,12 @@ if __name__ == '__main__':
 
     if args.pretrained_model_path is not None:
         model = torch.load(args.pretrained_model_path, map_location='cpu')
-        writer = SummaryWriter(os.path.join('logs', 'cifar10', 'pretrain-cls'))
+        writer = SummaryWriter(
+            os.path.join('logdir', 'cifar10', 'pretrain-cls'))
     else:
         model = MAE_ViT()
-        writer = SummaryWriter(os.path.join('logs', 'cifar10', 'scratch-cls'))
+        writer = SummaryWriter(
+            os.path.join('logdir', 'cifar10', 'scratch-cls'))
     model = ViT_Classifier(model.encoder, num_classes=10).to(device)
 
     loss_fn = torch.nn.CrossEntropyLoss()
