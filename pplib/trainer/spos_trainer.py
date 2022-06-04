@@ -69,7 +69,7 @@ class SPOSTrainer(BaseTrainer):
             }
             train_dataloader.set_postfix(log=postfix)
 
-    def validate(self, epoch, choice=None):
+    def valid(self, epoch, choice=None):
         self.model.eval()
         val_loss = 0.0
         val_top1 = AvgrageMeter()

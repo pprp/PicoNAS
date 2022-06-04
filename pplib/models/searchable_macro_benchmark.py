@@ -2,6 +2,7 @@ import torch.nn as nn
 from torch.nn import Sequential
 
 from pplib.nas.mutables import OneShotOP
+from pplib.utils.misc import convert_arch2dict
 
 
 class ConvBNReLU(nn.Sequential):
@@ -201,3 +202,21 @@ class MacroBenchmarkSuperNet(nn.Module):
         x = x.view(x.shape[0], -1)
         x = self.out2(x)
         return x
+
+
+if __name__ == '__main__':
+    arch_config = 'I1I1221I121121'
+    from pplib.nas.mutators import OneShotMutator
+
+    supernet = MacroBenchmarkSuperNet()
+
+    mutator = OneShotMutator()
+    mutator.prepare_from_supernet(supernet)
+
+    sg = mutator.search_group
+
+    print(sg.keys())
+
+    print(mutator.random_subnet)
+
+    mutator.set_subnet(convert_arch2dict(arch_config))

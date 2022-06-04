@@ -88,7 +88,7 @@ class MacroTrainer(BaseTrainer):
             }
             train_dataloader.set_postfix(log=postfix)
 
-    def validate(self, epoch):
+    def valid(self, epoch):
         self.model.eval()
         val_loss = 0.0
         val_top1 = AvgrageMeter()
