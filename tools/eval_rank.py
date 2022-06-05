@@ -56,7 +56,7 @@ def compuate_rank_consistency(sampled_dict: Dict,
 
 if __name__ == '__main__':
     json_path = r'./data/benchmark/benchmark_cifar10_dataset.json'
-    ckpt_path = r'checkpoints/log_spos_c10_train_supernet_retrain_super_ckpt_0005.pth.tar'  # noqa: E501
+    ckpt_path = r'checkpoints/log_spos_c10_train_supernet_retrain_epoch600_super_ckpt_0600.pth.tar'  # noqa: E501
     valid_args = dict(
         name='cifar10',
         bs=64,

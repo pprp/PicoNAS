@@ -10,15 +10,33 @@ single path one shot with CIFAR10
 - 1. pretrain:
 
 ```bash
-python mae_pretrain.py
+python tools/mae_pretrain.py
 ```
 
 - 2. retrain
 
 ```bash
-python train_classifier.py
+python tools/train_classifier.py
 ```
 
 ## SPOS
 
--
+- Search Space 1: Official ShuffleNet-based Search space.
+
+```python
+python tools/train_spos.py
+```
+
+- Search Space 2: Macro BenchMark-based Search space.
+
+```python
+python tools/train_macro.py
+```
+
+## Rank
+
+To evaluate the rank consistency in nas, run:
+
+```python
+python tools/eval_rank.py
+```
