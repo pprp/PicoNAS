@@ -1,20 +1,19 @@
 import argparse
-import os
 import time
 
 import init_paths  # noqa: F401
 import torch
 import torch.nn as nn
-import torchvision
 from thop import profile
-# from torchsummary import summary
-from torchvision import datasets
 
 import pplib.utils.utils as utils
+from pplib.datasets import build_dataloader
 from pplib.models import MacroBenchmarkSuperNet
 from pplib.nas.mutators import OneShotMutator
 from pplib.trainer import MacroTrainer
-from pplib.utils.utils import data_transforms
+from pplib.utils.config import Config
+
+# from torchsummary import summary
 
 
 def get_args():
@@ -74,6 +73,9 @@ def get_args():
 def main():
     # args & device
     args = get_args()
+
+    cfg = Config.fromfile(args.config)
+
     if torch.cuda.is_available():
         print('Train on GPU!')
         device = torch.device('cuda')
@@ -82,50 +84,9 @@ def main():
 
     # dataset
     assert args.dataset in ['cifar10', 'imagenet']
-    train_transform, valid_transform = data_transforms(args)
-    if args.dataset == 'cifar10':
-        trainset = torchvision.datasets.CIFAR10(
-            root=os.path.join(args.data_dir, 'cifar'),
-            train=True,
-            download=True,
-            transform=train_transform)
-        train_loader = torch.utils.data.DataLoader(
-            trainset,
-            batch_size=args.batch_size,
-            shuffle=True,
-            pin_memory=True,
-            num_workers=8)
-        valset = torchvision.datasets.CIFAR10(
-            root=os.path.join(args.data_dir, 'cifar'),
-            train=False,
-            download=True,
-            transform=valid_transform)
-        val_loader = torch.utils.data.DataLoader(
-            valset,
-            batch_size=args.batch_size,
-            shuffle=False,
-            pin_memory=True,
-            num_workers=8)
-    elif args.dataset == 'imagenet':
-        train_data_set = datasets.ImageNet(
-            os.path.join(args.data_dir, 'ILSVRC2012', 'train'),
-            train_transform)
-        val_data_set = datasets.ImageNet(
-            os.path.join(args.data_dir, 'ILSVRC2012', 'valid'),
-            valid_transform)
-        train_loader = torch.utils.data.DataLoader(
-            train_data_set,
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=8,
-            pin_memory=True,
-            sampler=None)
-        val_loader = torch.utils.data.DataLoader(
-            val_data_set,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=8,
-            pin_memory=True)
+
+    train_loader = build_dataloader(name='cifar10', type='train', args=cfg)
+    val_loader = build_dataloader(name='cifar10', type='val', args=cfg)
 
     dataloader = {
         'train': train_loader,

@@ -5,7 +5,7 @@ from .cutout import Cutout
 from .randomerase import RandomErase
 
 
-def build_transforms(name='cifar10', type='train', args=None):
+def build_transforms(name='cifar10', type='train', config=None):
     assert type in ['train', 'val']
     assert name in ['cifar10', 'cifar100']
     transform_type = None
@@ -16,16 +16,16 @@ def build_transforms(name='cifar10', type='train', args=None):
             transforms.RandomHorizontalFlip(),
         ]
 
-        if args.random_erase:
+        if config.get('random_erase', False):
             mid_transform = [
                 RandomErase(
-                    args.random_erase_prob,
-                    args.random_erase_sl,
-                    args.random_erase_sh,
-                    args.random_erase_r,
+                    config.random_erase_prob,
+                    config.random_erase_sl,
+                    config.random_erase_sh,
+                    config.random_erase_r,
                 ),
             ]
-        elif args.autoaugmentation:
+        elif config.get('autoaugmentation', False):
             mid_transform = [
                 CIFAR10Policy(),
             ]
@@ -45,7 +45,7 @@ def build_transforms(name='cifar10', type='train', args=None):
                                      [0.1942, 0.1918, 0.1958]),
             ]
 
-        if args.cutout:
+        if config.cutout:
             post_transform.append(Cutout(1, 8))
 
         transform_type = transforms.Compose(

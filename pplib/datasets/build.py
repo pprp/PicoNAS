@@ -4,11 +4,7 @@ from torch.utils.data import DataLoader
 from .transforms import build_transforms
 
 
-def build_dataset(type='train',
-                  name='cifar10',
-                  root='~/data',
-                  args=None,
-                  fast=False):
+def build_dataset(type='train', name='cifar10', config=None, fast=False):
     assert name in ['cifar10', 'cifar100']
     assert type in ['train', 'val']
 
@@ -17,33 +13,33 @@ def build_dataset(type='train',
     if name == 'cifar10':
         if type == 'train':
             dataset_type = datasets.CIFAR10(
-                root=root,
+                root=config.data_dir,
                 train=True,
                 download=True,
-                transform=build_transforms('cifar10', 'train', args=args),
+                transform=build_transforms('cifar10', 'train', config=config),
             )
         elif type == 'val':
             dataset_type = datasets.CIFAR10(
-                root=root,
+                root=config.data_dir,
                 train=False,
                 download=True,
-                transform=build_transforms('cifar10', 'val', args=args),
+                transform=build_transforms('cifar10', 'val', config=config),
             )
 
     elif name == 'cifar100':
         if type == 'train':
             dataset_type = datasets.CIFAR100(
-                root=root,
+                root=config.data_dir,
                 train=True,
                 download=True,
-                transform=build_transforms('cifar10', 'train', args=args),
+                transform=build_transforms('cifar10', 'train', config=config),
             )
         elif type == 'val':
             dataset_type = datasets.CIFAR100(
-                root=root,
+                root=config.data_dir,
                 train=False,
                 download=True,
-                transform=build_transforms('cifar10', 'val', args=args),
+                transform=build_transforms('cifar10', 'val', config=config),
             )
     else:
         raise 'Type Error: {} Not Supported'.format(name)
@@ -63,45 +59,45 @@ def build_dataset(type='train',
     return dataset_type
 
 
-def build_dataloader(name='cifar10', type='train', args=None):
+def build_dataloader(name='cifar10', type='train', config=None):
     assert type in ['train', 'val']
     assert name in ['cifar10', 'cifar100']
     if name == 'cifar10':
         if type == 'train':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'train', 'cifar10', args.root, args=args, fast=args.fast),
-                batch_size=args.bs,
+                    'train', 'cifar10', config=config, fast=config.fast),
+                batch_size=config.batch_size,
                 shuffle=True,
-                num_workers=args.nw,
+                num_workers=config.nw,
                 pin_memory=True,
             )
         elif type == 'val':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'val', 'cifar10', args.root, args=args, fast=args.fast),
-                batch_size=args.bs,
+                    'val', 'cifar10', config=config, fast=config.fast),
+                batch_size=config.batch_size,
                 shuffle=False,
-                num_workers=args.nw,
+                num_workers=config.nw,
                 pin_memory=True,
             )
     elif name == 'cifar100':
         if type == 'train':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'train', 'cifar100', args.root, args=args, fast=args.fast),
-                batch_size=args.bs,
+                    'train', 'cifar100', config=config, fast=config.fast),
+                batch_size=config.batch_size,
                 shuffle=True,
-                num_workers=args.nw,
+                num_workers=config.nw,
                 pin_memory=True,
             )
         elif type == 'val':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'val', 'cifar100', args.root, args=args, fast=args.fast),
-                batch_size=args.bs,
+                    'val', 'cifar100', config=config, fast=config.fast),
+                batch_size=config.batch_size,
                 shuffle=False,
-                num_workers=args.nw,
+                num_workers=config.nw,
                 pin_memory=True,
             )
     else:

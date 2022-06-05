@@ -5,27 +5,32 @@ import time
 import init_paths  # noqa: F401
 import torch
 import torch.nn as nn
-import torchvision
 from thop import profile
-# from torchsummary import summary
-from torchvision import datasets
 
 import pplib.utils.utils as utils
+from pplib.datasets import build_dataloader
 from pplib.models import SinglePathOneShotSuperNet
 from pplib.trainer import SPOSTrainer
-from pplib.utils.utils import data_transforms
+from pplib.utils.config import Config
+
+# from torchsummary import summary
 
 
-def get_args():
+def parse_args():
     parser = argparse.ArgumentParser('Single_Path_One_Shot')
     parser.add_argument(
-        '--exp_name',
+        '--config',
         type=str,
-        default='spos_cifar10',
+        default='configs/spos/spos_cifar10.py',
         required=True,
-        help='experiment name')
+        help='user settings config')
     parser.add_argument(
-        '--data_dir', type=str, default='./data/', help='path to the dataset')
+        '--exp_name', type=str, default='spos_cifar10', help='experiment name')
+    parser.add_argument(
+        '--data_dir',
+        type=str,
+        default='./data/cifar',
+        help='path to the dataset')
     parser.add_argument(
         '--classes', type=int, default=10, help='dataset classes')
     parser.add_argument('--layers', type=int, default=20, help='batch size')
@@ -72,7 +77,15 @@ def get_args():
 
 def main():
     # args & device
-    args = get_args()
+    args = parse_args()
+    cfg = Config.fromfile(args.config)
+    cfg.merge_from_dict(vars(args))
+
+    # dump config files
+    if not os.path.exists(cfg.work_dir):
+        os.mkdir(cfg.work_dir)
+    cfg.dump(os.path.join(cfg.work_dir, os.path.basename(args.config)))
+
     if torch.cuda.is_available():
         print('Train on GPU!')
         device = torch.device('cuda')
@@ -80,51 +93,9 @@ def main():
         device = torch.device('cpu')
 
     # dataset
-    assert args.dataset in ['cifar10', 'imagenet']
-    train_transform, valid_transform = data_transforms(args)
-    if args.dataset == 'cifar10':
-        trainset = torchvision.datasets.CIFAR10(
-            root=os.path.join(args.data_dir, 'cifar'),
-            train=True,
-            download=True,
-            transform=train_transform)
-        train_loader = torch.utils.data.DataLoader(
-            trainset,
-            batch_size=args.batch_size,
-            shuffle=True,
-            pin_memory=True,
-            num_workers=8)
-        valset = torchvision.datasets.CIFAR10(
-            root=os.path.join(args.data_dir, 'cifar'),
-            train=False,
-            download=True,
-            transform=valid_transform)
-        val_loader = torch.utils.data.DataLoader(
-            valset,
-            batch_size=args.batch_size,
-            shuffle=False,
-            pin_memory=True,
-            num_workers=8)
-    elif args.dataset == 'imagenet':
-        train_data_set = datasets.ImageNet(
-            os.path.join(args.data_dir, 'ILSVRC2012', 'train'),
-            train_transform)
-        val_data_set = datasets.ImageNet(
-            os.path.join(args.data_dir, 'ILSVRC2012', 'valid'),
-            valid_transform)
-        train_loader = torch.utils.data.DataLoader(
-            train_data_set,
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=8,
-            pin_memory=True,
-            sampler=None)
-        val_loader = torch.utils.data.DataLoader(
-            val_data_set,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=8,
-            pin_memory=True)
+    assert cfg.dataset_type in ['cifar10', 'imagenet']
+    train_loader = build_dataloader(name='cifar10', type='train', config=cfg)
+    val_loader = build_dataloader(name='cifar10', type='val', config=cfg)
 
     dataloader = {
         'train': train_loader,
@@ -132,19 +103,19 @@ def main():
     }
 
     # SinglePath_OneShot
-    model = SinglePathOneShotSuperNet(args.dataset, args.resize, args.classes,
-                                      args.layers)
+    model = SinglePathOneShotSuperNet(cfg.dataset_type, args.resize,
+                                      cfg.classes, cfg.layers)
     criterion = nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(model.parameters(), args.learning_rate,
-                                args.momentum, args.weight_decay)
+    optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
+                                cfg.momentum, cfg.weight_decay)
     scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, lambda epoch: 1 - (epoch / args.epochs))
+        optimizer, lambda epoch: 1 - (epoch / cfg.epochs))
 
     # flops & params & structure
     flops, params = profile(
         model,
-        inputs=(torch.randn(1, 3, 32, 32), ) if args.dataset == 'cifar10' else
-        (torch.randn(1, 3, 224, 224), ),
+        inputs=(torch.randn(1, 3, 32, 32), )
+        if cfg.dataset_type == 'cifar10' else (torch.randn(1, 3, 224, 224), ),
         verbose=False)
 
     print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' %
@@ -158,20 +129,20 @@ def main():
         criterion=criterion,
         scheduler=scheduler,
         searching=True,
-        epochs=args.epochs,
+        epochs=cfg.epochs,
         device=device)
 
     start = time.time()
 
-    for epoch in range(args.epochs):
+    for epoch in range(cfg.epochs):
         trainer.train(epoch)
-        if (epoch + 1) % args.val_interval == 0:
+        if (epoch + 1) % cfg.val_interval == 0:
             trainer.valid(epoch=epoch)
             utils.save_checkpoint({
                 'state_dict': model.state_dict(),
             },
                                   epoch + 1,
-                                  tag=args.exp_name + '_super')
+                                  tag=cfg.exp_name + '_super')
 
     utils.time_record(start)
 

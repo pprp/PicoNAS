@@ -3,7 +3,6 @@ import time
 
 import numpy as np
 import torch
-import torchvision.transforms as transforms
 
 
 class AvgrageMeter(object):
@@ -43,72 +42,6 @@ def save_checkpoint(state, iters, tag=''):
     filename = os.path.join('./checkpoints/{}_ckpt_{:04}.pth.tar'.format(
         tag, iters))
     torch.save(state, filename)
-
-
-class Cutout(object):
-
-    def __init__(self, length):
-        self.length = length
-
-    def __call__(self, img):
-        h, w = img.size(1), img.size(2)
-        mask = np.ones((h, w), np.float32)
-        y = np.random.randint(h)
-        x = np.random.randint(w)
-
-        y1 = np.clip(y - self.length // 2, 0, h)
-        y2 = np.clip(y + self.length // 2, 0, h)
-        x1 = np.clip(x - self.length // 2, 0, w)
-        x2 = np.clip(x + self.length // 2, 0, w)
-
-        mask[y1:y2, x1:x2] = 0.
-        mask = torch.from_numpy(mask)
-        mask = mask.expand_as(img)
-        img *= mask
-        return img
-
-
-def data_transforms(args):
-    if args.dataset == 'cifar10':
-        MEAN = [0.49139968, 0.48215827, 0.44653124]
-        STD = [0.24703233, 0.24348505, 0.26158768]
-    elif args.dataset == 'imagenet':
-        MEAN = [0.485, 0.456, 0.406]
-        STD = [0.229, 0.224, 0.225]
-
-    if args.resize or args.dataset == 'imagenet':
-        # cifar10 resize or imagenet
-        train_transform = transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            # transforms.ColorJitter(brightness=0.4, contrast=0.4,
-            #                         saturation=0.4, hue=0.2),
-            transforms.ToTensor(),
-            transforms.Normalize(MEAN, STD)
-        ])
-        valid_transform = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(MEAN, STD)
-        ])
-    else:  # cifar10
-        train_transform = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            # transforms.ColorJitter(brightness=0.4, contrast=0.4,
-            #                        saturation=0.4, hue=0.2),
-            transforms.ToTensor(),
-            transforms.Normalize(MEAN, STD)
-        ])
-        valid_transform = transforms.Compose(
-            [transforms.ToTensor(),
-             transforms.Normalize(MEAN, STD)])
-
-    if args.cutout:
-        train_transform.transforms.append(Cutout(args.cutout_length))
-
-    return train_transform, valid_transform
 
 
 def random_choice(num_choice, layers):

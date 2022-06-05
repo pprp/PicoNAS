@@ -3,12 +3,12 @@ import math
 import os
 
 import torch
-import torchvision
 from torch.utils.tensorboard import SummaryWriter
-from torchvision.transforms import Compose, Normalize, ToTensor
 from tqdm import tqdm
 
+from pplib.datasets import build_dataloader
 from pplib.models.mae_model import MAE_ViT, ViT_Classifier
+from pplib.utils.config import Config
 from pplib.utils.utils import setup_seed
 
 if __name__ == '__main__':
@@ -28,6 +28,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    cfg = Config.fromfile(args.config)
     setup_seed(args.seed)
 
     batch_size = args.batch_size
@@ -36,20 +37,9 @@ if __name__ == '__main__':
     assert batch_size % load_batch_size == 0
     steps_per_update = batch_size // load_batch_size
 
-    train_dataset = torchvision.datasets.CIFAR10(
-        'data',
-        train=True,
-        download=True,
-        transform=Compose([ToTensor(), Normalize(0.5, 0.5)]))
-    val_dataset = torchvision.datasets.CIFAR10(
-        'data',
-        train=False,
-        download=True,
-        transform=Compose([ToTensor(), Normalize(0.5, 0.5)]))
-    train_dataloader = torch.utils.data.DataLoader(
-        train_dataset, load_batch_size, shuffle=True, num_workers=4)
-    val_dataloader = torch.utils.data.DataLoader(
-        val_dataset, load_batch_size, shuffle=False, num_workers=4)
+    train_loader = build_dataloader(name='cifar10', type='train', args=cfg)
+    val_loader = build_dataloader(name='cifar10', type='val', args=cfg)
+
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     if args.pretrained_model_path is not None:
@@ -87,7 +77,7 @@ if __name__ == '__main__':
         model.train()
         losses = []
         access = []
-        for img, label in tqdm(iter(train_dataloader)):
+        for img, label in tqdm(iter(train_loader)):
             step_count += 1
             img = img.to(device)
             label = label.to(device)
@@ -110,7 +100,7 @@ if __name__ == '__main__':
         with torch.no_grad():
             losses = []
             access = []
-            for img, label in tqdm(iter(val_dataloader)):
+            for img, label in tqdm(iter(val_loader)):
                 img = img.to(device)
                 label = label.to(device)
                 logits = model(img)
