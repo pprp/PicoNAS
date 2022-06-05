@@ -1,4 +1,5 @@
 import argparse
+import os
 import time
 
 import init_paths  # noqa: F401
@@ -19,13 +20,21 @@ from pplib.utils.config import Config
 def get_args():
     parser = argparse.ArgumentParser('Single_Path_One_Shot')
     parser.add_argument(
+        '--config',
+        type=str,
+        default='configs/spos/spos_cifar10.py',
+        required=True,
+        help='user settings config')
+    parser.add_argument(
         '--exp_name',
         type=str,
-        default='spos_cifar10',
-        required=True,
+        default='macro_cifar10',
         help='experiment name')
     parser.add_argument(
-        '--data_dir', type=str, default='./data/', help='path to the dataset')
+        '--data_dir',
+        type=str,
+        default='./data/cifar',
+        help='path to the dataset')
     parser.add_argument(
         '--classes', type=int, default=10, help='dataset classes')
     parser.add_argument('--layers', type=int, default=20, help='batch size')
@@ -75,6 +84,12 @@ def main():
     args = get_args()
 
     cfg = Config.fromfile(args.config)
+    cfg.merge_from_dict(vars(args))
+
+    # dump config files
+    if not os.path.exists(cfg.work_dir):
+        os.mkdir(cfg.work_dir)
+    cfg.dump(os.path.join(cfg.work_dir, os.path.basename(args.config)))
 
     if torch.cuda.is_available():
         print('Train on GPU!')
@@ -83,10 +98,10 @@ def main():
         device = torch.device('cpu')
 
     # dataset
-    assert args.dataset in ['cifar10', 'imagenet']
+    assert cfg.dataset in ['cifar10', 'imagenet']
 
-    train_loader = build_dataloader(name='cifar10', type='train', args=cfg)
-    val_loader = build_dataloader(name='cifar10', type='val', args=cfg)
+    train_loader = build_dataloader(name='cifar10', type='train', config=cfg)
+    val_loader = build_dataloader(name='cifar10', type='val', config=cfg)
 
     dataloader = {
         'train': train_loader,
@@ -98,15 +113,15 @@ def main():
     mutator.prepare_from_supernet(model)
 
     criterion = nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(model.parameters(), args.learning_rate,
-                                args.momentum, args.weight_decay)
+    optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
+                                cfg.momentum, cfg.weight_decay)
     scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, lambda epoch: 1 - (epoch / args.epochs))
+        optimizer, lambda epoch: 1 - (epoch / cfg.epochs))
 
     # flops & params & structure
     flops, params = profile(
         model,
-        inputs=(torch.randn(1, 3, 32, 32), ) if args.dataset == 'cifar10' else
+        inputs=(torch.randn(1, 3, 32, 32), ) if cfg.dataset == 'cifar10' else
         (torch.randn(1, 3, 224, 224), ),
         verbose=False)
 
@@ -122,20 +137,20 @@ def main():
         criterion=criterion,
         scheduler=scheduler,
         searching=True,
-        epochs=args.epochs,
+        epochs=cfg.epochs,
         device=device)
 
     start = time.time()
 
-    for epoch in range(args.epochs):
+    for epoch in range(cfg.epochs):
         trainer.train(epoch)
-        if (epoch + 1) % args.val_interval == 0:
+        if (epoch + 1) % cfg.val_interval == 0:
             trainer.valid(epoch=epoch)
             utils.save_checkpoint({
                 'state_dict': model.state_dict(),
             },
                                   epoch + 1,
-                                  tag=args.exp_name + '_super')
+                                  tag=cfg.exp_name + '_super')
 
     utils.time_record(start)
 

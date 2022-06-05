@@ -2,6 +2,6 @@
 dataset_type = 'CIFAR10'
 fast = False
 nw = 2
-data_dir = './config/'
+data_dir = './data/cifar'
 
 classes = 10
