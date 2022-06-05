@@ -40,3 +40,17 @@ To evaluate the rank consistency in nas, run:
 ```python
 python tools/eval_rank.py
 ```
+
+
+## TODO LIST
+
+- [ ] SIMMIM + SupMIM
+- [ ] NASBench201
+- [ ] SPOS
+- [ ] FairNAS
+- [ ] AngleNAS
+- [ ] BNNAS
+- [ ] LandmarkReg
+- [x] MacroBenchmark
+- [x] SAM optimizer
+- [ ] KD

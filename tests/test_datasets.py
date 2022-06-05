@@ -14,7 +14,7 @@ class TestDataset(TestCase):
     def test_dataset(self):
         args = dict(
             bs=64,
-            root='./data/cifar',
+            data_dir='./data/cifar',
             fast=False,
             nw=2,
             random_erase=None,
@@ -22,7 +22,7 @@ class TestDataset(TestCase):
             cutout=None,
         )
         dataset = build_dataset(
-            type='train', name='cifar10', root='./data/cifar', args=Dict(args))
+            type='train', name='cifar10', config=Dict(args))
         assert dataset is not None
         for i, (img, label) in enumerate(dataset):
             if i > 10:
@@ -32,14 +32,13 @@ class TestDataset(TestCase):
     def test_dataloader(self):
         args = dict(
             bs=64,
-            root='./data/cifar',
             fast=False,
             nw=2,
             random_erase=None,
             autoaugmentation=None,
             cutout=None,
-        )
-        dataloader = build_dataloader(args=Dict(args))
+            data_dir='./data/cifar')
+        dataloader = build_dataloader(config=Dict(args))
         assert dataloader is not None
 
         for i, (img, label) in enumerate(dataloader):
