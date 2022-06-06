@@ -100,7 +100,7 @@ class DiffOP(DiffMutable[str, str]):
     DARTS. Search the best module by learnable parameters `arch_param`.
 
     Args:
-        candidate_ops (dict[str, dict]): the configs for the candidate
+        candidate_ops (nn.ModuleDict): the configs for the candidate
             operations.
         module_kwargs (dict[str, dict], optional): Module initialization named
             arguments. Defaults to None.
@@ -113,7 +113,7 @@ class DiffOP(DiffMutable[str, str]):
 
     def __init__(
         self,
-        candidate_ops: Dict[str, Dict],
+        candidate_ops: nn.ModuleDict,
         module_kwargs: Optional[Dict[str, Dict]] = None,
         alias: Optional[str] = None,
         init_cfg: Optional[Dict] = None,

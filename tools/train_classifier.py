@@ -7,7 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from pplib.datasets import build_dataloader
-from pplib.models.mae_model import MAE_ViT, ViT_Classifier
+from pplib.models.mae.mae_model import MAE_ViT, ViT_Classifier
 from pplib.utils.config import Config
 from pplib.utils.utils import setup_seed
 

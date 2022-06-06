@@ -2,6 +2,7 @@ import unittest
 from unittest import TestCase
 
 from pplib.datasets import build_dataloader, build_dataset
+from pplib.utils.config import Config
 
 
 class Dict(dict):
@@ -13,7 +14,7 @@ class TestDataset(TestCase):
 
     def test_dataset(self):
         args = dict(
-            bs=64,
+            batch_size=64,
             data_dir='./data/cifar',
             fast=False,
             nw=2,
@@ -22,7 +23,7 @@ class TestDataset(TestCase):
             cutout=None,
         )
         dataset = build_dataset(
-            type='train', name='cifar10', config=Dict(args))
+            type='train', name='cifar10', config=Config(args))
         assert dataset is not None
         for i, (img, label) in enumerate(dataset):
             if i > 10:
@@ -31,14 +32,14 @@ class TestDataset(TestCase):
 
     def test_dataloader(self):
         args = dict(
-            bs=64,
+            batch_size=64,
             fast=False,
             nw=2,
             random_erase=None,
             autoaugmentation=None,
             cutout=None,
             data_dir='./data/cifar')
-        dataloader = build_dataloader(config=Dict(args))
+        dataloader = build_dataloader(config=Config(args))
         assert dataloader is not None
 
         for i, (img, label) in enumerate(dataloader):
