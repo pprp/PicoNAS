@@ -1,3 +1,4 @@
+import argparse
 import json
 import random
 from typing import Dict, List
@@ -26,13 +27,7 @@ def load_json(path):
 def compuate_rank_consistency(sampled_dict: Dict,
                               trainer: MacroTrainer,
                               type: str = 'test_acc') -> None:
-    """compute rank consistency of different types of indicators.
-
-    Args:
-        sampled_dict (Dict): _description_
-        supernet (nn.Module): _description_
-        type (str): _description_
-    """
+    """compute rank consistency of different types of indicators."""
     assert type in ['test_acc', 'MMACs', 'val_acc', 'Params'], \
         f'Not support type {type}.'
 
@@ -41,7 +36,8 @@ def compuate_rank_consistency(sampled_dict: Dict,
     true_indicator_list: List[float] = []
     supernet_indicator_list: List[float] = []
 
-    for k, v in sampled_dict.items():
+    for i, (k, v) in enumerate(sampled_dict.items()):
+        print(f'evaluating the {i}th architecture.')
         subnet_dict = convert_arch2dict(k)
         top1 = trainer.valid(epoch=0, subnet_dict=subnet_dict)
         supernet_indicator_list.append(top1)
@@ -55,8 +51,31 @@ def compuate_rank_consistency(sampled_dict: Dict,
 
 
 if __name__ == '__main__':
-    json_path = r'./data/benchmark/benchmark_cifar10_dataset.json'
-    ckpt_path = r'checkpoints/log_spos_c10_train_supernet_retrain_epoch600_super_ckpt_0600.pth.tar'  # noqa: E501
+    args = argparse.ArgumentParser('rank evaluation')
+    args.add_argument(
+        '--json-path',
+        type=str,
+        default='./data/benchmark/benchmark_cifar10_dataset.json',
+        help='benchmark json file path')
+    args.add_argument(
+        '--ckpt-path',
+        type=str,
+        default='checkpoints/path_to_checkpoint.pth.tar',
+        help='path of supernet checkpoint.')
+    args.add_argument(
+        '--type',
+        type=str,
+        choices=['test_acc', 'MMACs', 'val_acc', 'Params'],
+        default='test_acc',
+        help='target type to rank.')
+    args.add_argument(
+        '--num-sample',
+        type=int,
+        default=100,
+        help='number of sample for rank evaluation.')
+
+    args = args.parse_args()
+
     valid_args = dict(
         name='cifar10',
         bs=64,
@@ -74,10 +93,11 @@ if __name__ == '__main__':
         device = torch.device('cpu')
 
     # load arch from json
-    arch_dict = load_json(json_path)
+    arch_dict = load_json(args.json_path)
 
-    # random sample 100 archs
-    sampled_archs: List[str] = random.sample(arch_dict.keys(), k=100)
+    # random sample `num_sample` archs
+    sampled_archs: List[str] = random.sample(
+        arch_dict.keys(), k=args.num_sample)
 
     # generate sampled dict
     sampled_dict: Dict = {}
@@ -88,7 +108,7 @@ if __name__ == '__main__':
     supernet = MacroBenchmarkSuperNet()
 
     # load supernet checkpoints
-    state = torch.load(ckpt_path)['state_dict']
+    state = torch.load(args.ckpt_path)['state_dict']
     supernet.load_state_dict(state, strict=False)
 
     # build one-shot mutator
@@ -104,4 +124,5 @@ if __name__ == '__main__':
         supernet, mutator=mutator, dataloader=dataloader, device=device)
 
     # compute the rank consistency of supernet
-    compuate_rank_consistency(sampled_dict=sampled_dict, trainer=trainer)
+    compuate_rank_consistency(
+        sampled_dict=sampled_dict, trainer=trainer, type=args.type)
