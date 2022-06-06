@@ -238,11 +238,12 @@ class NASBench201Cell(nn.Module):
         super(NASBench201Cell, self).__init__()
 
         self.NUM_NODES = 4
+        self.layers = nn.ModuleList()
 
         for i in range(self.NUM_NODES):
             node_ops = nn.ModuleList()
             for layer_idx in range(0, i):
-                candidate_op = nn.ModuleList({
+                candidate_op = nn.ModuleDict({
                     'none':
                     Zero(C_in, C_out, stride),
                     'avg_pool_3x3':
@@ -260,9 +261,12 @@ class NASBench201Cell(nn.Module):
                     nn.Identity()
                     if stride == 1 and C_in == C_out else FactorizedReduce(
                         C_in, C_out, stride if layer_idx == 0 else 1,
-                        bn_affine, bn_momentum, bn_track_running_stats)
+                        bn_affine, bn_momentum, bn_track_running_stats),
                 })
-                node_ops.append(DiffOP(candidate_ops=candidate_op))
+                node_ops.append(
+                    DiffOP(
+                        candidate_ops=candidate_op,
+                        alias=f'node{i}_edge{layer_idx}'))
             self.layers.append(node_ops)
         self.in_dim = C_in
         self.out_dim = C_out

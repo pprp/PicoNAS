@@ -216,19 +216,19 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
         search_group: Dict[int, List[MUTABLE_TYPE]] = dict()
         current_group_nums = len(self._custom_group)
 
-        for alias_name, modules in alias2module.items():
+        for gid, (alias_name, modules) in enumerate(alias2module.items()):
 
             for module in modules:
-                group_id = self.alias2group_id.get(alias_name)
+                if len(self.alias2group_id.keys()) == 0:
+                    group_id = self.alias2group_id.get(alias_name)
+                else:
+                    group_id = gid
 
-                if group_id is None:
-                    group_id = current_group_nums
-                    current_group_nums += 1
                 try:
                     search_group[group_id].append(module)
                 except KeyError:
                     search_group[group_id] = [module]
 
-                self.alias2group_id[name] = group_id
+                self.alias2group_id[alias_name] = group_id
 
         self._search_group = search_group
