@@ -214,12 +214,12 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
                     self.alias2group_id[module_name] = idx
 
         search_group: Dict[int, List[MUTABLE_TYPE]] = dict()
-        current_group_nums = len(self._custom_group)
 
+        self.alias2group_id_copy = self.alias2group_id.copy()
         for gid, (alias_name, modules) in enumerate(alias2module.items()):
 
             for module in modules:
-                if len(self.alias2group_id.keys()) == 0:
+                if len(self.alias2group_id_copy.keys()) > 0:
                     group_id = self.alias2group_id.get(alias_name)
                 else:
                     group_id = gid
