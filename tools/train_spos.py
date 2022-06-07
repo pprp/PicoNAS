@@ -9,7 +9,7 @@ from thop import profile
 
 import pplib.utils.utils as utils
 from pplib.datasets import build_dataloader
-from pplib.models import SearchableShuffleNetV2
+from pplib.models import SearchableMobileNet
 from pplib.nas.mutators.one_shot_mutator import OneShotMutator
 from pplib.trainer import SPOSTrainer
 from pplib.utils.config import Config
@@ -105,7 +105,7 @@ def main():
     }
 
     # SinglePath_OneShot
-    model = SearchableShuffleNetV2()
+    model = SearchableMobileNet()
     mutator = OneShotMutator()
     mutator.prepare_from_supernet(model)
 

@@ -45,8 +45,8 @@ python tools/eval_rank.py
 ## TODO LIST
 
 - [ ] SIMMIM + SupMIM
-- [ ] NASBench201
-- [ ] SPOS
+- [x] NASBench201
+- [x] SPOS
 - [ ] FairNAS
 - [ ] AngleNAS
 - [ ] BNNAS
