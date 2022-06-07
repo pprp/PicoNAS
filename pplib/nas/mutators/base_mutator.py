@@ -220,7 +220,9 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
 
             for module in modules:
                 if len(self.alias2group_id_copy.keys()) > 0:
-                    group_id = self.alias2group_id.get(alias_name)
+                    group_id = self.alias2group_id_copy.get(alias_name)
+                    assert group_id is not None, \
+                        f'Get wrong alias name: {alias_name}'
                 else:
                     group_id = gid
 
