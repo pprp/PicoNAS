@@ -11,3 +11,4 @@ data/*
 build/*
 dist/*
 *.json
+checkpoints/*

@@ -18,7 +18,7 @@ from pplib.utils.config import Config
 
 
 def get_args():
-    parser = argparse.ArgumentParser('Single_Path_One_Shot')
+    parser = argparse.ArgumentParser('train macro benchmark')
     parser.add_argument(
         '--config',
         type=str,

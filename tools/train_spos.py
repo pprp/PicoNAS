@@ -9,7 +9,8 @@ from thop import profile
 
 import pplib.utils.utils as utils
 from pplib.datasets import build_dataloader
-from pplib.models import SinglePathOneShotSuperNet
+from pplib.models import SearchableShuffleNetV2
+from pplib.nas.mutators.one_shot_mutator import OneShotMutator
 from pplib.trainer import SPOSTrainer
 from pplib.utils.config import Config
 
@@ -78,6 +79,7 @@ def parse_args():
 def main():
     # args & device
     args = parse_args()
+
     cfg = Config.fromfile(args.config)
     cfg.merge_from_dict(vars(args))
 
@@ -103,8 +105,10 @@ def main():
     }
 
     # SinglePath_OneShot
-    model = SinglePathOneShotSuperNet(cfg.dataset_type, args.resize,
-                                      cfg.classes, cfg.layers)
+    model = SearchableShuffleNetV2()
+    mutator = OneShotMutator()
+    mutator.prepare_from_supernet(model)
+
     criterion = nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
                                 cfg.momentum, cfg.weight_decay)
@@ -124,6 +128,7 @@ def main():
 
     trainer = SPOSTrainer(
         model,
+        mutator=mutator,
         dataloader=dataloader,
         optimizer=optimizer,
         criterion=criterion,

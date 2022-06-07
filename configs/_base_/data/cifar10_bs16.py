@@ -1,5 +1,5 @@
 # dataset settings
-dataset_type = 'CIFAR10'
+dataset_type = 'cifar10'
 fast = False
 nw = 2
 data_dir = './data/cifar'

@@ -3,4 +3,4 @@ _base_ = [
 ]
 
 work_dir = './checkpoints/'
-exp_name = 'spos_cifar10_epoch100'
+exp_name = 'macrobenchmark_cifar10_epoch100'

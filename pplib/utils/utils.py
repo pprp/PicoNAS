@@ -1,7 +1,6 @@
 import os
 import time
 
-import numpy as np
 import torch
 
 
@@ -42,10 +41,6 @@ def save_checkpoint(state, iters, tag=''):
     filename = os.path.join('./checkpoints/{}_ckpt_{:04}.pth.tar'.format(
         tag, iters))
     torch.save(state, filename)
-
-
-def random_choice(num_choice, layers):
-    return list(np.random.randint(num_choice, size=layers))
 
 
 def time_record(start):

@@ -54,7 +54,6 @@ class SearchableShuffleNetV2(nn.Module):
             else:
                 inp, outp, stride = self.in_channels // 2, out_channels, 1
             stride = 2 if stride == 2 and i == 0 else 1
-            print(self.in_channels // 2, out_channels)
             candidate_ops = nn.ModuleDict({
                 'shuffle_3x3':
                 ShuffleModule(inp, outp, kernel=3, stride=stride),

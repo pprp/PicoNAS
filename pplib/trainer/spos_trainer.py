@@ -4,7 +4,8 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
-from pplib.utils.utils import AvgrageMeter, accuracy, random_choice
+from pplib.nas.mutators import OneShotMutator
+from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 
 
@@ -13,6 +14,7 @@ class SPOSTrainer(BaseTrainer):
     def __init__(
         self,
         model: nn.Module,
+        mutator: OneShotMutator,
         dataloader: Dict,
         optimizer,
         criterion,
@@ -23,11 +25,7 @@ class SPOSTrainer(BaseTrainer):
         num_layers: int = 20,
         device: torch.device = None,
     ):
-        """_summary_
 
-        Args:
-            model (_type_): _description_
-        """
         self.epochs = epochs
         self.model = model
         self.searching = searching
@@ -38,6 +36,7 @@ class SPOSTrainer(BaseTrainer):
         self.device = device
         self.num_choices = num_choices
         self.num_layers = num_layers
+        self.mutator = mutator
 
     def train(self, epoch: int):
         self.model.train()
@@ -51,8 +50,9 @@ class SPOSTrainer(BaseTrainer):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             self.optimizer.zero_grad()
             if self.searching:
-                choice = random_choice(self.num_choices, self.num_layers)
-                outputs = self.model(inputs, choice)
+                rand_subnet = self.mutator.random_subnet
+                self.mutator.set_subnet(rand_subnet)
+                outputs = self.model(inputs)
             else:
                 outputs = self.model(inputs)
             loss = self.criterion(outputs, targets)
@@ -69,7 +69,7 @@ class SPOSTrainer(BaseTrainer):
             }
             train_dataloader.set_postfix(log=postfix)
 
-    def valid(self, epoch, choice=None):
+    def valid(self, epoch, subnet_dict: Dict = None):
         self.model.eval()
         val_loss = 0.0
         val_top1 = AvgrageMeter()
@@ -79,11 +79,13 @@ class SPOSTrainer(BaseTrainer):
                 inputs, targets = inputs.to(self.device), targets.to(
                     self.device)
                 if self.searching:
-                    if choice is None:
-                        choice = random_choice(self.num_choices,
-                                               self.num_layers)
-                    outputs = self.model(inputs, choice)
+                    # during searching phase, test random subnet
+                    rand_subnet = self.mutator.random_subnet
+                    self.mutator.set_subnet(rand_subnet)
+                    outputs = self.model(inputs)
                 else:
+                    # during evaluation phase, test specific subnet
+                    self.mutator.set_subnet(subnet_dict)
                     outputs = self.model(inputs)
                 loss = self.criterion(outputs, targets)
                 val_loss += loss.item()
