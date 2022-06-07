@@ -1,216 +1,80 @@
-import numpy as np
-import torch
 import torch.nn as nn
+from torch import Tensor
 
-from ..modules import ShuffleModule, ShuffleXModule
+from pplib.models.spos.spos_modules import ShuffleModule, ShuffleXModule
+from pplib.nas.mutables import OneShotOP
 
 
-class SinglePathOneShotSuperNet(nn.Module):
+class SearchableShuffleNetV2(nn.Module):
 
-    def __init__(self,
-                 dataset='cifar10',
-                 input_size=32,
-                 classes=10,
-                 layers=20):
-        super(SinglePathOneShotSuperNet, self).__init__()
-        if dataset == 'cifar10':
-            first_stride = 1
-            self.downsample_layers = [4, 8]
+    def __init__(self, classes=10) -> None:
+        super().__init__()
 
-        # ShuffleNet config
-        self.last_channel = 1024
-        self.channel = [
-            16, 64, 64, 64, 64, 160, 160, 160, 160, 320, 320, 320, 320, 320,
-            320, 320, 320, 640, 640, 640, 640
+        self.arch_settings = [
+            # channel, num_blocks, stride
+            [64, 4, 1],
+            [160, 4, 2],
+            [320, 8, 2],
+            [640, 4, 1],
         ]
-
-        self.kernel_list = [3, 5, 7, 'x']
+        self.in_channels = 16
+        self.last_channel = 640
 
         self.first_conv = nn.Sequential(
             nn.Conv2d(
                 3,
-                self.channel[0],
+                self.in_channels,
                 kernel_size=3,
-                stride=first_stride,
+                stride=1,
                 padding=1,
-                bias=False),  # bias ?
-            nn.BatchNorm2d(self.channel[0], affine=False),  # affine ?
+                bias=False), nn.BatchNorm2d(self.in_channels, affine=False),
             nn.ReLU6(inplace=True))
 
-        self.choice_block = nn.ModuleList([])
-        self.features = nn.ModuleList([])
-        for i in range(layers):
-            if i in self.downsample_layers:
-                stride = 2
-                inc, ouc = self.channel[i], self.channel[i + 1]
-            else:
-                stride = 1
-                inc, ouc = self.channel[i] // 2, self.channel[i + 1]
-            layer = nn.ModuleList([])
-            for j in self.kernel_list:
-                if j == 'x':
-                    layer.append(ShuffleXModule(inc, ouc, stride=stride))
-                else:
-                    layer.append(
-                        ShuffleModule(inc, ouc, kernel=j, stride=stride))
-            self.features.append(layer)
+        self.layers = nn.ModuleList()
+        for channel, num_blocks, stride in self.arch_settings:
+            layer = self._make_layer(channel, num_blocks, stride)
+            self.layers.append(layer)
 
         self.last_conv = nn.Sequential(
             nn.Conv2d(
-                self.channel[-1], self.last_channel, 1, 1, 0, bias=False),
+                self.in_channels, self.last_channel, 1, 1, 0, bias=False),
             nn.BatchNorm2d(self.last_channel, affine=False),
             nn.ReLU6(inplace=True))
 
-        self.gvp = nn.AdaptiveAvgPool2d(1)
+        self.gap = nn.AdaptiveAvgPool2d(1)
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(self.last_channel, classes, bias=False)
 
-        self._initialize_weights()
+    def _make_layer(self, out_channels: int, num_blocks: int,
+                    stride: int) -> nn.Sequential:
+        layers = []
+        for i in range(num_blocks):
+            if i == 0 and stride == 2:
+                inp, outp, stride = self.in_channels, out_channels, 2
+            else:
+                inp, outp, stride = self.in_channels // 2, out_channels, 1
+            stride = 2 if stride == 2 and i == 0 else 1
+            print(self.in_channels // 2, out_channels)
+            candidate_ops = nn.ModuleDict({
+                'shuffle_3x3':
+                ShuffleModule(inp, outp, kernel=3, stride=stride),
+                'shuffle_5x5':
+                ShuffleModule(inp, outp, kernel=5, stride=stride),
+                'shuffle_7x7':
+                ShuffleModule(inp, outp, kernel=7, stride=stride),
+                'shuffle_xception':
+                ShuffleXModule(inp, outp, stride=stride),
+            })
+            layers.append(OneShotOP(candidate_ops=candidate_ops))
+            self.in_channels = out_channels
+        return nn.Sequential(*layers)
 
-    def _initialize_weights(self):
-        for name, m in self.named_modules():
-            if isinstance(m, nn.Conv2d):
-                if 'first' in name:
-                    nn.init.normal_(m.weight, 0, 0.01)
-                else:
-                    nn.init.normal_(m.weight, 0, 1.0 / m.weight.shape[1])
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm2d):
-                if m.weight is not None:
-                    nn.init.constant_(m.weight, 1)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0.0001)
-                nn.init.constant_(m.running_mean, 0)
-            elif isinstance(m, nn.BatchNorm1d):
-                nn.init.constant_(m.weight, 1)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0.0001)
-                nn.init.constant_(m.running_mean, 0)
-            elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-
-    def forward(self, input, choice=np.random.randint(4, size=20)):
-        # 20 = 4+4+8+4
-        x = self.first_conv(input)
-        for i, j in enumerate(choice):
-            x = self.features[i][j](x)
+    def forward(self, x: Tensor):
+        x = self.first_conv(x)
+        for i, layer in enumerate(self.layers):
+            x = layer(x)
         x = self.last_conv(x)
-        x = self.gvp(x)
+        x = self.gap(x)
         x = x.view(-1, self.last_channel)
         x = self.classifier(x)
         return x
-
-
-class SinglePathOneShotSubNet(nn.Module):
-
-    def __init__(self,
-                 dataset='cifar10',
-                 input_size=32,
-                 classes=10,
-                 layers=20,
-                 choice=None):
-        super(SinglePathOneShotSubNet, self).__init__()
-        if dataset == 'cifar10':
-            first_stride = 1
-            self.downsample_layers = [4, 8]
-
-        self.choice = np.random.randint(
-            4, size=20) if choice is None else choice
-
-        # ShuffleNet config
-        self.last_channel = 1024
-        self.channel = [
-            16, 64, 64, 64, 64, 160, 160, 160, 160, 320, 320, 320, 320, 320,
-            320, 320, 320, 640, 640, 640, 640
-        ]
-
-        self.kernel_list = [3, 5, 7, 'x']
-
-        self.first_conv = nn.Sequential(
-            nn.Conv2d(
-                3,
-                self.channel[0],
-                kernel_size=3,
-                stride=first_stride,
-                padding=1,
-                bias=False),  # bias ?
-            nn.BatchNorm2d(self.channel[0], affine=False),  # affine ?
-            nn.ReLU6(inplace=True))
-
-        self.choice_block = nn.ModuleList([])
-        self.features = nn.ModuleList([])
-
-        for i, c in enumerate(self.choice):
-            if i in self.downsample_layers:
-                stride = 2
-                inc, ouc = self.channel[i], self.channel[i + 1]
-            else:
-                stride = 1
-                inc, ouc = self.channel[i] // 2, self.channel[i + 1]
-            layer = nn.ModuleList([])
-
-            j = self.kernel_list[c]
-
-            if j == 'x':
-                layer.append(ShuffleXModule(inc, ouc, stride=stride))
-            else:
-                layer.append(ShuffleModule(inc, ouc, kernel=j, stride=stride))
-
-            self.features.append(layer)
-
-        self.last_conv = nn.Sequential(
-            nn.Conv2d(
-                self.channel[-1], self.last_channel, 1, 1, 0, bias=False),
-            nn.BatchNorm2d(self.last_channel, affine=False),
-            nn.ReLU6(inplace=True))
-
-        self.gvp = nn.AdaptiveAvgPool2d(1)
-        self.dropout = nn.Dropout(0.1)
-        self.classifier = nn.Linear(self.last_channel, classes, bias=False)
-
-        self._initialize_weights()
-
-    def _initialize_weights(self):
-        for name, m in self.named_modules():
-            if isinstance(m, nn.Conv2d):
-                if 'first' in name:
-                    nn.init.normal_(m.weight, 0, 0.01)
-                else:
-                    nn.init.normal_(m.weight, 0, 1.0 / m.weight.shape[1])
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm2d):
-                if m.weight is not None:
-                    nn.init.constant_(m.weight, 1)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0.0001)
-                nn.init.constant_(m.running_mean, 0)
-            elif isinstance(m, nn.BatchNorm1d):
-                nn.init.constant_(m.weight, 1)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0.0001)
-                nn.init.constant_(m.running_mean, 0)
-            elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-
-    def forward(self, input, choice):
-        # 20 = 4+4+8+4
-        x = self.first_conv(input)
-        for i, j in enumerate(choice):
-            x = self.features[i][j](x)
-        x = self.last_conv(x)
-        x = self.gvp(x)
-        x = x.view(-1, self.last_channel)
-        x = self.classifier(x)
-        return x
-
-
-if __name__ == '__main__':
-    m = SinglePathOneShotSuperNet()
-    input = torch.zeros(5, 3, 32, 32)
-    print(m(input).shape)
