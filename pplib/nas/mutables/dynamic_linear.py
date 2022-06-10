@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Linear
 
-from pplib.nas.mutables import oneshot_mutable
+from pplib.nas.mutables import OneShotMutable
 from .dynamic_mutable import DynamicMutable
 
 
@@ -187,7 +187,7 @@ class LinearSuper(DynamicMutable, Linear):
             nn.init.constant_(self.bias, 0.)
 
 
-class SlimmableLinear(oneshot_mutable[int, int], Linear):
+class SlimmableLinear(OneShotMutable[int, int], Linear):
 
     def __init__(self,
                  in_features_list: List[int],
