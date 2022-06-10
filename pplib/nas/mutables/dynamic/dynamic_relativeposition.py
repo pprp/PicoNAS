@@ -1,0 +1,135 @@
+from typing import Dict, NamedTuple, Optional
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch import Tensor
+
+from pplib.nas.mutables.dynamic_mutable import DynamicMutable
+from ..utils import trunc_normal_
+
+
+class RelativePosionSample(NamedTuple):
+    sample_head_dim: int
+
+
+class DynamicRelativePosion2D(DynamicMutable):
+
+    def __init__(self,
+                 num_units: int,
+                 max_relative_position: int,
+                 alias: Optional[str] = None,
+                 module_kwargs: Optional[Dict[str, Dict]] = None,
+                 init_cfg: Optional[Dict] = None) -> None:
+        super().__init__(
+            module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
+
+        self.num_units = num_units
+        self.max_relative_position = max_relative_position
+
+        self.embeddings_table_v = nn.Parameter(
+            torch.randn(max_relative_position * 2 + 2, num_units))
+        self.embeddings_table_h = nn.Parameter(
+            torch.randn(max_relative_position * 2 + 2, num_units))
+
+        trunc_normal_(self.embeddings_table_v, std=.02)
+        trunc_normal_(self.embeddings_table_h, std=.02)
+
+        # store parameters
+        self.samples: Dict[str, nn.Parameter] = {}
+        # store args
+        self._choices: RelativePosionSample = RelativePosionSample(
+            self.num_units)
+
+    def sample_parameters(self, choice: RelativePosionSample) -> None:
+        self._choices = choice
+        self.samples['embeddings_table_v'] = \
+            self.embeddings_table_v[:, :self._choices.sample_head_dim]
+        self.samples['embeddings_table_h'] = \
+            self.embeddings_table_h[:, :self._choices.sample_head_dim]
+
+    def forward_all(self, x: Tensor) -> Tensor:
+        return super().forward_all(x)
+
+    def forward_choice(
+            self,
+            x: Tensor,
+            choice: Optional[RelativePosionSample] = None) -> Tensor:
+        return super().forward_choice(x, choice)
+
+    def fix_chosen(self, chosen: RelativePosionSample) -> None:
+        return super().fix_chosen(chosen)
+
+    def forward_fixed(self, x: Tensor) -> Tensor:
+        return super().forward_fixed(x)
+
+
+class RelativePosition2D_super(nn.Module):
+
+    def __init__(self, num_units, max_relative_position):
+        super().__init__()
+
+        self.num_units = num_units
+        self.max_relative_position = max_relative_position
+        # The first element in embeddings_table_v is the vertical
+        #     embedding for the class
+        self.embeddings_table_v = nn.Parameter(
+            torch.randn(max_relative_position * 2 + 2, num_units))
+        self.embeddings_table_h = nn.Parameter(
+            torch.randn(max_relative_position * 2 + 2, num_units))
+
+        trunc_normal_(self.embeddings_table_v, std=.02)
+        trunc_normal_(self.embeddings_table_h, std=.02)
+
+        self.sample_head_dim = None
+        self.sample_embeddings_table_h = None
+        self.sample_embeddings_table_v = None
+
+    def set_sample_config(self, sample_head_dim):
+        self.sample_head_dim = sample_head_dim
+        self.sample_embeddings_table_h = \
+            self.embeddings_table_h[:, :sample_head_dim]
+        self.sample_embeddings_table_v = \
+            self.embeddings_table_v[:, :sample_head_dim]
+
+    def calc_sampled_param_num(self):
+        return self.sample_embeddings_table_h.numel(
+        ) + self.sample_embeddings_table_v.numel()
+
+    def forward(self, length_q, length_k):
+        # remove the first cls token distance computation
+        length_q = length_q - 1
+        length_k = length_k - 1
+        range_vec_q = torch.arange(length_q)
+        range_vec_k = torch.arange(length_k)
+        # compute the row and column distance
+        distance_mat_v = (
+            range_vec_k[None, :] // int(length_q**0.5) -
+            range_vec_q[:, None] // int(length_q**0.5))
+        distance_mat_h = (
+            range_vec_k[None, :] % int(length_q**0.5) -
+            range_vec_q[:, None] % int(length_q**0.5))
+        # clip the distance to the range of
+        #      [-max_relative_position, max_relative_position]
+        distance_mat_clipped_v = torch.clamp(distance_mat_v,
+                                             -self.max_relative_position,
+                                             self.max_relative_position)
+        distance_mat_clipped_h = torch.clamp(distance_mat_h,
+                                             -self.max_relative_position,
+                                             self.max_relative_position)
+
+        # translate the distance from [1, 2 * max_relative_position + 1],
+        #      0 is for the cls token
+        final_mat_v = distance_mat_clipped_v + self.max_relative_position + 1
+        final_mat_h = distance_mat_clipped_h + self.max_relative_position + 1
+        # pad the 0 which represent the cls token
+        final_mat_v = F.pad(final_mat_v, (1, 0, 1, 0), 'constant', 0)
+        final_mat_h = F.pad(final_mat_h, (1, 0, 1, 0), 'constant', 0)
+
+        final_mat_v = torch.LongTensor(final_mat_v).cuda()
+        final_mat_h = torch.LongTensor(final_mat_h).cuda()
+        # get the embeddings with the corresponding distance
+        embeddings = self.sample_embeddings_table_v[
+            final_mat_v] + self.sample_embeddings_table_h[final_mat_h]
+
+        return embeddings

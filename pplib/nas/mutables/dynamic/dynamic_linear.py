@@ -15,6 +15,18 @@ class LinearSample(NamedTuple):
 
 
 class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
+    """Dynamic mutable for Linear layer.
+
+    Args:
+        max_in_dim (int): _description_
+        max_out_dim (int): _description_
+        bias (bool, optional): _description_. Defaults to True.
+        scale (bool, optional): _description_. Defaults to False.
+        alias (Optional[str], optional): _description_. Defaults to None.
+        module_kwargs (Optional[Dict[str, Dict]], optional): _description_.
+            Defaults to None.
+        init_cfg (Optional[Dict], optional): _description_. Defaults to None.
+    """
 
     def __init__(self,
                  max_in_dim: int,
@@ -24,6 +36,7 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
                  alias: Optional[str] = None,
                  module_kwargs: Optional[Dict[str, Dict]] = None,
                  init_cfg: Optional[Dict] = None) -> None:
+
         self.DynamicMutable.__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
         self.Linear.__init__(
