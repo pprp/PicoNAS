@@ -1,23 +1,101 @@
-import random
-from typing import List, Optional
+from abc import abstractmethod
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
+from torch.nn import LayerNorm, Linear
 
 from .oneshot_mutable import OneShotMutable
 from .utils import trunc_normal_
 
 
-class SlimmableLinear(OneShotMutable[int, int], nn.Linear):
+class DynamicMutable(OneShotMutable[Any, Any]):
+    """_summary_
+
+
+    Note: autoformer -> ours
+        sample_parameters -> sample_parameters
+        set_sample_config -> set_forward_args
+        calc_sampled_param_num -> calc_sampled_params
+        get_complexity -> calc_sampled_flops
+
+    Args:
+        module_kwargs (Optional[Dict[str, Dict]], optional): _description_.
+            Defaults to None.
+        alias (Optional[str], optional): _description_. Defaults to None.
+        init_cfg (Optional[Dict], optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+
+    def __init__(self,
+                 module_kwargs: Optional[Dict[str, Dict]] = None,
+                 alias: Optional[str] = None,
+                 init_cfg: Optional[Dict] = None) -> None:
+        super().__init__(
+            module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
+
+    @abstractmethod
+    def sample_parameters(self, choice: Dict) -> None:
+        """Modify the sample property. This function would be called in
+        `modify_forward` function.
+
+        Args:
+            choice (Dict): _description_
+        """
+
+    @abstractmethod
+    def calc_sampled_params(self) -> float:
+        """calculate the parameter of sampled mutable"""
+
+    @abstractmethod
+    def calc_sampled_flops(self) -> float:
+        """calculate the FLOPs of sampled mutable"""
+
+    def set_forward_args(self, choice: Dict) -> None:
+        """Interface for modifying the choice using partial"""
+        return super().set_forward_args(choice)
+
+    @abstractmethod
+    def fix_chosen(self, chosen: Dict) -> None:
+        return super().fix_chosen(chosen)
+
+    @abstractmethod
+    def sample_choice(self) -> Dict:
+        """sample choice on dynamic mutable"""
+
+    # @abstractmethod
+    # def forward_fixed(self, x: Any) -> Any:
+    #     """Forward when the mutable is fixed.
+
+    #     All subclasses must implement this method.
+    #     """
+
+    # @abstractmethod
+    # def forward_all(self, x: Any) -> Any:
+    #     """Forward all choices."""
+
+    # @abstractmethod
+    # def forward_choice(self,
+    #                    x: Any,
+    #                    choice: Optional[Any] = None) -> Any:
+    #     """Forward when the mutable is not fixed.
+
+    #     All subclasses must implement this method.
+    #     """
+
+
+class SlimmableLinear(OneShotMutable[int, int], Linear):
 
     def __init__(self,
                  in_features_list: List[int],
                  out_features_list: List[int],
                  bias=True) -> None:
-        nn.Linear.__init__(
+        Linear.__init__(
             in_featuress=max(in_features_list),
             out_features=max(out_features_list),
             bias=bias)
@@ -26,11 +104,6 @@ class SlimmableLinear(OneShotMutable[int, int], nn.Linear):
         self.out_features_list = out_features_list
         self._chosen: Optional[int] = None
         self._is_fixed = False
-
-    @property
-    def random_choice(self) -> int:
-        """return the index"""
-        return random.sample(list(range(len(self.in_features_list))), k=1)
 
     def forward_fixed(self, x) -> Tensor:
         assert self._is_fixed is True
@@ -66,7 +139,7 @@ class SlimmableLinear(OneShotMutable[int, int], nn.Linear):
         return list(range(len(self.in_features_list)))
 
 
-class LinearSuper(OneShotMutable, nn.Linear):
+class LinearSuper(OneShotMutable, Linear):
     """_summary_
 
     Args:
@@ -86,7 +159,7 @@ class LinearSuper(OneShotMutable, nn.Linear):
                  non_linear='linear',
                  scale: bool = False) -> None:
 
-        nn.Linear.__init__(super_in_dim, super_out_dim, bias=bias)
+        Linear.__init__(super_in_dim, super_out_dim, bias=bias)
 
         # super_in_dim and super_out_dim indicate the largest network!
         self.super_in_dim = super_in_dim
@@ -215,7 +288,7 @@ class PatchembedSuper(OneShotMutable):
         return total_flops
 
 
-class LayerNormSuper(nn.LayerNorm):
+class LayerNormSuper(LayerNorm):
 
     def __init__(self, super_embed_dim):
         super().__init__(super_embed_dim)
@@ -469,7 +542,7 @@ class AttentionSuper(nn.Module):
         return x
 
 
-class qkv_super(nn.Linear):
+class qkv_super(Linear):
 
     def __init__(self,
                  super_in_dim,
