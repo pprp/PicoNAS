@@ -7,10 +7,10 @@ class BaseTrainer:
             config (_type_): _description_
         """
 
-    def train():
+    def train(self):
         """_summary_
         """
 
-    def valid():
+    def valid(self):
         """_summary_
         """

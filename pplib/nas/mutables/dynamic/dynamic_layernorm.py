@@ -4,8 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import LayerNorm
 
-from pplib.nas.mutables.dynamic_linear import LinearSample
-from .dynamic_mutable import DynamicMutable
+from pplib.nas.mutables.dynamic.dynamic_linear import LinearSample
+from ..dynamic_mutable import DynamicMutable
 
 
 class LayerNormSample(NamedTuple):

@@ -1,17 +1,17 @@
 from abc import abstractmethod
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 import torch
 import torch.nn as nn
 
-from pplib.nas.mutables.dynamic_qkv import qkv_super
-from .dynamic_linear import LinearSuper
-from .oneshot_mutable import OneShotMutable
+from pplib.nas.mutables.dynamic.dynamic_qkv import qkv_super
+from .dynamic.dynamic_linear import LinearSuper
+from .oneshot_mutable import CHOICE_TYPE, CHOSEN_TYPE, OneShotMutable
 from .utils import trunc_normal_
 
 
-class DynamicMutable(OneShotMutable[Any, Any]):
-    """_summary_
+class DynamicMutable(OneShotMutable[CHOICE_TYPE, CHOSEN_TYPE]):
+    """Base class of dynamic mutables.
 
 
     Note: autoformer -> ours
