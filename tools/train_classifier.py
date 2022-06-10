@@ -9,7 +9,6 @@ from tqdm import tqdm
 from pplib.datasets import build_dataloader
 from pplib.models.mae.mae_model import MAE_ViT, ViT_Classifier
 from pplib.utils.config import Config
-from pplib.utils.utils import setup_seed
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -29,7 +28,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     cfg = Config.fromfile(args.config)
-    setup_seed(args.seed)
 
     batch_size = args.batch_size
     load_batch_size = min(args.max_device_batch_size, batch_size)
@@ -37,8 +35,8 @@ if __name__ == '__main__':
     assert batch_size % load_batch_size == 0
     steps_per_update = batch_size // load_batch_size
 
-    train_loader = build_dataloader(name='cifar10', type='train', args=cfg)
-    val_loader = build_dataloader(name='cifar10', type='val', args=cfg)
+    train_loader = build_dataloader(name='cifar10', type='train', config=cfg)
+    val_loader = build_dataloader(name='cifar10', type='val', config=cfg)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -70,7 +68,7 @@ if __name__ == '__main__':
     lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
         optim, lr_lambda=lr_func, verbose=True)
 
-    best_val_acc = 0
+    best_val_acc = 0.
     step_count = 0
     optim.zero_grad()
     for e in range(args.total_epoch):

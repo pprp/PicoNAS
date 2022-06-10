@@ -25,9 +25,9 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample], Linear):
                  alias: Optional[str] = None,
                  module_kwargs: Optional[Dict[str, Dict]] = None,
                  init_cfg: Optional[Dict] = None) -> None:
-        DynamicMutable.__init__(
+        self.DynamicMutable.__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
-        Linear.__init__(
+        self.Linear.__init__(
             in_features=max_in_dim, out_features=max_out_dim, bias=bias)
 
         self.max_in_dim = max_in_dim
@@ -40,6 +40,10 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample], Linear):
 
         # scale
         self.scale = scale
+
+        # type hint
+        self.weight: nn.Parameter
+        self.bias: nn.Parameter
 
     def sample_parameters(self, choice: QKVSample) -> None:
         self._choice = choice

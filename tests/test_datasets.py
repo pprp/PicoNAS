@@ -18,7 +18,7 @@ class TestDataset(TestCase):
             data_dir='./data/cifar',
             fast=False,
             nw=2,
-            random_erase=None,
+            random_erase=False,
             autoaugmentation=None,
             cutout=None,
         )
@@ -35,7 +35,7 @@ class TestDataset(TestCase):
             batch_size=64,
             fast=False,
             nw=2,
-            random_erase=None,
+            random_erase=False,
             autoaugmentation=None,
             cutout=None,
             data_dir='./data/cifar')

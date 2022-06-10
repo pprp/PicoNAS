@@ -26,8 +26,7 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
         super().__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
 
-        num_patches = (img_size[1] // patch_size[1]) * (
-            img_size[0] // patch_size[0])
+        num_patches = (img_size // patch_size) * (img_size // patch_size)
         self.img_size = img_size
         self.patch_size = patch_size
         self.num_patches = num_patches
@@ -38,13 +37,10 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
         self.max_embed_dim = embed_dim
         self.scale = scale
 
-        # sampled_
-        self.sample_embed_dim = None
-
         # store parameter
-        self.samples = {}
+        self.samples: Dict[str, nn.Parameter] = {}
         # store args
-        self._choice: PatchSample
+        self._choice: PatchSample = PatchSample(self.max_embed_dim)
 
     def sample_parameters(self, choice: PatchSample) -> None:
         self._choice = choice
@@ -97,9 +93,8 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
                 'Please do not call `fix_chosen` function again.')
 
         # new a conv2d layer
-        temp_weight = self.proj.weight.data[:chosen.sample_out_dim, :chosen.
-                                            sample_in_dim]
-        temp_bias = self.proj.bias.data[:chosen.sample_out_dim]
+        temp_weight = self.proj.weight.data[:chosen.sample_embed_dim, ...]
+        temp_bias = self.proj.bias.data[:chosen.sample_embed_dim]
         self.proj.weight = nn.Parameter(temp_weight)
         self.proj.bias = nn.Parameter(temp_bias)
 

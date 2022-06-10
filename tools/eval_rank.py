@@ -1,6 +1,7 @@
 import argparse
 import json
 import random
+from collections import namedtuple
 from typing import Dict, List
 
 import torch
@@ -11,11 +12,6 @@ from pplib.nas.mutators import OneShotMutator
 from pplib.trainer import MacroTrainer
 from pplib.utils.misc import convert_arch2dict
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
-
-
-class CostumDict(dict):
-    __setattr__ = dict.__setitem__
-    __getattribute__ = dict.__getitem__
 
 
 def load_json(path):
@@ -51,30 +47,30 @@ def compuate_rank_consistency(sampled_dict: Dict,
 
 
 if __name__ == '__main__':
-    args = argparse.ArgumentParser('rank evaluation')
-    args.add_argument(
-        '--json-path',
+    parser = argparse.ArgumentParser('rank evaluation')
+    parser.add_argument(
+        '--json_path',
         type=str,
         default='./data/benchmark/benchmark_cifar10_dataset.json',
         help='benchmark json file path')
-    args.add_argument(
-        '--ckpt-path',
+    parser.add_argument(
+        '--ckpt_path',
         type=str,
         default='checkpoints/path_to_checkpoint.pth.tar',
         help='path of supernet checkpoint.')
-    args.add_argument(
+    parser.add_argument(
         '--type',
         type=str,
         choices=['test_acc', 'MMACs', 'val_acc', 'Params'],
         default='test_acc',
         help='target type to rank.')
-    args.add_argument(
-        '--num-sample',
+    parser.add_argument(
+        '--num_sample',
         type=int,
         default=100,
         help='number of sample for rank evaluation.')
 
-    args = args.parse_args()
+    args = parser.parse_args()
 
     valid_args = dict(
         name='cifar10',
@@ -82,10 +78,15 @@ if __name__ == '__main__':
         root='./data/cifar',
         fast=False,
         nw=2,
-        random_erase=None,
-        autoaugmentation=None,
-        cutout=None,
+        random_erase=False,
+        autoaugmentation=False,
+        cutout=False,
     )
+
+    NamedConfig = namedtuple('x', tuple(valid_args.keys()))  # type: ignore
+
+    val_config = NamedConfig(**valid_args)
+
     if torch.cuda.is_available():
         print('Train on GPU!')
         device = torch.device('cuda')
@@ -117,7 +118,7 @@ if __name__ == '__main__':
 
     # build valid dataloader
     dataloader = {}
-    dataloader['val'] = build_dataloader(args=CostumDict(valid_args))
+    dataloader['val'] = build_dataloader(config=val_config)
 
     # get trainer
     trainer = MacroTrainer(

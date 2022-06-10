@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import LayerNorm
 
-from pplib.nas.mutables.dynamic.dynamic_linear import LinearSample
 from ..dynamic_mutable import DynamicMutable
 
 
@@ -20,16 +19,20 @@ class DynamicLayerNorm(DynamicMutable[LayerNormSample, LayerNormSample],
                  alias: Optional[str] = None,
                  module_kwargs: Optional[Dict[str, Dict]] = None,
                  init_cfg: Optional[Dict] = None) -> None:
-        DynamicMutable.__init__(
+        self.DynamicMutable.__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
-        LayerNorm.__init__(max_embed_dim)
+        self.LayerNorm.__init__(max_embed_dim)
 
         self.max_embed_dim = max_embed_dim
 
         # store parameters
-        self.samples = {}
+        self.samples: Dict[str, nn.Parameter] = {}
         # store args
         self._choice: LayerNormSample = LayerNormSample(max_embed_dim)
+
+        # type hint
+        self.weight: nn.Parameter
+        self.bias: nn.Parameter
 
     def sample_parameters(self, choice: LayerNormSample) -> None:
         self._choice = choice
@@ -37,7 +40,7 @@ class DynamicLayerNorm(DynamicMutable[LayerNormSample, LayerNormSample],
         self.samples['bias'] = self.bias[:self._choice.embed_dim]
 
     def forward_all(self, x: Any) -> Any:
-        max_choice = LinearSample(self.max_embed_dim)
+        max_choice = LayerNormSample(embed_dim=self.max_embed_dim)
         self.sample_parameters(max_choice)
         return F.layer_norm(
             x, (self._choice.embed_dim, ),
@@ -49,7 +52,7 @@ class DynamicLayerNorm(DynamicMutable[LayerNormSample, LayerNormSample],
                        x: Any,
                        choice: Optional[LayerNormSample] = None) -> Any:
         if choice is not None:
-            self.sample_choice(choice)
+            self.sample_parameters(choice)
             return F.layer_norm(
                 x, (self._choice.embed_dim, ),
                 weight=self.samples['weight'],
@@ -62,12 +65,12 @@ class DynamicLayerNorm(DynamicMutable[LayerNormSample, LayerNormSample],
         """fix chosen"""
         if self.is_fixed:
             raise AttributeError(
-                'The mode of DynamicLinear is `fixed`. '
+                'The mode of DynamicLayerNorm is `fixed`. '
                 'Please do not call `fix_chosen` function again.')
 
-        # new a linear layer
-        temp_weight = self.weight.data[:chosen.embed_dim]
-        temp_bias = self.bias.data[:chosen.embed_dim]
+        # new a layernorm layer
+        temp_weight: nn.Parameter = self.weight.data[:chosen.embed_dim]
+        temp_bias: nn.Parameter = self.bias.data[:chosen.embed_dim]
         self.weight = nn.Parameter(temp_weight)
         self.bias = nn.Parameter(temp_bias)
 

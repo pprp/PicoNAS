@@ -6,7 +6,6 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Linear
 
-from pplib.nas.mutables import OneShotMutable
 from ..dynamic_mutable import DynamicMutable
 
 
@@ -25,21 +24,25 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
                  alias: Optional[str] = None,
                  module_kwargs: Optional[Dict[str, Dict]] = None,
                  init_cfg: Optional[Dict] = None) -> None:
-        DynamicMutable.__init__(
+        self.DynamicMutable.__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
-        Linear.__init__(
+        self.Linear.__init__(
             in_features=max_in_dim, out_features=max_out_dim, bias=bias)
 
         self.max_in_dim = max_in_dim
         self.max_out_dim = max_out_dim
 
         # store parameters
-        self.samples: Dict = {}
+        self.samples: Dict[str, nn.Parameter] = {}
         # store args
         self._choice: LinearSample = LinearSample(max_in_dim, max_out_dim)
 
         # scale
         self.scale = scale
+
+        # type hint
+        self.weight: nn.Parameter
+        self.bias: nn.Parameter
 
     def sample_parameters(self, choice: LinearSample) -> None:
         self._choice = choice
@@ -128,7 +131,7 @@ class LinearSuper(DynamicMutable, Linear):
         self.sample_in_dim = None
         self.sample_out_dim = None
 
-        self.samples = {}
+        self.samples: Dict[str, nn.Parameter] = {}
 
         self.scale = scale
         self._reset_parameters(bias, uniform_, non_linear)
@@ -183,53 +186,3 @@ class LinearSuper(DynamicMutable, Linear):
             self.weight, non_linear=non_linear)
         if bias:
             nn.init.constant_(self.bias, 0.)
-
-
-class SlimmableLinear(OneShotMutable[int, int], Linear):
-
-    def __init__(self,
-                 in_features_list: List[int],
-                 out_features_list: List[int],
-                 bias=True) -> None:
-        Linear.__init__(
-            in_featuress=max(in_features_list),
-            out_features=max(out_features_list),
-            bias=bias)
-        assert len(self.in_features_list) == len(self.out_features_list)
-        self.in_features_list = in_features_list
-        self.out_features_list = out_features_list
-        self._chosen: Optional[int] = None
-        self._is_fixed = False
-
-    def forward_fixed(self, x) -> Tensor:
-        assert self._is_fixed is True
-        assert self._chosen is not None
-        self.in_features = self.in_features_list[self._chosen]
-        self.out_features = self.out_features_list[self._chosen]
-        weight = self.weight[:self.out_features, :self.in_features]
-        if self.bias is not None:
-            bias = self.bias[:self.out_features]
-        else:
-            bias = self.bias
-
-        return nn.functional.linear(x, weight, bias)
-
-    def forward_choice(self,
-                       x: Tensor,
-                       choice: Optional[int] = None) -> Tensor:
-        self.fix_chosen(choice)
-        return self.forward_fixed(x)
-
-    def fix_chosen(self, chosen: int) -> None:
-        """chosen index"""
-        if self.is_fixed:
-            raise AttributeError(
-                'The mode of current MUTABLE is `fixed`. '
-                'Please do not call `fix_chosen` function again.')
-
-        self._chosen = chosen
-        self.is_fixed = True
-
-    def choices(self) -> List[int]:
-        """index list"""
-        return list(range(len(self.in_features_list)))

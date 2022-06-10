@@ -38,7 +38,7 @@ class DynamicMutable(OneShotMutable[CHOICE_TYPE, CHOSEN_TYPE]):
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
 
     @abstractmethod
-    def sample_parameters(self, choice: Dict) -> None:
+    def sample_parameters(self, choice: CHOICE_TYPE) -> None:
         """Modify the sample property. This function would be called in
         `modify_forward` function.
 
@@ -54,16 +54,16 @@ class DynamicMutable(OneShotMutable[CHOICE_TYPE, CHOSEN_TYPE]):
     def calc_sampled_flops(self) -> float:
         """calculate the FLOPs of sampled mutable"""
 
-    def set_forward_args(self, choice: Dict) -> None:
+    def set_forward_args(self, choice: CHOICE_TYPE) -> None:
         """Interface for modifying the choice using partial"""
         return super().set_forward_args(choice)
 
     @abstractmethod
-    def fix_chosen(self, chosen: Dict) -> None:
+    def fix_chosen(self, chosen: CHOSEN_TYPE) -> None:
         return super().fix_chosen(chosen)
 
     @abstractmethod
-    def sample_choice(self) -> Dict:
+    def sample_choice(self) -> CHOICE_TYPE:
         """sample choice on dynamic mutable"""
 
 

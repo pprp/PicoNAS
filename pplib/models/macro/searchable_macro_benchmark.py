@@ -1,3 +1,5 @@
+from typing import List
+
 import torch.nn as nn
 from torch.nn import Sequential
 
@@ -97,7 +99,7 @@ class MacroBenchmarkSuperNet(nn.Module):
 
         super(MacroBenchmarkSuperNet, self).__init__()
 
-        self.arch_settings = [
+        self.arch_settings: List[List] = [
             # channel, num_blocks, stride, type
             [32, 4, 1, 'mutable'],  # 0-3
             [32, 1, 2, 'downsample'],  # 4
@@ -114,9 +116,12 @@ class MacroBenchmarkSuperNet(nn.Module):
 
         self.layers = []
         for i, layer_cfg in enumerate(self.arch_settings):
-            channel, num_blocks, stride, type = layer_cfg
-            inverted_res_layer = self._make_layer(channel, num_blocks, stride,
-                                                  type)
+            channel, num_blocks, stride, block_type = layer_cfg
+            inverted_res_layer = self._make_layer(
+                out_channels=channel,
+                num_blocks=num_blocks,
+                stride=stride,
+                block_type=block_type)
             layer_name = f'layer{i+1}'
             self.add_module(layer_name, inverted_res_layer)
             self.layers.append(layer_name)
@@ -127,19 +132,9 @@ class MacroBenchmarkSuperNet(nn.Module):
         self.out2 = nn.Linear(1280, num_classes)
 
     def _make_layer(self, out_channels: int, num_blocks: int, stride: int,
-                    type: str) -> Sequential:
-        """_summary_
-
-        Args:
-            out_channels (int): _description_
-            num_blocks (int): _description_
-            stride (int): _description_
-            type (str): 'mutable' or 'downsample'
-
-        Returns:
-            Sequential: _description_
-        """
-        if type == 'downsample':
+                    block_type: str) -> Sequential:
+        """make single layer"""
+        if block_type == 'downsample':
             layers = []
             layers += [
                 InvertedResidual(
