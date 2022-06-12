@@ -48,7 +48,9 @@ class DynamicRelativePosion2D(DynamicMutable):
         self.samples['embeddings_table_h'] = \
             self.embeddings_table_h[:, :self._choices.sample_head_dim]
 
-    def forward_all(self, length_q, length_k) -> Tensor:
+    def forward_all(self, x: Dict) -> Tensor:
+        length_q = x['length_q']
+        length_k = x['length_k']
         max_choice = RelativePosionSample(self.max_relative_position)
         self.sample_parameters(max_choice)
 

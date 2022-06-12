@@ -24,6 +24,9 @@ class TestDynamicLinear(TestCase):
         dummy_input = torch.randn(4, 24)
         head.forward(dummy_input)
         head.forward_choice(dummy_input, choice)
+
+        # test forward all
+        dummy_input = torch.randn(4, 48)
         head.forward_all(dummy_input)
 
         # test out of range assert

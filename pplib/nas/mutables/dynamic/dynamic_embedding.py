@@ -1,4 +1,4 @@
-from typing import Dict, List, NamedTuple, Optional
+from typing import Any, Dict, List, NamedTuple, Optional
 
 import numpy as np
 import torch.nn as nn
@@ -116,8 +116,8 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
     def choices(self) -> List[PatchSample]:
         return super().choices
 
-    def calc_sampled_flops(self) -> float:
-        return super().calc_sampled_flops()
+    def calc_sampled_flops(self, x: Any) -> float:
+        return super().calc_sampled_flops(x)
 
     def calc_sampled_params(self) -> float:
         return super().calc_sampled_params()

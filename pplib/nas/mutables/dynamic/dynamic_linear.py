@@ -15,7 +15,7 @@ class LinearSample(NamedTuple):
     sample_out_dim: int
 
 
-class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
+class DynamicLinear(DynamicMutable[LinearSample, LinearSample]):
     """Dynamic mutable for Linear layer.
 
     Args:
@@ -38,15 +38,15 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
                  module_kwargs: Optional[Dict[str, Dict]] = None,
                  init_cfg: Optional[Dict] = None) -> None:
 
-        Linear.__init__(
-            self, in_features=max_in_dim, out_features=max_out_dim, bias=bias)
         DynamicMutable.__init__(
             self, module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
 
-        # DynamicMutable.__init__(self=self)
-
         self.max_in_dim = max_in_dim
         self.max_out_dim = max_out_dim
+
+        # warp linear
+        self.linear = nn.Linear(
+            in_features=max_in_dim, out_features=max_out_dim, bias=bias)
 
         # store parameters
         self.samples: Dict[str, nn.Parameter] = {}
@@ -55,10 +55,6 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
 
         # scale
         self.scale = scale
-
-        # type hint
-        self.weight: nn.Parameter
-        self.bias: nn.Parameter
 
     def sample_choice(self) -> LinearSample:
         """sample with random choice"""
@@ -74,12 +70,14 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
 
         self._choice = choice
 
-        self.samples['weight'] = self.weight[:self._choice.sample_out_dim, :
-                                             self._choice.sample_in_dim]
-        self.samples['bias'] = self.bias
+        self.samples['weight'] = self.linear.weight[:self._choice.
+                                                    sample_out_dim, :self.
+                                                    _choice.sample_in_dim]
+        self.samples['bias'] = self.linear.bias
         self.samples['scale'] = self.max_out_dim / self._choice.sample_out_dim
-        if self.bias is not None:
-            self.samples['bias'] = self.bias[:self._choice.sample_out_dim]
+        if self.linear.bias is not None:
+            self.samples['bias'] = self.linear.bias[:self._choice.
+                                                    sample_out_dim]
 
     def forward_all(self, x: Any) -> Any:
         max_choice = LinearSample(self.max_in_dim, self.max_out_dim)
@@ -115,11 +113,11 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
             'sampled output dim is larger than max output dim.'
 
         # new a linear layer
-        temp_weight = self.weight.data[:chosen.sample_out_dim, :chosen.
-                                       sample_in_dim]
-        temp_bias = self.bias.data[:chosen.sample_out_dim]
-        self.weight = nn.Parameter(temp_weight)
-        self.bias = nn.Parameter(temp_bias)
+        temp_weight = self.linear.weight.data[:chosen.sample_out_dim, :chosen.
+                                              sample_in_dim]
+        temp_bias = self.linear.bias.data[:chosen.sample_out_dim]
+        self.linear.weight = nn.Parameter(temp_weight)
+        self.linear.bias = nn.Parameter(temp_bias)
 
         self._choice = chosen
         self.is_fixed = True
@@ -127,16 +125,26 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
     def forward_fixed(self, x: Tensor) -> Tensor:
         assert self.is_fixed is True, \
             'Please call fix_chosen before forward_fixed.'
-        return F.linear(x, self.weight, self.bias)
+        return F.linear(x, self.linear.weight, self.linear.bias)
 
     def choices(self) -> List[LinearSample]:
         return super().choices
 
-    def calc_sampled_flops(self) -> float:
-        return super().calc_sampled_flops()
+    def calc_sampled_flops(self, sequence_length) -> float:
+        total_flops = 0
+        total_flops += sequence_length * np.prod(self.samples['weight'].size())
+        return total_flops
 
     def calc_sampled_params(self) -> float:
-        return super().calc_sampled_params()
+        assert 'weight' in self.samples['weight'].numel(), \
+            'Please call sample_parameters before calc flops'
+        weight_numel = self.samples['weight'].numel()
+        if self.samples['bias'] is not None:
+            bias_numel = self.samples['bias'].numel()
+        else:
+            bias_numel = 0.
+
+        return weight_numel + bias_numel
 
 
 class LinearSuper(DynamicMutable, Linear):

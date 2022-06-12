@@ -102,8 +102,8 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample], Linear):
     def choices(self) -> List[QKVSample]:
         return super().choices
 
-    def calc_sampled_flops(self) -> float:
-        return super().calc_sampled_flops()
+    def calc_sampled_flops(self, x: Any) -> float:
+        return super().calc_sampled_flops(x)
 
     def calc_sampled_params(self) -> float:
         return super().calc_sampled_params()
