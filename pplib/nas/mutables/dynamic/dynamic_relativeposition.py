@@ -1,4 +1,4 @@
-from typing import Dict, NamedTuple, Optional
+from typing import Any, Dict, List, NamedTuple, Optional
 
 import torch
 import torch.nn as nn
@@ -9,18 +9,29 @@ from pplib.nas.mutables.dynamic_mutable import DynamicMutable
 from ..utils import trunc_normal_
 
 
-class RelativePosionSample(NamedTuple):
+class RelativePositonSample(NamedTuple):
     sample_head_dim: int
 
 
 class DynamicRelativePosion2D(DynamicMutable):
+    """_summary_
+
+    Args:
+        num_units (int): _description_
+        max_relative_position (int, optional): _description_. Defaults to 14.
+        alias (Optional[str], optional): _description_. Defaults to None.
+        module_kwargs (Optional[Dict[str, Dict]], optional): _description_.
+            Defaults to None.
+        init_cfg (Optional[Dict], optional): _description_. Defaults to None.
+    """
 
     def __init__(self,
                  num_units: int,
-                 max_relative_position: int,
+                 max_relative_position: int = 14,
                  alias: Optional[str] = None,
                  module_kwargs: Optional[Dict[str, Dict]] = None,
                  init_cfg: Optional[Dict] = None) -> None:
+
         super().__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
 
@@ -38,10 +49,10 @@ class DynamicRelativePosion2D(DynamicMutable):
         # store parameters
         self.samples: Dict[str, nn.Parameter] = {}
         # store args
-        self._choices: RelativePosionSample = RelativePosionSample(
+        self._choices: RelativePositonSample = RelativePositonSample(
             self.num_units)
 
-    def sample_parameters(self, choice: RelativePosionSample) -> None:
+    def sample_parameters(self, choice: RelativePositonSample) -> None:
         self._choices = choice
         self.samples['embeddings_table_v'] = \
             self.embeddings_table_v[:, :self._choices.sample_head_dim]
@@ -51,7 +62,7 @@ class DynamicRelativePosion2D(DynamicMutable):
     def forward_all(self, x: Dict) -> Tensor:
         length_q = x['length_q']
         length_k = x['length_k']
-        max_choice = RelativePosionSample(self.max_relative_position)
+        max_choice = RelativePositonSample(self.max_relative_position)
         self.sample_parameters(max_choice)
 
         # remove the first cls token distance computation
@@ -94,14 +105,26 @@ class DynamicRelativePosion2D(DynamicMutable):
     def forward_choice(
             self,
             x: Tensor,
-            choice: Optional[RelativePosionSample] = None) -> Tensor:
+            choice: Optional[RelativePositonSample] = None) -> Tensor:
         return super().forward_choice(x, choice)
 
-    def fix_chosen(self, chosen: RelativePosionSample) -> None:
+    def fix_chosen(self, chosen: RelativePositonSample) -> None:
         return super().fix_chosen(chosen)
 
     def forward_fixed(self, x: Tensor) -> Tensor:
         return super().forward_fixed(x)
+
+    def calc_sampled_flops(self, x: Any) -> float:
+        return super().calc_sampled_flops(x)
+
+    def calc_sampled_params(self) -> float:
+        return super().calc_sampled_params()
+
+    def sample_choice(self) -> RelativePositonSample:
+        return super().sample_choice()
+
+    def choices(self) -> List[RelativePositonSample]:
+        return super().choices
 
 
 class RelativePosition2D_super(nn.Module):

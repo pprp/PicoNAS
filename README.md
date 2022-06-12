@@ -48,7 +48,7 @@ python tools/eval_rank.py
 - [x] NASBench201
 - [x] SPOS
 - [ ] FairNAS
-- [ ] AngleNAS
+- [x] AngleNAS
 - [ ] BNNAS
 - [ ] LandmarkReg
 - [x] MacroBenchmark
