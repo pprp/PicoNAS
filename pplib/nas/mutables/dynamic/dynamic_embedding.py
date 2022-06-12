@@ -1,3 +1,4 @@
+import random
 from typing import Any, Dict, List, NamedTuple, Optional
 
 import numpy as np
@@ -18,7 +19,7 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
                  img_size: int = 224,
                  patch_size: int = 16,
                  in_channels: int = 3,
-                 embed_dim: int = 768,
+                 max_embed_dim: int = 768,
                  scale: bool = False,
                  module_kwargs: Optional[Dict[str, Dict]] = None,
                  alias: Optional[str] = None,
@@ -32,9 +33,12 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
         self.num_patches = num_patches
 
         self.proj = nn.Conv2d(
-            in_channels, embed_dim, kernel_size=patch_size, stride=patch_size)
+            in_channels,
+            max_embed_dim,
+            kernel_size=patch_size,
+            stride=patch_size)
 
-        self.max_embed_dim = embed_dim
+        self.max_embed_dim = max_embed_dim
         self.scale = scale
 
         # store parameter
@@ -42,12 +46,18 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
         # store args
         self._choice: PatchSample = PatchSample(self.max_embed_dim)
 
+    def sample_choice(self) -> PatchSample:
+        return PatchSample(random.randint(0, self.max_embed_dim))
+
     def sample_parameters(self, choice: PatchSample) -> None:
         self._choice = choice
+        assert choice.sample_embed_dim <= self.max_embed_dim, \
+            'Sampled embed dim should smaller or equal than max embed dim.'
+
         self.samples['weight'] = self.proj.weight[:self._choice.
                                                   sample_embed_dim, ...]
-        self.samples['bias'] = self.proj.weight[:self._choice.sample_embed_dim,
-                                                ...]
+        self.samples['bias'] = self.proj.bias[:self._choice.sample_embed_dim,
+                                              ...]
         if self.scale:
             self.samples[
                 'scale'] = self.max_embed_dim / self._choice.sample_embed_dim
@@ -83,7 +93,18 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
             return x
         else:
             # chose the lagest
-            return self.forward_all(x)
+            assert self.samples is not None, \
+                'Please call `sample_parameters` before forward_choice'
+            x = F.conv2d(
+                x,
+                self.samples['weight'],
+                self.samples['bias'],
+                stride=self.patch_size,
+                padding=self.proj.padding,
+                dilation=self.proj.dilation).flatten(2).transpose(1, 2)
+            if self.scale:
+                return x * self.samples['scale']
+            return x
 
     def fix_chosen(self, chosen: PatchSample) -> None:
         """fix chosen"""
@@ -104,8 +125,8 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
     def forward_fixed(self, x: Tensor) -> Tensor:
         x = F.conv2d(
             x,
-            self.samples['weight'],
-            self.samples['bias'],
+            self.proj.weight,
+            self.proj.bias,
             stride=self.patch_size,
             padding=self.proj.padding,
             dilation=self.proj.dilation).flatten(2).transpose(1, 2)
@@ -117,10 +138,14 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
         return super().choices
 
     def calc_sampled_flops(self, x: Any) -> float:
-        return super().calc_sampled_flops(x)
+        total_flops = 0
+        if self.samples['bias'] is not None:
+            total_flops += self.samples['bias'].size(0)
+        total_flops += x * np.prod(self.samples['weight'].size())
+        return total_flops
 
     def calc_sampled_params(self) -> float:
-        return super().calc_sampled_params()
+        return self.samples['weight'].numel() + self.samples['bias'].numel()
 
 
 class PatchembedSuper(DynamicMutable):
