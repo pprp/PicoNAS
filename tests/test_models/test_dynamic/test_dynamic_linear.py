@@ -42,6 +42,10 @@ class TestDynamicLinear(TestCase):
         dummy_input = torch.randn(4, 32)
         head.forward_fixed(dummy_input)
 
+        # test sample choice
+        chosen = head.sample_choice()
+        assert chosen is not None
+
 
 if __name__ == '__main__':
     unittest.main()

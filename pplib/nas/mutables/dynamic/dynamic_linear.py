@@ -38,8 +38,8 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample]):
                  module_kwargs: Optional[Dict[str, Dict]] = None,
                  init_cfg: Optional[Dict] = None) -> None:
 
-        DynamicMutable.__init__(
-            self, module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
+        super().__init__(
+            module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
 
         self.max_in_dim = max_in_dim
         self.max_out_dim = max_out_dim
@@ -95,7 +95,7 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample]):
         else:
             # assert already called sample_parameters
             assert self.samples is not None, \
-                'Did not call `sample_parameters`'
+                'Please call `sample_parameters` before forward_choice'
             return F.linear(x, self.samples['weight'],
                             self.samples['bias']) * (
                                 self.samples['scale'] if self.scale else 1)
