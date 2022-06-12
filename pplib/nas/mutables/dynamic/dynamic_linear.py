@@ -1,3 +1,4 @@
+import random
 from typing import Any, Dict, List, NamedTuple, Optional
 
 import numpy as np
@@ -37,10 +38,12 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
                  module_kwargs: Optional[Dict[str, Dict]] = None,
                  init_cfg: Optional[Dict] = None) -> None:
 
-        self.DynamicMutable.__init__(
-            module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
-        self.Linear.__init__(
-            in_features=max_in_dim, out_features=max_out_dim, bias=bias)
+        Linear.__init__(
+            self, in_features=max_in_dim, out_features=max_out_dim, bias=bias)
+        DynamicMutable.__init__(
+            self, module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
+
+        # DynamicMutable.__init__(self=self)
 
         self.max_in_dim = max_in_dim
         self.max_out_dim = max_out_dim
@@ -57,7 +60,18 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
         self.weight: nn.Parameter
         self.bias: nn.Parameter
 
+    def sample_choice(self) -> LinearSample:
+        """sample with random choice"""
+        return LinearSample(
+            random.randint(0, self.max_in_dim),
+            random.randint(0, self.max_out_dim))
+
     def sample_parameters(self, choice: LinearSample) -> None:
+        assert choice.sample_in_dim <= self.max_in_dim, \
+            'sampled input dim is larger than max input dim.'
+        assert choice.sample_out_dim <= self.max_out_dim, \
+            'sampled output dim is larger than max output dim.'
+
         self._choice = choice
 
         self.samples['weight'] = self.weight[:self._choice.sample_out_dim, :
@@ -81,8 +95,12 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
                             self.samples['bias']) * (
                                 self.samples['scale'] if self.scale else 1)
         else:
-            # chose the lagest
-            return self.forward_all(x)
+            # assert already called sample_parameters
+            assert self.samples is not None, \
+                'Did not call `sample_parameters`'
+            return F.linear(x, self.samples['weight'],
+                            self.samples['bias']) * (
+                                self.samples['scale'] if self.scale else 1)
 
     def fix_chosen(self, chosen: LinearSample) -> None:
         """fix chosen"""
@@ -90,6 +108,11 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
             raise AttributeError(
                 'The mode of DynamicLinear is `fixed`. '
                 'Please do not call `fix_chosen` function again.')
+
+        assert chosen.sample_in_dim <= self.max_in_dim, \
+            'sampled input dim is larger than max input dim.'
+        assert chosen.sample_out_dim <= self.max_out_dim, \
+            'sampled output dim is larger than max output dim.'
 
         # new a linear layer
         temp_weight = self.weight.data[:chosen.sample_out_dim, :chosen.
@@ -102,6 +125,8 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample], Linear):
         self.is_fixed = True
 
     def forward_fixed(self, x: Tensor) -> Tensor:
+        assert self.is_fixed is True, \
+            'Please call fix_chosen before forward_fixed.'
         return F.linear(x, self.weight, self.bias)
 
     def choices(self) -> List[LinearSample]:
