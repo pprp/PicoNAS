@@ -119,10 +119,20 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample]):
         return super().choices
 
     def calc_sampled_flops(self, x: Any) -> float:
-        return super().calc_sampled_flops(x)
+        total_flops = 0
+        total_flops += x * np.prod(self.samples['weight'].size())
+        return total_flops
 
     def calc_sampled_params(self) -> float:
-        return super().calc_sampled_params()
+        assert 'weight' in self.samples.keys()
+        weight_numel = self.samples['weight'].numel()
+
+        if self.samples['bias'] is not None:
+            bias_numel = self.samples['bias'].numel()
+        else:
+            bias_numel = 0
+
+        return weight_numel + bias_numel
 
     def sample_choice(self) -> QKVSample:
         return QKVSample(
