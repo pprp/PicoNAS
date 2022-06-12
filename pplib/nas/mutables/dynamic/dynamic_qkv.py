@@ -1,3 +1,4 @@
+import random
 from typing import Any, Dict, List, NamedTuple, Optional
 
 import numpy as np
@@ -15,7 +16,20 @@ class QKVSample(NamedTuple):
     sample_out_dim: int
 
 
-class DynamicQKV(DynamicMutable[QKVSample, QKVSample], Linear):
+class DynamicQKV(DynamicMutable[QKVSample, QKVSample]):
+    """Dynamic QKV in transformer.
+
+    Args:
+        max_in_dim (int): _description_
+        max_out_dim (int): _description_
+        bias (bool, optional): _description_. Defaults to True.
+        scale (bool, optional): _description_. Defaults to False.
+        alias (Optional[str], optional): _description_. Defaults to None.
+        module_kwargs (Optional[Dict[str, Dict]], optional): _description_.
+            Defaults to None.
+        init_cfg (Optional[Dict], optional): _description_.
+            Defaults to None.
+    """
 
     def __init__(self,
                  max_in_dim: int,
@@ -25,13 +39,14 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample], Linear):
                  alias: Optional[str] = None,
                  module_kwargs: Optional[Dict[str, Dict]] = None,
                  init_cfg: Optional[Dict] = None) -> None:
-        self.DynamicMutable.__init__(
+
+        super().__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
-        self.Linear.__init__(
-            in_features=max_in_dim, out_features=max_out_dim, bias=bias)
 
         self.max_in_dim = max_in_dim
         self.max_out_dim = max_out_dim
+
+        self.linear = nn.Linear(max_in_dim, max_out_dim, bias)
 
         # store parameters
         self.samples: Dict = {}
@@ -41,28 +56,25 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample], Linear):
         # scale
         self.scale = scale
 
-        # type hint
-        self.weight: nn.Parameter
-        self.bias: nn.Parameter
-
     def sample_parameters(self, choice: QKVSample) -> None:
         self._choice = choice
 
-        sample_weight = self.weight[:, :self._choice.sample_in_dim]
+        sample_weight = self.linear.weight[:, :self._choice.sample_in_dim]
         sample_weight = torch.cat([
             sample_weight[i:self._choice.sample_out_dim:3, :] for i in range(3)
         ],
                                   dim=0)  # noqa: E501
 
         self.samples['weight'] = sample_weight
-        self.samples['bias'] = self.bias
+        self.samples['bias'] = self.linear.bias
 
         self.samples['scale'] = self.max_out_dim / self._choice.sample_out_dim
 
-        if self.bias is not None:
-            self.samples['bias'] = self.bias[:self._choice.sample_out_dim]
+        if self.linear.bias is not None:
+            self.samples['bias'] = self.linear.bias[:self._choice.
+                                                    sample_out_dim]
 
-    def forward_all(self, x: Any) -> Any:
+    def forward_all(self, x: Tensor) -> Tensor:
         max_choice = QKVSample(self.max_in_dim, self.max_out_dim)
         self.sample_parameters(max_choice)
         return F.linear(x, self.samples['weight'], self.samples['bias'])
@@ -76,8 +88,12 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample], Linear):
                             self.samples['bias']) * (
                                 self.samples['scale'] if self.scale else 1)
         else:
-            # chose the lagest
-            return self.forward_all(x)
+            # assert already called sample_parameters
+            assert self.samples is not None, \
+                'Please call `sample_parameters` before forward_choice'
+            return F.linear(x, self.samples['weight'],
+                            self.samples['bias']) * (
+                                self.samples['scale'] if self.scale else 1)
 
     def fix_chosen(self, chosen: QKVSample) -> None:
         """fix chosen"""
@@ -87,17 +103,17 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample], Linear):
                 'Please do not call `fix_chosen` function again.')
         # TODO
         # new a linear layer
-        temp_weight = self.weight.data[:chosen.sample_out_dim, :chosen.
-                                       sample_in_dim]
-        temp_bias = self.bias.data[:chosen.sample_out_dim]
-        self.weight = nn.Parameter(temp_weight)
-        self.bias = nn.Parameter(temp_bias)
+        temp_weight = self.linear.weight.data[:chosen.sample_out_dim, :chosen.
+                                              sample_in_dim]
+        temp_bias = self.linear.bias.data[:chosen.sample_out_dim]
+        self.linear.weight = nn.Parameter(temp_weight)
+        self.linear.bias = nn.Parameter(temp_bias)
 
         self._choice = chosen
         self.is_fixed = True
 
     def forward_fixed(self, x: Tensor) -> Tensor:
-        return F.linear(x, self.weight, self.bias)
+        return F.linear(x, self.linear.weight, self.linear.bias)
 
     def choices(self) -> List[QKVSample]:
         return super().choices
@@ -107,6 +123,11 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample], Linear):
 
     def calc_sampled_params(self) -> float:
         return super().calc_sampled_params()
+
+    def sample_choice(self) -> QKVSample:
+        return QKVSample(
+            random.randint(0, self.max_in_dim),
+            random.randint(0, self.max_out_dim))
 
 
 class qkv_super(Linear):
