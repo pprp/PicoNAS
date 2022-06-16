@@ -1,5 +1,5 @@
 import random
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Dict, List, NamedTuple, Optional
 
 import numpy as np
 import torch.nn as nn
@@ -136,16 +136,6 @@ class DynamicPatchEmbed(DynamicMutable[PatchSample, PatchSample]):
 
     def choices(self) -> List[PatchSample]:
         return super().choices
-
-    def calc_sampled_flops(self, x: Any) -> float:
-        total_flops = 0
-        if self.samples['bias'] is not None:
-            total_flops += self.samples['bias'].size(0)
-        total_flops += x * np.prod(self.samples['weight'].size())
-        return total_flops
-
-    def calc_sampled_params(self) -> float:
-        return self.samples['weight'].numel() + self.samples['bias'].numel()
 
 
 class PatchembedSuper(DynamicMutable):

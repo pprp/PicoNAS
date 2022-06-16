@@ -42,6 +42,18 @@ class Mlp(nn.Module):
 
 
 class Attention(nn.Module):
+    """_summary_
+
+    Args:
+        dim (_type_): _description_
+        num_heads (int, optional): _description_. Defaults to 8.
+        qkv_bias (bool, optional): _description_. Defaults to False.
+        qk_scale (_type_, optional): _description_. Defaults to None.
+        attn_drop (_type_, optional): _description_. Defaults to 0..
+        proj_drop (_type_, optional): _description_. Defaults to 0..
+        window_size (_type_, optional): _description_. Defaults to None.
+        attn_head_dim (_type_, optional): _description_. Defaults to None.
+    """
 
     def __init__(self,
                  dim,
@@ -52,6 +64,7 @@ class Attention(nn.Module):
                  proj_drop=0.,
                  window_size=None,
                  attn_head_dim=None):
+
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
@@ -286,6 +299,35 @@ class RelativePositionBias(nn.Module):
 
 class VisionTransformer(nn.Module):
     """ Vision Transformer with support for patch or hybrid CNN input stage
+
+
+    Args:
+        embed_dim (int, optional): the dimension of patch embedding.
+            Defaults to 768.
+        depth (int, optional): depth of vision transformer.
+            Defaults to 12.
+        num_heads (int, optional): num of head.
+            Defaults to 12.
+        qkv_bias (bool, optional): whether use bias in qkv.
+            Defaults to False.
+        qk_scale (_type_, optional): TODO.
+            Defaults to None.
+        drop_rate (_type_, optional): drop rate for all mlps.
+            Defaults to 0..
+        attn_drop_rate (_type_, optional): after softmax apply the drop out.
+            Defaults to 0..
+        drop_path_rate (_type_, optional): the drop rate of drop path.
+            Defaults to 0..
+        init_values (_type_, optional): init value before dropout.
+            Defaults to None.
+        use_abs_pos_emb (bool, optional): use absolute positino embedding.
+            Defaults to True.
+        use_rel_pos_bias (bool, optional):
+            Defaults to False.
+        use_shared_rel_pos_bias (bool, optional): _description_.
+            Defaults to False.
+        use_mean_pooling (bool, optional): _description_. Defaults to True.
+        init_scale (float, optional): _description_. Defaults to 0.001.
     """
 
     def __init__(self,
@@ -309,6 +351,7 @@ class VisionTransformer(nn.Module):
                  use_shared_rel_pos_bias=False,
                  use_mean_pooling=True,
                  init_scale=0.001):
+
         super().__init__()
         self.num_classes = num_classes
         self.num_features = self.embed_dim = embed_dim

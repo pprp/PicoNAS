@@ -93,16 +93,6 @@ class DynamicLayerNorm(DynamicMutable[LayerNormSample, LayerNormSample]):
     def choices(self) -> List[LayerNormSample]:
         return super().choices
 
-    def calc_sampled_flops(self, x: Any) -> float:
-        return x * self._choice.embed_dim
-
-    def calc_sampled_params(self) -> float:
-        assert 'weight' in self.samples.keys(), \
-            'Please call sample_parameters before calc params'
-        assert 'bias' in self.samples.keys(), \
-            'Please call sample_parameters before calc params'
-        return self.samples['weight'].numel() + self.samples['bias'].numel()
-
     def sample_choice(self) -> LayerNormSample:
         """sample with random choice"""
         return LayerNormSample(random.randint(0, self.max_embed_dim))

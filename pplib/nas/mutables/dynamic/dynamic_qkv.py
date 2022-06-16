@@ -1,4 +1,3 @@
-import random
 from typing import Any, Dict, List, NamedTuple, Optional
 
 import numpy as np
@@ -122,22 +121,6 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample]):
         total_flops = 0
         total_flops += x * np.prod(self.samples['weight'].size())
         return total_flops
-
-    def calc_sampled_params(self) -> float:
-        assert 'weight' in self.samples.keys()
-        weight_numel = self.samples['weight'].numel()
-
-        if self.samples['bias'] is not None:
-            bias_numel = self.samples['bias'].numel()
-        else:
-            bias_numel = 0
-
-        return weight_numel + bias_numel
-
-    def sample_choice(self) -> QKVSample:
-        return QKVSample(
-            random.randint(0, self.max_in_dim),
-            random.randint(0, self.max_out_dim))
 
 
 class qkv_super(Linear):

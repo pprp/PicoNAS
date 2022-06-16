@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from .oneshot_mutable import CHOICE_TYPE, CHOSEN_TYPE, OneShotMutable
 
@@ -39,14 +39,6 @@ class DynamicMutable(OneShotMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         Args:
             choice (Dict): _description_
         """
-
-    @abstractmethod
-    def calc_sampled_params(self) -> float:
-        """calculate the parameter of sampled mutable"""
-
-    @abstractmethod
-    def calc_sampled_flops(self, x: Any) -> float:
-        """calculate the FLOPs of sampled mutable"""
 
     def set_forward_args(self, choice: CHOICE_TYPE) -> None:
         """Interface for modifying the choice using partial"""

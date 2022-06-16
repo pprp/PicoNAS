@@ -62,6 +62,7 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample]):
             random.randint(0, self.max_in_dim),
             random.randint(0, self.max_out_dim))
 
+    # slice
     def sample_parameters(self, choice: LinearSample) -> None:
         assert choice.sample_in_dim <= self.max_in_dim, \
             'sampled input dim is larger than max input dim.'
@@ -116,6 +117,8 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample]):
         temp_weight = self.linear.weight.data[:chosen.sample_out_dim, :chosen.
                                               sample_in_dim]
         temp_bias = self.linear.bias.data[:chosen.sample_out_dim]
+
+        # new a linear layer
         self.linear.weight = nn.Parameter(temp_weight)
         self.linear.bias = nn.Parameter(temp_bias)
 
@@ -129,22 +132,6 @@ class DynamicLinear(DynamicMutable[LinearSample, LinearSample]):
 
     def choices(self) -> List[LinearSample]:
         return super().choices
-
-    def calc_sampled_flops(self, sequence_length) -> float:
-        total_flops = 0
-        total_flops += sequence_length * np.prod(self.samples['weight'].size())
-        return total_flops
-
-    def calc_sampled_params(self) -> float:
-        assert 'weight' in self.samples['weight'].numel(), \
-            'Please call sample_parameters before calc flops'
-        weight_numel = self.samples['weight'].numel()
-        if self.samples['bias'] is not None:
-            bias_numel = self.samples['bias'].numel()
-        else:
-            bias_numel = 0.
-
-        return weight_numel + bias_numel
 
 
 class LinearSuper(DynamicMutable, Linear):

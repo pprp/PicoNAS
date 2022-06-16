@@ -54,3 +54,9 @@ python tools/eval_rank.py
 - [x] MacroBenchmark
 - [x] SAM optimizer
 - [ ] KD
+
+
+## Thanks
+
+- MMRazor: https://github.com/open-mmlab/mmrazor
+- SimMIM: https://github.com/microsoft/SimMIM

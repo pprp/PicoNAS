@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Dict, List, NamedTuple, Optional
 
 import torch
 import torch.nn as nn
@@ -113,12 +113,6 @@ class DynamicRelativePosion2D(DynamicMutable):
 
     def forward_fixed(self, x: Tensor) -> Tensor:
         return super().forward_fixed(x)
-
-    def calc_sampled_flops(self, x: Any) -> float:
-        return super().calc_sampled_flops(x)
-
-    def calc_sampled_params(self) -> float:
-        return super().calc_sampled_params()
 
     def sample_choice(self) -> RelativePositonSample:
         return super().sample_choice()
