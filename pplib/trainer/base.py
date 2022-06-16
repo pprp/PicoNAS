@@ -4,6 +4,7 @@ import warnings
 from msilib.schema import Error
 
 import torch
+from mindspore import Tensor
 
 
 class BaseTrainer:
@@ -45,7 +46,7 @@ class BaseTrainer:
         logging.basicConfig(level=logging.INFO)
 
     def fit(self, train_loader, val_loader, epochs):
-        """Fits.
+        """Fits. High Level API
 
         Fit the model using the given loaders for the given number
         of epochs.
@@ -101,18 +102,57 @@ class BaseTrainer:
 
                 logging.info(msg)
 
+    def forward(self,
+                batch_inputs: torch.Tensor,
+                mode: str = 'tensor') -> Tensor:
+        """Forward. High Level API.
+
+        Note:
+            if model == 'loss', return dict of loss tensor;
+            if model == 'tensor', return naive tensor type results;
+            if model == 'predict', called by val_step and test_step results.
+
+        Args:
+            batch_inputs (torch.Tensor): _description_
+            mode (str, optional): _description_. Defaults to 'tensor'.
+        """
+        if mode == 'loss':
+            return self.loss(batch_inputs)
+        elif mode == 'tensor':
+            return self._forward(batch_inputs)
+        elif mode == 'predict':
+            return self.predict(batch_inputs)
+        else:
+            raise RuntimeError(f'Invalid mode: {mode}')
+
+    def predict(self, batch_inputs):
+        """Network forward step. Low Level API"""
+        features, labels = batch_inputs
+        features, labels = self._to_device(features, labels, self.device)
+        # forward pass
+        out = self.model(features)
+        return out
+
+    def loss(self, batch_inputs) -> Tensor:
+        """Forward and compute loss. Low Level API"""
+        _, labels = batch_inputs
+        out = self._forward(batch_inputs)
+        return self._compute_loss(out, labels)
+
+    def _forward(self, batch_inputs) -> Tensor:
+        """Network forward step. Low Level API"""
+        features, labels = batch_inputs
+        features, labels = self._to_device(features, labels, self.device)
+        # forward pass
+        out = self.model(features)
+        return out
+
     def _train(self, loader):
         self.model.train()
 
-        for features, labels in loader:
+        for batch_inputs in loader:
             # move to device
-            features, labels = self._to_device(features, labels, self.device)
-
-            # forward pass
-            out = self.model(features)
-
-            # loss
-            loss = self._compute_loss(out, labels)
+            loss = self.forward(batch_inputs, mode='loss')
 
             # remove gradient from previous passes
             self.optimizer.zero_grad()
@@ -132,13 +172,9 @@ class BaseTrainer:
         self.model.eval()
 
         with torch.no_grad():
-            for features, labels in loader:
+            for batch_inputs in loader:
                 # move to device
-                features, labels = self._to_device(features, labels,
-                                                   self.device)
-
-                out = self.model(features)
-                loss = self._compute_loss(out, labels)
+                loss = self.forward(batch_inputs, mode='loss')
 
         return loss.item()
 
@@ -150,9 +186,6 @@ class BaseTrainer:
             msg = 'Target tensor has been casted from'
             msg = f"{msg} {type(target)} to 'long' dtype to avoid errors."
             warnings.warn(msg)
-
-        # apply regularization if any
-        # loss += penalty.item()
 
         return loss
 
