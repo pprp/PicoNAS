@@ -175,7 +175,6 @@ class BaseTrainer:
             for batch_inputs in loader:
                 # move to device
                 loss = self.forward(batch_inputs, mode='loss')
-
         return loss.item()
 
     def _compute_loss(self, real, target):
