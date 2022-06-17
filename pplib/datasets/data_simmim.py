@@ -7,12 +7,14 @@
 
 import numpy as np
 import torch
-import torch.distributed as dist
+import torch.distributed as dist  # noqa: F401
+import torchvision.datasets as datasets
 import torchvision.transforms as T
+import torchvision.transforms as transforms
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
-from torch.utils.data import DataLoader, DistributedSampler
+from torch.utils.data import DataLoader, DistributedSampler  # noqa: F401
 from torch.utils.data._utils.collate import default_collate
-from torchvision.datasets import ImageFolder
+from torchvision.datasets import ImageFolder  # noqa: F401
 
 
 class MaskGenerator:
@@ -95,23 +97,34 @@ def collate_fn(batch):
         return ret
 
 
-def build_loader_simmim(config, logger):
-    transform = SimMIMTransform(config)
+def build_loader_simmim(logger):
+    transform = SimMIMTransform()
     logger.info(f'Pre-train data transform:\n{transform}')
 
-    dataset = ImageFolder(config.DATA.DATA_PATH, transform)
+    dataset = datasets.CIFAR10(
+        root='./data/cifar',
+        train=True,
+        download=True,
+        transform=transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465),
+                                 (0.2023, 0.1994, 0.2010)),
+        ]),
+    )
     logger.info(f'Build dataset: train images = {len(dataset)}')
 
-    sampler = DistributedSampler(
-        dataset,
-        num_replicas=dist.get_world_size(),
-        rank=dist.get_rank(),
-        shuffle=True)
+    # sampler = DistributedSampler(
+    #     dataset,
+    #     num_replicas=dist.get_world_size(),
+    #     rank=dist.get_rank(),
+    #     shuffle=True)
     dataloader = DataLoader(
         dataset,
-        config.DATA.BATCH_SIZE,
-        sampler=sampler,
-        num_workers=config.DATA.NUM_WORKERS,
+        32,
+        # sampler=sampler,
+        num_workers=4,
         pin_memory=True,
         drop_last=True,
         collate_fn=collate_fn)

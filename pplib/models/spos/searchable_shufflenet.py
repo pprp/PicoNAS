@@ -77,3 +77,57 @@ class SearchableShuffleNetV2(nn.Module):
         x = x.view(-1, self.last_channel)
         x = self.classifier(x)
         return x
+
+
+class SearchableMAE(SearchableShuffleNetV2):
+
+    def __init__(self, classes=10) -> None:
+        super().__init__(classes=classes)
+
+        self.decoder = nn.Sequential(
+            # x16
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(
+                self.last_channel,
+                self.last_channel // 2,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=True),
+            nn.BatchNorm2d(self.last_channel // 2),
+            nn.ReLU(inplace=True),
+
+            # x32
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(
+                self.last_channel // 2,
+                3,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=True),
+            nn.BatchNorm2d(3),
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, x: Tensor):
+        x = self.first_conv(x)
+        for i, layer in enumerate(self.layers):
+            x = layer(x)
+        x = self.last_conv(x)
+        x = self.decoder(x)
+        return x
+
+
+if __name__ == '__main__':
+    m = SearchableShuffleNetV2()
+    import torch
+
+    inputs = torch.randn(4, 3, 32, 32)
+
+    outputs = m(inputs)
+    print(outputs.shape)
+
+    m = SearchableMAE()
+    outputs = m(inputs)
+    print(outputs.shape)

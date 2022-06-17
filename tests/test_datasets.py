@@ -1,8 +1,9 @@
 import unittest
 from unittest import TestCase
 
-from pplib.datasets import build_dataloader, build_dataset
+from pplib.datasets import build_dataloader, build_dataset, build_loader_simmim
 from pplib.utils.config import Config
+from pplib.utils.logging import get_logger
 
 
 class Dict(dict):
@@ -46,6 +47,14 @@ class TestDataset(TestCase):
             if i > 10:
                 break
             print(img.shape, label.shape)
+
+    def test_dataloader_simmim(self):
+        logger = get_logger('test')
+        loader = build_loader_simmim(logger)
+        for i, (img, mask) in enumerate(loader):
+            if i > 10:
+                break
+            print(img.shape, mask.shape)
 
 
 if __name__ == '__main__':
