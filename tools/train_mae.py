@@ -5,11 +5,11 @@ import time
 import init_paths  # noqa: F401
 import torch
 import torch.nn as nn
-from thop import profile
+from thop import profile  # noqa: F401
 
 import pplib.utils.utils as utils
 from pplib.datasets import build_loader_simmim
-from pplib.models import MacroBenchmarkSuperNet
+from pplib.models import SearchableMAE
 from pplib.nas.mutators import OneShotMutator
 from pplib.trainer import MAETrainer
 from pplib.utils.config import Config
@@ -105,49 +105,39 @@ def main():
 
     dataloader = build_loader_simmim(logger)
 
-    model = MacroBenchmarkSuperNet()
+    model = SearchableMAE()
+
     mutator = OneShotMutator(custom_group=None)
     mutator.prepare_from_supernet(model)
 
     criterion = nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
                                 cfg.momentum, cfg.weight_decay)
-    scheduler = torch.optim.lr_scheduler.LambdaLR(
+    scheduler = torch.optim.lr_scheduler.LambdaLR(  # noqa: F841
         optimizer, lambda epoch: 1 - (epoch / cfg.epochs))
 
     # flops & params & structure
-    flops, params = profile(
-        model,
-        inputs=(torch.randn(1, 3, 32, 32), ) if cfg.dataset == 'cifar10' else
-        (torch.randn(1, 3, 224, 224), ),
-        verbose=False)
+    # flops, params = profile(
+    #     model,
+    #     inputs=(torch.randn(1, 3, 32, 32), ) if cfg.dataset == 'cifar10' else
+    #     (torch.randn(1, 3, 224, 224), ),
+    #     verbose=False)
 
-    print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' %
-          ((params / 1e6), (flops / 1e6)))
+    # print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' %
+    #       ((params / 1e6), (flops / 1e6)))
     model = model.to(device)
 
     trainer = MAETrainer(
         model,
         mutator=mutator,
-        dataloader=dataloader,
         optimizer=optimizer,
         criterion=criterion,
-        scheduler=scheduler,
-        searching=True,
-        epochs=cfg.epochs,
+        logger_kwargs=None,
         device=device)
 
     start = time.time()
 
-    for epoch in range(cfg.epochs):
-        trainer.train(epoch)
-        if (epoch + 1) % cfg.val_interval == 0:
-            trainer.valid(epoch=epoch)
-            utils.save_checkpoint({
-                'state_dict': model.state_dict(),
-            },
-                                  epoch + 1,
-                                  tag=cfg.exp_name + '_super')
+    trainer.fit(dataloader, dataloader, cfg.epochs)
 
     utils.time_record(start)
 

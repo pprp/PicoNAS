@@ -118,6 +118,14 @@ class SearchableMAE(SearchableShuffleNetV2):
         mask = rearrange(mask, 'b h w -> b (h w)')
         mask = mask.unsqueeze(-1).repeat(1, 1, 12)
         x = x * mask
+        x = rearrange(
+            x,
+            'b (p1 p2) (c h w) -> b c (p1 h) (p2 w)',
+            p1=16,
+            p2=16,
+            c=3,
+            h=2,
+            w=2)
 
         # forward the masked img
         x = self.first_conv(x)
