@@ -1,4 +1,5 @@
 import torch.nn as nn
+from einops import rearrange
 from torch import Tensor
 
 from pplib.models.spos.spos_modules import ShuffleModule, ShuffleXModule
@@ -110,7 +111,15 @@ class SearchableMAE(SearchableShuffleNetV2):
             nn.ReLU(inplace=True),
         )
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor, mask: Tensor) -> Tensor:  # type: ignore
+        # process masked image
+        x = rearrange(
+            x, 'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)', p1=16, p2=16)
+        mask = rearrange(mask, 'b h w -> b (h w)')
+        mask = mask.unsqueeze(-1).repeat(1, 1, 12)
+        x = x * mask
+
+        # forward the masked img
         x = self.first_conv(x)
         for i, layer in enumerate(self.layers):
             x = layer(x)

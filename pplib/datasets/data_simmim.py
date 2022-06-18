@@ -6,12 +6,11 @@
 # --------------------------------------------------------
 
 import numpy as np
-import torch
+import torch  # noqa: F401
 import torch.distributed as dist  # noqa: F401
 import torchvision.datasets as datasets
-import torchvision.transforms as T
 import torchvision.transforms as transforms
-from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD  # noqa: F401
 from torch.utils.data import DataLoader, DistributedSampler  # noqa: F401
 from torch.utils.data._utils.collate import default_collate
 from torchvision.datasets import ImageFolder  # noqa: F401
@@ -21,9 +20,9 @@ class MaskGenerator:
     """Generate mask with ratio"""
 
     def __init__(self,
-                 input_size=192,
-                 mask_patch_size=32,
-                 model_patch_size=4,
+                 input_size=32,
+                 mask_patch_size=2,
+                 model_patch_size=2,
                  mask_ratio=0.6):
 
         self.input_size = input_size
@@ -54,29 +53,24 @@ class MaskGenerator:
 class SimMIMTransform:
 
     def __init__(self):
-        self.transform_img = T.Compose([
-            T.Lambda(lambda img: img.convert('RGB')
-                     if img.mode != 'RGB' else img),
-            T.RandomResizedCrop(
-                224, scale=(0.67, 1.), ratio=(3. / 4., 4. / 3.)),
-            T.RandomHorizontalFlip(),
-            T.ToTensor(),
-            T.Normalize(
-                mean=torch.tensor(IMAGENET_DEFAULT_MEAN),
-                std=torch.tensor(IMAGENET_DEFAULT_STD)),
+        self.transform_img = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465),
+                                 (0.2023, 0.1994, 0.2010)),
         ])
 
         self.mask_generator = MaskGenerator(
-            input_size=224,
-            mask_patch_size=32,
-            model_patch_size=16,  # for vit
+            input_size=32,
+            mask_patch_size=2,
+            model_patch_size=2,  # for vit
             mask_ratio=0.6,
         )
 
     def __call__(self, img):
         img = self.transform_img(img)
         mask = self.mask_generator()
-
         return img, mask
 
 
@@ -105,13 +99,7 @@ def build_loader_simmim(logger):
         root='./data/cifar',
         train=True,
         download=True,
-        transform=transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465),
-                                 (0.2023, 0.1994, 0.2010)),
-        ]),
+        transform=transform,
     )
     logger.info(f'Build dataset: train images = {len(dataset)}')
 
@@ -122,9 +110,9 @@ def build_loader_simmim(logger):
     #     shuffle=True)
     dataloader = DataLoader(
         dataset,
-        32,
+        batch_size=2,
         # sampler=sampler,
-        num_workers=4,
+        num_workers=0,
         pin_memory=True,
         drop_last=True,
         collate_fn=collate_fn)

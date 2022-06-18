@@ -20,9 +20,16 @@ class MAETrainer(BaseTrainer):
         if self.criterion is None:
             self.criterion = nn.MSELoss()
 
-    def _compute_loss(self, real, target):
+    def _forward(self, batch_inputs):
+        img, mask = batch_inputs
+        out = self.model(img, mask)
+        return out
 
-        return super()._compute_loss(real, target)
+    def loss(self, batch_inputs) -> None:
+        """Forward and compute loss. Low Level API"""
+        img, mask = batch_inputs
+        out = self._forward(batch_inputs)
+        return self._compute_loss(out, img)
 
     def _train(self, loader):
         self.model.train()
