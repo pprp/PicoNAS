@@ -110,7 +110,7 @@ def build_loader_simmim(logger):
     #     shuffle=True)
     dataloader = DataLoader(
         dataset,
-        batch_size=32,
+        batch_size=128,
         # sampler=sampler,
         num_workers=0,
         pin_memory=True,

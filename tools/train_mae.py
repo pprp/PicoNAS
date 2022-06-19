@@ -43,7 +43,7 @@ def get_args():
         '--num_choices', type=int, default=4, help='number choices per layer')
     parser.add_argument(
         '--batch_size', type=int, default=96, help='batch size')
-    parser.add_argument('--epochs', type=int, default=100, help='batch size')
+    parser.add_argument('--epochs', type=int, default=600, help='batch size')
     parser.add_argument(
         '--learning_rate',
         type=float,
@@ -110,7 +110,7 @@ def main():
     mutator = OneShotMutator(custom_group=None)
     mutator.prepare_from_supernet(model)
 
-    criterion = nn.CrossEntropyLoss().to(device)
+    criterion = nn.MSELoss().to(device)
     optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
                                 cfg.momentum, cfg.weight_decay)
     scheduler = torch.optim.lr_scheduler.LambdaLR(  # noqa: F841
@@ -131,9 +131,10 @@ def main():
         model,
         mutator=mutator,
         optimizer=optimizer,
+        scheduler=scheduler,
         criterion=criterion,
-        logger_kwargs=None,
-        device=device)
+        device=device,
+        log_name='mae')
 
     start = time.time()
 

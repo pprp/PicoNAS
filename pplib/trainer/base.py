@@ -1,10 +1,12 @@
-import logging
+import os
 import time
 import warnings
-from msilib.schema import Error
 
 import torch
-from mindspore import Tensor
+from torch import Tensor
+from torch.utils.tensorboard import SummaryWriter
+
+from pplib.utils.logging import get_logger
 
 
 class BaseTrainer:
@@ -28,22 +30,28 @@ class BaseTrainer:
                  mutator,
                  criterion,
                  optimizer,
-                 logger_kwargs,
-                 device=None):
+                 scheduler,
+                 device=None,
+                 log_name='base',
+                 searching: bool = True):
         self.model = model
         self.mutator = mutator
         self.criterion = criterion
         self.optimizer = optimizer
-        self.logger_kwargs = logger_kwargs
+        self.scheduler = scheduler
         self.device = self._get_device(device)
-
         self.model.to(self.device)
+        self.searching = searching
 
         # attributes
         self.train_loss_ = []
         self.val_loss_ = []
+        self.current_epoch = 0
 
-        logging.basicConfig(level=logging.INFO)
+        self.logger = get_logger(log_name)
+
+        writer_path = os.path.join('./logdirs', log_name)
+        self.writer = SummaryWriter(writer_path)
 
     def fit(self, train_loader, val_loader, epochs):
         """Fits. High Level API
@@ -63,6 +71,7 @@ class BaseTrainer:
 
         # ---- train process ----
         for epoch in range(epochs):
+            self.current_epoch = epoch
             # track epoch time
             epoch_start_time = time.time()
 
@@ -76,31 +85,27 @@ class BaseTrainer:
             self.val_loss_.append(val_loss)
 
             epoch_time = time.time() - epoch_start_time
-            self._logger(tr_loss, val_loss, epoch + 1, epochs, epoch_time,
-                         **self.logger_kwargs)
+
+            self.logger.info(
+                f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss.item()} Val loss: {val_loss.item()}'  # noqa: E501
+            )
+
+            self.writer.add_scalar(
+                'train_epoch_loss',
+                tr_loss.item(),
+                global_step=self.current_epoch)
+            self.writer.add_scalar(
+                'valid_epoch_loss',
+                val_loss.item(),
+                global_step=self.current_epoch)
+
+            self.scheduler.step()
 
         total_time = time.time() - total_start_time
 
         # final message
-        logging.info(
+        self.logger.info(
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
-
-    def _logger(self,
-                tr_loss,
-                val_loss,
-                epoch,
-                epochs,
-                epoch_time,
-                show=True,
-                update_step=20):
-        if show:
-            if epoch % update_step == 0 or epoch == 1:
-                # to satisfy pep8 common limit of characters
-                msg = f'Epoch {epoch}/{epochs} | Train loss: {tr_loss}'
-                msg = f'{msg} | Validation loss: {val_loss}'
-                msg = f'{msg} | Time/epoch: {round(epoch_time, 5)} seconds'
-
-                logging.info(msg)
 
     def forward(self,
                 batch_inputs: torch.Tensor,
@@ -150,7 +155,7 @@ class BaseTrainer:
     def _train(self, loader):
         self.model.train()
 
-        for batch_inputs in loader:
+        for i, batch_inputs in enumerate(loader):
             # move to device
             loss = self.forward(batch_inputs, mode='loss')
 
@@ -162,6 +167,13 @@ class BaseTrainer:
 
             # parameters update
             self.optimizer.step()
+
+            if i % 20 == 0:
+                self.logger.info(f'Step: {i} \t Train loss: {loss.item()}')
+                self.writer.add_scalar(
+                    'train_step_loss',
+                    loss.item(),
+                    global_step=i + self.current_epoch * len(loader))
 
         return loss.item()
 
@@ -178,14 +190,9 @@ class BaseTrainer:
         return loss.item()
 
     def _compute_loss(self, real, target):
-        try:
-            loss = self.criterion(real, target)
-        except Error:
-            loss = self.criterion(real, target.long())
-            msg = 'Target tensor has been casted from'
-            msg = f"{msg} {type(target)} to 'long' dtype to avoid errors."
-            warnings.warn(msg)
-
+        # print(real.shape, target.shape)
+        real, target = self._to_device(real, target, self.device)
+        loss = self.criterion(real, target)
         return loss
 
     def _get_device(self, device):
