@@ -90,3 +90,25 @@ class DropPath(nn.Module):
 
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training)
+
+
+def iter_flatten(iterable):
+    """
+    Flatten a potentially deeply nested python list
+    """
+    # https://rightfootin.blogspot.com/2006/09/more-on-python-flatten.html
+    it = iter(iterable)
+    for e in it:
+        if isinstance(e, (list, tuple)):
+            for f in iter_flatten(e):
+                yield f
+        else:
+            yield e
+
+
+class AttrDict(dict):
+    """Convert the key of dict to attribute of objects"""
+
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self

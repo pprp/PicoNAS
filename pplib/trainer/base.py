@@ -1,6 +1,7 @@
 import os
 import time
 import warnings
+from typing import List
 
 import torch
 from torch import Tensor
@@ -44,8 +45,8 @@ class BaseTrainer:
         self.searching = searching
 
         # attributes
-        self.train_loss_ = []
-        self.val_loss_ = []
+        self.train_loss_: List = []
+        self.val_loss_: List = []
         self.current_epoch = 0
 
         self.logger = get_logger(log_name)

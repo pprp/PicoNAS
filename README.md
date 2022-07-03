@@ -60,3 +60,4 @@ python tools/eval_rank.py
 
 - MMRazor: https://github.com/open-mmlab/mmrazor
 - SimMIM: https://github.com/microsoft/SimMIM
+- NASLib: https://github.com/automl/NASLib
