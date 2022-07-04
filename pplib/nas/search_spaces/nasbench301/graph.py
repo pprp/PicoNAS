@@ -3,6 +3,7 @@ import os
 import random
 from collections import namedtuple
 from copy import deepcopy
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -16,8 +17,16 @@ from pplib.nas.search_spaces.core.query_metrics import Metric
 from pplib.nas.search_spaces.nasbench301.conversions import (
     convert_compact_to_naslib, convert_naslib_to_compact,
     convert_naslib_to_genotype, make_compact_immutable, make_compact_mutable)
-from pplib.utils.utils import AttrDict, get_project_root
+from pplib.utils.utils import AttrDict
 from .primitives import FactorizedReduce
+
+
+def get_project_root() -> Path:
+    """
+    Returns the root path of the project.
+    """
+    return Path(__file__).parent.parent
+
 
 logger = logging.getLogger(__name__)
 

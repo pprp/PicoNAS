@@ -24,10 +24,7 @@ EDGE_LIST = ((1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4))
 def convert_naslib_to_op_indices(naslib_object):
 
     cell = naslib_object._get_child_graphs(single_instances=True)[0]
-    ops = []
-    for i, j in EDGE_LIST:
-        ops.append(cell.edges[i, j]['op'].get_op_name)
-
+    ops = [cell.edges[i, j]['op'].get_op_name for i, j in EDGE_LIST]
     return [OP_NAMES.index(name) for name in ops]
 
 

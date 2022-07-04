@@ -1,4 +1,4 @@
-from naslib.search_spaces.core.primitives import AbstractPrimitive
+from pplib.nas.search_spaces.core.primitives import AbstractPrimitive
 
 
 class ModelWrapper(AbstractPrimitive):

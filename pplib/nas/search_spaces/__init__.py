@@ -45,10 +45,9 @@ def get_search_space(name, dataset):
     except KeyError:
         n_classes = -1
 
-    if name == 'transbench101_micro' or name == 'transbench101_macro':
-        create_graph = True if dataset.lower() in [
-            'svhn', 'ninapro', 'scifar100'
-        ] else False
+    if name in ['transbench101_micro', 'transbench101_macro']:
+        create_graph = dataset.lower() in ['svhn', 'ninapro', 'scifar100']
+
         return search_space_cls(
             dataset=dataset,
             use_small_model=True,
@@ -56,7 +55,7 @@ def get_search_space(name, dataset):
             n_classes=n_classes,
             in_channels=in_channels)
     elif name == 'nasbench301':
-        auxiliary = True if dataset.lower() == 'cifar10' else False
+        auxiliary = dataset.lower() == 'cifar10'
         return search_space_cls(
             n_classes=n_classes, in_channels=in_channels, auxiliary=auxiliary)
     elif name == 'nasbench201':
