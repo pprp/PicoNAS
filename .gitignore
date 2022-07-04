@@ -3,7 +3,6 @@
 *.tar
 *.pth
 *.csv
-*.txt
 *.pkl
 datasets/*
 data/*
