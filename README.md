@@ -67,5 +67,26 @@ runner: 属于入口，兼容各种用法
 
 - api：(naslib/utils/get_dataset_api) 获取api，得到json的访问
 - predictor: 预测器，根据不同type的方法如zen，snip等进行计算，提供查询功能，得到对应分数
-- search_space: Graph类
-- evaluator: 
+    - pruners/measures: 各种评价指标
+    - 
+- search_space: (Graph) networkx中构图功能添加
+    - graph 搜索空间定义
+    - primitives 基元，即候选操作。
+- evaluator: 评估器，主要功能有：
+    - 加载数据集 load-dataset
+    - 调用预测器predictor进行查询
+    - 评估test集合上的结果 single_evaluate
+    - 适配搜索空间：adapt_search_space 
+
+
+ss_type: 
+- nasbench101
+- nasbench201
+- nasbench301 
+- transbench101
+- transbench101_micro
+- 'transbench101_macro
+
+dataset:
+- cifar10 
+- cifar100
