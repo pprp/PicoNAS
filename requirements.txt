@@ -10,3 +10,6 @@ transforms3d
 scikit-learn
 tqdm
 ConfigSpace
+mmcv
+einops
+timm

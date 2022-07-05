@@ -1,8 +1,6 @@
-# spos-cifar
+# pplib
 
 single path one shot with CIFAR10
-
-![](https://pic3.zhimg.com/v2-44d8ca5374bd7c45d345b75e8117e36a_b.jpg)
 
 
 ## MAE
@@ -61,3 +59,13 @@ python tools/eval_rank.py
 - MMRazor: https://github.com/open-mmlab/mmrazor
 - SimMIM: https://github.com/microsoft/SimMIM
 - NASLib: https://github.com/automl/NASLib
+
+
+## NASLib 
+
+runner: 属于入口，兼容各种用法
+
+- api：(naslib/utils/get_dataset_api) 获取api，得到json的访问
+- predictor: 预测器，根据不同type的方法如zen，snip等进行计算，提供查询功能，得到对应分数
+- search_space: Graph类
+- evaluator: 
