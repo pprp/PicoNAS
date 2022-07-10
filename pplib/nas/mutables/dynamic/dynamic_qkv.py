@@ -7,6 +7,8 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Linear
 
+from pplib.nas.mutables.base_mutable import CHOICE_TYPE
+
 from ..dynamic_mutable import DynamicMutable
 
 
@@ -54,6 +56,9 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample]):
 
         # scale
         self.scale = scale
+    
+    def sample_choice(self) -> CHOICE_TYPE:
+        return super().sample_choice()
 
     def sample_parameters(self, choice: QKVSample) -> None:
         self._choice = choice

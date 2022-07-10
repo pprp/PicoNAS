@@ -13,3 +13,4 @@ ConfigSpace
 mmcv
 einops
 timm
+thop 
