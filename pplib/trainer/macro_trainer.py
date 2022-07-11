@@ -2,7 +2,6 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
-from tqdm import tqdm
 
 from pplib.nas.mutators import OneShotMutator
 from pplib.utils.utils import AvgrageMeter, accuracy
@@ -26,91 +25,93 @@ class MacroTrainer(BaseTrainer):
     """
 
     def __init__(
-            self,
-            model: nn.Module,
-            mutator: OneShotMutator,
-            dataloader: Dict,
-            optimizer=None,
-            criterion=None,
-            scheduler=None,
-            epochs: int = 200,
-            searching: bool = True,
-            num_choices: int = 4,
-            num_layers: int = 20,
-            device: torch.device = torch.device('cuda'),
+        self,
+        model: nn.Module,
+        mutator: OneShotMutator,
+        optimizer=None,
+        criterion=None,
+        scheduler=None,
+        num_choices: int = 4,
+        num_layers: int = 20,
+        device: torch.device = torch.device('cuda'),
+        log_name='macro',
+        searching: bool = True,
     ):
-        self.device = device
-        self.epochs = epochs
-        self.model = model.to(self.device)
-        self.searching = searching
-        self.criterion = criterion if criterion is not None \
-            else nn.CrossEntropyLoss()
-        self.scheduler = scheduler
-        self.optimizer = optimizer
-        self.dataloader = dataloader
+        super().__init__(model, mutator, criterion, optimizer, scheduler,
+                         device, log_name, searching)
+
         self.num_choices = num_choices
         self.num_layers = num_layers
-        self.mutator = mutator
 
-    def train(self, epoch):
-        """_summary_
+    def _forward(self, batch_inputs):
+        """Network forward step. Low Level API"""
+        features, labels = batch_inputs
+        features, labels = self._to_device(features, labels, self.device)
+        # forward pass
+        if self.searching is True:
+            rand_subnet = self.mutator.random_subnet
+            self.mutator.set_subnet(rand_subnet)
+            out = self.model(features)
+        else:
+            out = self.model(features)
+        return out
 
-        Args:
-            epoch (_type_): _description_
-        """
-        self.model.train()
-        train_loss = 0.0
-        top1 = AvgrageMeter()
-        train_dataloader = tqdm(self.dataloader['train'])
-        train_dataloader.set_description(
-            '[%s%04d/%04d %s%f]' % ('Epoch:', epoch + 1, self.epochs, 'lr:',
-                                    self.scheduler.get_lr()[0]))
-        for step, (inputs, targets) in enumerate(train_dataloader):
-            inputs, targets = inputs.to(self.device), targets.to(self.device)
-            self.optimizer.zero_grad()
-            if self.searching:
-                rand_subnet = self.mutator.random_subnet
-                self.mutator.set_subnet(rand_subnet)
-                outputs = self.model(inputs)
-            else:
-                outputs = self.model(inputs)
-            loss = self.criterion(outputs, targets)
-            loss.backward()
+    def _predict(self, batch_inputs, subnet_dict: Dict = None):
+        """Network forward step. Low Level API"""
+        inputs, labels = batch_inputs
+        inputs, labels = self._to_device(inputs, labels, self.device)
+        # forward pass
+        if self.searching:
+            rand_subnet = self.mutator.random_subnet
+            self.mutator.set_subnet(rand_subnet)
+            out = self.model(inputs)
+        else:
+            self.mutator.set_subnet(subnet_dict)
+            out = self.model(inputs)
+        return out
 
-            self.optimizer.step()
-            prec1, prec5 = accuracy(outputs, targets, topk=(1, 5))
-            n = inputs.size(0)
-            top1.update(prec1.item(), n)
-            train_loss += loss.item()
-            postfix = {
-                'train_loss': '%.6f' % (train_loss / (step + 1)),
-                'train_acc': '%.6f' % top1.avg
-            }
-            train_dataloader.set_postfix(log=postfix)
-
-    def valid(self, epoch: int = 0, subnet_dict: Dict = None):
+    def metric_score(self, loader, subnet_dict: Dict = None):
         self.model.eval()
+
         val_loss = 0.0
-        val_top1 = AvgrageMeter()
-        val_dataloader = self.dataloader['val']
+        top1_vacc = AvgrageMeter()
+        top5_vacc = AvgrageMeter()
+
         with torch.no_grad():
-            for step, (inputs, targets) in enumerate(val_dataloader):
-                inputs, targets = inputs.to(self.device), targets.to(
-                    self.device)
-                if self.searching:
-                    # during searching phase, test random subnet
-                    rand_subnet = self.mutator.random_subnet
-                    self.mutator.set_subnet(rand_subnet)
-                    outputs = self.model(inputs)
-                else:
-                    # during evaluation phase, test specific subnet
-                    self.mutator.set_subnet(subnet_dict)
-                    outputs = self.model(inputs)
-                loss = self.criterion(outputs, targets)
-                val_loss += loss.item()
-                prec1, prec5 = accuracy(outputs, targets, topk=(1, 5))
+            for step, batch_inputs in enumerate(loader):
+                inputs, labels = batch_inputs
+
+                # move to device
+                outputs = self._predict(batch_inputs, subnet_dict=subnet_dict)
+
+                # compute loss
+                loss = self._compute_loss(outputs, labels)
+
+                # compute accuracy
                 n = inputs.size(0)
-                val_top1.update(prec1.item(), n)
-            print('[Val_Accuracy epoch:%d] val_loss:%f, val_acc:%f' %
-                  (epoch + 1, val_loss / (step + 1), val_top1.avg))
-            return val_top1.avg
+                top1, top5 = accuracy(outputs, labels, top1=(1, 5))
+                top1_vacc.update(top1.item(), n)
+                top5_vacc.update(top5.item(), n)
+
+                # accumulate loss
+                val_loss += loss.item()
+
+                # print every 20 iter
+                if step % 20 == 0:
+                    self.logger.info(
+                        f'Step: {step} \t Val loss: {loss.item()} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
+                    )
+                    self.writer.add_scalar(
+                        'val_step_loss',
+                        loss.item(),
+                        global_step=step + self.current_epoch * len(loader))
+                    self.writer.add_scalar(
+                        'top1_val_acc',
+                        top1_vacc.avg,
+                        global_step=step + self.current_epoch * len(loader))
+                    self.writer.add_scalar(
+                        'top5_val_acc',
+                        top5_vacc.avg,
+                        global_step=step + self.current_epoch * len(loader))
+
+        return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg

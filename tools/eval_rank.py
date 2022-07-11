@@ -1,7 +1,6 @@
 import argparse
 import json
 import random
-from collections import namedtuple
 from typing import Dict, List
 
 import torch
@@ -10,6 +9,7 @@ from pplib.datasets import build_dataloader
 from pplib.models import MacroBenchmarkSuperNet
 from pplib.nas.mutators import OneShotMutator
 from pplib.trainer import MacroTrainer
+from pplib.utils.config import Config
 from pplib.utils.misc import convert_arch2dict
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
@@ -35,8 +35,9 @@ def compuate_rank_consistency(sampled_dict: Dict,
     for i, (k, v) in enumerate(sampled_dict.items()):
         print(f'evaluating the {i}th architecture.')
         subnet_dict = convert_arch2dict(k)
-        top1 = trainer.valid(epoch=0, subnet_dict=subnet_dict)
-        supernet_indicator_list.append(top1)
+        top1_acc, loss = trainer.valid(epoch=0, subnet_dict=subnet_dict)
+
+        supernet_indicator_list.append(loss)
         true_indicator_list.append(v[type])
 
     kt = kendalltau(true_indicator_list, supernet_indicator_list)
@@ -75,17 +76,16 @@ if __name__ == '__main__':
     valid_args = dict(
         name='cifar10',
         bs=64,
-        root='./data/cifar',
+        data_dir='./data/cifar',
         fast=False,
         nw=2,
         random_erase=False,
         autoaugmentation=False,
         cutout=False,
+        batch_size=32,
     )
 
-    NamedConfig = namedtuple('x', tuple(valid_args.keys()))  # type: ignore
-
-    val_config = NamedConfig(**valid_args)
+    val_config = Config(valid_args)
 
     if torch.cuda.is_available():
         print('Train on GPU!')

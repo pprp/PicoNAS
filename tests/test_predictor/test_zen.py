@@ -1,6 +1,5 @@
-import unittest 
+import unittest
 from unittest import TestCase
-import torch
 
 from pplib.datasets import build_dataloader
 from pplib.nas.search_spaces import get_search_space
@@ -22,7 +21,7 @@ class TestZenScore(TestCase):
         dataloader = build_dataloader(config=Config(args))
 
         search_space = get_search_space('nasbench201', 'cifar10')
-        zc_api = get_zc_benchmark_api('nasbench201', 'cifar10') # dict 
+        zc_api = get_zc_benchmark_api('nasbench201', 'cifar10')  # dict
         search_space.instantiate_model = False
         search_space.labeled_archs = [eval(arch) for arch in zc_api.keys()]
 

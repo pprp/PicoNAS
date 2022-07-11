@@ -103,11 +103,6 @@ def main():
     train_loader = build_dataloader(name='cifar10', type='train', config=cfg)
     val_loader = build_dataloader(name='cifar10', type='val', config=cfg)
 
-    dataloader = {
-        'train': train_loader,
-        'val': val_loader,
-    }
-
     model = MacroBenchmarkSuperNet()
     mutator = OneShotMutator(custom_group=None)
     mutator.prepare_from_supernet(model)
@@ -132,25 +127,15 @@ def main():
     trainer = MacroTrainer(
         model,
         mutator=mutator,
-        dataloader=dataloader,
         optimizer=optimizer,
         criterion=criterion,
         scheduler=scheduler,
         searching=True,
-        epochs=cfg.epochs,
         device=device)
 
     start = time.time()
 
-    for epoch in range(cfg.epochs):
-        trainer.train(epoch)
-        if (epoch + 1) % cfg.val_interval == 0:
-            trainer.valid(epoch=epoch)
-            utils.save_checkpoint({
-                'state_dict': model.state_dict(),
-            },
-                                  epoch + 1,
-                                  tag=cfg.exp_name + '_super')
+    trainer.fit(train_loader, val_loader, epochs=cfg.epochs)
 
     utils.time_record(start)
 

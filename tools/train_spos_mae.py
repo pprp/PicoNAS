@@ -125,6 +125,7 @@ def main():
 
     # print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' %
     #       ((params / 1e6), (flops / 1e6)))
+
     model = model.to(device)
 
     trainer = MAETrainer(

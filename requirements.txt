@@ -1,6 +1,6 @@
 archai
 torch
-torchvision 
+torchvision
 fvcore==0.1.5.post20210630
 pytest==6.2.4
 pytorch-msssim==0.2.1
@@ -13,4 +13,4 @@ ConfigSpace
 mmcv
 einops
 timm
-thop 
+thop

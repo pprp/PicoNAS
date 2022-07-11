@@ -121,7 +121,8 @@ def convert_naslib_to_str(naslib_object):
     }
 
     cell = naslib_object.edges[2, 3].op
-    edge_op_dict = {(i, j): ops_to_nb201[cell.edges[i, j]['op'].get_op_name] for i, j in cell.edges}
+    edge_op_dict = {(i, j): ops_to_nb201[cell.edges[i, j]['op'].get_op_name]
+                    for i, j in cell.edges}
     op_edge_list = [
         '{}~{}'.format(edge_op_dict[(i, j)], i - 1)
         for i, j in sorted(edge_op_dict, key=lambda x: x[1])

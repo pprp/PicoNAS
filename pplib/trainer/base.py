@@ -1,29 +1,29 @@
 import os
 import time
 import warnings
-from typing import List
+from typing import List, Tuple
 
 import torch
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
+import pplib.utils.utils as utils
 from pplib.utils.logging import get_logger
+from pplib.utils.utils import AvgrageMeter, accuracy
 
 
 class BaseTrainer:
     """Trainer
 
-    Class that eases the training of a PyTorch model.
-
     Args:
-        model : torch.Module
-            The model to train.
-        criterion : torch.Module
-            Loss function criterion.
-        optimizer : torch.optim
-            Optimizer to perform the parameters update.
-        logger_kwards : dict
-            Args for ..
+        model ([type]): [description]
+        mutator ([type]): [description]
+        criterion ([type]): [description]
+        optimizer ([type]): [description]
+        scheduler ([type]): [description]
+        device ([type], optional): [description]. Defaults to None.
+        log_name (str, optional): [description]. Defaults to 'base'.
+        searching (bool, optional): [description]. Defaults to True.
     """
 
     def __init__(self,
@@ -35,14 +35,16 @@ class BaseTrainer:
                  device=None,
                  log_name='base',
                  searching: bool = True):
+
         self.model = model
         self.mutator = mutator
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.device = self._get_device(device)
+        self.device = self._get_device(device) if device is None else device
         self.model.to(self.device)
         self.searching = searching
+        self.log_name = log_name
 
         # attributes
         self.train_loss_: List = []
@@ -77,10 +79,18 @@ class BaseTrainer:
             epoch_start_time = time.time()
 
             # train
-            tr_loss = self._train(train_loader)
+            tr_loss, top1_tacc, top5_tacc = self._train(train_loader)
 
             # validate
-            val_loss = self._validate(val_loader)
+            val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
+
+            # save ckpt
+            if epoch % 10 == 0:
+                utils.save_checkpoint({
+                    'state_dict': self.model.state_dict(),
+                },
+                                      epoch + 1,
+                                      tag=self.log_name + '_macro')
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)
@@ -88,17 +98,13 @@ class BaseTrainer:
             epoch_time = time.time() - epoch_start_time
 
             self.logger.info(
-                f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss.item()} Val loss: {val_loss.item()}'  # noqa: E501
+                f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
             self.writer.add_scalar(
-                'train_epoch_loss',
-                tr_loss.item(),
-                global_step=self.current_epoch)
+                'train_epoch_loss', tr_loss, global_step=self.current_epoch)
             self.writer.add_scalar(
-                'valid_epoch_loss',
-                val_loss.item(),
-                global_step=self.current_epoch)
+                'valid_epoch_loss', val_loss, global_step=self.current_epoch)
 
             self.scheduler.step()
 
@@ -123,45 +129,53 @@ class BaseTrainer:
             mode (str, optional): _description_. Defaults to 'tensor'.
         """
         if mode == 'loss':
-            return self.loss(batch_inputs)
+            return self._loss(batch_inputs)
         elif mode == 'tensor':
             return self._forward(batch_inputs)
         elif mode == 'predict':
-            return self.predict(batch_inputs)
+            return self._predict(batch_inputs)
         else:
             raise RuntimeError(f'Invalid mode: {mode}')
 
-    def predict(self, batch_inputs):
+    def _predict(self, batch_inputs):
         """Network forward step. Low Level API"""
-        features, labels = batch_inputs
-        features, labels = self._to_device(features, labels, self.device)
+        inputs, labels = batch_inputs
+        inputs, labels = self._to_device(inputs, labels, self.device)
         # forward pass
-        out = self.model(features)
+        out = self.model(inputs)
         return out
 
-    def loss(self, batch_inputs) -> Tensor:
+    def _loss(self, batch_inputs) -> Tuple:
         """Forward and compute loss. Low Level API"""
         _, labels = batch_inputs
         out = self._forward(batch_inputs)
-        return self._compute_loss(out, labels)
+        return self._compute_loss(out, labels), out
 
     def _forward(self, batch_inputs) -> Tensor:
         """Network forward step. Low Level API"""
-        features, labels = batch_inputs
-        features, labels = self._to_device(features, labels, self.device)
+        inputs, labels = batch_inputs
+        inputs, labels = self._to_device(inputs, labels, self.device)
         # forward pass
-        out = self.model(features)
+        out = self.model(inputs)
         return out
 
     def _train(self, loader):
         self.model.train()
 
-        for i, batch_inputs in enumerate(loader):
-            # move to device
-            loss = self.forward(batch_inputs, mode='loss')
+        train_loss = 0.
+        top1_tacc = AvgrageMeter()
+        top5_tacc = AvgrageMeter()
+
+        for step, batch_inputs in enumerate(loader):
+            # get image and labels
+            inputs, labels = batch_inputs
+            inputs, labels = self._to_device(inputs, labels, self.device)
 
             # remove gradient from previous passes
             self.optimizer.zero_grad()
+
+            # compute loss
+            loss, outputs = self.forward(batch_inputs, mode='loss')
 
             # backprop
             loss.backward()
@@ -169,29 +183,83 @@ class BaseTrainer:
             # parameters update
             self.optimizer.step()
 
-            if i % 20 == 0:
-                self.logger.info(f'Step: {i} \t Train loss: {loss.item()}')
+            # compute accuracy
+            n = inputs.size(0)
+            top1, top5 = accuracy(outputs, labels, topk=(1, 5))
+            top1_tacc.update(top1.item(), n)
+            top5_tacc.update(top5.item(), n)
+
+            # accumulate loss
+            train_loss += loss.item()
+
+            # print every 20 iter
+            if step % 20 == 0:
+                self.logger.info(
+                    f'Step: {step} \t Train loss: {loss.item()} Top1 acc: {top1_tacc.avg} Top5 acc: {top5_tacc.avg}'
+                )
                 self.writer.add_scalar(
                     'train_step_loss',
                     loss.item(),
-                    global_step=i + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader))
+                self.writer.add_scalar(
+                    'top1_train_acc',
+                    top1_tacc.avg,
+                    global_step=step + self.current_epoch * len(loader))
+                self.writer.add_scalar(
+                    'top5_train_acc',
+                    top5_tacc.avg,
+                    global_step=step + self.current_epoch * len(loader))
 
-        return loss.item()
-
-    def _to_device(self, features, labels, device):
-        return features.to(device), labels.to(device)
+        return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
     def _validate(self, loader):
         self.model.eval()
 
+        val_loss = 0.0
+        top1_vacc = AvgrageMeter()
+        top5_vacc = AvgrageMeter()
+
         with torch.no_grad():
-            for batch_inputs in loader:
+            for step, batch_inputs in enumerate(loader):
+                inputs, labels = batch_inputs
+                inputs, labels = self._to_device(inputs, labels, self.device)
+
                 # move to device
-                loss = self.forward(batch_inputs, mode='loss')
-        return loss.item()
+                outputs = self.forward(batch_inputs, mode='predict')
+
+                # compute loss
+                loss = self._compute_loss(outputs, labels)
+
+                # compute accuracy
+                n = inputs.size(0)
+                top1, top5 = accuracy(outputs, labels, topk=(1, 5))
+                top1_vacc.update(top1.item(), n)
+                top5_vacc.update(top5.item(), n)
+
+                # accumulate loss
+                val_loss += loss.item()
+
+                # print every 20 iter
+                if step % 20 == 0:
+                    self.logger.info(
+                        f'Step: {step} \t Val loss: {loss.item()} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
+                    )
+                    self.writer.add_scalar(
+                        'val_step_loss',
+                        loss.item(),
+                        global_step=step + self.current_epoch * len(loader))
+                    self.writer.add_scalar(
+                        'top1_val_acc',
+                        top1_vacc.avg,
+                        global_step=step + self.current_epoch * len(loader))
+                    self.writer.add_scalar(
+                        'top5_val_acc',
+                        top5_vacc.avg,
+                        global_step=step + self.current_epoch * len(loader))
+
+        return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def _compute_loss(self, real, target):
-        # print(real.shape, target.shape)
         real, target = self._to_device(real, target, self.device)
         loss = self.criterion(real, target)
         return loss
@@ -203,5 +271,7 @@ class BaseTrainer:
             warnings.warn(msg)
         else:
             dev = device
-
         return dev
+
+    def _to_device(self, inputs, labels, device):
+        return inputs.to(device), labels.to(device)
