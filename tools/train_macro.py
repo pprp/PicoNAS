@@ -12,6 +12,7 @@ from pplib.datasets import build_dataloader
 from pplib.models import MacroBenchmarkSuperNet
 from pplib.nas.mutators import OneShotMutator
 from pplib.trainer import MacroTrainer
+from pplib.utils.bn_calibrate import separate_bn_params
 from pplib.utils.config import Config
 
 # from torchsummary import summary
@@ -108,8 +109,22 @@ def main():
     mutator.prepare_from_supernet(model)
 
     criterion = nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
-                                cfg.momentum, cfg.weight_decay)
+
+    # support bn calibration
+    base_params, bn_params = separate_bn_params(model)
+    optimizer = torch.optim.SGD([{
+        'params': base_params,
+        'weight_decay': cfg.weight_decay
+    }, {
+        'params': bn_params,
+        'weight_decay': 0.0
+    }],
+                                lr=cfg.learning_rate,
+                                momentum=cfg.momentum)
+
+    # optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
+    #                             cfg.momentum, cfg.weight_decay)
+
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lambda epoch: 1 - (epoch / cfg.epochs))
 

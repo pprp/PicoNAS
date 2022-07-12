@@ -4,12 +4,13 @@ import random
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from pplib.models.nasbench101.nb101_blocks import ConvBnRelu, MaxPool
 from pplib.nas.mutables import OneShotPathOP
 
+
 class Cell(nn.Module):
+
     def __init__(self, inplanes, outplanes, shadow_bn):
         super(Cell, self).__init__()
         self.inplanes = inplanes
@@ -17,7 +18,7 @@ class Cell(nn.Module):
         self.shadow_bn = shadow_bn
 
         nodes = nn.ModuleList([])
-        # 12 + 1 
+        # 12 + 1
 
         for i in range(4):
             nodes.append(ConvBnRelu(self.inplanes, self.outplanes, 1))
@@ -38,29 +39,42 @@ class Cell(nn.Module):
 
 
 class NASBench101(nn.Module):
+
     def __init__(self, init_channels, classes=10, shadow_bn=True):
         super(NASBench101, self).__init__()
         self.init_channels = init_channels
-        
+
         self.stem = nn.Sequential(
-            nn.Conv2d(3, self.init_channels, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(self.init_channels),
-            nn.ReLU(inplace=True)
-        )
-        
+            nn.Conv2d(
+                3,
+                self.init_channels,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False), nn.BatchNorm2d(self.init_channels),
+            nn.ReLU(inplace=True))
+
         self.cell_list = nn.ModuleList([])
         for i in range(9):
             if i in [3, 6]:
-                # downsample 
-                self.cell_list.append(Cell(self.init_channels, self.init_channels * 2, shadow_bn=shadow_bn))
+                # downsample
+                self.cell_list.append(
+                    Cell(
+                        self.init_channels,
+                        self.init_channels * 2,
+                        shadow_bn=shadow_bn))
                 self.init_channels *= 2
             else:
-                self.cell_list.append(Cell(self.init_channels, self.init_channels, shadow_bn=shadow_bn))
+                self.cell_list.append(
+                    Cell(
+                        self.init_channels,
+                        self.init_channels,
+                        shadow_bn=shadow_bn))
 
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(self.init_channels, classes)
         self._initialize_weights()
-    
+
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -76,7 +90,7 @@ class NASBench101(nn.Module):
                 init_range = 1.0 / math.sqrt(n)
                 m.weight.data.uniform_(-init_range, init_range)
                 m.bias.data.zero_()
-    
+
     def forward(self, x):
         x = self.stem(x)
         for i in range(9):
@@ -88,13 +102,14 @@ class NASBench101(nn.Module):
         out = self.classifier(x)
         return out
 
+
 def random_choice(m):
     assert m >= 1
-    
+
     choice = {}
-    m_ = np.random.randint(low=1, high=m+1, size=1)[0]
+    m_ = np.random.randint(low=1, high=m + 1, size=1)[0]
     path_list = random.sample(range(m), m_)
-    
+
     ops = []
     for i in range(m_):
         ops.append(random.sample(range(3), 1)[0])
@@ -102,8 +117,10 @@ def random_choice(m):
 
     choice['op'] = ops
     choice['path'] = path_list
-    
+
     return choice
+
+
 if __name__ == '__main__':
     # ['conv1x1-bn-relu', 'conv3x3-bn-relu', 'maxpool3x3']
     # choice = {'path': [0, 1, 2],  # a list of shape (4, )
@@ -113,12 +130,12 @@ if __name__ == '__main__':
     from pplib.nas.mutators import OneShotMutator
     choice = random_choice(3)
     print(choice)
-    
+
     model = NASBench101(init_channels=128)
     mutator = OneShotMutator()
     mutator.prepare_from_supernet(model)
 
-    rand_subnet = mutator.random_subnet 
+    rand_subnet = mutator.random_subnet
     mutator.set_subnet(rand_subnet)
 
     # import ipdb; ipdb.set_trace()

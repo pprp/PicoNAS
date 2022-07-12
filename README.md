@@ -42,9 +42,9 @@ python tools/eval_rank.py
 
 ## TODO LIST
 
-- [ ] NASBench201
+- [x] NASBench201
 - [ ] LandmarkReg
-- [ ] BNNAS
+- [x] BNNAS
 - [ ] Support Alias for DiffMutables
 - [x] AngleNAS
   - [ ] AngleNAS for NASBench201
@@ -55,13 +55,14 @@ python tools/eval_rank.py
 - [x] MacroBenchmark
 - [x] SAM optimizer
 - [ ] KD
+- [ ] Save path
 
 ## Thanks
 
 - MMRazor: https://github.com/open-mmlab/mmrazor
 - SimMIM: https://github.com/microsoft/SimMIM
 - NASLib: https://github.com/automl/NASLib
-
+- MixPath: https://github.com/xiaomi-automl/MixPath
 
 ## NASLib
 
