@@ -43,6 +43,65 @@ class MacroTrainer(BaseTrainer):
         self.num_choices = num_choices
         self.num_layers = num_layers
 
+    def _train(self, loader):
+        self.model.train()
+
+        train_loss = 0.
+        top1_tacc = AvgrageMeter()
+        top5_tacc = AvgrageMeter()
+
+        for step, batch_inputs in enumerate(loader):
+            # get image and labels
+            inputs, labels = batch_inputs
+            inputs, labels = self._to_device(inputs, labels, self.device)
+
+            # remove gradient from previous passes
+            self.optimizer.zero_grad()
+
+            # compute loss
+            loss, outputs = self.forward(batch_inputs, mode='loss')
+
+            # backprop
+            loss.backward()
+
+            # clear grad 
+            for p in self.model.parameters():
+                if p.grad is not None and p.grad.sum() == 0:
+                    p.grad = None 
+
+            # parameters update
+            self.optimizer.step()
+
+            # compute accuracy
+            n = inputs.size(0)
+            top1, top5 = accuracy(outputs, labels, topk=(1, 5))
+            top1_tacc.update(top1.item(), n)
+            top5_tacc.update(top5.item(), n)
+
+            # accumulate loss
+            train_loss += loss.item()
+
+            # print every 20 iter
+            if step % self.print_freq == 0:
+                self.logger.info(
+                    f'Step: {step} \t Train loss: {loss.item()} Top1 acc: {top1_tacc.avg} Top5 acc: {top5_tacc.avg}'
+                )
+                self.writer.add_scalar(
+                    'train_step_loss',
+                    loss.item(),
+                    global_step=step + self.current_epoch * len(loader))
+                self.writer.add_scalar(
+                    'top1_train_acc',
+                    top1_tacc.avg,
+                    global_step=step + self.current_epoch * len(loader))
+                self.writer.add_scalar(
+                    'top5_train_acc',
+                    top5_tacc.avg,
+                    global_step=step + self.current_epoch * len(loader))
+
+        return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
+
+
     def _forward(self, batch_inputs):
         """Network forward step. Low Level API"""
         features, labels = batch_inputs
