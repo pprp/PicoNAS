@@ -64,10 +64,10 @@ class MacroTrainer(BaseTrainer):
             # backprop
             loss.backward()
 
-            # clear grad 
+            # clear grad
             for p in self.model.parameters():
                 if p.grad is not None and p.grad.sum() == 0:
-                    p.grad = None 
+                    p.grad = None
 
             # parameters update
             self.optimizer.step()
@@ -100,7 +100,6 @@ class MacroTrainer(BaseTrainer):
                     global_step=step + self.current_epoch * len(loader))
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
-
 
     def _forward(self, batch_inputs):
         """Network forward step. Low Level API"""
