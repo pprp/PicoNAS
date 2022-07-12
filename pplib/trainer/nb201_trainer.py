@@ -2,9 +2,9 @@ from typing import Dict
 
 import torch
 
+from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
 from pplib.utils.utils import AvgrageMeter, accuracy
-from pplib.models.nasbench201 import OneShotNASBench201Network
 from .base import BaseTrainer
 
 
@@ -37,7 +37,6 @@ class NB201Trainer(BaseTrainer):
     ):
         super().__init__(model, mutator, criterion, optimizer, scheduler,
                          device, log_name, searching)
-
 
     def _forward(self, batch_inputs):
         """Network forward step. Low Level API"""
@@ -76,7 +75,8 @@ class NB201Trainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 inputs, labels = batch_inputs
-                inputs, labels = self._to_device(inputs, labels, device=self.device)
+                inputs, labels = self._to_device(
+                    inputs, labels, device=self.device)
 
                 # move to device
                 outputs = self._predict(batch_inputs, subnet_dict=subnet_dict)
