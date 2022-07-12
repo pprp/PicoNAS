@@ -80,6 +80,7 @@ class MacroTrainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 inputs, labels = batch_inputs
+                inputs, labels = self._to_device(inputs, labels, device=self.device)
 
                 # move to device
                 outputs = self._predict(batch_inputs, subnet_dict=subnet_dict)
@@ -89,7 +90,7 @@ class MacroTrainer(BaseTrainer):
 
                 # compute accuracy
                 n = inputs.size(0)
-                top1, top5 = accuracy(outputs, labels, top1=(1, 5))
+                top1, top5 = accuracy(outputs, labels, topk=(1, 5))
                 top1_vacc.update(top1.item(), n)
                 top5_vacc.update(top5.item(), n)
 

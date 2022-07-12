@@ -20,9 +20,10 @@ def load_json(path):
     return arch_dict
 
 
-def compuate_rank_consistency(sampled_dict: Dict,
+def compuate_rank_consistency(loader, 
+                              sampled_dict: Dict,
                               trainer: MacroTrainer,
-                              type: str = 'test_acc') -> None:
+                              type: str = 'val_acc') -> None:
     """compute rank consistency of different types of indicators."""
     assert type in ['test_acc', 'MMACs', 'val_acc', 'Params'], \
         f'Not support type {type}.'
@@ -35,9 +36,9 @@ def compuate_rank_consistency(sampled_dict: Dict,
     for i, (k, v) in enumerate(sampled_dict.items()):
         print(f'evaluating the {i}th architecture.')
         subnet_dict = convert_arch2dict(k)
-        top1_acc, loss = trainer.valid(epoch=0, subnet_dict=subnet_dict)
+        loss, top1_acc, top5_acc = trainer.metric_score(loader, subnet_dict=subnet_dict)
 
-        supernet_indicator_list.append(loss)
+        supernet_indicator_list.append(top1_acc)
         true_indicator_list.append(v[type])
 
     kt = kendalltau(true_indicator_list, supernet_indicator_list)
@@ -117,13 +118,12 @@ if __name__ == '__main__':
     mutator.prepare_from_supernet(supernet)
 
     # build valid dataloader
-    dataloader = {}
-    dataloader['val'] = build_dataloader(config=val_config)
+    dataloader = build_dataloader(config=val_config)
 
     # get trainer
     trainer = MacroTrainer(
-        supernet, mutator=mutator, dataloader=dataloader, device=device)
+        supernet, mutator=mutator, device=device)
 
     # compute the rank consistency of supernet
-    compuate_rank_consistency(
+    compuate_rank_consistency(loader=dataloader,
         sampled_dict=sampled_dict, trainer=trainer, type=args.type)

@@ -4,6 +4,7 @@ import warnings
 from typing import List, Tuple
 
 import torch
+import torch.nn as nn 
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
@@ -38,7 +39,7 @@ class BaseTrainer:
 
         self.model = model
         self.mutator = mutator
-        self.criterion = criterion
+        self.criterion = nn.CrossEntropyLoss() if criterion is None else criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = self._get_device(device) if device is None else device
