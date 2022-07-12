@@ -80,7 +80,8 @@ class MacroTrainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 inputs, labels = batch_inputs
-                inputs, labels = self._to_device(inputs, labels, device=self.device)
+                inputs, labels = self._to_device(
+                    inputs, labels, device=self.device)
 
                 # move to device
                 outputs = self._predict(batch_inputs, subnet_dict=subnet_dict)

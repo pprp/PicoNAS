@@ -4,7 +4,7 @@ import warnings
 from typing import List, Tuple
 
 import torch
-import torch.nn as nn 
+import torch.nn as nn
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
@@ -35,17 +35,20 @@ class BaseTrainer:
                  scheduler,
                  device=None,
                  log_name='base',
-                 searching: bool = True):
+                 searching: bool = True,
+                 print_freq: int = 100):
 
         self.model = model
         self.mutator = mutator
-        self.criterion = nn.CrossEntropyLoss() if criterion is None else criterion
+        self.criterion = nn.CrossEntropyLoss(
+        ) if criterion is None else criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = self._get_device(device) if device is None else device
         self.model.to(self.device)
         self.searching = searching
         self.log_name = log_name
+        self.print_freq = print_freq
 
         # attributes
         self.train_loss_: List = []
@@ -194,7 +197,7 @@ class BaseTrainer:
             train_loss += loss.item()
 
             # print every 20 iter
-            if step % 20 == 0:
+            if step % self.print_freq == 0:
                 self.logger.info(
                     f'Step: {step} \t Train loss: {loss.item()} Top1 acc: {top1_tacc.avg} Top5 acc: {top5_tacc.avg}'
                 )
@@ -241,7 +244,7 @@ class BaseTrainer:
                 val_loss += loss.item()
 
                 # print every 20 iter
-                if step % 20 == 0:
+                if step % self.print_freq == 0:
                     self.logger.info(
                         f'Step: {step} \t Val loss: {loss.item()} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
                     )

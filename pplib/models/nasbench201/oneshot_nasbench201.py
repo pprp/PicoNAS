@@ -244,8 +244,8 @@ class NASBench201Cell(nn.Module):
             node_ops = nn.ModuleList()
             for layer_idx in range(0, i):
                 candidate_op = nn.ModuleDict({
-                    'none':
-                    Zero(C_in, C_out, stride),
+                    # 'none':
+                    # Zero(C_in, C_out, stride),
                     'avg_pool_3x3':
                     Pooling(C_in, C_out, stride if layer_idx == 0 else 1,
                             bn_affine, bn_momentum, bn_track_running_stats),

@@ -20,7 +20,7 @@ def load_json(path):
     return arch_dict
 
 
-def compuate_rank_consistency(loader, 
+def compuate_rank_consistency(loader,
                               sampled_dict: Dict,
                               trainer: MacroTrainer,
                               type: str = 'val_acc') -> None:
@@ -36,7 +36,8 @@ def compuate_rank_consistency(loader,
     for i, (k, v) in enumerate(sampled_dict.items()):
         print(f'evaluating the {i}th architecture.')
         subnet_dict = convert_arch2dict(k)
-        loss, top1_acc, top5_acc = trainer.metric_score(loader, subnet_dict=subnet_dict)
+        loss, top1_acc, top5_acc = trainer.metric_score(
+            loader, subnet_dict=subnet_dict)
 
         supernet_indicator_list.append(top1_acc)
         true_indicator_list.append(v[type])
@@ -121,9 +122,11 @@ if __name__ == '__main__':
     dataloader = build_dataloader(config=val_config)
 
     # get trainer
-    trainer = MacroTrainer(
-        supernet, mutator=mutator, device=device)
+    trainer = MacroTrainer(supernet, mutator=mutator, device=device)
 
     # compute the rank consistency of supernet
-    compuate_rank_consistency(loader=dataloader,
-        sampled_dict=sampled_dict, trainer=trainer, type=args.type)
+    compuate_rank_consistency(
+        loader=dataloader,
+        sampled_dict=sampled_dict,
+        trainer=trainer,
+        type=args.type)

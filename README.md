@@ -42,18 +42,19 @@ python tools/eval_rank.py
 
 ## TODO LIST
 
+- [ ] NASBench201
+- [ ] LandmarkReg
+- [ ] BNNAS
+- [ ] Support Alias for DiffMutables
+- [x] AngleNAS
+  - [ ] AngleNAS for NASBench201
 - [x] SIMMIM
 - [ ] SupMIM
-- [x] NASBench201
 - [x] SPOS
 - [ ] FairNAS
-- [x] AngleNAS
-- [ ] BNNAS
-- [ ] LandmarkReg
 - [x] MacroBenchmark
 - [x] SAM optimizer
 - [ ] KD
-
 
 ## Thanks
 
