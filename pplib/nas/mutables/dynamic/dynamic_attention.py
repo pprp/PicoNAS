@@ -1,6 +1,8 @@
 from typing import Dict, NamedTuple, Optional
 
-import torch.nn as nn
+import torch
+import torch.nn.functional as F
+from mmcv.cnn.bricks.transformer import MultiheadAttention
 
 from pplib.nas.mutables.dynamic_mutable import DynamicMutable
 from .dynamic_linear import LinearSuper
@@ -13,187 +15,82 @@ class AttentionSample(NamedTuple):
     sample_num_heads: int
     sample_in_embed_dim: int
 
-
-class DynamicAttention(DynamicMutable):
-
-    def __init__(self,
-                 super_embed_dim,
-                 num_heads=8,
-                 qkv_bias=False,
-                 qk_scale=None,
-                 attn_drop=0.,
-                 proj_drop=0.,
-                 normalization=False,
-                 relative_position=False,
-                 num_patches=None,
-                 max_relative_position=14,
-                 scale=False,
-                 change_qkv=False,
-                 alias: Optional[str] = None,
-                 module_kwargs: Optional[Dict[str, Dict]] = None,
-                 init_cfg: Optional[Dict] = None) -> None:
-        """ """
-        self.num_heads = num_heads
-        head_dim = super_embed_dim // num_heads
-        self.scale = qk_scale or head_dim**-0.5
-        self.super_embed_dim = super_embed_dim
-
-        self.fc_scale = scale
-        self.change_qkv = change_qkv
-        if change_qkv:
-            self.qkv = qkv_super(
-                super_embed_dim, 3 * super_embed_dim, bias=qkv_bias)
-        else:
-            self.qkv = LinearSuper(
-                super_embed_dim, 3 * super_embed_dim, bias=qkv_bias)
-
-        self.relative_position = relative_position
-        if self.relative_position:
-            self.rel_pos_embed_k = RelativePosition2D_super(
-                super_embed_dim // num_heads, max_relative_position)
-            self.rel_pos_embed_v = RelativePosition2D_super(
-                super_embed_dim // num_heads, max_relative_position)
-        self.max_relative_position = max_relative_position
-        self.sample_qk_embed_dim = None
-        self.sample_v_embed_dim = None
-        self.sample_num_heads = None
-        self.sample_scale = None
-        self.sample_in_embed_dim = None
-
-        self.proj = LinearSuper(super_embed_dim, super_embed_dim)
-
-        self.attn_drop = nn.Dropout(attn_drop)
-        self.proj_drop = nn.Dropout(proj_drop)
+# torch 的 MHA 中逻辑过于复杂，这里是基于 mmcls 的 MHA 开发的
 
 
-class AttentionSuper(nn.Module):
+class DynamicMHA(MultiheadAttention):
 
-    def __init__(self,
-                 super_embed_dim,
-                 num_heads=8,
-                 qkv_bias=False,
-                 qk_scale=None,
-                 attn_drop=0.,
-                 proj_drop=0.,
-                 normalization=False,
-                 relative_position=False,
-                 num_patches=None,
-                 max_relative_position=14,
-                 scale=False,
-                 change_qkv=False):
-        super().__init__()
-        self.num_heads = num_heads
-        head_dim = super_embed_dim // num_heads
-        self.scale = qk_scale or head_dim**-0.5
-        self.super_embed_dim = super_embed_dim
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # auto former 的官方实现中 head dims 是固定的 64
+        # 这里的实现是 head dims 可搜索
+        self.mutable_head_dims = OrderChannelMutable(self.head_dims, candidate_choices=[
+                                                     int(0.5 * self.head_dims), self.head_dims])
+        self.mutable_embed_dims = OrderChannelMutable(
+            self.embed_dims, candidate_choices=[320, 384, 448])
+        # 还没设计实现 MutableValue，先拿一个 list 简单测试一下
+        self.mutable_num_heads = [5, 6, 7]
+        # TODO del, just for test
+        self.mutable_head_dims.current_choice = int(0.5 * self.head_dims)
 
-        self.fc_scale = scale
-        self.change_qkv = change_qkv
-        if change_qkv:
-            self.qkv = qkv_super(
-                super_embed_dim, 3 * super_embed_dim, bias=qkv_bias)
-        else:
-            self.qkv = LinearSuper(
-                super_embed_dim, 3 * super_embed_dim, bias=qkv_bias)
+    def _get_q_out_mask(self):
+        # TODO sample, min is just for test.
+        active_num_heads = min(self.mutable_num_heads)
+        active_heads_mask = torch.cat(
+            [self.mutable_head_dims.mask] * active_num_heads, dim=0)
 
-        self.relative_position = relative_position
-        if self.relative_position:
-            self.rel_pos_embed_k = RelativePosition2D_super(
-                super_embed_dim // num_heads, max_relative_position)
-            self.rel_pos_embed_v = RelativePosition2D_super(
-                super_embed_dim // num_heads, max_relative_position)
-        self.max_relative_position = max_relative_position
-        self.sample_qk_embed_dim = None
-        self.sample_v_embed_dim = None
-        self.sample_num_heads = None
-        self.sample_scale = None
-        self.sample_in_embed_dim = None
+        inactive_num_heads = max(self.mutable_num_heads) - active_num_heads
+        inactive_mask = torch.zeros_like(self.mutable_head_dims.mask).bool()
+        inactive_heads_mask = torch.cat(
+            [inactive_mask] * inactive_num_heads, dim=0)
 
-        self.proj = LinearSuper(super_embed_dim, super_embed_dim)
+        q_out_mask = torch.cat([active_heads_mask, inactive_heads_mask], dim=0)
 
-        self.attn_drop = nn.Dropout(attn_drop)
-        self.proj_drop = nn.Dropout(proj_drop)
+        return q_out_mask
 
-    def set_sample_config(self,
-                          sample_q_embed_dim=None,
-                          sample_num_heads=None,
-                          sample_in_embed_dim=None):
+    def _get_qkv_weight_bias(self):
+        q_out_mask = self._get_q_out_mask()
+        out_mask = torch.cat([q_out_mask] * 3, dim=0)
+        in_mask = self.mutable_embed_dims.mask
 
-        self.sample_in_embed_dim = sample_in_embed_dim
-        self.sample_num_heads = sample_num_heads
-        if not self.change_qkv:
-            self.sample_qk_embed_dim = self.super_embed_dim
-            self.sample_scale = (sample_in_embed_dim //
-                                 self.sample_num_heads)**-0.5
+        weight = self.qkv.weight[out_mask][:, in_mask]
+        bias = self.qkv.bias[out_mask] if self.qkv.bias is not None else None
+        return weight, bias
 
-        else:
-            self.sample_qk_embed_dim = sample_q_embed_dim
-            self.sample_scale = (self.sample_qk_embed_dim //
-                                 self.sample_num_heads)**-0.5
+    def _get_proj_weight_bias(self):
+        out_mask = self.mutable_embed_dims.mask
+        in_mask = self._get_q_out_mask()
 
-        self.qkv.set_sample_config(
-            sample_in_dim=sample_in_embed_dim,
-            sample_out_dim=3 * self.sample_qk_embed_dim)
-        self.proj.set_sample_config(
-            sample_in_dim=self.sample_qk_embed_dim,
-            sample_out_dim=sample_in_embed_dim)
-        if self.relative_position:
-            self.rel_pos_embed_k.set_sample_config(self.sample_qk_embed_dim //
-                                                   sample_num_heads)
-            self.rel_pos_embed_v.set_sample_config(self.sample_qk_embed_dim //
-                                                   sample_num_heads)
-
-    def calc_sampled_param_num(self):
-
-        return 0
-
-    def get_complexity(self, sequence_length):
-        total_flops = 0
-        total_flops += self.qkv.get_complexity(sequence_length)
-        # attn
-        total_flops += sequence_length * sequence_length * self.sample_qk_embed_dim  # noqa: E501
-        # x
-        total_flops += sequence_length * sequence_length * self.sample_qk_embed_dim  # noqa: E501
-        total_flops += self.proj.get_complexity(sequence_length)
-        if self.relative_position:
-            total_flops += self.max_relative_position * sequence_length * \
-                sequence_length + sequence_length * sequence_length / 2.0
-            total_flops += self.max_relative_position * sequence_length * \
-                sequence_length + sequence_length * self.sample_qk_embed_dim / 2.0  # noqa: E501
-        return total_flops
+        weight = self.proj.weight[out_mask][:, in_mask]
+        bias = self.proj.bias[out_mask] if self.qkv.bias is not None else None
+        return weight, bias
 
     def forward(self, x):
-        B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.sample_num_heads,
-                                  -1).permute(2, 0, 3, 1, 4)
-        q, k, v = qkv[0], qkv[1], qkv[
-            2]  # make torchscript happy (cannot use tensor as tuple)
+        B, N, _ = x.shape
 
-        attn = (q @ k.transpose(-2, -1)) * self.sample_scale
-        if self.relative_position:
-            r_p_k = self.rel_pos_embed_k(N, N)
-            attn = attn + (q.permute(2, 0, 1, 3).reshape(N, self.sample_num_heads * B, -1) @ r_p_k.transpose(2, 1)) \
-                .transpose(1, 0).reshape(B, self.sample_num_heads, N, N) * self.sample_scale  # noqa: E501
+        qkv_weight, qkv_bias = self._get_qkv_weight_bias()
+        qkv = F.linear(x, qkv_weight, qkv_bias)
 
+        # TODO mutable value, min is just for test
+        current_num_heads = min(self.mutable_num_heads)
+
+        current_head_dims = self.mutable_head_dims.mask.sum()
+        current_embed_dims = self.mutable_embed_dims.mask.sum()
+        qkv = qkv.reshape(B, N, 3, current_num_heads,
+                          current_head_dims).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv[0], qkv[1], qkv[2]
+
+        attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
 
-        x = (attn @ v).transpose(1, 2).reshape(B, N, -1)
-        if self.relative_position:
-            r_p_v = self.rel_pos_embed_v(N, N)
-            attn_1 = attn.permute(2, 0, 1,
-                                  3).reshape(N, B * self.sample_num_heads, -1)
-            # The size of attention is (B, num_heads, N, N), reshape it to
-            # (N, B*num_heads, N) and do batch matmul with the relative
-            # position embedding of V (N, N, head_dim) get shape like
-            # (N, B*num_heads, head_dim). We reshape it to the same size
-            # as x (B, num_heads, N, hidden_dim)
-            x = x + (attn_1 @ r_p_v).transpose(1, 0).reshape(
-                B, self.sample_num_heads, N, -1).transpose(2, 1).reshape(
-                    B, N, -1)
+        x = (attn @ v).transpose(1, 2).reshape(B, N,
+                                               current_num_heads * current_head_dims)
+        proj_weight, proj_bias = self._get_proj_weight_bias()
+        x = F.linear(x, proj_weight, proj_bias)
 
-        if self.fc_scale:
-            x = x * (self.super_embed_dim / self.sample_qk_embed_dim)
-        x = self.proj(x)
-        x = self.proj_drop(x)
+        x = self.out_drop(self.proj_drop(x))
+
+        if self.v_shortcut:
+            x = v.squeeze(1) + x
         return x

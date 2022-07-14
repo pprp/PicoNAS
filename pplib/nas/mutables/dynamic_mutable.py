@@ -7,12 +7,9 @@ from .oneshot_mutable import CHOICE_TYPE, CHOSEN_TYPE, OneShotMutable
 class DynamicMutable(OneShotMutable[CHOICE_TYPE, CHOSEN_TYPE]):
     """Base class of dynamic mutables.
 
-
     Note: autoformer -> ours
         sample_parameters -> sample_parameters
         set_sample_config -> set_forward_args
-        calc_sampled_param_num -> calc_sampled_params
-        get_complexity -> calc_sampled_flops
 
     Args:
         module_kwargs (Optional[Dict[str, Dict]], optional): _description_.
