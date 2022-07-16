@@ -32,18 +32,25 @@ class MutableValue(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         """Sort candidates list"""
         self._candidates = sorted(self._candidates)
 
-    @property
-    def current_value(self, mode: str = 'max') -> Any:
+    def sample_value(self, mode: str = 'max') -> Any:
         """Get current value based on mode."""
-        if self._chosen is not None:
-            return self._chosen
+        assert mode in self.supported_mode, \
+            f'The current mode {mode} is not supported.' \
+            f'Supported mode are {self.supported_mode}.'
+
+        if self._is_fixed:
+            self._chosen = self._chosen
 
         if mode == 'max':
-            return self._candidates[-1]
+            self._chosen = self._candidates[-1]
         elif mode == 'min':
-            return self._candidates[0]
+            self._chosen = self._candidates[0]
         elif mode == 'random':
-            return random.sample(self._candidates, k=1)[0]
+            self._chosen = random.sample(self._candidates, k=1)[0]
+
+    @property
+    def current_value(self):
+        return self._chosen
 
     @property
     def choices(self) -> List[CHOSEN_TYPE]:
@@ -57,4 +64,5 @@ class MutableValue(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         Note:
             This operation is irreversible.
         """
+        self._is_fixed = True
         self._chosen = chosen

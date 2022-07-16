@@ -10,6 +10,18 @@ from pplib.nas.mutators.base_mutator import MUTABLE_TYPE, BaseMutator
 
 
 class DynamicMutator(BaseMutator):
+    """_summary_
+
+    Args:
+        BaseMutator (_type_): _description_
+
+
+
+    Example:
+        mutator.prepare_from_supernet(supernet)
+        mutator.sample_value(mode='max')
+
+    """
 
     def __init__(self,
                  custom_group: Optional[List[List[str]]] = None,
@@ -33,16 +45,18 @@ class DynamicMutator(BaseMutator):
                 in your algorithm.
         """
         global_count = 0
-        for name, module in supernet.named_modules():
+        for _, module in supernet.named_modules():
             if isinstance(module, DynamicMutable):
                 attrs = vars(module)
-                for k, v in attrs.items():
+                for v in attrs.values():
                     if isinstance(v, MutableValue):
-                        self._search_group[global_count] = v 
-                        global_count += 1 
-                
-    def sample_value(self, value: DynamicMutable, mode: str = 'max') -> Any:
+                        self._search_group[global_count] = v
+                        global_count += 1
+
+    def sample_value(self, mode: str = 'max') -> Any:
         """Tranverse all of DynamicMutable and change value by mode."""
+        for id, mutable in self._search_group.items():
+            mutable.sample_value(mode)
 
     @property
     def mutable_class_type(self) -> Type[MUTABLE_TYPE]:
