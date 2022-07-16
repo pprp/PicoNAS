@@ -15,6 +15,7 @@ class AttentionSample(NamedTuple):
     sample_num_heads: int
     sample_in_embed_dim: int
 
+
 # torch 的 MHA 中逻辑过于复杂，这里是基于 mmcls 的 MHA 开发的
 
 
@@ -24,8 +25,9 @@ class DynamicMHA(MultiheadAttention):
         super().__init__(*args, **kwargs)
         # auto former 的官方实现中 head dims 是固定的 64
         # 这里的实现是 head dims 可搜索
-        self.mutable_head_dims = OrderChannelMutable(self.head_dims, candidate_choices=[
-                                                     int(0.5 * self.head_dims), self.head_dims])
+        self.mutable_head_dims = OrderChannelMutable(
+            self.head_dims,
+            candidate_choices=[int(0.5 * self.head_dims), self.head_dims])
         self.mutable_embed_dims = OrderChannelMutable(
             self.embed_dims, candidate_choices=[320, 384, 448])
         # 还没设计实现 MutableValue，先拿一个 list 简单测试一下
@@ -84,8 +86,8 @@ class DynamicMHA(MultiheadAttention):
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
 
-        x = (attn @ v).transpose(1, 2).reshape(B, N,
-                                               current_num_heads * current_head_dims)
+        x = (attn @ v).transpose(1, 2).reshape(
+            B, N, current_num_heads * current_head_dims)
         proj_weight, proj_bias = self._get_proj_weight_bias()
         x = F.linear(x, proj_weight, proj_bias)
 

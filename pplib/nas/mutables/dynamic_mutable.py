@@ -1,10 +1,12 @@
 from abc import abstractmethod
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
-from .oneshot_mutable import CHOICE_TYPE, CHOSEN_TYPE, OneShotMutable
+from pplib.nas.mutables.base_mutable import (CHOICE_TYPE, CHOSEN_TYPE,
+                                             BaseMutable)
+from .mutable_value import MutableValue
 
 
-class DynamicMutable(OneShotMutable[CHOICE_TYPE, CHOSEN_TYPE]):
+class DynamicMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
     """Base class of dynamic mutables.
 
     Note: autoformer -> ours
@@ -37,14 +39,6 @@ class DynamicMutable(OneShotMutable[CHOICE_TYPE, CHOSEN_TYPE]):
             choice (Dict): _description_
         """
 
-    def set_forward_args(self, choice: CHOICE_TYPE) -> None:
-        """Interface for modifying the choice using partial"""
-        return super().set_forward_args(choice)
-
     @abstractmethod
     def fix_chosen(self, chosen: CHOSEN_TYPE) -> None:
         return super().fix_chosen(chosen)
-
-    @abstractmethod
-    def sample_choice(self) -> CHOICE_TYPE:
-        """sample choice on dynamic mutable"""

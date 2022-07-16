@@ -119,4 +119,3 @@ class DynamicRelativePosion2D(DynamicMutable):
 
     def choices(self) -> List[RelativePositonSample]:
         return super().choices
-

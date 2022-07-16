@@ -14,4 +14,4 @@ srun --partition=mm_model \
     --kill-on-bad-exit=1 \
     --quotatype=auto \
     --async \
-    python 
+    python

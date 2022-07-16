@@ -125,4 +125,3 @@ class DynamicQKV(DynamicMutable[QKVSample, QKVSample]):
         total_flops = 0
         total_flops += x * np.prod(self.samples['weight'].size())
         return total_flops
-

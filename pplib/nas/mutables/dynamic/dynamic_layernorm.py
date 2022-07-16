@@ -3,7 +3,6 @@ from typing import Any, Dict, List, NamedTuple, Optional
 
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import LayerNorm
 
 from ..dynamic_mutable import DynamicMutable
 
@@ -96,4 +95,3 @@ class DynamicLayerNorm(DynamicMutable[LayerNormSample, LayerNormSample]):
     def sample_choice(self) -> LayerNormSample:
         """sample with random choice"""
         return LayerNormSample(random.randint(0, self.max_embed_dim))
-
