@@ -15,11 +15,10 @@ class DynamicMutator(BaseMutator):
     Args:
         BaseMutator (_type_): _description_
 
-
-
     Example:
         mutator.prepare_from_supernet(supernet)
         mutator.sample_value(mode='max')
+        mutator.fix_chosen(supernet)
 
     """
 
@@ -46,7 +45,7 @@ class DynamicMutator(BaseMutator):
         """
         global_count = 0
         for _, module in supernet.named_modules():
-            if isinstance(module, DynamicMutable):
+            if isinstance(module, self.mutable_class_type):
                 attrs = vars(module)
                 for v in attrs.values():
                     if isinstance(v, MutableValue):
@@ -57,6 +56,12 @@ class DynamicMutator(BaseMutator):
         """Tranverse all of DynamicMutable and change value by mode."""
         for id, mutable in self._search_group.items():
             mutable.sample_value(mode)
+
+    def fix_chosen(self, supernet) -> None:
+        """Tranverse all of Mutable and fix chosen operations."""
+        for _, module in supernet.named_modules():
+            if isinstance(module, self.mutable_class_type):
+                module.fix_chosen()
 
     @property
     def mutable_class_type(self) -> Type[MUTABLE_TYPE]:

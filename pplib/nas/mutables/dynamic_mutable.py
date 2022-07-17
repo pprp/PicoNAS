@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from pplib.nas.mutables.base_mutable import (CHOICE_TYPE, CHOSEN_TYPE,
                                              BaseMutable)
@@ -41,4 +41,19 @@ class DynamicMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
 
     @abstractmethod
     def fix_chosen(self, chosen: CHOSEN_TYPE) -> None:
-        return super().fix_chosen(chosen)
+        """fix chosen and remove useless operations"""
+
+    def get_value(self, value):
+        """Get value according to value type and kind.
+
+        Args:
+            value (Int / MutableValue): Input value.
+            mode (str, optional): decide the return value.
+                Defaults to None.
+        """
+        if isinstance(value, MutableValue):
+            return value.current_value
+        elif isinstance(value, int):
+            return value
+        else:
+            raise f'Not support {type(value)} currently.'
