@@ -49,7 +49,7 @@ class DynamicLinear(DynamicMixin, Linear):
         in_features = self.get_value(self.in_features)
         out_features = self.get_value(self.out_features)
         weights = self.weight[:out_features, :in_features]
-        bias = self.bias[:out_features]
+        bias = self.bias[:out_features] if self.bias is not None else None
         return weights, bias
 
     def forward(self, x: Tensor) -> Tensor:

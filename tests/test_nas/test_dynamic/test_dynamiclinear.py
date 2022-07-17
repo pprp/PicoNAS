@@ -40,6 +40,17 @@ class TestDynamicLinear(TestCase):
         outs = self.model.forward_fixed(ins)
         print(outs.shape)
 
+        with pytest.raises(AttributeError):
+            self.mutator.fix_chosen(self.model)
+
+        # test normal int
+        model = DynamicLinear(32, 16, bias=False)
+        ins = torch.randn(4, 32)
+        print(model(ins).shape)
+
+        # print choices
+        print(self.model.choices)
+
 
 if __name__ == '__main__':
     unittest.main()
