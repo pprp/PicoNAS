@@ -5,17 +5,18 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Linear
 
-from pplib.nas.mutables.dynamic_mutable import DynamicMutable
+from pplib.nas.mutables.dynamic_mixin import DynamicMixin
 from ..mutable_value import MutableValue
 
 
-class DynamicLinear(DynamicMutable, Linear):
+class DynamicLinear(DynamicMixin, Linear):
     """Dynamic mutable for Linear layer."""
 
     def __init__(self,
                  in_features: Union[int, MutableValue],
                  out_features: Union[int, MutableValue],
-                 bias: bool = True) -> None:
+                 bias: bool = True,
+                 mode: str = 'max') -> None:
 
         if isinstance(in_features, MutableValue):
             self.max_in_features = in_features.current_value(mode='max')
@@ -33,21 +34,19 @@ class DynamicLinear(DynamicMutable, Linear):
             raise f'The type of in_features {type(out_features)} is not' \
                   'supported, Only int or MutableValue is supported currently.'
 
-        super().__init__(
+        super(DynamicLinear, self).__init__(
             in_features=self.max_in_features,
             out_features=self.max_out_features,
             bias=bias)
-        DynamicMutable.__init__()
-
         self.in_features = in_features
         self.out_features = out_features
+        self._mode = mode
 
     def sample_parameters(self) -> None:
         in_features = self.get_value(self.in_features)
         out_features = self.get_value(self.out_features)
-
-        weights = self.linear.weight[:out_features, :in_features]
-        bias = self.linear.bias[:out_features]
+        weights = self.weight[:out_features, :in_features]
+        bias = self.bias[:out_features]
         return weights, bias
 
     def forward(self, x: Tensor) -> Tensor:
@@ -67,19 +66,19 @@ class DynamicLinear(DynamicMutable, Linear):
             self.out_features, MutableValue) else self.out_features
 
         # new a linear layer
-        temp_weight = self.linear.weight.data[:out_features, :in_features]
-        temp_bias = self.linear.bias.data[:out_features]
+        temp_weight = self.weight.data[:out_features, :in_features]
+        temp_bias = self.bias.data[:out_features]
 
         # new a linear layer
-        self.linear.weight = nn.Parameter(temp_weight)
-        self.linear.bias = nn.Parameter(temp_bias)
+        self.weight = nn.Parameter(temp_weight)
+        self.bias = nn.Parameter(temp_bias)
 
         self.is_fixed = True
 
     def forward_fixed(self, x: Tensor) -> Tensor:
         assert self.is_fixed is True, \
             'Please call fix_chosen before forward_fixed.'
-        return F.linear(x, self.linear.weight, self.linear.bias)
+        return F.linear(x, self.weight, self.bias)
 
     @property
     def choices(self):

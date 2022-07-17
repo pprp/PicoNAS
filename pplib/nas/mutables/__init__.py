@@ -2,12 +2,12 @@
 from .diff_mutable import (DiffChoiceRoute, DiffMutable, DiffOP,
                            GumbelChoiceRoute)
 from .dynamic import DynamicLinear
-from .dynamic_mutable import DynamicMutable
+from .dynamic_mixin import DynamicMixin
 from .mutable_value import MutableValue
 from .oneshot_mutable import OneShotMutable, OneShotOP, OneShotPathOP
 
 __all__ = [
     'OneShotOP', 'OneShotMutable', 'DiffOP', 'DiffChoiceRoute',
     'GumbelChoiceRoute', 'DiffMutable', 'OneShotPathOP', 'MutableValue',
-    'DynamicMutable', 'DynamicLinear'
+    'DynamicMixin', 'DynamicLinear'
 ]

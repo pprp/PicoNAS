@@ -1,10 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Type
 
 from torch.nn import Module
 
-from pplib.nas.mutables.dynamic_mutable import DynamicMutable
+from pplib.nas.mutables.dynamic_mixin import DynamicMixin
 from pplib.nas.mutables.mutable_value import MutableValue
 from pplib.nas.mutators.base_mutator import MUTABLE_TYPE, BaseMutator
 
@@ -32,10 +31,9 @@ class DynamicMutator(BaseMutator):
             custom_group = []
         self._custom_group = custom_group
 
-        self._search_group: Optional[Dict[int, List[MUTABLE_TYPE]]] = None
+        self._search_group: Dict[int, List[MUTABLE_TYPE]] = {}
         self._with_alias = with_alias
 
-    @abstractmethod
     def prepare_from_supernet(self, supernet: Module) -> None:
         """Do some necessary preparations with supernet.
 
@@ -70,4 +68,23 @@ class DynamicMutator(BaseMutator):
         Returns:
             Type[MUTABLE_TYPE]: Mutable class type.
         """
-        return DynamicMutable
+        return DynamicMixin
+
+    @property
+    def search_group(self) -> Dict[int, List[MUTABLE_TYPE]]:
+        """Search group of supernet.
+
+        Note:
+            For mutable based mutator, the search group is composed of
+            corresponding mutables.
+
+        Raises:
+            RuntimeError: Called before search group has been built.
+
+        Returns:
+            Dict[int, List[MUTABLE_TYPE]]: Search group.
+        """
+        if self._search_group is None:
+            raise RuntimeError(
+                'Call `prepare_from_supernet` before access search group!')
+        return self._search_group
