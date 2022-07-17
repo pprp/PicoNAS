@@ -19,7 +19,7 @@ class DynamicLinear(DynamicMixin, Linear):
                  mode: str = 'max') -> None:
 
         if isinstance(in_features, MutableValue):
-            self.max_in_features = in_features.current_value(mode='max')
+            self.max_in_features = in_features.current_value
         elif isinstance(in_features, int):
             self.max_in_features = in_features
         else:
@@ -27,7 +27,7 @@ class DynamicLinear(DynamicMixin, Linear):
                   'supported, Only int or MutableValue is supported currently.'
 
         if isinstance(out_features, MutableValue):
-            self.max_out_features = out_features.current_value(mode='max')
+            self.max_out_features = out_features.current_value
         elif isinstance(out_features, int):
             self.max_out_features = out_features
         else:
@@ -40,7 +40,10 @@ class DynamicLinear(DynamicMixin, Linear):
             bias=bias)
         self.in_features = in_features
         self.out_features = out_features
+
+        # flags required by dynamic mixin
         self._mode = mode
+        self._is_fixed = False
 
     def sample_parameters(self) -> None:
         in_features = self.get_value(self.in_features)

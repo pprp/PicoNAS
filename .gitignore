@@ -13,3 +13,5 @@ dist/*
 checkpoints/*
 *.png
 logdirs/*
+.coverage 
+converage.xml

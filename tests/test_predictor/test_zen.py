@@ -25,8 +25,10 @@ class TestZenScore(TestCase):
         search_space.instantiate_model = False
         search_space.labeled_archs = [eval(arch) for arch in zc_api.keys()]
 
-        method_type = 'grad_norm'
         loss_fn = search_space.get_loss_fn()
+
+        assert dataloader is not None
+        assert loss_fn is not None
 
 
 if __name__ == '__main__':

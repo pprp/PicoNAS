@@ -39,11 +39,10 @@ class MutableValue():
         elif mode == 'random':
             self._chosen = random.sample(self._candidates, k=1)[0]
 
-    def current_value(self, mode: str = 'max'):
-        assert mode in self.supported_mode, \
-            f'The current mode {mode} is not supported.' \
-            f'Supported mode are {self.supported_mode}.'
-        self.sample_value(mode)
+    @property
+    def current_value(self):
+        if self._chosen is None:
+            self.sample_value(self._mode)
         return self._chosen
 
     @property

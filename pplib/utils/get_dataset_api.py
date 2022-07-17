@@ -18,7 +18,7 @@ def get_project_root() -> Path:
     """
     Returns the root path of the project.
     """
-    return Path(__file__).parent.parent
+    return Path(__file__).parent.parent.parent
 
 
 def get_transbench101_api(dataset):

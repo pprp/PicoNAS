@@ -24,6 +24,14 @@ class DynamicMixin:
         assert mode in self.supported_mode
         self._mode = mode
 
+    @property
+    def is_fixed(self):
+        return self._is_fixed
+
+    @is_fixed.setter
+    def is_fixed(self, is_fixed: bool):
+        self._is_fixed = is_fixed
+
     @abstractmethod
     def sample_parameters(self, choice: Any) -> None:
         """Modify the sample property. This function would be called in
@@ -46,7 +54,7 @@ class DynamicMixin:
                 Defaults to None.
         """
         if isinstance(value, MutableValue):
-            return value.current_value(mode=self.mode)
+            return value.current_value
         elif isinstance(value, int):
             return value
         else:
