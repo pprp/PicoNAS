@@ -50,6 +50,10 @@ class DynamicMutator(BaseMutator):
                         self._search_group[global_count] = v
                         global_count += 1
 
+    def merge_search_group(self):
+        """merge search group with same mutable value"""
+        pass
+
     def sample_value(self, mode: str = 'max') -> Any:
         """Tranverse all of DynamicMutable and change value by mode."""
         for id, mutable in self._search_group.items():

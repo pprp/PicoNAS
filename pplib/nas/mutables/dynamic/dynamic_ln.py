@@ -14,22 +14,21 @@ class DynamicLayerNorm(DynamicMixin, LayerNorm):
 
     def __init__(self,
                  normalized_shape: Union[int, MutableValue],
-                 eps:float=1e-5,
+                 eps: float = 1e-5,
                  bias: bool = True,
                  mode: str = 'max') -> None:
 
         if isinstance(normalized_shape, MutableValue):
-            # TODO get max 
+            # TODO get max
             self.max_normalized_shape = normalized_shape.current_value
         elif isinstance(normalized_shape, int):
             self.max_normalized_shape = normalized_shape
         else:
-            raise f'The type of normalized_shape {type(normalized_shape)} is not' \
-                  'supported, Only int or MutableValue is supported currently.'
+            raise f'The type of normalized_shape {type(normalized_shape)} is ' \
+                  'not supported, Only int or MutableValue is supported.'
 
         super(DynamicLayerNorm, self).__init__(
-            normalized_shape=self.max_normalized_shape,
-            eps=eps)
+            normalized_shape=self.max_normalized_shape, eps=eps)
 
         self.normalized_shape = normalized_shape
 
@@ -72,7 +71,8 @@ class DynamicLayerNorm(DynamicMixin, LayerNorm):
         assert self.is_fixed is True, \
             'Please call fix_chosen before forward_fixed.'
         normalized_shape = self.get_value(self.normalized_shape)
-        return F.layer_norm(x, (normalized_shape, ), self.weight, self.bias, self.eps)
+        return F.layer_norm(x, (normalized_shape, ), self.weight, self.bias,
+                            self.eps)
 
     @property
     def choices(self):
