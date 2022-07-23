@@ -171,7 +171,7 @@ class SupernetNATS(nn.Module):
         forward_op: [4, 0, 2, 4, 6]
         """
         assert forward_op is not None
-        outs = []
+        # outs = []
         # stem
         idx = forward_op[0]
         x = self.stem[0](x, idx, idx)

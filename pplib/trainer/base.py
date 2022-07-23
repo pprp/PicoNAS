@@ -94,7 +94,7 @@ class BaseTrainer:
                     'state_dict': self.model.state_dict(),
                 },
                                       epoch + 1,
-                                      tag=self.log_name + '_macro')
+                                      tag=f'{self.log_name}_macro')
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)

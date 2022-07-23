@@ -4,6 +4,7 @@ from .mae import MAE_ViT, ViT_Classifier  # noqa: F401
 from .nasbench101 import NASBench101
 from .nasbench201 import DiffNASBench201Network  # noqa: F401
 from .nasbench201 import OneShotNASBench201Network  # noqa: F401
+from .nats import SupernetNATS  # noqa: F401
 from .spos import SearchableMobileNet  # noqa: F401
 from .spos import SearchableMAE, SearchableShuffleNetV2  # noqa: F401
 
