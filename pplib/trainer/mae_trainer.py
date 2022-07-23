@@ -33,8 +33,7 @@ class MAETrainer(BaseTrainer):
         if self.searching:
             rand_subnet = self.mutator.random_subnet
             self.mutator.set_subnet(rand_subnet)
-        out = self.model(img, mask)
-        return out
+        return self.model(img, mask)
 
     def loss(self, batch_inputs) -> None:
         """Forward and compute loss. Low Level API"""

@@ -1,9 +1,10 @@
-import torch.nn as nn
-
-from ..core.primitives import AbstractPrimitive, ReLUConvBN
 """
 Code below from NASBench-201 and slighly adapted
 """
+
+import torch.nn as nn
+
+from ..core.primitives import AbstractPrimitive, ReLUConvBN
 
 
 class ResNetBasicblock(AbstractPrimitive):
