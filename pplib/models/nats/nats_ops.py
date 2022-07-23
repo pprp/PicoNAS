@@ -3,6 +3,7 @@ License: https://github.com/changlin31/BossNAS
 """
 
 from copy import deepcopy
+
 import torch.nn as nn
 
 
@@ -23,10 +24,22 @@ def get_combination(space, num):
 
 
 OPS = {
-    'nor_conv_7x7': lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(C_in, C_out, (7, 7), (stride, stride), (3, 3), (1, 1), affine, track_running_stats),
-    'nor_conv_3x3': lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(C_in, C_out, (3, 3), (stride, stride), (1, 1), (1, 1), affine, track_running_stats),
-    'nor_conv_1x1': lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(C_in, C_out, (1, 1), (stride, stride), (0, 0), (1, 1), affine, track_running_stats),
-    'skip_connect': lambda C_in, C_out, stride, affine, track_running_stats: Identity() if stride == 1 and C_in == C_out else FactorizedReduce(C_in, C_out, stride, affine, track_running_stats),
+    'nor_conv_7x7':
+    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+        C_in, C_out, (7, 7), (stride, stride), (3, 3),
+        (1, 1), affine, track_running_stats),
+    'nor_conv_3x3':
+    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+        C_in, C_out, (3, 3), (stride, stride), (1, 1),
+        (1, 1), affine, track_running_stats),
+    'nor_conv_1x1':
+    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+        C_in, C_out, (1, 1), (stride, stride), (0, 0),
+        (1, 1), affine, track_running_stats),
+    'skip_connect':
+    lambda C_in, C_out, stride, affine, track_running_stats: Identity()
+    if stride == 1 and C_in == C_out else FactorizedReduce(
+        C_in, C_out, stride, affine, track_running_stats),
 }
 
 candidate_Cs = [8, 16, 24, 32, 40, 48, 56, 64]
@@ -36,22 +49,26 @@ class Structure:
     """control the converation of str format and nodes format."""
 
     def __init__(self, genotype):
-        assert isinstance(genotype, list) or isinstance(genotype, tuple), 'invalid class of genotype : {:}'.format(
-            type(genotype))
+        assert isinstance(genotype, list) or isinstance(
+            genotype, tuple), 'invalid class of genotype : {:}'.format(
+                type(genotype))
         self.node_num = len(genotype) + 1
         self.nodes = []
         self.node_N = []
         for idx, node_info in enumerate(genotype):
             assert isinstance(
-                node_info, (list, tuple)), 'invalid class of node_info : {:}'.format(type(node_info))
+                node_info,
+                (list, tuple)), 'invalid class of node_info : {:}'.format(
+                    type(node_info))
 
             assert len(node_info) >= 1, 'invalid length : {:}'.format(
                 len(node_info))
             for node_in in node_info:
-                assert isinstance(node_in, list) or isinstance(node_in, tuple), 'invalid class of in-node : {:}'.format(
-                    type(node_in))
-                assert len(
-                    node_in) == 2 and node_in[1] <= idx, 'invalid in-node : {:}'.format(node_in)
+                assert isinstance(node_in, list) or isinstance(
+                    node_in, tuple), 'invalid class of in-node : {:}'.format(
+                        type(node_in))
+                assert len(node_in) == 2 and node_in[
+                    1] <= idx, 'invalid in-node : {:}'.format(node_in)
             self.node_N.append(len(node_info))
             self.nodes.append(tuple(deepcopy(node_info)))
 
@@ -129,8 +146,10 @@ class Structure:
         return True
 
     def __repr__(self):
-        return ('{name}({node_num} nodes with {node_info})'.format(name=self.__class__.__name__, node_info=self.tostr(),
-                                                                   **self.__dict__))
+        return ('{name}({node_num} nodes with {node_info})'.format(
+            name=self.__class__.__name__,
+            node_info=self.tostr(),
+            **self.__dict__))
 
     def __len__(self):
         return len(self.nodes) + 1
@@ -142,15 +161,16 @@ class Structure:
     def str2structure(xstr):
         if isinstance(xstr, Structure):
             return xstr
-        assert isinstance(
-            xstr, str), 'must take string (not {:}) as input'.format(type(xstr))
+        assert isinstance(xstr,
+                          str), 'must take string (not {:}) as input'.format(
+                              type(xstr))
         nodestrs = xstr.split('+')
         genotypes = []
         for i, node_str in enumerate(nodestrs):
             inputs = list(filter(lambda x: x != '', node_str.split('|')))
             for xinput in inputs:
-                assert len(xinput.split('~')
-                           ) == 2, 'invalid input length : {:}'.format(xinput)
+                assert len(xinput.split(
+                    '~')) == 2, 'invalid input length : {:}'.format(xinput)
             inputs = (xi.split('~') for xi in inputs)
             input_infos = tuple((op, int(IDX)) for (op, IDX) in inputs)
             genotypes.append(input_infos)
@@ -158,15 +178,16 @@ class Structure:
 
     @staticmethod
     def str2fullstructure(xstr, default_name='none'):
-        assert isinstance(
-            xstr, str), 'must take string (not {:}) as input'.format(type(xstr))
+        assert isinstance(xstr,
+                          str), 'must take string (not {:}) as input'.format(
+                              type(xstr))
         nodestrs = xstr.split('+')
         genotypes = []
         for i, node_str in enumerate(nodestrs):
             inputs = list(filter(lambda x: x != '', node_str.split('|')))
             for xinput in inputs:
-                assert len(xinput.split('~')
-                           ) == 2, 'invalid input length : {:}'.format(xinput)
+                assert len(xinput.split(
+                    '~')) == 2, 'invalid input length : {:}'.format(xinput)
             inputs = (xi.split('~') for xi in inputs)
             input_infos = list((op, int(IDX)) for (op, IDX) in inputs)
             all_in_nodes = list(x[1] for x in input_infos)
@@ -179,9 +200,9 @@ class Structure:
 
     @staticmethod
     def gen_all(search_space, num, return_ori):
-        assert isinstance(search_space, list) or isinstance(search_space,
-                                                            tuple), 'invalid class of search-space : {:}'.format(
-            type(search_space))
+        assert isinstance(search_space, list) or isinstance(
+            search_space, tuple), 'invalid class of search-space : {:}'.format(
+                type(search_space))
         assert num >= 2, 'There should be at least two nodes in a neural cell instead of {:}'.format(
             num)
         all_archs = get_combination(search_space, 1)
@@ -211,7 +232,12 @@ class FactorizedReduce(nn.Module):
         self.relu = nn.ReLU(inplace=False)
         if stride == 1:
             self.conv = SlimmableConv2d(
-                candidate_Cs, candidate_Cs, 1, stride=stride, padding=0, bias=not affine)
+                candidate_Cs,
+                candidate_Cs,
+                1,
+                stride=stride,
+                padding=0,
+                bias=not affine)
         else:
             raise ValueError('Invalid stride : {:}'.format(stride))
         self.bn = SwitchableBatchNorm2d(candidate_Cs)
@@ -223,7 +249,8 @@ class FactorizedReduce(nn.Module):
         return out
 
     def extra_repr(self):
-        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(**self.__dict__)
+        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(
+            **self.__dict__)
 
 
 class Identity(nn.Module):
@@ -237,11 +264,25 @@ class Identity(nn.Module):
 
 class ReLUConvBN(nn.Module):
 
-    def __init__(self, C_in, C_out, kernel_size, stride, padding, dilation, affine, track_running_stats=True):
+    def __init__(self,
+                 C_in,
+                 C_out,
+                 kernel_size,
+                 stride,
+                 padding,
+                 dilation,
+                 affine,
+                 track_running_stats=True):
         super(ReLUConvBN, self).__init__()
         self.relu = nn.ReLU(inplace=False)
-        self.sconv = SlimmableConv2d(candidate_Cs, candidate_Cs, kernel_size,
-                                     stride=stride, padding=padding, dilation=dilation, bias=not affine)
+        self.sconv = SlimmableConv2d(
+            candidate_Cs,
+            candidate_Cs,
+            kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            bias=not affine)
         self.sbn = SwitchableBatchNorm2d(candidate_Cs)
 
     def forward(self, x, in_idx, out_idx):
@@ -253,7 +294,13 @@ class ReLUConvBN(nn.Module):
 
 class InferCell(nn.Module):
 
-    def __init__(self, genotype, C_in, C_out, stride, affine=True, track_running_stats=True):
+    def __init__(self,
+                 genotype,
+                 C_in,
+                 C_out,
+                 stride,
+                 affine=True,
+                 track_running_stats=True):
         super(InferCell, self).__init__()
 
         self.layers = nn.ModuleList()
@@ -261,16 +308,16 @@ class InferCell(nn.Module):
         self.node_IX = []
         self.genotype = deepcopy(genotype)
         for i in range(1, len(genotype)):
-            node_info = genotype[i-1]
+            node_info = genotype[i - 1]
             cur_index = []
             cur_innod = []
             for (op_name, op_in) in node_info:
                 if op_in == 0:
-                    layer = OPS[op_name](
-                        C_in, C_out, stride, affine, track_running_stats)
+                    layer = OPS[op_name](C_in, C_out, stride, affine,
+                                         track_running_stats)
                 else:
-                    layer = OPS[op_name](
-                        C_out, C_out,      1, affine, track_running_stats)
+                    layer = OPS[op_name](C_out, C_out, 1, affine,
+                                         track_running_stats)
                 cur_index.append(len(self.layers))
                 cur_innod.append(op_in)
                 self.layers.append(layer)
@@ -279,31 +326,38 @@ class InferCell(nn.Module):
         self.nodes = len(genotype)
         self.in_dim = C_in
         self.out_dim = C_out
-        self.factorizedreduce = FactorizedReduce(
-            C_in, C_out, stride, affine, track_running_stats)
+        self.factorizedreduce = FactorizedReduce(C_in, C_out, stride, affine,
+                                                 track_running_stats)
 
     def extra_repr(self):
         string = 'info :: nodes={nodes}, inC={in_dim}, outC={out_dim}'.format(
             **self.__dict__)
         laystr = []
-        for i, (node_layers, node_innods) in enumerate(zip(self.node_IX, self.node_IN)):
-            y = ['I{:}-L{:}'.format(_ii, _il)
-                 for _il, _ii in zip(node_layers, node_innods)]
-            x = '{:}<-({:})'.format(i+1, ','.join(y))
+        for i, (node_layers,
+                node_innods) in enumerate(zip(self.node_IX, self.node_IN)):
+            y = [
+                'I{:}-L{:}'.format(_ii, _il)
+                for _il, _ii in zip(node_layers, node_innods)
+            ]
+            x = '{:}<-({:})'.format(i + 1, ','.join(y))
             laystr.append(x)
-        return string + ', [{:}]'.format(' | '.join(laystr)) + ', {:}'.format(self.genotype.tostr())
+        return string + ', [{:}]'.format(' | '.join(laystr)) + ', {:}'.format(
+            self.genotype.tostr())
 
     def forward(self, inputs, in_idx, out_idx):
         nodes = [inputs]
-        for i, (node_layers, node_innods) in enumerate(zip(self.node_IX, self.node_IN)):
+        for i, (node_layers,
+                node_innods) in enumerate(zip(self.node_IX, self.node_IN)):
             node_features = 0
             for _il, _ii in zip(node_layers, node_innods):
                 if _il == 3 and in_idx != out_idx:
                     node_feature = self.factorizedreduce(
                         nodes[_ii], in_idx=in_idx, out_idx=out_idx)
                 else:
-                    node_feature = self.layers[_il](nodes[_ii], in_idx=in_idx if _il in [
-                                                    0, 1, 3] else out_idx, out_idx=out_idx)
+                    node_feature = self.layers[_il](
+                        nodes[_ii],
+                        in_idx=in_idx if _il in [0, 1, 3] else out_idx,
+                        out_idx=out_idx)
                 node_features += node_feature
             # node_features = sum( self.layers[_il](nodes[_ii], in_idx=in_idx if _ii == 0 else out_idx, out_idx=out_idx) for _il, _ii in zip(node_layers, node_innods) )
             nodes.append(node_features)
@@ -312,24 +366,33 @@ class InferCell(nn.Module):
 
 class ResNetBasicblock(nn.Module):
 
-    def __init__(self, inplanes, planes, stride, affine=True, track_running_stats=True):
+    def __init__(self,
+                 inplanes,
+                 planes,
+                 stride,
+                 affine=True,
+                 track_running_stats=True):
         super(ResNetBasicblock, self).__init__()
         assert stride == 1 or stride == 2, 'invalid stride {:}'.format(stride)
-        self.conv_a = ReLUConvBN(
-            inplanes, planes, 3, stride, 1, 1, affine, track_running_stats)
-        self.conv_b = ReLUConvBN(planes, planes, 3,
-                                 1, 1, 1, affine, track_running_stats)
+        self.conv_a = ReLUConvBN(inplanes, planes, 3, stride, 1, 1, affine,
+                                 track_running_stats)
+        self.conv_b = ReLUConvBN(planes, planes, 3, 1, 1, 1, affine,
+                                 track_running_stats)
 
         if stride == 2:
             self.downsample = nn.Sequential(
                 nn.AvgPool2d(kernel_size=2, stride=2, padding=0),
-                SlimmableConv2d(candidate_Cs, candidate_Cs,
-                                kernel_size=1, stride=1, padding=0, bias=False)
-            )
+                SlimmableConv2d(
+                    candidate_Cs,
+                    candidate_Cs,
+                    kernel_size=1,
+                    stride=1,
+                    padding=0,
+                    bias=False))
         else:
             self.downsample = None
-        self.downsample_s = ReLUConvBN(
-            inplanes, planes, 1, 1, 0, 1, affine, track_running_stats)
+        self.downsample_s = ReLUConvBN(inplanes, planes, 1, 1, 0, 1, affine,
+                                       track_running_stats)
         self.in_dim = inplanes
         self.out_dim = planes
         self.stride = stride
@@ -356,6 +419,7 @@ class ResNetBasicblock(nn.Module):
 
 
 class SwitchableBatchNorm2d(nn.Module):
+
     def __init__(self, num_features_list):
         super(SwitchableBatchNorm2d, self).__init__()
         self.num_features_list = num_features_list
@@ -372,13 +436,25 @@ class SwitchableBatchNorm2d(nn.Module):
 
 
 class SlimmableConv2d(nn.Conv2d):
-    def __init__(self, in_channels_list, out_channels_list,
-                 kernel_size, stride=1, padding=0, dilation=1,
-                 groups_list=[1], bias=True):
+
+    def __init__(self,
+                 in_channels_list,
+                 out_channels_list,
+                 kernel_size,
+                 stride=1,
+                 padding=0,
+                 dilation=1,
+                 groups_list=[1],
+                 bias=True):
         super(SlimmableConv2d, self).__init__(
-            max(in_channels_list), max(out_channels_list),
-            kernel_size, stride=stride, padding=padding, dilation=dilation,
-            groups=max(groups_list), bias=bias)
+            max(in_channels_list),
+            max(out_channels_list),
+            kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=max(groups_list),
+            bias=bias)
         self.in_channels_list = in_channels_list
         self.out_channels_list = out_channels_list
         self.groups_list = groups_list
@@ -394,8 +470,25 @@ class SlimmableConv2d(nn.Conv2d):
             bias = self.bias[:self.out_channels]
         else:
             bias = self.bias
-        y = nn.functional.conv2d(
-            input, weight, bias, self.stride, self.padding,
-            self.dilation, self.groups)
-        return
+        y = nn.functional.conv2d(input, weight, bias, self.stride,
+                                 self.padding, self.dilation, self.groups)
+        return y
 
+
+class SlimmableLinear(nn.Linear):
+
+    def __init__(self, in_features_list, out_features_list, bias=True):
+        super(SlimmableLinear, self).__init__(
+            max(in_features_list), max(out_features_list), bias=bias)
+        self.in_features_list = in_features_list
+        self.out_features_list = out_features_list
+
+    def forward(self, input, in_idx, out_idx):
+        self.in_features = self.in_features_list[in_idx]
+        self.out_features = self.out_features_list[out_idx]
+        weight = self.weight[:self.out_features, :self.in_features]
+        if self.bias is not None:
+            bias = self.bias[:self.out_features]
+        else:
+            bias = self.bias
+        return nn.functional.linear(input, weight, bias)
