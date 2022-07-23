@@ -47,6 +47,7 @@ def all_op_encoding(num_of_ops, layers):
 
 
 class MixOps(nn.Module):
+    """Each mixops has 6 operations"""
     def __init__(self, reduction=False):
         super(MixOps, self).__init__()
         genotype = '|nor_conv_3x3~0|+|nor_conv_3x3~0|nor_conv_3x3~1|+|skip_connect~0|nor_conv_3x3~1|nor_conv_3x3~2|'
@@ -65,6 +66,7 @@ class MixOps(nn.Module):
 
 
 class Block(nn.Module):
+    """Each block has n layers"""
     def __init__(self, layers, stage, target):
         super(Block, self).__init__()
         self._block_layers = nn.ModuleList()
@@ -106,6 +108,8 @@ class Block(nn.Module):
 
 
 class SupernetNATS(nn.Module):
+    """Three Blocks, with [2, 2, 1] layers
+    """
     def __init__(self, target='cifar10'):
         super(SupernetNATS, self).__init__()
         self.max_num_Cs = 5
@@ -132,6 +136,7 @@ class SupernetNATS(nn.Module):
             self._blocks.append(Block(layers, stage=i, target=self.target))
 
     def forward(self, x, start_block, pre_op=-2, forward_op=None,):
+        import ipdb; ipdb.set_trace()
         outs = []
         if start_block == 0:
             idx = forward_op[0]
@@ -185,3 +190,13 @@ def get_model_parameters_number(model):
     params_num = sum(p.numel()
                      for p in model.parameters())  # if p.requires_grad)
     return params_num
+
+
+if __name__ == "__main__":
+    import torch
+    m = SupernetNATS()
+    i = torch.randn(4, 3, 32, 32)
+    forward_op = m.set_forward_cfg('fair')
+    print(forward_op)
+    o = m(i, start_block=1, forward_op=forward_op)
+    print(o.shape)
