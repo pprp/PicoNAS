@@ -32,7 +32,7 @@ def compuate_rank_consistency(loader, sampled_dict: Dict,
         loss, top1_acc, top5_acc = trainer.metric_score(
             loader, current_op_list=current_op_list)
 
-        supernet_indicator_list.append(top1_acc)
+        supernet_indicator_list.append(loss)
         true_indicator_list.append(v)
 
     kt = kendalltau(true_indicator_list, supernet_indicator_list)
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--num_sample',
         type=int,
-        default=100,
+        default=50,
         help='number of sample for rank evaluation.')
 
     args = parser.parse_args()

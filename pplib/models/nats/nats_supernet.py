@@ -2,14 +2,20 @@
 License: https://github.com/changlin31/BossNAS
 """
 
+from typing import List
+
 import numpy as np
 import torch.nn as nn
+from einops import rearrange
+from torch import Tensor
 
+from pplib.datasets.data_simmim import build_loader_simmim
 from pplib.models.nats.nats_ops import (InferCell, ResNetBasicblock,
                                         SlimmableConv2d, SlimmableLinear)
 from pplib.models.nats.nats_ops import Structure as CellStructure
 from pplib.models.nats.nats_ops import SwitchableBatchNorm2d
 from pplib.models.nats.utils import reset
+from pplib.utils.logging import get_logger
 
 
 def uniform_random_op_encoding(num_of_ops, layers):
@@ -27,8 +33,7 @@ def fair_random_op_encoding(num_of_ops, layers):
 
 def get_path(str, num):
     if (num == 1):
-        for x in str:
-            yield x
+        yield from str
     else:
         for x in str:
             for y in get_path(str, num - 1):
@@ -36,14 +41,8 @@ def get_path(str, num):
 
 
 def all_op_encoding(num_of_ops, layers):
-    # return alist
-    encodings = []
-    strKey = ''
-    for x in range(num_of_ops):
-        strKey += str(x)
-    for path in get_path(strKey, layers):
-        encodings.append([int(op) for op in path])
-    return encodings
+    strKey = ''.join(str(x) for x in range(num_of_ops))
+    return [[int(op) for op in path] for path in get_path(strKey, layers)]
 
 
 class MixOps(nn.Module):
@@ -89,11 +88,9 @@ class Block(nn.Module):
                         self._block_layers.append(MixOps(reduction=True))
                 elif target == 'cifar100':
                     if i == 0:
-                        self._block_layers.append(
-                            MixOps(reduction=False if stage == 0 else True))
+                        self._block_layers.append(MixOps(reduction=stage != 0))
                     elif i == layers - 1:
-                        self._block_layers.append(
-                            MixOps(reduction=True if stage == 0 else False))
+                        self._block_layers.append(MixOps(reduction=stage == 0))
 
     def forward(self, x, start_block, forward_list=None, pre_op=None):
         """
@@ -237,9 +234,62 @@ class SupernetNATS(nn.Module):
 
 
 def get_model_parameters_number(model):
-    params_num = sum(p.numel()
-                     for p in model.parameters())  # if p.requires_grad)
-    return params_num
+    return sum(p.numel() for p in model.parameters())  # if p.requires_grad)
+
+
+class MAESupernetNATS(SupernetNATS):
+
+    def __init__(self, target='cifar10') -> None:
+        super().__init__(target=target)
+
+    def process_mask(self, x: Tensor, mask: Tensor, patch_size=16):
+        # process masked image
+        x = rearrange(
+            x,
+            'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)',
+            p1=patch_size,
+            p2=patch_size)
+        mask = rearrange(mask, 'b h w -> b (h w)')
+        mask = mask.unsqueeze(-1).repeat(1, 1, 12)
+        x = x * mask
+        x = rearrange(
+            x,
+            'b (p1 p2) (c h w) -> b c (p1 h) (p2 w)',
+            p1=patch_size,
+            p2=patch_size,
+            c=3,
+            h=2,
+            w=2)
+        return x
+
+    def forward(self,
+                x: Tensor,
+                mask: Tensor,
+                forward_op: List = None) -> Tensor:
+        # process mask
+        x = self.process_mask(x, mask)
+
+        # forward the masked image
+        assert forward_op is not None
+        # stem
+        idx = forward_op[0]
+        x = self.stem[0](x, idx, idx)
+        x = self.stem[1](x, idx)
+        # blocks
+        for i, block in enumerate(self._blocks):
+            pre_op = forward_op[sum(self._op_layers_list[:i]) -
+                                1] if i > 0 else -1
+            x = block(
+                x,
+                i,
+                forward_list=forward_op[sum(self._op_layers_list[:i]
+                                            ):sum(self._op_layers_list[:(i +
+                                                                         1)])],
+                pre_op=pre_op)
+
+        x = self.gap(x)
+        x = x.view(-1, self.candidate_Cs[forward_op[-1]])
+        return self.classifier(x, forward_op[-1], 0)
 
 
 if __name__ == '__main__':
@@ -250,3 +300,16 @@ if __name__ == '__main__':
     print(forward_op)
     o = m(i, forward_op=forward_op[0])
     print(o.shape)
+
+    # test mae supernet
+    logger = get_logger('test')
+    loader = build_loader_simmim(logger)
+    m = MAESupernetNATS()
+
+    for i, (img, mask, _) in enumerate(loader):
+        if i > 2:
+            break
+
+        o = m(img, mask, forward_op=m.set_forward_cfg('fair')[0])
+
+        print(o.shape)

@@ -171,3 +171,29 @@ class NATSTrainer(BaseTrainer):
                         global_step=step + self.current_epoch * len(loader))
 
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
+
+
+class MAENATSTrainer(NATSTrainer):
+
+    def __init__(
+        self,
+        model: nn.Module,
+        mutator,
+        optimizer=None,
+        criterion=None,
+        scheduler=None,
+        num_choices: int = 4,
+        num_layers: int = 20,
+        device: torch.device = torch.device('cuda'),
+        log_name='nats',
+        searching: bool = True,
+        method: str = 'uni',
+    ):
+        super().__init__(model, mutator, criterion, optimizer, scheduler,
+                         device, log_name, searching)
+
+        self.num_choices = num_choices
+        self.num_layers = num_layers
+
+        assert method in ['uni', 'fair']
+        self.method = method
