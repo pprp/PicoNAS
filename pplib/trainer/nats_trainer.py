@@ -113,16 +113,18 @@ class NATSTrainer(BaseTrainer):
             forward_op_list = self.model.set_forward_cfg(self.method)
         return self.model(features, list(forward_op_list))
 
-    def _predict(self, batch_inputs):
+    def _predict(self, batch_inputs, current_op_list):
         """Network forward step. Low Level API"""
         inputs, labels = batch_inputs
         inputs, labels = self._to_device(inputs, labels, self.device)
         # forward pass
         if self.searching:
             forward_op_list = self.model.set_forward_cfg(self.method)
+        else:
+            forward_op_list = current_op_list
         return self.model(inputs, forward_op_list)
 
-    def metric_score(self, loader):
+    def metric_score(self, loader, current_op_list):
         self.model.eval()
 
         val_loss = 0.0
@@ -136,7 +138,7 @@ class NATSTrainer(BaseTrainer):
                     inputs, labels, device=self.device)
 
                 # move to device
-                outputs = self._predict(batch_inputs)
+                outputs = self._predict(batch_inputs, current_op_list)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)

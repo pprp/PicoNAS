@@ -129,7 +129,7 @@ class SearchableMAE(SearchableShuffleNetV2):
 
         # forward the masked img
         x = self.first_conv(x)
-        for i, layer in enumerate(self.layers):
+        for layer in self.layers:
             x = layer(x)
         x = self.last_conv(x)
         x = self.decoder(x)

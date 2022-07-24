@@ -109,10 +109,7 @@ class MacroTrainer(BaseTrainer):
         if self.searching is True:
             rand_subnet = self.mutator.random_subnet
             self.mutator.set_subnet(rand_subnet)
-            out = self.model(features)
-        else:
-            out = self.model(features)
-        return out
+        return self.model(features)
 
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
         """Network forward step. Low Level API"""
@@ -122,11 +119,9 @@ class MacroTrainer(BaseTrainer):
         if self.searching:
             rand_subnet = self.mutator.random_subnet
             self.mutator.set_subnet(rand_subnet)
-            out = self.model(inputs)
         else:
             self.mutator.set_subnet(subnet_dict)
-            out = self.model(inputs)
-        return out
+        return self.model(inputs)
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         self.model.eval()

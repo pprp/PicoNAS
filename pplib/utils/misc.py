@@ -1,8 +1,15 @@
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
 import torch
 from torch import Tensor
+
+
+def convert_channel2idx(arch: str) -> List:
+    """arch: '8:8:56:24:8' """
+    candidate_cs = [8, 16, 24, 32, 40, 48, 56, 64]
+    arch_list = [int(a) for a in arch.split(':')]
+    return [candidate_cs.index(a) for a in arch_list]
 
 
 def convert_arch2dict(arch: str) -> Dict:
@@ -16,10 +23,7 @@ def convert_arch2dict(arch: str) -> Dict:
     """
     assert len(arch) == 14
 
-    specific_subnet = {}
-    for c, id in zip(arch, list(range(14))):
-        specific_subnet[id] = c
-    return specific_subnet
+    return {id: c for c, id in zip(arch, list(range(14)))}
 
 
 def convertTensor2Pltimg(img: Tensor) -> np.array:
