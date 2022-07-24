@@ -40,30 +40,28 @@ class NB201Trainer(BaseTrainer):
 
     def _forward(self, batch_inputs):
         """Network forward step. Low Level API"""
-        features, labels = batch_inputs
-        features, labels = self._to_device(features, labels, self.device)
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
         # forward pass
         if self.searching is True:
             rand_subnet = self.mutator.random_subnet
             self.mutator.set_subnet(rand_subnet)
-            out = self.model(features)
-        else:
-            out = self.model(features)
-        return out
+        return self.model(inputs)
 
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
         """Network forward step. Low Level API"""
         inputs, labels = batch_inputs
-        inputs, labels = self._to_device(inputs, labels, self.device)
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
         # forward pass
         if self.searching:
             rand_subnet = self.mutator.random_subnet
             self.mutator.set_subnet(rand_subnet)
-            out = self.model(inputs)
         else:
             self.mutator.set_subnet(subnet_dict)
-            out = self.model(inputs)
-        return out
+        return self.model(inputs)
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         self.model.eval()
@@ -75,8 +73,8 @@ class NB201Trainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 inputs, labels = batch_inputs
-                inputs, labels = self._to_device(
-                    inputs, labels, device=self.device)
+                inputs = self._to_device(inputs, self.device)
+                labels = self._to_device(labels, self.device)
 
                 # move to device
                 outputs = self._predict(batch_inputs, subnet_dict=subnet_dict)

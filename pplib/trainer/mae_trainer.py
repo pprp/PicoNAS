@@ -28,8 +28,8 @@ class MAETrainer(BaseTrainer):
 
     def _forward(self, batch_inputs):
         img, mask, _ = batch_inputs
-        img, mask = self._to_device(img, mask, self.device)
-
+        img = self._to_device(img, self.device)
+        mask = self._to_device(mask, self.device)
         if self.searching:
             rand_subnet = self.mutator.random_subnet
             self.mutator.set_subnet(rand_subnet)

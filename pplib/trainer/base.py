@@ -144,7 +144,8 @@ class BaseTrainer:
     def _predict(self, batch_inputs):
         """Network forward step. Low Level API"""
         inputs, labels = batch_inputs
-        inputs, labels = self._to_device(inputs, labels, self.device)
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
         # forward pass
         out = self.model(inputs)
         return out
@@ -158,7 +159,9 @@ class BaseTrainer:
     def _forward(self, batch_inputs) -> Tensor:
         """Network forward step. Low Level API"""
         inputs, labels = batch_inputs
-        inputs, labels = self._to_device(inputs, labels, self.device)
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
         # forward pass
         out = self.model(inputs)
         return out
@@ -173,7 +176,8 @@ class BaseTrainer:
         for step, batch_inputs in enumerate(loader):
             # get image and labels
             inputs, labels = batch_inputs
-            inputs, labels = self._to_device(inputs, labels, self.device)
+            inputs = self._to_device(inputs, self.device)
+            labels = self._to_device(labels, self.device)
 
             # remove gradient from previous passes
             self.optimizer.zero_grad()
@@ -226,8 +230,8 @@ class BaseTrainer:
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 inputs, labels = batch_inputs
-                inputs, labels = self._to_device(inputs, labels, self.device)
-
+                inputs = self._to_device(inputs, self.device)
+                labels = self._to_device(labels, self.device)
                 # move to device
                 outputs = self.forward(batch_inputs, mode='predict')
 
@@ -264,9 +268,9 @@ class BaseTrainer:
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def _compute_loss(self, real, target):
-        real, target = self._to_device(real, target, self.device)
-        loss = self.criterion(real, target)
-        return loss
+        real = self._to_device(real, self.device)
+        target = self._to_device(target, self.device)
+        return self.criterion(real, target)
 
     def _get_device(self, device):
         if device is None:
@@ -277,5 +281,5 @@ class BaseTrainer:
             dev = device
         return dev
 
-    def _to_device(self, inputs, labels, device):
-        return inputs.to(device), labels.to(device)
+    def _to_device(self, inputs, device):
+        return inputs.to(device)

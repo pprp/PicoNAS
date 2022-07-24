@@ -54,8 +54,8 @@ class NATSTrainer(BaseTrainer):
         for step, batch_inputs in enumerate(loader):
             # get image and labels
             inputs, labels = batch_inputs
-            inputs, labels = self._to_device(inputs, labels, self.device)
-
+            inputs = self._to_device(inputs, self.device)
+            labels = self._to_device(labels, self.device)
             # remove gradient from previous passes
             self.optimizer.zero_grad()
 
@@ -104,19 +104,22 @@ class NATSTrainer(BaseTrainer):
 
     def _forward(self, batch_inputs):
         """Network forward step. Low Level API"""
-        features, labels = batch_inputs
-        features, labels = self._to_device(features, labels, self.device)
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
         # forward pass
         if self.searching is True:
             # rand_subnet = self.mutator.random_subnet
             # self.mutator.set_subnet(rand_subnet)
             forward_op_list = self.model.set_forward_cfg(self.method)
-        return self.model(features, list(forward_op_list))
+        return self.model(inputs, list(forward_op_list))
 
     def _predict(self, batch_inputs, current_op_list):
         """Network forward step. Low Level API"""
         inputs, labels = batch_inputs
-        inputs, labels = self._to_device(inputs, labels, self.device)
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
         # forward pass
         if self.searching:
             forward_op_list = self.model.set_forward_cfg(self.method)
@@ -134,8 +137,8 @@ class NATSTrainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 inputs, labels = batch_inputs
-                inputs, labels = self._to_device(
-                    inputs, labels, device=self.device)
+                inputs = self._to_device(inputs, self.device)
+                labels = self._to_device(labels, self.device)
 
                 # move to device
                 outputs = self._predict(batch_inputs, current_op_list)
@@ -174,6 +177,7 @@ class NATSTrainer(BaseTrainer):
 
 
 class MAENATSTrainer(NATSTrainer):
+    """Main difference rely on the forward function."""
 
     def __init__(
         self,
@@ -197,3 +201,30 @@ class MAENATSTrainer(NATSTrainer):
 
         assert method in ['uni', 'fair']
         self.method = method
+
+    def _forward(self, batch_inputs):
+        """Network forward step. Low Level API"""
+        inputs, mask, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        mask = self._to_device(mask, self.device)
+        labels = self._to_device(labels, self.device)
+
+        # forward pass
+        if self.searching is True:
+            # rand_subnet = self.mutator.random_subnet
+            # self.mutator.set_subnet(rand_subnet)
+            forward_op_list = self.model.set_forward_cfg(self.method)
+        return self.model(inputs, list(forward_op_list))
+
+    def _predict(self, batch_inputs, current_op_list):
+        """Network forward step. Low Level API"""
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
+        # forward pass
+        if self.searching:
+            forward_op_list = self.model.set_forward_cfg(self.method)
+        else:
+            forward_op_list = current_op_list
+        return self.model(inputs, forward_op_list)
