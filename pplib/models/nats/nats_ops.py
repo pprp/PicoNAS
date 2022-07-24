@@ -466,13 +466,10 @@ class SlimmableConv2d(nn.Conv2d):
         self.out_channels = self.out_channels_list[out_index]
         self.groups = self.groups_list[in_idx]
         weight = self.weight[:self.out_channels, :self.in_channels, :, :]
-        if self.bias is not None:
-            bias = self.bias[:self.out_channels]
-        else:
-            bias = self.bias
-        y = nn.functional.conv2d(input, weight, bias, self.stride,
-                                 self.padding, self.dilation, self.groups)
-        return y
+        bias = self.bias[:self.
+                         out_channels] if self.bias is not None else self.bias
+        return nn.functional.conv2d(input, weight, bias, self.stride,
+                                    self.padding, self.dilation, self.groups)
 
 
 class SlimmableLinear(nn.Linear):
@@ -487,8 +484,6 @@ class SlimmableLinear(nn.Linear):
         self.in_features = self.in_features_list[in_idx]
         self.out_features = self.out_features_list[out_idx]
         weight = self.weight[:self.out_features, :self.in_features]
-        if self.bias is not None:
-            bias = self.bias[:self.out_features]
-        else:
-            bias = self.bias
+        bias = self.bias[:self.
+                         out_features] if self.bias is not None else self.bias
         return nn.functional.linear(input, weight, bias)

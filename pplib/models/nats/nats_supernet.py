@@ -188,9 +188,7 @@ class SupernetNATS(nn.Module):
         x = self.gap(x)
         x = x.view(-1, self.candidate_Cs[forward_op[-1]])
 
-        # print(f"in of classifier: {forward_op[-1]} shape of input: {x.shape}")
         return self.classifier(x, forward_op[-1], 0)
-        # return tuple(outs)
 
     def set_forward_cfg(self, method='fair'):  # support method: uniform/fair
         # TODO: support fair
@@ -242,21 +240,61 @@ class MAESupernetNATS(SupernetNATS):
     def __init__(self, target='cifar10') -> None:
         super().__init__(target=target)
 
-    def process_mask(self, x: Tensor, mask: Tensor, patch_size=16):
+        self.last_channel = 128
+
+        # convert from dynamic to static
+        self.last_dynamic_conv = SlimmableConv2d(
+            self.candidate_Cs,
+            [self.last_channel for _ in range(len(self.candidate_Cs))],
+            kernel_size=1,
+            stride=1,
+            padding=0,
+            bias=False,
+        )
+        self.last_bn = nn.BatchNorm2d(self.last_channel)
+
+        # decoder is two upsample layers
+        self.decoder = nn.Sequential(
+            # x16
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(
+                self.last_channel,
+                self.last_channel // 2,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=True),
+            nn.BatchNorm2d(self.last_channel // 2),
+            nn.ReLU(inplace=True),
+
+            # x32
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(
+                self.last_channel // 2,
+                3,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=True),
+            nn.BatchNorm2d(3),
+            nn.ReLU(inplace=True),
+        )
+
+    def process_mask(self, x: Tensor, mask: Tensor, num_patch=16):
         # process masked image
         x = rearrange(
             x,
             'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)',
-            p1=patch_size,
-            p2=patch_size)
+            p1=num_patch,
+            p2=num_patch)
         mask = rearrange(mask, 'b h w -> b (h w)')
         mask = mask.unsqueeze(-1).repeat(1, 1, 12)
         x = x * mask
         x = rearrange(
             x,
             'b (p1 p2) (c h w) -> b c (p1 h) (p2 w)',
-            p1=patch_size,
-            p2=patch_size,
+            p1=num_patch,
+            p2=num_patch,
             c=3,
             h=2,
             w=2)
@@ -287,9 +325,10 @@ class MAESupernetNATS(SupernetNATS):
                                                                          1)])],
                 pre_op=pre_op)
 
-        x = self.gap(x)
-        x = x.view(-1, self.candidate_Cs[forward_op[-1]])
-        return self.classifier(x, forward_op[-1], 0)
+        # convert from dynamic to static
+        x = self.last_dynamic_conv(x, forward_op[-1], 0)
+        x = self.last_bn(x)
+        return self.decoder(x)
 
 
 if __name__ == '__main__':

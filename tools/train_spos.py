@@ -143,11 +143,10 @@ def main():
         trainer.train(epoch)
         if (epoch + 1) % cfg.val_interval == 0:
             trainer.valid(epoch=epoch)
-            utils.save_checkpoint({
-                'state_dict': model.state_dict(),
-            },
+            utils.save_checkpoint({'state_dict': model.state_dict()},
+                                  'spos',
                                   epoch + 1,
-                                  tag=cfg.exp_name + '_super')
+                                  tag=f'{cfg.exp_name}_super')
 
     utils.time_record(start)
 

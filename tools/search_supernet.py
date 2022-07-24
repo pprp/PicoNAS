@@ -193,8 +193,9 @@ def main():
             utils.save_checkpoint({
                 'state_dict': model.state_dict(),
             },
+                                  'search_supernet',
                                   epoch + 1,
-                                  tag=args.exp_name + '_super')
+                                  tag=f'{args.exp_name}_super')
 
     utils.time_record(start)
 

@@ -7,15 +7,12 @@ import torch
 import torch.nn as nn
 
 import pplib.utils.utils as utils
-from pplib.datasets import build_dataloader
-from pplib.models import SupernetNATS
-# from pplib.nas.mutators import OneShotMutator
-from pplib.trainer import NATSTrainer
+from pplib.datasets.data_simmim import build_loader_simmim
+from pplib.models import MAESupernetNATS
+from pplib.trainer.nats_trainer import MAENATSTrainer
 from pplib.utils.bn_calibrate import separate_bn_params
 from pplib.utils.config import Config
-
-# from thop import profile
-# from torchsummary import summary
+from pplib.utils.logging import get_logger
 
 
 def get_args():
@@ -81,6 +78,8 @@ def get_args():
 
 
 def main():
+    logger = get_logger('nats_mae')
+
     # args & device
     args = get_args()
 
@@ -101,14 +100,17 @@ def main():
     # dataset
     assert cfg.dataset in ['cifar10', 'imagenet']
 
-    train_loader = build_dataloader(name='cifar10', type='train', config=cfg)
-    val_loader = build_dataloader(name='cifar10', type='val', config=cfg)
+    # train_loader = build_dataloader(name='cifar10', type='train', config=cfg)
+    # val_loader = build_dataloader(name='cifar10', type='val', config=cfg)
 
-    model = SupernetNATS(target=cfg.dataset)
+    train_dataloader = build_loader_simmim(logger, is_train=True)
+    val_dataloader = build_loader_simmim(logger, is_train=False)
+
+    model = MAESupernetNATS(target=cfg.dataset)
     # mutator = OneShotMutator(custom_group=None)
     # mutator.prepare_from_supernet(model)
 
-    criterion = nn.CrossEntropyLoss().to(device)
+    criterion = nn.MSELoss().to(device)
 
     # support bn calibration
     base_params, bn_params = separate_bn_params(model)
@@ -139,18 +141,19 @@ def main():
     #       ((params / 1e6), (flops / 1e6)))
     model = model.to(device)
 
-    trainer = NATSTrainer(
+    trainer = MAENATSTrainer(
         model,
         mutator=None,
         optimizer=optimizer,
         criterion=criterion,
         scheduler=scheduler,
         searching=True,
-        device=device)
+        device=device,
+        log_name='nats_mae')
 
     start = time.time()
 
-    trainer.fit(train_loader, val_loader, epochs=cfg.epochs)
+    trainer.fit(train_dataloader, val_dataloader, epochs=cfg.epochs)
 
     utils.time_record(start)
 

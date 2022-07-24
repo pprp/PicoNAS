@@ -140,8 +140,7 @@ class SearchableMAE(SearchableShuffleNetV2):
         for layer in self.layers:
             x = layer(x)
         x = self.last_conv(x)
-        x = self.decoder(x)
-        return x
+        return self.decoder(x)
 
 
 if __name__ == '__main__':

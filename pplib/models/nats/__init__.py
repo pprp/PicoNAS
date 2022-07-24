@@ -1,3 +1,3 @@
-from .nats_supernet import SupernetNATS
+from .nats_supernet import MAESupernetNATS, SupernetNATS
 
-__all__ = ['SupernetNATS']
+__all__ = ['SupernetNATS', 'MAESupernetNATS']

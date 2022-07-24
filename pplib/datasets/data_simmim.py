@@ -77,27 +77,26 @@ class SimMIMTransform:
 def collate_fn(batch):
     if not isinstance(batch[0][0], tuple):
         return default_collate(batch)
-    else:
-        batch_num = len(batch)
-        ret = []
-        for item_idx in range(len(batch[0][0])):
-            if batch[0][0][item_idx] is None:
-                ret.append(None)
-            else:
-                ret.append(
-                    default_collate(
-                        [batch[i][0][item_idx] for i in range(batch_num)]))
-        ret.append(default_collate([batch[i][1] for i in range(batch_num)]))
-        return ret
+    batch_num = len(batch)
+    ret = []
+    for item_idx in range(len(batch[0][0])):
+        if batch[0][0][item_idx] is None:
+            ret.append(None)
+        else:
+            ret.append(
+                default_collate(
+                    [batch[i][0][item_idx] for i in range(batch_num)]))
+    ret.append(default_collate([batch[i][1] for i in range(batch_num)]))
+    return ret
 
 
-def build_loader_simmim(logger):
+def build_loader_simmim(logger, is_train=True):
     transform = SimMIMTransform()
     logger.info(f'Pre-train data transform:\n{transform}')
 
     dataset = datasets.CIFAR10(
         root='./data/cifar',
-        train=True,
+        train=is_train,
         download=True,
         transform=transform,
     )
@@ -112,7 +111,7 @@ def build_loader_simmim(logger):
         dataset,
         batch_size=128,
         # sampler=sampler,
-        num_workers=0,
+        num_workers=4,
         pin_memory=True,
         drop_last=True,
         collate_fn=collate_fn)

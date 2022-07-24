@@ -90,9 +90,8 @@ class BaseTrainer:
 
             # save ckpt
             if epoch % 10 == 0:
-                utils.save_checkpoint({
-                    'state_dict': self.model.state_dict(),
-                },
+                utils.save_checkpoint({'state_dict': self.model.state_dict()},
+                                      self.log_name,
                                       epoch + 1,
                                       tag=f'{self.log_name}_macro')
 
@@ -146,9 +145,7 @@ class BaseTrainer:
         inputs, labels = batch_inputs
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
-        # forward pass
-        out = self.model(inputs)
-        return out
+        return self.model(inputs)
 
     def _loss(self, batch_inputs) -> Tuple:
         """Forward and compute loss. Low Level API"""
