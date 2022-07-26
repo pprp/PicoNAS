@@ -12,7 +12,6 @@ from pplib.models import MAESupernetNATS
 from pplib.trainer.nats_trainer import MAENATSTrainer
 from pplib.utils.bn_calibrate import separate_bn_params
 from pplib.utils.config import Config
-from pplib.utils.logging import get_logger
 
 
 def get_args():
@@ -44,7 +43,7 @@ def get_args():
     parser.add_argument(
         '--learning_rate',
         type=float,
-        default=0.025,
+        default=0.01,
         help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
     parser.add_argument(
@@ -78,7 +77,6 @@ def get_args():
 
 
 def main():
-    logger = get_logger('nats_mae')
 
     # args & device
     args = get_args()
@@ -103,8 +101,8 @@ def main():
     # train_loader = build_dataloader(name='cifar10', type='train', config=cfg)
     # val_loader = build_dataloader(name='cifar10', type='val', config=cfg)
 
-    train_dataloader = build_loader_simmim(logger, is_train=True)
-    val_dataloader = build_loader_simmim(logger, is_train=False)
+    train_dataloader = build_loader_simmim(is_train=True)
+    val_dataloader = build_loader_simmim(is_train=False)
 
     model = MAESupernetNATS(target=cfg.dataset)
     # mutator = OneShotMutator(custom_group=None)
@@ -127,8 +125,8 @@ def main():
     # optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
     #                             cfg.momentum, cfg.weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, lambda epoch: 1 - (epoch / cfg.epochs))
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=cfg.epochs)
 
     # flops & params & structure
     # flops, params = profile(
@@ -139,6 +137,7 @@ def main():
 
     # print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' %
     #       ((params / 1e6), (flops / 1e6)))
+
     model = model.to(device)
 
     trainer = MAENATSTrainer(
@@ -149,7 +148,7 @@ def main():
         scheduler=scheduler,
         searching=True,
         device=device,
-        log_name='nats_mae')
+        log_name='nats_mae_cosine')
 
     start = time.time()
 

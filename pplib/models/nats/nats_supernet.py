@@ -15,7 +15,6 @@ from pplib.models.nats.nats_ops import (InferCell, ResNetBasicblock,
 from pplib.models.nats.nats_ops import Structure as CellStructure
 from pplib.models.nats.nats_ops import SwitchableBatchNorm2d
 from pplib.models.nats.utils import reset
-from pplib.utils.logging import get_logger
 
 
 def uniform_random_op_encoding(num_of_ops, layers):
@@ -341,8 +340,7 @@ if __name__ == '__main__':
     print(o.shape)
 
     # test mae supernet
-    logger = get_logger('test')
-    loader = build_loader_simmim(logger)
+    loader = build_loader_simmim(is_train=True)
     m = MAESupernetNATS()
 
     for i, (img, mask, _) in enumerate(loader):

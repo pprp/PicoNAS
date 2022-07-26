@@ -13,7 +13,6 @@ from pplib.models import SearchableMAE
 from pplib.nas.mutators import OneShotMutator
 from pplib.trainer import PlainTrainer
 from pplib.utils.config import Config
-from pplib.utils.logging import get_logger
 
 # from torchsummary import summary
 
@@ -82,8 +81,6 @@ def get_args():
 
 def main():
     # args & device
-    logger = get_logger('mae')
-
     args = get_args()
 
     cfg = Config.fromfile(args.config)
@@ -103,7 +100,7 @@ def main():
     # dataset
     assert cfg.dataset in ['cifar10', 'imagenet']
 
-    dataloader = build_loader_simmim(logger)
+    dataloader = build_loader_simmim()
 
     model = SearchableMAE()
 

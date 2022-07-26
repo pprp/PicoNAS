@@ -94,7 +94,7 @@ if __name__ == '__main__':
     supernet.load_state_dict(state, strict=False)
 
     # build valid dataloader
-    dataloader = build_loader_simmim(logger=logger, is_train=False)
+    dataloader = build_loader_simmim(is_train=False)
 
     # get trainer
     trainer = MAENATSTrainer(

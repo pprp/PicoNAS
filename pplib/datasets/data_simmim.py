@@ -90,9 +90,8 @@ def collate_fn(batch):
     return ret
 
 
-def build_loader_simmim(logger, is_train=True):
+def build_loader_simmim(is_train=True):
     transform = SimMIMTransform()
-    logger.info(f'Pre-train data transform:\n{transform}')
 
     dataset = datasets.CIFAR10(
         root='./data/cifar',
@@ -100,7 +99,6 @@ def build_loader_simmim(logger, is_train=True):
         download=True,
         transform=transform,
     )
-    logger.info(f'Build dataset: train images = {len(dataset)}')
 
     # sampler = DistributedSampler(
     #     dataset,

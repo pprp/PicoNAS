@@ -1,8 +1,7 @@
-import logging
 from typing import List
 
 import torch
-from archai.common import ml_utils
+# from archai.common import ml_utils
 from torch import nn
 
 from .model import Network
@@ -29,7 +28,7 @@ def build(desc_matrix: List[List[int]],
     model_spec = ModelSpec(desc_matrix, vertex_ops)
     model = Network(model_spec, stem_out_channels, num_stacks,
                     num_modules_per_stack, num_labels)
-    logging.info(f'Model parameters: {ml_utils.param_size(model)}')
+    # logging.info(f'Model parameters: {ml_utils.param_size(model)}')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu'
                           ) if device is None else device
     model.to(device)

@@ -55,9 +55,9 @@ class BaseTrainer:
         self.val_loss_: List = []
         self.current_epoch = 0
 
-        self.logger = get_logger(log_name)
+        self.logger = get_logger(self.log_name)
 
-        writer_path = os.path.join('./logdirs', log_name)
+        writer_path = os.path.join('./logdirs', self.log_name)
         self.writer = SummaryWriter(writer_path)
 
     def fit(self, train_loader, val_loader, epochs):
