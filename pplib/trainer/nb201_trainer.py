@@ -94,8 +94,8 @@ class NB201Trainer(BaseTrainer):
                 # print every 20 iter
                 if step % 20 == 0:
                     self.logger.info(
-                        f'Step: {step} \t Val loss: {loss.item()} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
-                    )
+                        f'Step: {step} \t Val loss: {loss.item()}'
+                        f'Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}')
                     self.writer.add_scalar(
                         'val_step_loss',
                         loss.item(),

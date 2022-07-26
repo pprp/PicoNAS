@@ -71,7 +71,7 @@ class SearchableShuffleNetV2(nn.Module):
 
     def forward(self, x: Tensor):
         x = self.first_conv(x)
-        for i, layer in enumerate(self.layers):
+        for layer in self.layers:
             x = layer(x)
         x = self.last_conv(x)
         x = self.gap(x)

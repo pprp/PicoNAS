@@ -240,19 +240,16 @@ class MAENATSTrainer(NATSTrainer):
                 outputs, inputs = self._predict(batch_inputs, current_op_list)
 
                 # compute loss
+                # import ipdb; ipdb.set_trace()
                 loss = self._compute_loss(outputs, inputs)
 
                 # accumulate loss
                 val_loss += loss.item()
 
                 # print every 20 iter
-                if step % 50 == 0:
+                if step % 30 == 0:
                     self.logger.info(
                         f'Step: {step} \t Val loss: {loss.item()}')
-                    self.writer.add_scalar(
-                        'val_step_loss',
-                        loss.item(),
-                        global_step=step + self.current_epoch * len(loader))
 
         return val_loss / (step + 1)
 
