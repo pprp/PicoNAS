@@ -196,6 +196,9 @@ class MAENATSTrainer(NATSTrainer):
         self.method = method
         self.evaluator = None
 
+        # for autoslim distillation
+        self.distill_criterion = nn.MSELoss().to(device)
+
     def build_evaluator(self, dataloader, bench_path, num_sample=20):
         self.evaluator = NATSEvaluator(self, dataloader, bench_path,
                                        num_sample)
@@ -208,7 +211,7 @@ class MAENATSTrainer(NATSTrainer):
         labels = self._to_device(labels, self.device)
 
         # forward pass
-        if self.searching is True:
+        if self.searching:
             forward_op_list = self.model.set_forward_cfg(self.method)
         return self.model(inputs, mask, list(forward_op_list))
 
@@ -249,12 +252,53 @@ class MAENATSTrainer(NATSTrainer):
                 # accumulate loss
                 val_loss += loss.item()
 
-                # print every 20 iter
-                if step % 30 == 0:
-                    self.logger.info(
-                        f'Step: {step} \t Val loss: {loss.item()}')
-
+        # self.logger.info(f'Metric Score -> Val loss: {val_loss / (step + 1)}')
         return val_loss / (step + 1)
+
+    def forward_fairnas(self, batch_inputs):
+        inputs, mask, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        mask = self._to_device(mask, self.device)
+        labels = self._to_device(labels, self.device)
+
+        forward_op_lists = self.model.set_forward_cfg('fair')
+        for op_list in forward_op_lists:
+            output = self.model(inputs, mask, op_list)
+            loss = self._compute_loss(output, inputs)
+            loss.backward()
+        return loss
+
+    def forward_spos(self, batch_inputs):
+        loss = self.forward(batch_inputs, mode='loss')
+        loss.backward()
+        return loss
+
+    def forward_autoslim(self, batch_inputs):
+        inputs, mask, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        mask = self._to_device(mask, self.device)
+        labels = self._to_device(labels, self.device)
+
+        # max supernet
+        max_forward_list = self.model.set_forward_cfg('large')
+        t_output = self.model(inputs, mask, max_forward_list)
+        loss = self._compute_loss(t_output, inputs)
+        loss.backward()
+
+        # middle supernet
+        mid_forward_lists = [
+            self.model.set_forward_cfg('uni') for _ in range(2)
+        ]
+        for mid_forward_list in mid_forward_lists:
+            output = self.model(inputs, mask, mid_forward_list)
+            loss = self.distill_criterion(output, t_output)
+            loss.backward()
+
+        # min supernet
+        min_forward_list = self.model.set_forward_cfg('small')
+        output = self.model(inputs, mask, min_forward_list)
+        loss = self.distill_criterion(output, t_output)
+        loss.backward()
 
     def _train(self, loader):
         self.model.train()
@@ -265,11 +309,12 @@ class MAENATSTrainer(NATSTrainer):
             # remove gradient from previous passes
             self.optimizer.zero_grad()
 
-            # compute loss
-            loss = self.forward(batch_inputs, mode='loss')
+            # # compute loss
+            # loss = self.forward(batch_inputs, mode='loss')
+            # # backprop
+            # loss.backward()
 
-            # backprop
-            loss.backward()
+            loss = self.forward_fairnas(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():
@@ -327,12 +372,18 @@ class MAENATSTrainer(NATSTrainer):
                                       epoch + 1,
                                       tag=f'{self.log_name}_macro')
 
-            # evaluate every 10 times
-            if epoch % 5 == 0:
-                if self.evaluator is not None:
+            if epoch % 2 == 0:
+                if self.evaluator is None:
                     bench_path = './data/benchmark/nats_cifar10_acc_rank.yaml'
-                    self.build_evaluator(val_loader, bench_path, num_sample=10)
-                    self.evaluator.compute_rank_consistency()
+                    self.build_evaluator(val_loader, bench_path, num_sample=50)
+                else:
+                    kt, ps, sp = self.evaluator.compute_rank_consistency()
+                    self.writer.add_scalar(
+                        'kendall_tau', kt, global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        'pearson', ps, global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        'spearman', sp, global_step=self.current_epoch)
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)

@@ -143,7 +143,7 @@ def main():
         scheduler=scheduler,
         searching=True,
         device=device,
-        log_name='nats_mae_cosine')
+        log_name='nats_mae_cosine_fairnas')
 
     start = time.time()
 

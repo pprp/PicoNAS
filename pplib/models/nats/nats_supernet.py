@@ -197,6 +197,10 @@ class SupernetNATS(nn.Module):
         elif method == 'fair':
             forward_op = fair_random_op_encoding(
                 num_of_ops=self._num_of_ops, layers=sum(self._op_layers_list))
+        elif method == 'large':
+            forward_op = [7 for _ in range(sum(self._op_layers_list))]
+        elif method == 'small':
+            forward_op = [0 for _ in range(sum(self._op_layers_list))]
         else:
             raise NotImplementedError
         return forward_op

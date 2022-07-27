@@ -38,6 +38,8 @@ class NATSEvaluator(Evaluator):
         true_indicator_list: List[float] = []
         supernet_indicator_list: List[float] = []
 
+        self.trainer.logger.info('Begin to compute rank consistency...')
+
         for i, (k, v) in enumerate(self.bench_dict.items()):
             print(f'evaluating the {i}th architecture.')
             current_op_list = convert_channel2idx(k)
@@ -53,3 +55,5 @@ class NATSEvaluator(Evaluator):
 
         print(
             f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+
+        return kt, ps, sp
