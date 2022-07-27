@@ -98,15 +98,10 @@ def main():
     # dataset
     assert cfg.dataset in ['cifar10', 'imagenet']
 
-    # train_loader = build_dataloader(name='cifar10', type='train', config=cfg)
-    # val_loader = build_dataloader(name='cifar10', type='val', config=cfg)
-
     train_dataloader = build_loader_simmim(is_train=True)
     val_dataloader = build_loader_simmim(is_train=False)
 
     model = MAESupernetNATS(target=cfg.dataset)
-    # mutator = OneShotMutator(custom_group=None)
-    # mutator.prepare_from_supernet(model)
 
     criterion = nn.MSELoss().to(device)
 

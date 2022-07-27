@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 
 import pplib.utils.utils as utils
+from pplib.evaluator import NATSEvaluator
 from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 
@@ -193,6 +194,11 @@ class MAENATSTrainer(NATSTrainer):
 
         assert method in {'uni', 'fair'}
         self.method = method
+        self.evaluator = None
+
+    def build_evaluator(self, dataloader, bench_path, num_sample=20):
+        self.evaluator = NATSEvaluator(self, dataloader, bench_path,
+                                       num_sample)
 
     def _forward(self, batch_inputs):
         """Network forward step. Low Level API"""
@@ -203,8 +209,6 @@ class MAENATSTrainer(NATSTrainer):
 
         # forward pass
         if self.searching is True:
-            # rand_subnet = self.mutator.random_subnet
-            # self.mutator.set_subnet(rand_subnet)
             forward_op_list = self.model.set_forward_cfg(self.method)
         return self.model(inputs, mask, list(forward_op_list))
 
@@ -240,7 +244,6 @@ class MAENATSTrainer(NATSTrainer):
                 outputs, inputs = self._predict(batch_inputs, current_op_list)
 
                 # compute loss
-                # import ipdb; ipdb.set_trace()
                 loss = self._compute_loss(outputs, inputs)
 
                 # accumulate loss
@@ -323,6 +326,13 @@ class MAENATSTrainer(NATSTrainer):
                                       self.log_name,
                                       epoch + 1,
                                       tag=f'{self.log_name}_macro')
+
+            # evaluate every 10 times
+            if epoch % 5 == 0:
+                if self.evaluator is not None:
+                    bench_path = './data/benchmark/nats_cifar10_acc_rank.yaml'
+                    self.build_evaluator(val_loader, bench_path, num_sample=10)
+                    self.evaluator.compute_rank_consistency()
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)

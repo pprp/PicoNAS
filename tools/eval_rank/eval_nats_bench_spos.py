@@ -53,7 +53,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ckpt_path',
         type=str,
-        default='checkpoints/nats_macro_ckpt_0191.pth.tar',
+        default='checkpoints/nats_spos/nats_macro_ckpt_0191.pth.tar',
         help='path of supernet checkpoint.')
 
     parser.add_argument(
