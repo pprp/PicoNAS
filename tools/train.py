@@ -7,11 +7,12 @@ import torch
 import torch.nn as nn
 
 import pplib.utils.utils as utils
-from pplib.datasets.data_simmim import build_loader_simmim
-from pplib.models import MAESupernetNATS
-from pplib.trainer.nats_trainer import MAENATSTrainer
-from pplib.utils.bn_calibrate import separate_bn_params
+from pplib.datasets import build_loader_simmim
+from pplib.models import build_model
+from pplib.nas.mutators import OneShotMutator
+from pplib.trainer import build_trainer
 from pplib.utils.config import Config
+from pplib.utils.logging import get_logger
 
 
 def get_args():
@@ -32,6 +33,23 @@ def get_args():
         type=str,
         default='./data/cifar',
         help='path to the dataset')
+
+    parser.add_argument(
+        '--model_name',
+        type=str,
+        default='MAESupernetNATS',
+        help='name of model')
+    parser.add_argument(
+        '--trainer_name',
+        type=str,
+        default='NATSMAETrainer',
+        help='name of trainer')
+    parser.add_argument(
+        '--log_name',
+        type=str,
+        default='NATSMAETrainer',
+        help='name of this experiments')
+
     parser.add_argument(
         '--classes', type=int, default=10, help='dataset classes')
     parser.add_argument('--layers', type=int, default=20, help='batch size')
@@ -39,11 +57,11 @@ def get_args():
         '--num_choices', type=int, default=4, help='number choices per layer')
     parser.add_argument(
         '--batch_size', type=int, default=96, help='batch size')
-    parser.add_argument('--epochs', type=int, default=200, help='batch size')
+    parser.add_argument('--epochs', type=int, default=600, help='batch size')
     parser.add_argument(
         '--learning_rate',
         type=float,
-        default=0.01,
+        default=0.025,
         help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
     parser.add_argument(
@@ -77,8 +95,9 @@ def get_args():
 
 
 def main():
-
     # args & device
+    logger = get_logger('mae')
+
     args = get_args()
 
     cfg = Config.fromfile(args.config)
@@ -98,56 +117,35 @@ def main():
     # dataset
     assert cfg.dataset in ['cifar10', 'imagenet']
 
-    train_dataloader = build_loader_simmim(is_train=True)
-    val_dataloader = build_loader_simmim(is_train=False)
+    dataloader = build_loader_simmim(logger)
 
-    model = MAESupernetNATS(target=cfg.dataset)
+    model = build_model(cfg.model_name)
+
+    mutator = OneShotMutator(custom_group=None)
+    mutator.prepare_from_supernet(model)
 
     criterion = nn.MSELoss().to(device)
-
-    # support bn calibration
-    base_params, bn_params = separate_bn_params(model)
-    optimizer = torch.optim.SGD([{
-        'params': base_params,
-        'weight_decay': cfg.weight_decay
-    }, {
-        'params': bn_params,
-        'weight_decay': 0.0
-    }],
-                                lr=cfg.learning_rate,
-                                momentum=cfg.momentum)
-
-    # optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
-    #                             cfg.momentum, cfg.weight_decay)
-
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=cfg.epochs)
-
-    # flops & params & structure
-    # flops, params = profile(
-    #     model,
-    #     inputs=(torch.randn(1, 3, 32, 32), ) if cfg.dataset == 'cifar10' else
-    #     (torch.randn(1, 3, 224, 224), ),
-    #     verbose=False)
-
-    # print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' %
-    #       ((params / 1e6), (flops / 1e6)))
+    optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
+                                cfg.momentum, cfg.weight_decay)
+    scheduler = torch.optim.lr_scheduler.LambdaLR(  # noqa: F841
+        optimizer, lambda epoch: 1 - (epoch / cfg.epochs))
 
     model = model.to(device)
 
-    trainer = MAENATSTrainer(
-        model,
+    trainer = build_trainer(
+        cfg.trainer_name,
+        model=model,
         mutator=None,
         optimizer=optimizer,
         criterion=criterion,
         scheduler=scheduler,
         searching=True,
         device=device,
-        log_name='nats_mae_cosine_fairnas')
+        log_name=cfg.log_name)
 
     start = time.time()
 
-    trainer.fit(train_dataloader, val_dataloader, epochs=cfg.epochs)
+    trainer.fit(dataloader, dataloader, cfg.epochs)
 
     utils.time_record(start)
 

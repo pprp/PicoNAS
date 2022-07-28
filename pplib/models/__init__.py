@@ -1,4 +1,5 @@
 from .bnnas import BNNAS  # noqa: F401
+from .build import build_model  # noqa: F401
 from .macro import MacroBenchmarkSuperNet  # noqa: F401
 from .mae import MAE_ViT, ViT_Classifier  # noqa: F401
 from .nasbench101 import NASBench101

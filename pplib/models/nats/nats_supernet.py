@@ -15,6 +15,7 @@ from pplib.models.nats.nats_ops import (InferCell, ResNetBasicblock,
 from pplib.models.nats.nats_ops import Structure as CellStructure
 from pplib.models.nats.nats_ops import SwitchableBatchNorm2d
 from pplib.models.nats.utils import reset
+from ..registry import register_model
 
 
 def uniform_random_op_encoding(num_of_ops, layers):
@@ -119,6 +120,7 @@ class Block(nn.Module):
         self.apply(reset)
 
 
+@register_model
 class SupernetNATS(nn.Module):
     """Three Blocks, with [2, 2, 1] layers
     """

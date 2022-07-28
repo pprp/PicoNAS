@@ -7,8 +7,10 @@ from tqdm import tqdm
 from pplib.nas.mutators import OneShotMutator
 from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
+from .registry import register_trainer
 
 
+@register_trainer
 class SPOSTrainer(BaseTrainer):
 
     def __init__(

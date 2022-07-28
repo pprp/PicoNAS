@@ -7,8 +7,10 @@ import torchvision
 from pplib.nas.mutators import OneShotMutator
 from pplib.utils.misc import convertTensor2BoardImage
 from .base import BaseTrainer
+from .registry import register_trainer
 
 
+@register_trainer
 class MAETrainer(BaseTrainer):
 
     def __init__(self,
