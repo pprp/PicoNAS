@@ -5,6 +5,7 @@ import torch.nn as nn
 
 from pplib.models.nats.utils import reset
 from pplib.models.spos.mbconv_ops import OPS
+from ..registry import register_model
 
 PRIMITIVES = [
     'MB6_3x3_se0.25',
@@ -155,6 +156,7 @@ class Block(nn.Module):
         self.apply(reset)
 
 
+@register_model
 class SupernetMBConv(nn.Module):
 
     def __init__(self,

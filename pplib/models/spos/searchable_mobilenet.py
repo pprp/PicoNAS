@@ -3,8 +3,10 @@ from torch import Tensor
 
 from pplib.models.spos.spos_modules import InvertedResidual, blocks_dict
 from pplib.nas.mutables import OneShotOP
+from ..registry import register_model
 
 
+@register_model
 class SearchableMobileNet(nn.Module):
 
     def __init__(self, classes: int = 10, width_mult: float = 1.) -> None:

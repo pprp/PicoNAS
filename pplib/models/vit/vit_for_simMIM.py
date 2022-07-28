@@ -14,6 +14,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
+from ..registry import register_model
+
 
 class Mlp(nn.Module):
 
@@ -297,6 +299,7 @@ class RelativePositionBias(nn.Module):
             2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
 
 
+@register_model
 class VisionTransformer(nn.Module):
     """ Vision Transformer with support for patch or hybrid CNN input stage
 

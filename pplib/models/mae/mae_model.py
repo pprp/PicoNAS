@@ -5,6 +5,8 @@ from einops.layers.torch import Rearrange
 from timm.models.layers import trunc_normal_
 from timm.models.vision_transformer import Block
 
+from ..registry import register_model
+
 
 def random_indexes(size: int):
     forward_indexes = np.arange(size)
@@ -152,6 +154,7 @@ class MAE_Decoder(torch.nn.Module):
         return img, mask
 
 
+@register_model
 class MAE_ViT(torch.nn.Module):
 
     def __init__(

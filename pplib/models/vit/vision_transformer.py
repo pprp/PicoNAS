@@ -3,6 +3,8 @@ from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 from torch import nn
 
+from ..registry import register_model
+
 # helpers
 
 
@@ -95,6 +97,7 @@ class Transformer(nn.Module):
         return x
 
 
+@register_model
 class ViT(nn.Module):
 
     def __init__(self,

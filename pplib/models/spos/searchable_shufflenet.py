@@ -4,8 +4,10 @@ from torch import Tensor
 
 from pplib.models.spos.spos_modules import ShuffleModule, ShuffleXModule
 from pplib.nas.mutables import OneShotOP
+from ..registry import register_model
 
 
+@register_model
 class SearchableShuffleNetV2(nn.Module):
 
     def __init__(self, classes=10) -> None:

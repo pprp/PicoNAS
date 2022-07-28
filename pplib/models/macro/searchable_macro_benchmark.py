@@ -5,6 +5,7 @@ from torch.nn import Sequential
 
 from pplib.nas.mutables import OneShotOP
 from pplib.utils.misc import convert_arch2dict
+from ..registry import register_model
 
 
 class ConvBNReLU(nn.Sequential):
@@ -78,6 +79,7 @@ class Identity(nn.Module):
         return x
 
 
+@register_model
 class MacroBenchmarkSuperNet(nn.Module):
     """MacroBenchmark SuperNet.
     There are 14 searchable cells and 2 choices in each cell.

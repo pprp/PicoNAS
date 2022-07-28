@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from pplib.nas.mutables import DiffOP
+from ..registry import register_model
 
 
 class ReLUConvBN(nn.Module):
@@ -197,6 +198,7 @@ class FactorizedReduce(nn.Module):
         return out
 
 
+@register_model
 class NASBench201Cell(nn.Module):
     """
     Builtin cell structure of NAS Bench 201. One cell contains

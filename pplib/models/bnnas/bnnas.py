@@ -3,8 +3,10 @@ import torch.nn as nn
 
 from pplib.models.bnnas.bn_blocks import InvertedResidual, blocks_dict, conv_bn
 from pplib.nas.mutables.oneshot_mutable import OneShotOP
+from ..registry import register_model
 
 
+@register_model
 class BNNAS(nn.Module):
 
     def __init__(

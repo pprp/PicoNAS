@@ -4,8 +4,10 @@ import torch.nn.functional as F
 from timm.models.layers import trunc_normal_
 
 from pplib.models.vit.vit_for_simMIM import VisionTransformer
+from ..registry import register_model
 
 
+@register_model
 class VisionTransformerForSimMIM(VisionTransformer):
 
     def __init__(self, **kwargs):

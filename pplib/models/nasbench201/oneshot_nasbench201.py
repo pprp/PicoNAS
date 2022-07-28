@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from pplib.nas.mutables import OneShotOP
+from ..registry import register_model
 
 
 class ReLUConvBN(nn.Module):
@@ -331,6 +332,7 @@ class ResNetBasicBlock(nn.Module):
         return inputs + basicblock
 
 
+@register_model
 class OneShotNASBench201Network(nn.Module):
 
     def __init__(self,

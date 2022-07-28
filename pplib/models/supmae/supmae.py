@@ -14,6 +14,8 @@ import torch
 import torch.nn as nn
 from timm.models.vision_transformer import Block, PatchEmbed
 
+from ..registry import register_model
+
 
 def get_1d_sincos_pos_embed_from_grid(embed_dim, pos):
     """
@@ -69,6 +71,7 @@ def get_2d_sincos_pos_embed(embed_dim, grid_size, cls_token=False):
     return pos_embed
 
 
+@register_model
 class SupervisedMaskedAutoencoderViT(nn.Module):
     """ Masked Autoencoder with VisionTransformer backbone
     """
