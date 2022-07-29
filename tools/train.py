@@ -4,9 +4,9 @@ import time
 
 import init_paths  # noqa: F401
 import torch
-import torch.nn as nn
 
 import pplib.utils.utils as utils
+from pplib.core import build_criterion, build_optimizer, build_scheduler
 from pplib.datasets.build import build_dataloader
 from pplib.models import build_model
 from pplib.trainer import build_trainer
@@ -49,18 +49,22 @@ def get_args():
         help='name of this experiments')
 
     parser.add_argument(
+        '--crit', type=str, default='ce', help='decide the criterion')
+    parser.add_argument(
+        '--optims', type=str, default='sgd', help='decide the optimizer')
+    parser.add_argument(
+        '--sched', type=str, default='cosine', help='decide the scheduler')
+
+    parser.add_argument(
         '--classes', type=int, default=10, help='dataset classes')
     parser.add_argument('--layers', type=int, default=20, help='batch size')
     parser.add_argument(
         '--num_choices', type=int, default=4, help='number choices per layer')
     parser.add_argument(
         '--batch_size', type=int, default=96, help='batch size')
-    parser.add_argument('--epochs', type=int, default=600, help='batch size')
+    parser.add_argument('--epochs', type=int, default=200, help='batch size')
     parser.add_argument(
-        '--learning_rate',
-        type=float,
-        default=0.025,
-        help='initial learning rate')
+        '--lr', type=float, default=0.025, help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
     parser.add_argument(
         '--weight-decay', type=float, default=3e-4, help='weight decay')
@@ -117,11 +121,9 @@ def main():
 
     model = build_model(cfg.model_name)
 
-    criterion = nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
-                                cfg.momentum, cfg.weight_decay)
-    scheduler = torch.optim.lr_scheduler.LambdaLR(  # noqa: F841
-        optimizer, lambda epoch: 1 - (epoch / cfg.epochs))
+    criterion = build_criterion(cfg.crit).to(device)
+    optimizer = build_optimizer(model, cfg)
+    scheduler = build_scheduler(cfg, optimizer)
 
     model = model.to(device)
 
