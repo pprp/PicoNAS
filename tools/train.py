@@ -7,12 +7,10 @@ import torch
 import torch.nn as nn
 
 import pplib.utils.utils as utils
-from pplib.datasets import build_loader_simmim
+from pplib.datasets.build import build_dataloader
 from pplib.models import build_model
-from pplib.nas.mutators import OneShotMutator
 from pplib.trainer import build_trainer
 from pplib.utils.config import Config
-from pplib.utils.logging import get_logger
 
 
 def get_args():
@@ -78,7 +76,7 @@ def get_args():
         help='validate and save frequency')
     # ******************************* dataset *******************************#
     parser.add_argument(
-        '--dataset', type=str, default='cifar10', help='path to the dataset')
+        '--dataset', type=str, default='simmim', help='path to the dataset')
     parser.add_argument('--cutout', action='store_true', help='use cutout')
     parser.add_argument(
         '--cutout_length', type=int, default=16, help='cutout length')
@@ -95,9 +93,6 @@ def get_args():
 
 
 def main():
-    # args & device
-    logger = get_logger('mae')
-
     args = get_args()
 
     cfg = Config.fromfile(args.config)
@@ -114,17 +109,15 @@ def main():
     else:
         device = torch.device('cpu')
 
-    # dataset
-    assert cfg.dataset in ['cifar10', 'imagenet']
+    train_dataloader = build_dataloader(
+        type='train', dataset=cfg.dataset, config=cfg)
 
-    dataloader = build_loader_simmim(logger)
+    val_dataloader = build_dataloader(
+        type='val', dataset=cfg.dataset, config=cfg)
 
     model = build_model(cfg.model_name)
 
-    mutator = OneShotMutator(custom_group=None)
-    mutator.prepare_from_supernet(model)
-
-    criterion = nn.MSELoss().to(device)
+    criterion = nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(model.parameters(), cfg.learning_rate,
                                 cfg.momentum, cfg.weight_decay)
     scheduler = torch.optim.lr_scheduler.LambdaLR(  # noqa: F841
@@ -145,7 +138,7 @@ def main():
 
     start = time.time()
 
-    trainer.fit(dataloader, dataloader, cfg.epochs)
+    trainer.fit(train_dataloader, val_dataloader, cfg.epochs)
 
     utils.time_record(start)
 

@@ -3,11 +3,12 @@ import torchvision.transforms as transforms
 from .autoaugment import CIFAR10Policy
 from .cutout import Cutout
 from .randomerase import RandomErase
+from .simmim_transform import SimMIMTransform
 
 
-def build_transforms(name='cifar10', type='train', config=None):
+def build_transforms(dataset='cifar10', type='train', config=None):
     assert type in ['train', 'val']
-    assert name in ['cifar10', 'cifar100']
+    assert dataset in ['cifar10', 'cifar100', 'simmim']
     transform_type = None
 
     if type == 'train':
@@ -32,13 +33,13 @@ def build_transforms(name='cifar10', type='train', config=None):
         else:
             mid_transform = []
 
-        if name == 'cifar10':
+        if dataset == 'cifar10':
             post_transform = [
                 transforms.ToTensor(),
                 transforms.Normalize((0.4914, 0.4822, 0.4465),
                                      (0.2023, 0.1994, 0.2010)),
             ]
-        elif name == 'cifar100':
+        elif dataset == 'cifar100':
             post_transform = [
                 transforms.ToTensor(),
                 transforms.Normalize([0.5071, 0.4865, 0.4409],
@@ -52,18 +53,20 @@ def build_transforms(name='cifar10', type='train', config=None):
             [*base_transform, *mid_transform, *post_transform])
 
     elif type == 'val':
-        if name == 'cifar10':
+        if dataset == 'cifar10':
             transform_type = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.4914, 0.4822, 0.4465),
                                      (0.2023, 0.1994, 0.2010)),
             ])
-        elif name == 'cifar100':
+        elif dataset == 'cifar100':
             transform_type = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize([0.5071, 0.4865, 0.4409],
                                      [0.1942, 0.1918, 0.1958]),
             ])
+    elif dataset == 'simmim':
+        transform_type = SimMIMTransform()
     else:
         raise 'Type Error in transforms'
 

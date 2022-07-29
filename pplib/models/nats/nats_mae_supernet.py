@@ -8,7 +8,6 @@ import torch.nn as nn
 from einops import rearrange
 from torch import Tensor
 
-from pplib.datasets.data_simmim import build_loader_simmim
 from pplib.models.nats.nats_ops import SlimmableConv2d
 from ..registry import register_model
 from .nats_supernet import SupernetNATS
@@ -109,18 +108,3 @@ class MAESupernetNATS(SupernetNATS):
         x = self.last_dynamic_conv(x, forward_op[-1], 0)
         x = self.last_bn(x)
         return self.decoder(x)
-
-
-if __name__ == '__main__':
-
-    # test mae supernet
-    loader = build_loader_simmim(is_train=True)
-    m = MAESupernetNATS()
-
-    for i, (img, mask, _) in enumerate(loader):
-        if i > 2:
-            break
-
-        o = m(img, mask, forward_op=m.set_forward_cfg('fair')[0])
-
-        print(o.shape)

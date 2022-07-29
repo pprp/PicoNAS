@@ -2,14 +2,9 @@
 License: https://github.com/changlin31/BossNAS
 """
 
-from typing import List
-
 import numpy as np
 import torch.nn as nn
-from einops import rearrange
-from torch import Tensor
 
-from pplib.datasets.data_simmim import build_loader_simmim
 from pplib.models.nats.nats_ops import (InferCell, ResNetBasicblock,
                                         SlimmableConv2d, SlimmableLinear)
 from pplib.models.nats.nats_ops import Structure as CellStructure
@@ -238,121 +233,3 @@ class SupernetNATS(nn.Module):
 
 def get_model_parameters_number(model):
     return sum(p.numel() for p in model.parameters())  # if p.requires_grad)
-
-
-class MAESupernetNATS(SupernetNATS):
-
-    def __init__(self, target='cifar10') -> None:
-        super().__init__(target=target)
-
-        self.last_channel = 128
-
-        # convert from dynamic to static
-        self.last_dynamic_conv = SlimmableConv2d(
-            self.candidate_Cs,
-            [self.last_channel for _ in range(len(self.candidate_Cs))],
-            kernel_size=1,
-            stride=1,
-            padding=0,
-            bias=False,
-        )
-        self.last_bn = nn.BatchNorm2d(self.last_channel)
-
-        # decoder is two upsample layers
-        self.decoder = nn.Sequential(
-            # x16
-            nn.Upsample(scale_factor=2),
-            nn.Conv2d(
-                self.last_channel,
-                self.last_channel // 2,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=True),
-            nn.BatchNorm2d(self.last_channel // 2),
-            nn.ReLU(inplace=True),
-
-            # x32
-            nn.Upsample(scale_factor=2),
-            nn.Conv2d(
-                self.last_channel // 2,
-                3,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=True),
-            nn.BatchNorm2d(3),
-            nn.ReLU(inplace=True),
-        )
-
-    def process_mask(self, x: Tensor, mask: Tensor, num_patch=16):
-        # process masked image
-        x = rearrange(
-            x,
-            'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)',
-            p1=num_patch,
-            p2=num_patch)
-        mask = rearrange(mask, 'b h w -> b (h w)')
-        mask = mask.unsqueeze(-1).repeat(1, 1, 12)
-        x = x * mask
-        x = rearrange(
-            x,
-            'b (p1 p2) (c h w) -> b c (p1 h) (p2 w)',
-            p1=num_patch,
-            p2=num_patch,
-            c=3,
-            h=2,
-            w=2)
-        return x
-
-    def forward(self,
-                x: Tensor,
-                mask: Tensor,
-                forward_op: List = None) -> Tensor:
-        # process mask
-        x = self.process_mask(x, mask)
-
-        # forward the masked image
-        assert forward_op is not None
-        # stem
-        idx = forward_op[0]
-        x = self.stem[0](x, idx, idx)
-        x = self.stem[1](x, idx)
-        # blocks
-        for i, block in enumerate(self._blocks):
-            pre_op = forward_op[sum(self._op_layers_list[:i]) -
-                                1] if i > 0 else -1
-            x = block(
-                x,
-                i,
-                forward_list=forward_op[sum(self._op_layers_list[:i]
-                                            ):sum(self._op_layers_list[:(i +
-                                                                         1)])],
-                pre_op=pre_op)
-
-        # convert from dynamic to static
-        x = self.last_dynamic_conv(x, forward_op[-1], 0)
-        x = self.last_bn(x)
-        return self.decoder(x)
-
-
-if __name__ == '__main__':
-    import torch
-    m = SupernetNATS()
-    i = torch.randn(4, 3, 32, 32)
-    forward_op = m.set_forward_cfg('fair')
-    print(forward_op)
-    o = m(i, forward_op=forward_op[0])
-    print(o.shape)
-
-    # test mae supernet
-    loader = build_loader_simmim(is_train=True)
-    m = MAESupernetNATS()
-
-    for i, (img, mask, _) in enumerate(loader):
-        if i > 2:
-            break
-
-        o = m(img, mask, forward_op=m.set_forward_cfg('fair')[0])
-
-        print(o.shape)

@@ -46,8 +46,9 @@ class NATSTrainer(BaseTrainer):
     def _loss(self, batch_inputs) -> Tuple:
         """Forward and compute loss. Low Level API"""
         inputs, labels = batch_inputs
+        labels = self._to_device(labels, self.device)
         out = self._forward(batch_inputs)
-        return self._compute_loss(out, labels), out, labels, inputs.size(0)
+        return self._compute_loss(out, labels), out, labels
 
     def _train(self, loader):
         self.model.train()
