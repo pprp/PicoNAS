@@ -226,17 +226,14 @@ class BaseTrainer:
 
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
-                inputs, labels = batch_inputs
-                inputs = self._to_device(inputs, self.device)
-                labels = self._to_device(labels, self.device)
                 # move to device
-                outputs = self.forward(batch_inputs, mode='predict')
+                outputs, labels = self.forward(batch_inputs, mode='predict')
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
 
                 # compute accuracy
-                n = inputs.size(0)
+                n = labels.size(0)
                 top1, top5 = accuracy(outputs, labels, topk=(1, 5))
                 top1_vacc.update(top1.item(), n)
                 top5_vacc.update(top5.item(), n)
