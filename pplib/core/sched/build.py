@@ -1,6 +1,6 @@
 from torch.optim import lr_scheduler
 
-from .schedulers import CyclicLR, WarmupMultiStepLR
+from .schedulers import WarmupMultiStepLR
 
 
 def build_scheduler(args, optimizer):
@@ -42,7 +42,7 @@ def build_scheduler(args, optimizer):
         #     total_epoch=int(args.epochs * 0.5),
         #     after_scheduler=tmp_scheduler,
         # )
-        scheduler = CyclicLR(
+        scheduler = lr_scheduler.CyclicLR(
             optimizer,
             base_lr=0,
             max_lr=args.lr,

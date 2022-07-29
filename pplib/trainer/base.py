@@ -159,9 +159,7 @@ class BaseTrainer:
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
 
-        # forward pass
-        out = self.model(inputs)
-        return out
+        return self.model(inputs)
 
     def _train(self, loader):
         self.model.train()
@@ -243,9 +241,6 @@ class BaseTrainer:
 
                 # print every 20 iter
                 if step % self.print_freq == 0:
-                    self.logger.info(
-                        f'Step: {step} \t Val loss: {loss.item()} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
-                    )
                     self.writer.add_scalar(
                         'val_step_loss',
                         loss.item(),
@@ -258,7 +253,9 @@ class BaseTrainer:
                         'top5_val_acc',
                         top5_vacc.avg,
                         global_step=step + self.current_epoch * len(loader))
-
+            self.logger.info(
+                f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
+            )
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def _compute_loss(self, real, target):

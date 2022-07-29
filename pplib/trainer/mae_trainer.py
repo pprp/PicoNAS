@@ -22,8 +22,19 @@ class MAETrainer(BaseTrainer):
                  device=None,
                  log_name='mae',
                  searching: bool = True):
-        super().__init__(model, mutator, criterion, optimizer, scheduler,
-                         device, log_name, searching)
+        super().__init__(
+            model=model,
+            mutator=mutator,
+            criterion=criterion,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            device=device,
+            log_name=log_name,
+            searching=searching)
+
+        if self.mutator is None:
+            self.mutator = OneShotMutator()
+            self.mutator.prepare_from_supernet(self.model)
 
         if self.criterion is None:
             self.criterion = nn.MSELoss()
@@ -37,7 +48,7 @@ class MAETrainer(BaseTrainer):
             self.mutator.set_subnet(rand_subnet)
         return self.model(img, mask)
 
-    def loss(self, batch_inputs) -> None:
+    def _loss(self, batch_inputs) -> None:
         """Forward and compute loss. Low Level API"""
         img, mask, _ = batch_inputs
         out = self._forward(batch_inputs)
@@ -59,7 +70,7 @@ class MAETrainer(BaseTrainer):
             # parameters update
             self.optimizer.step()
 
-            if i % 20 == 0:
+            if i % self.print_freq == 0:
                 self.logger.info(f'Step: {i} \t Train loss: {loss.item()}')
                 self.writer.add_scalar(
                     'train_step_loss',
@@ -70,12 +81,17 @@ class MAETrainer(BaseTrainer):
 
     def _validate(self, loader):
         self.model.eval()
+        val_loss = 0.
 
         with torch.no_grad():
-            for batch_inputs in loader:
+            for step, batch_inputs in enumerate(loader):
                 # move to device
                 loss = self.forward(batch_inputs, mode='loss')
-        return loss
+
+                val_loss += loss.item()
+
+            self.logger.info(f'Val loss: {val_loss / (step+1)}')
+        return val_loss / (step + 1)
 
     def fit(self, train_loader, val_loader, epochs):
         """Fits. High Level API

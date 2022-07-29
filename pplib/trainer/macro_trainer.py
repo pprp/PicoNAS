@@ -33,17 +33,23 @@ class MacroTrainer(BaseTrainer):
         optimizer=None,
         criterion=None,
         scheduler=None,
-        num_choices: int = 4,
-        num_layers: int = 20,
         device: torch.device = torch.device('cuda'),
         log_name='macro',
         searching: bool = True,
     ):
-        super().__init__(model, mutator, criterion, optimizer, scheduler,
-                         device, log_name, searching)
+        super().__init__(
+            model=model,
+            mutator=mutator,
+            criterion=criterion,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            device=device,
+            log_name=log_name,
+            searching=searching)
 
-        self.num_choices = num_choices
-        self.num_layers = num_layers
+        if self.mutator is None:
+            self.mutator = OneShotMutator()
+            self.mutator.prepare_from_supernet(self.model)
 
     def _train(self, loader):
         self.model.train()
@@ -126,7 +132,7 @@ class MacroTrainer(BaseTrainer):
             self.mutator.set_subnet(rand_subnet)
         else:
             self.mutator.set_subnet(subnet_dict)
-        return self.model(inputs)
+        return self.model(inputs), labels
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         self.model.eval()

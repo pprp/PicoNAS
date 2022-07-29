@@ -143,15 +143,13 @@ class Zero(nn.Module):
             input tensor
         """
         if self.C_in == self.C_out:
-            if self.stride == 1:
-                return x.mul(0.)
-            else:
-                return x[:, :, ::self.stride, ::self.stride].mul(0.)
-        else:
-            shape = list(x.shape)
-            shape[1] = self.C_out
-            zeros = x.new_zeros(shape, dtype=x.dtype, device=x.device)
-            return zeros
+            return x.mul(
+                0.0) if self.stride == 1 else x[:, :, ::self.stride, ::self.
+                                                stride].mul(0.0)
+
+        shape = list(x.shape)
+        shape[1] = self.C_out
+        return x.new_zeros(shape, dtype=x.dtype, device=x.device)
 
 
 class FactorizedReduce(nn.Module):
@@ -168,21 +166,15 @@ class FactorizedReduce(nn.Module):
         self.C_in = C_in
         self.C_out = C_out
         self.relu = nn.ReLU(inplace=False)
-        if stride == 2:
-            C_outs = [C_out // 2, C_out - C_out // 2]
-            self.convs = nn.ModuleList()
-            for i in range(2):
-                self.convs.append(
-                    nn.Conv2d(
-                        C_in,
-                        C_outs[i],
-                        1,
-                        stride=stride,
-                        padding=0,
-                        bias=False))
-            self.pad = nn.ConstantPad2d((0, 1, 0, 1), 0)
-        else:
+        if stride != 2:
             raise ValueError('Invalid stride : {:}'.format(stride))
+        C_outs = [C_out // 2, C_out - C_out // 2]
+        self.convs = nn.ModuleList()
+        for i in range(2):
+            self.convs.append(
+                nn.Conv2d(
+                    C_in, C_outs[i], 1, stride=stride, padding=0, bias=False))
+        self.pad = nn.ConstantPad2d((0, 1, 0, 1), 0)
         self.bn = nn.BatchNorm2d(
             C_out,
             affine=bn_affine,
@@ -243,7 +235,7 @@ class NASBench201Cell(nn.Module):
 
         for i in range(self.NUM_NODES):
             node_ops = nn.ModuleList()
-            for layer_idx in range(0, i):
+            for layer_idx in range(i):
                 candidate_op = nn.ModuleDict({
                     # 'none':
                     # Zero(C_in, C_out, stride),
@@ -297,7 +289,7 @@ class ResNetBasicBlock(nn.Module):
                  bn_momentum=0.1,
                  bn_track_running_stats=True):
         super(ResNetBasicBlock, self).__init__()
-        assert stride == 1 or stride == 2, 'invalid stride {:}'.format(stride)
+        assert stride in [1, 2], 'invalid stride {:}'.format(stride)
         self.conv_a = ReLUConvBN(inplanes, planes, 3, stride, 1, 1, bn_affine,
                                  bn_momentum, bn_track_running_stats)
         self.conv_b = ReLUConvBN(planes, planes, 3, 1, 1, 1, bn_affine,
@@ -336,8 +328,8 @@ class ResNetBasicBlock(nn.Module):
 class OneShotNASBench201Network(nn.Module):
 
     def __init__(self,
-                 stem_out_channels,
-                 num_modules_per_stack,
+                 stem_out_channels=16,
+                 num_modules_per_stack=5,
                  bn_affine=True,
                  bn_momentum=0.1,
                  bn_track_running_stats=True):

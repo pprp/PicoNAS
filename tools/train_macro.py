@@ -15,8 +15,6 @@ from pplib.trainer import MacroTrainer
 from pplib.utils.bn_calibrate import separate_bn_params
 from pplib.utils.config import Config
 
-# from torchsummary import summary
-
 
 def get_args():
     parser = argparse.ArgumentParser('train macro benchmark')

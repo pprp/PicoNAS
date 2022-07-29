@@ -141,7 +141,7 @@ def build_dataloader(dataset='cifar10', type='train', config=None):
         if type == 'train':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'train', 'cifar10', config=config, fast=config.fast),
+                    'train', 'simmim', config=config, fast=config.fast),
                 batch_size=config.batch_size,
                 shuffle=True,
                 num_workers=config.nw,
@@ -151,7 +151,7 @@ def build_dataloader(dataset='cifar10', type='train', config=None):
         elif type == 'val':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'val', 'cifar10', config=config, fast=config.fast),
+                    'val', 'simmim', config=config, fast=config.fast),
                 batch_size=config.batch_size,
                 shuffle=False,
                 num_workers=config.nw,

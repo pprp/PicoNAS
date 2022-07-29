@@ -82,6 +82,7 @@ class SearchableShuffleNetV2(nn.Module):
         return x
 
 
+@register_model
 class SearchableMAE(SearchableShuffleNetV2):
 
     def __init__(self, classes=10) -> None:

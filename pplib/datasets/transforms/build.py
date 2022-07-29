@@ -45,6 +45,8 @@ def build_transforms(dataset='cifar10', type='train', config=None):
                 transforms.Normalize([0.5071, 0.4865, 0.4409],
                                      [0.1942, 0.1918, 0.1958]),
             ]
+        elif dataset == 'simmim':
+            post_transform = [SimMIMTransform()]
 
         if config.cutout:
             post_transform.append(Cutout(1, 8))
@@ -65,8 +67,9 @@ def build_transforms(dataset='cifar10', type='train', config=None):
                 transforms.Normalize([0.5071, 0.4865, 0.4409],
                                      [0.1942, 0.1918, 0.1958]),
             ])
-    elif dataset == 'simmim':
-        transform_type = SimMIMTransform()
+        elif dataset == 'simmim':
+            transform_type = SimMIMTransform()
+
     else:
         raise 'Type Error in transforms'
 
