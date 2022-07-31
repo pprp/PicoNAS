@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from ..registry import register_model
 from .nats_supernet import SupernetNATS
+from .non_linear_neck import NonLinearNeck
 
 try:
     import apex
@@ -40,7 +41,7 @@ class SiameseSupernetsNATS(nn.Module):
         self.num_block = num_block
 
         self.online_backbone = SupernetNATS()
-        self.target_backbone = SupernetNATS() 
+        self.target_backbone = SupernetNATS()
 
         self.backbone = self.online_backbone
 
@@ -63,8 +64,23 @@ class SiameseSupernetsNATS(nn.Module):
                 target_channel_fix.append(nn.Sequential(nn.Conv2d(channel, outc, kernel_size=1, stride=1, bias=False),
                                                         nn.BatchNorm2d(outc)))
             self.target_channels_fix.append(target_channel_fix)
-            self.online_necks.append(builder.build_neck(neck))
-            self.target_necks.append(builder.build_neck(neck))
+            self.online_necks.append(NonLinearNeck(in_channels=2048,
+                                                   hid_channels=4096,
+                                                   out_channels=256,
+                                                   num_layers=2,
+                                                   sync_bn=False,
+                                                   with_bias=True,
+                                                   with_last_bn=False,
+                                                   with_avg_pool=True))
+            self.target_necks.append(NonLinearNeck(in_channels=2048,
+                                                   hid_channels=4096,
+                                                   out_channels=256,
+                                                   num_layers=2,
+                                                   sync_bn=False,
+                                                   with_bias=True,
+                                                   with_last_bn=False,
+                                                   with_avg_pool=True))
+
             self.heads.append(builder.build_head(head))
 
         for param in self.target_backbone.parameters():
@@ -318,14 +334,17 @@ class SiameseSupernetsNATS(nn.Module):
 
         channel_fix_op = forward_singleop[sum(
             self._op_layers_list[:self.start_block + 1]) - 1]
-        self.target_neck((self.target_channel_fix[channel_fix_op](self.target_backbone(img_v1, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
+        self.target_neck((self.target_channel_fix[channel_fix_op](self.target_backbone(
+            img_v1, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
 
-        self.target_neck((self.target_channel_fix[channel_fix_op](self.target_backbone(img_v2, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
+        self.target_neck((self.target_channel_fix[channel_fix_op](self.target_backbone(
+            img_v2, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
 
+        self.online_neck((self.online_channel_fix[channel_fix_op](self.online_backbone(
+            img_v1, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
 
-        self.online_neck((self.online_channel_fix[channel_fix_op](self.online_backbone(img_v1, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
-
-        self.online_neck((self.online_channel_fix[channel_fix_op](self.online_backbone(img_v2, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
+        self.online_neck((self.online_channel_fix[channel_fix_op](self.online_backbone(
+            img_v2, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
 
 
 # utils
