@@ -19,10 +19,10 @@ def get_args():
         '--config',
         type=str,
         default='configs/spos/spos_cifar10.py',
-        required=True,
+        required=False,
         help='user settings config')
     parser.add_argument(
-        '--exp_name',
+        '--work_dir',
         type=str,
         default='macro_cifar10',
         help='experiment name')
@@ -49,7 +49,7 @@ def get_args():
         help='name of this experiments')
 
     parser.add_argument(
-        '--crit', type=str, default='ce', help='decide the criterion')
+        '--crit', type=str, default='mse', help='decide the criterion')
     parser.add_argument(
         '--optims', type=str, default='sgd', help='decide the optimizer')
     parser.add_argument(
@@ -92,20 +92,27 @@ def get_args():
     parser.add_argument(
         '--resize', action='store_true', default=False, help='use resize')
     args = parser.parse_args()
-    print(args)
     return args
 
 
 def main():
     args = get_args()
 
-    cfg = Config.fromfile(args.config)
-    cfg.merge_from_dict(vars(args))
+    # merge argparse and config file
+    if args.config is not None:
+        cfg = Config.fromfile(args.config)
+        cfg.merge_from_dict(vars(args))
+    else:
+        cfg = Config(args)
+
+    print(cfg)
 
     # dump config files
+    cfg.work_dir = os.path.join(cfg.work_dir, cfg.model_name)
     if not os.path.exists(cfg.work_dir):
-        os.mkdir(cfg.work_dir)
-    cfg.dump(os.path.join(cfg.work_dir, os.path.basename(args.config)))
+        os.makedirs(cfg.work_dir)
+    current_exp_name = f'{cfg.model_name}-{cfg.trainer_name}-{cfg.log_name}.yaml'
+    cfg.dump(os.path.join(cfg.work_dir, current_exp_name))
 
     if torch.cuda.is_available():
         print('Train on GPU!')

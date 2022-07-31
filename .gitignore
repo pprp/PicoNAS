@@ -16,3 +16,4 @@ logdirs/*
 .coverage
 *.xml
 lib/*
+*.yaml
