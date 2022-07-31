@@ -23,7 +23,7 @@ def build_scheduler(args, optimizer):
         )
     elif args.sched == 'cosine':
         scheduler = lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=args.epochs, eta_min=0)
+            optimizer, T_max=args.epochs, eta_min=0.0)
     elif args.sched == 'warmcosine':
         # cifar slow / total = 20 / 300
         # tmp_scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)

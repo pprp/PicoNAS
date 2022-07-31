@@ -59,6 +59,9 @@ class BaseTrainer:
 
         writer_path = os.path.join('./logdirs', self.log_name)
         self.writer = SummaryWriter(writer_path)
+        
+        # evaluator is to eval the rank consistency
+        self.evaluator = None 
 
     def fit(self, train_loader, val_loader, epochs):
         """Fits. High Level API

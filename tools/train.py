@@ -24,7 +24,7 @@ def get_args():
     parser.add_argument(
         '--work_dir',
         type=str,
-        default='macro_cifar10',
+        default='./work_dir',
         help='experiment name')
     parser.add_argument(
         '--data_dir',
@@ -61,13 +61,13 @@ def get_args():
     parser.add_argument(
         '--num_choices', type=int, default=4, help='number choices per layer')
     parser.add_argument(
-        '--batch_size', type=int, default=96, help='batch size')
+        '--batch_size', type=int, default=256, help='batch size')
     parser.add_argument('--epochs', type=int, default=200, help='batch size')
     parser.add_argument(
         '--lr', type=float, default=0.025, help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
     parser.add_argument(
-        '--weight-decay', type=float, default=3e-4, help='weight decay')
+        '--weight-decay', type=float, default=5e-4, help='weight decay')
     parser.add_argument(
         '--val_interval',
         type=int,

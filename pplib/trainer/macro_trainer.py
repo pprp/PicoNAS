@@ -1,12 +1,17 @@
 from typing import Dict
+import time 
 
 import torch
 import torch.nn as nn
+from pplib.evaluator import macro_evaluator
+from pplib.evaluator.nats_evaluator import NATSEvaluator
 
 from pplib.nas.mutators import OneShotMutator
 from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 from .registry import register_trainer
+import pplib.utils.utils as utils
+
 
 
 @register_trainer
@@ -50,7 +55,12 @@ class MacroTrainer(BaseTrainer):
         if self.mutator is None:
             self.mutator = OneShotMutator()
             self.mutator.prepare_from_supernet(self.model)
+        
+        self.evaluator = None 
 
+    def build_evaluator(self, dataloader, bench_path, num_sample=20):
+        self.evaluator = macro_evaluator(self, dataloader, bench_path, num_sample)
+        
     def _train(self, loader):
         self.model.train()
 
@@ -133,6 +143,76 @@ class MacroTrainer(BaseTrainer):
         else:
             self.mutator.set_subnet(subnet_dict)
         return self.model(inputs), labels
+
+    def fit(self, train_loader, val_loader, epochs):
+        """Fits. High Level API
+
+        Fit the model using the given loaders for the given number
+        of epochs.
+
+        Args:
+            train_loader :
+            val_loader :
+            epochs : int
+                Number of training epochs.
+
+        """
+        # track total training time
+        total_start_time = time.time()
+
+        # ---- train process ----
+        for epoch in range(epochs):
+            self.current_epoch = epoch
+            # track epoch time
+            epoch_start_time = time.time()
+
+            # train
+            tr_loss, top1_tacc, top5_tacc = self._train(train_loader)
+
+            # validate
+            val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
+
+            # save ckpt
+            if epoch % 10 == 0:
+                utils.save_checkpoint({'state_dict': self.model.state_dict()},
+                                      self.log_name,
+                                      epoch + 1,
+                                      tag=f'{self.log_name}_macro')
+
+            self.train_loss_.append(tr_loss)
+            self.val_loss_.append(val_loss)
+
+            epoch_time = time.time() - epoch_start_time
+
+            self.logger.info(
+                f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
+            )
+            
+            if epoch % 5 == 0:
+                if self.evaluator is None:
+                    bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
+                    self.build_evaluator(val_loader, bench_path, num_sample=20)
+                else:
+                    kt, ps, sp = self.evaluator.compute_rank_consistency()
+                    self.writer.add_scalar(
+                        'kendall_tau', kt, global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        'pearson', ps, global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        'spearman', sp, global_step=self.current_epoch)
+
+            self.writer.add_scalar(
+                'train_epoch_loss', tr_loss, global_step=self.current_epoch)
+            self.writer.add_scalar(
+                'valid_epoch_loss', val_loss, global_step=self.current_epoch)
+
+            self.scheduler.step()
+
+        total_time = time.time() - total_start_time
+
+        # final message
+        self.logger.info(
+            f"""End of training. Total time: {round(total_time, 5)} seconds""")
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         self.model.eval()
