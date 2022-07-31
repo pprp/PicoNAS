@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+
 from ..registry import register_model
 from .nats_supernet import SupernetNATS
 from .non_linear_neck import NonLinearNeck
@@ -56,30 +57,40 @@ class SiameseSupernetsNATS(nn.Module):
             outc = neck['in_channels']
             online_channel_fix = nn.ModuleList()
             for channel in channel_list:
-                online_channel_fix.append(nn.Sequential(nn.Conv2d(channel, outc, kernel_size=1, stride=1, bias=False),
-                                                        nn.BatchNorm2d(outc)))
+                online_channel_fix.append(
+                    nn.Sequential(
+                        nn.Conv2d(
+                            channel, outc, kernel_size=1, stride=1,
+                            bias=False), nn.BatchNorm2d(outc)))
             self.online_channels_fix.append(online_channel_fix)
             target_channel_fix = nn.ModuleList()
             for channel in channel_list:
-                target_channel_fix.append(nn.Sequential(nn.Conv2d(channel, outc, kernel_size=1, stride=1, bias=False),
-                                                        nn.BatchNorm2d(outc)))
+                target_channel_fix.append(
+                    nn.Sequential(
+                        nn.Conv2d(
+                            channel, outc, kernel_size=1, stride=1,
+                            bias=False), nn.BatchNorm2d(outc)))
             self.target_channels_fix.append(target_channel_fix)
-            self.online_necks.append(NonLinearNeck(in_channels=2048,
-                                                   hid_channels=4096,
-                                                   out_channels=256,
-                                                   num_layers=2,
-                                                   sync_bn=False,
-                                                   with_bias=True,
-                                                   with_last_bn=False,
-                                                   with_avg_pool=True))
-            self.target_necks.append(NonLinearNeck(in_channels=2048,
-                                                   hid_channels=4096,
-                                                   out_channels=256,
-                                                   num_layers=2,
-                                                   sync_bn=False,
-                                                   with_bias=True,
-                                                   with_last_bn=False,
-                                                   with_avg_pool=True))
+            self.online_necks.append(
+                NonLinearNeck(
+                    in_channels=2048,
+                    hid_channels=4096,
+                    out_channels=256,
+                    num_layers=2,
+                    sync_bn=False,
+                    with_bias=True,
+                    with_last_bn=False,
+                    with_avg_pool=True))
+            self.target_necks.append(
+                NonLinearNeck(
+                    in_channels=2048,
+                    hid_channels=4096,
+                    out_channels=256,
+                    num_layers=2,
+                    sync_bn=False,
+                    with_bias=True,
+                    with_last_bn=False,
+                    with_avg_pool=True))
 
             self.heads.append(builder.build_head(head))
 
@@ -199,7 +210,7 @@ class SiameseSupernetsNATS(nn.Module):
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
-        assert img.dim() == 5, f"Input must have 5 dims, got: {img.dim()}"
+        assert img.dim() == 5, f'Input must have 5 dims, got: {img.dim()}'
         img_v1 = img[:, 0, ...].contiguous()
         img_v2 = img[:, 1, ...].contiguous()
         pre_op = -1
@@ -210,22 +221,30 @@ class SiameseSupernetsNATS(nn.Module):
                     forward_bestpath.append(op)
             pre_op = forward_bestpath[-1]
             for i, best_path in enumerate(self.best_paths):
-                img_v1 = self.online_backbone(img_v1,
-                                              start_block=i,
-                                              forward_op=forward_bestpath)[0]
-                img_v2 = self.online_backbone(img_v2,
-                                              start_block=i,
-                                              forward_op=forward_bestpath)[0]
+                img_v1 = self.online_backbone(
+                    img_v1, start_block=i, forward_op=forward_bestpath)[0]
+                img_v2 = self.online_backbone(
+                    img_v2, start_block=i, forward_op=forward_bestpath)[0]
 
-        channel_fix_op = forward_singleop_online[sum(
-            self._op_layers_list[:self.start_block+1]) - 1]
+        channel_fix_op = forward_singleop_online[
+            sum(self._op_layers_list[:self.start_block + 1]) - 1]
 
-        proj_online_v1 = self.online_neck(tuple([self.online_channel_fix[channel_fix_op](self.online_backbone(img_v1,
-                                                                                                              start_block=self.start_block, pre_op=pre_op,
-                                                                                                              forward_op=forward_singleop_online)[0])]))[0]
-        proj_online_v2 = self.online_neck(tuple([self.online_channel_fix[channel_fix_op](self.online_backbone(img_v2,
-                                                                                                              start_block=self.start_block, pre_op=pre_op,
-                                                                                                              forward_op=forward_singleop_online)[0])]))[0]
+        proj_online_v1 = self.online_neck(
+            tuple([
+                self.online_channel_fix[channel_fix_op](self.online_backbone(
+                    img_v1,
+                    start_block=self.start_block,
+                    pre_op=pre_op,
+                    forward_op=forward_singleop_online)[0])
+            ]))[0]
+        proj_online_v2 = self.online_neck(
+            tuple([
+                self.online_channel_fix[channel_fix_op](self.online_backbone(
+                    img_v2,
+                    start_block=self.start_block,
+                    pre_op=pre_op,
+                    forward_op=forward_singleop_online)[0])
+            ]))[0]
 
         loss = self.head(proj_online_v1, self.proj_target_v2)['loss'] + \
             self.head(proj_online_v2, self.proj_target_v1)['loss']
@@ -247,7 +266,7 @@ class SiameseSupernetsNATS(nn.Module):
         elif mode == 'single':
             return self.forward_single(img, **kwargs)
         else:
-            raise Exception(f"No such mode: {mode}")
+            raise Exception(f'No such mode: {mode}')
 
     def forward_target(self, img, **kwargs):
         """Forward computation during training.
@@ -257,7 +276,7 @@ class SiameseSupernetsNATS(nn.Module):
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
-        assert img.dim() == 5, f"Input must have 5 dims, got: {img.dim()}"
+        assert img.dim() == 5, f'Input must have 5 dims, got: {img.dim()}'
         img_v1 = img[:, 0, ...].contiguous()
         img_v2 = img[:, 1, ...].contiguous()
 
@@ -271,12 +290,12 @@ class SiameseSupernetsNATS(nn.Module):
                     forward_bestpath.append(op)
             pre_op = forward_bestpath[-1]
             for i, best_path in enumerate(self.best_paths):
-                img_v1 = self.target_backbone(img_v1,
-                                              start_block=i,
-                                              forward_op=forward_bestpath)[0].clone().detach()
-                img_v2 = self.target_backbone(img_v2,
-                                              start_block=i,
-                                              forward_op=forward_bestpath)[0].clone().detach()
+                img_v1 = self.target_backbone(
+                    img_v1, start_block=i,
+                    forward_op=forward_bestpath)[0].clone().detach()
+                img_v2 = self.target_backbone(
+                    img_v2, start_block=i,
+                    forward_op=forward_bestpath)[0].clone().detach()
 
         # print("imgv1:"+ str(img_v1.shape))
         self.forward_op_target = self.forward_op_online
@@ -285,16 +304,26 @@ class SiameseSupernetsNATS(nn.Module):
 
         with torch.no_grad():
             for forward_singleop_target in self.forward_op_target:
-                channel_fix_op = forward_singleop_target[sum(
-                    self._op_layers_list[:self.start_block + 1]) - 1]
-                temp_v1 = self.target_neck(tuple([self.target_channel_fix[channel_fix_op](self.target_backbone(img_v1,
-                                                                                                               start_block=self.start_block, pre_op=pre_op,
-                                                                                                               forward_op=forward_singleop_target)[0])]))[
-                    0].clone().detach()
-                temp_v2 = self.target_neck(tuple([self.target_channel_fix[channel_fix_op](self.target_backbone(img_v2,
-                                                                                                               start_block=self.start_block, pre_op=pre_op,
-                                                                                                               forward_op=forward_singleop_target)[0])]))[
-                    0].clone().detach()
+                channel_fix_op = forward_singleop_target[
+                    sum(self._op_layers_list[:self.start_block + 1]) - 1]
+                temp_v1 = self.target_neck(
+                    tuple([
+                        self.target_channel_fix[channel_fix_op](
+                            self.target_backbone(
+                                img_v1,
+                                start_block=self.start_block,
+                                pre_op=pre_op,
+                                forward_op=forward_singleop_target)[0])
+                    ]))[0].clone().detach()
+                temp_v2 = self.target_neck(
+                    tuple([
+                        self.target_channel_fix[channel_fix_op](
+                            self.target_backbone(
+                                img_v2,
+                                start_block=self.start_block,
+                                pre_op=pre_op,
+                                forward_op=forward_singleop_target)[0])
+                    ]))[0].clone().detach()
                 temp_v1 = nn.functional.normalize(temp_v1, dim=1)
                 temp_v1 = self._batch_unshuffle_ddp(temp_v1, idx_unshuffle_v1)
 
@@ -325,26 +354,44 @@ class SiameseSupernetsNATS(nn.Module):
                     forward_bestpath.append(op)
             pre_op = forward_bestpath[-1]
             for i, best_path in enumerate(self.best_paths):
-                img_v1 = self.target_backbone(img_v1,
-                                              start_block=i,
-                                              forward_op=forward_bestpath)[0]
-                img_v2 = self.target_backbone(img_v2,
-                                              start_block=i,
-                                              forward_op=forward_bestpath)[0]
+                img_v1 = self.target_backbone(
+                    img_v1, start_block=i, forward_op=forward_bestpath)[0]
+                img_v2 = self.target_backbone(
+                    img_v2, start_block=i, forward_op=forward_bestpath)[0]
 
-        channel_fix_op = forward_singleop[sum(
-            self._op_layers_list[:self.start_block + 1]) - 1]
-        self.target_neck((self.target_channel_fix[channel_fix_op](self.target_backbone(
-            img_v1, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
+        channel_fix_op = forward_singleop[
+            sum(self._op_layers_list[:self.start_block + 1]) - 1]
+        self.target_neck(
+            (self.target_channel_fix[channel_fix_op](self.target_backbone(
+                img_v1,
+                start_block=self.start_block,
+                pre_op=pre_op,
+                forward_op=forward_singleop,
+            )[0]), ))
 
-        self.target_neck((self.target_channel_fix[channel_fix_op](self.target_backbone(
-            img_v2, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
+        self.target_neck(
+            (self.target_channel_fix[channel_fix_op](self.target_backbone(
+                img_v2,
+                start_block=self.start_block,
+                pre_op=pre_op,
+                forward_op=forward_singleop,
+            )[0]), ))
 
-        self.online_neck((self.online_channel_fix[channel_fix_op](self.online_backbone(
-            img_v1, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
+        self.online_neck(
+            (self.online_channel_fix[channel_fix_op](self.online_backbone(
+                img_v1,
+                start_block=self.start_block,
+                pre_op=pre_op,
+                forward_op=forward_singleop,
+            )[0]), ))
 
-        self.online_neck((self.online_channel_fix[channel_fix_op](self.online_backbone(
-            img_v2, start_block=self.start_block, pre_op=pre_op, forward_op=forward_singleop,)[0]),))
+        self.online_neck(
+            (self.online_channel_fix[channel_fix_op](self.online_backbone(
+                img_v2,
+                start_block=self.start_block,
+                pre_op=pre_op,
+                forward_op=forward_singleop,
+            )[0]), ))
 
 
 # utils

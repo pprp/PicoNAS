@@ -1,21 +1,28 @@
+import json
 import random
 from typing import Dict, List
 
-import json
-
 from pplib.evaluator.base import Evaluator
-from pplib.utils.misc import convert_channel2idx
+from pplib.utils.misc import convert_arch2dict
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
 
 class MacroEvaluator(Evaluator):
 
-    def __init__(self, trainer, dataloader, bench_path, num_sample=None):
+    def __init__(self,
+                 trainer,
+                 dataloader,
+                 bench_path,
+                 num_sample=None,
+                 type='test_acc'):
         super().__init__(trainer, dataloader, bench_path)
         self.trainer = trainer
         self.dataloader = dataloader
         self.bench_path = bench_path
         self.num_sample = num_sample
+        self.type = type
+        assert type in ['test_acc', 'MMACs', 'val_acc', 'Params'], \
+            f'Not support type {type}.'
 
         self.bench_dict = self.load_benchmark()
 
@@ -43,13 +50,14 @@ class MacroEvaluator(Evaluator):
         self.trainer.logger.info('Begin to compute rank consistency...')
 
         for i, (k, v) in enumerate(self.bench_dict.items()):
-            print(f'evaluating the {i}th architecture.')
-            current_op_list = convert_channel2idx(k)
+            self.trainer.logger.info(f'evaluating the {i}th architecture.')
+
+            subnet_dict = convert_arch2dict(k)
             indicator = self.trainer.metric_score(
-                self.dataloader, current_op_list=current_op_list)
+                self.dataloader, subnet_dict=subnet_dict)
 
             supernet_indicator_list.append(indicator)
-            true_indicator_list.append(v)
+            true_indicator_list.append(v[self.type])
 
         kt = kendalltau(true_indicator_list, supernet_indicator_list)
         ps = pearson(true_indicator_list, supernet_indicator_list)

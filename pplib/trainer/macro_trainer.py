@@ -1,17 +1,15 @@
+import time
 from typing import Dict
-import time 
 
 import torch
 import torch.nn as nn
-from pplib.evaluator import macro_evaluator
-from pplib.evaluator.nats_evaluator import NATSEvaluator
 
+import pplib.utils.utils as utils
+from pplib.evaluator import MacroEvaluator
 from pplib.nas.mutators import OneShotMutator
 from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 from .registry import register_trainer
-import pplib.utils.utils as utils
-
 
 
 @register_trainer
@@ -55,12 +53,13 @@ class MacroTrainer(BaseTrainer):
         if self.mutator is None:
             self.mutator = OneShotMutator()
             self.mutator.prepare_from_supernet(self.model)
-        
-        self.evaluator = None 
+
+        self.evaluator = None
 
     def build_evaluator(self, dataloader, bench_path, num_sample=20):
-        self.evaluator = macro_evaluator(self, dataloader, bench_path, num_sample)
-        
+        self.evaluator = MacroEvaluator(self, dataloader, bench_path,
+                                        num_sample)
+
     def _train(self, loader):
         self.model.train()
 
@@ -137,7 +136,7 @@ class MacroTrainer(BaseTrainer):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
         # forward pass
-        if self.searching:
+        if subnet_dict is None:
             rand_subnet = self.mutator.random_subnet
             self.mutator.set_subnet(rand_subnet)
         else:
@@ -187,7 +186,7 @@ class MacroTrainer(BaseTrainer):
             self.logger.info(
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
-            
+
             if epoch % 5 == 0:
                 if self.evaluator is None:
                     bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
@@ -223,18 +222,15 @@ class MacroTrainer(BaseTrainer):
 
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
-                inputs, labels = batch_inputs
-                inputs = self._to_device(inputs, self.device)
-                labels = self._to_device(labels, self.device)
-
                 # move to device
-                outputs = self._predict(batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(
+                    batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
 
                 # compute accuracy
-                n = inputs.size(0)
+                n = labels.size(0)
                 top1, top5 = accuracy(outputs, labels, topk=(1, 5))
                 top1_vacc.update(top1.item(), n)
                 top5_vacc.update(top5.item(), n)
@@ -244,9 +240,6 @@ class MacroTrainer(BaseTrainer):
 
                 # print every 20 iter
                 if step % 20 == 0:
-                    self.logger.info(
-                        f'Step: {step} \t Val loss: {loss.item()} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
-                    )
                     self.writer.add_scalar(
                         'val_step_loss',
                         loss.item(),
@@ -260,4 +253,8 @@ class MacroTrainer(BaseTrainer):
                         top5_vacc.avg,
                         global_step=step + self.current_epoch * len(loader))
 
-        return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
+        self.logger.info(
+            f'Val loss: {loss.item()} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
+        )
+        # val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
+        return top1_vacc.avg

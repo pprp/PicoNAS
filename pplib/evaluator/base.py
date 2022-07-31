@@ -12,6 +12,6 @@ class Evaluator:
     def compute_rank_consistency(self):
         """compute rank consistency."""
         pass
-    
+
     def sample_archs(self, bench_dict):
         """sample from benchmark."""

@@ -22,10 +22,7 @@ def get_args():
         required=False,
         help='user settings config')
     parser.add_argument(
-        '--work_dir',
-        type=str,
-        default='./work_dir',
-        help='experiment name')
+        '--work_dir', type=str, default='./work_dir', help='experiment name')
     parser.add_argument(
         '--data_dir',
         type=str,
@@ -108,7 +105,7 @@ def main():
     print(cfg)
 
     # dump config files
-    cfg.work_dir = os.path.join(cfg.work_dir, cfg.model_name)
+    cfg.work_dir = os.path.join(cfg.work_dir, cfg.trainer_name)
     if not os.path.exists(cfg.work_dir):
         os.makedirs(cfg.work_dir)
     current_exp_name = f'{cfg.model_name}-{cfg.trainer_name}-{cfg.log_name}.yaml'

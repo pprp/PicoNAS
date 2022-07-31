@@ -55,13 +55,19 @@ class BaseTrainer:
         self.val_loss_: List = []
         self.current_epoch = 0
 
-        self.logger = get_logger(self.log_name)
+        # mkdir for logger
+        log_path = os.path.join('./work_dir', self.__class__.__name__)
+        log_file_name = f'{log_name}-{self.__class__.__name__}.log'
+        if not os.path.exists(log_path):
+            os.makedirs(log_path)
+        self.logger = get_logger(
+            self.log_name, log_file=os.path.join(log_path, log_file_name))
 
         writer_path = os.path.join('./logdirs', self.log_name)
         self.writer = SummaryWriter(writer_path)
-        
+
         # evaluator is to eval the rank consistency
-        self.evaluator = None 
+        self.evaluator = None
 
     def fit(self, train_loader, val_loader, epochs):
         """Fits. High Level API

@@ -23,7 +23,7 @@ repos:
       - id: fix-encoding-pragma
         args: ["--remove"]
       - id: mixed-line-ending
-        args: ["--fix=crlf"]
+        args: ["--fix=lf"]
   # - repo: https://github.com/codespell-project/codespell
   #   rev: v2.1.0
   #   hooks:
