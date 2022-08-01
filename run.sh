@@ -39,4 +39,4 @@ CUDA_VISIBLE_DEVICES=4 python tools/train.py --config configs/spos/spos_cifar10.
 
 
 # EVAL MACRO FLOPS
-python tools/eval_rank.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --dataset cifar10 --log_name macro_spos --work_dir ./work_dir --crit ce
+python tools/eval_rank.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --dataset cifar10 --log_name macro_eval_flops --work_dir ./work_dir --crit ce
