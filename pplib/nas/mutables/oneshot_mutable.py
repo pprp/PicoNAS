@@ -183,9 +183,7 @@ class OneShotOP(OneShotMutable[str, str]):
         Returns:
             Tensor: the result of forward all of the ``choice`` operation.
         """
-        outputs = list()
-        for op in self._candidate_ops.values():
-            outputs.append(op(x))
+        outputs = [op(x) for op in self._candidate_ops.values()]
         return sum(outputs)
 
     def fix_chosen(self, chosen: List[str]) -> None:
@@ -214,8 +212,7 @@ class OneShotOP(OneShotMutable[str, str]):
     @property
     def random_choice(self) -> str:
         """uniform sampling."""
-        choice = np.random.choice(self.choices, 1)[0]
-        return choice
+        return np.random.choice(self.choices, 1)[0]
 
     @property
     def choices(self) -> List[str]:
@@ -266,9 +263,7 @@ class OneShotProbOP(OneShotOP):
     def random_choice(self) -> str:
         """Sampling with probabilities."""
         assert len(self.choice_probs) == len(self._candidate_ops.keys())
-        choice = random.choices(
-            self.choices, weights=self.choice_probs, k=1)[0]
-        return choice
+        return random.choices(self.choices, weights=self.choice_probs, k=1)[0]
 
 
 class OneShotPathOP(OneShotOP):

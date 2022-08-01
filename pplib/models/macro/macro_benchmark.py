@@ -1,4 +1,5 @@
 from typing import List
+from numpy import isin
 
 import torch.nn as nn
 from torch.nn import Sequential
@@ -186,7 +187,7 @@ class MacroBenchmarkSuperNet(nn.Module):
         x = self.in_conv(x)
 
         # main body (list of cells)
-        for i, layer_name in enumerate(self.layers):
+        for layer_name in self.layers:
             layer = getattr(self, layer_name)
             x = layer(x)
 

@@ -5,6 +5,7 @@ from typing import Dict, List
 import numpy as np
 import torch
 import torch.nn as nn
+from mmcv.cnn import get_model_complexity_info
 
 import pplib.utils.utils as utils
 from pplib.evaluator import MacroEvaluator
@@ -52,13 +53,16 @@ class MacroTrainer(BaseTrainer):
             log_name=log_name,
             searching=searching)
 
+        # init flops
+        self._init_flops()
+
         if self.mutator is None:
             self.mutator = OneShotMutator()
             self.mutator.prepare_from_supernet(self.model)
 
         self.evaluator = None
 
-    def build_evaluator(self, dataloader, bench_path, num_sample=20):
+    def _build_evaluator(self, dataloader, bench_path, num_sample=20):
         self.evaluator = MacroEvaluator(self, dataloader, bench_path,
                                         num_sample)
 
@@ -81,7 +85,7 @@ class MacroTrainer(BaseTrainer):
             # FairNAS
             # loss, outputs = self._forward_fairnas(batch_inputs)
 
-            ## Single Path One Shot
+            # Single Path One Shot
             # compute loss
             loss, outputs = self.forward(batch_inputs, mode='loss')
             # backprop
@@ -168,21 +172,10 @@ class MacroTrainer(BaseTrainer):
         choices = ['I', '1', '2']
         length = 14
 
-        all_list = []
-        for _ in range(length):
-            all_list.append(random.sample(choices, 3))
-
+        all_list = [random.sample(choices, 3) for _ in range(length)]
         all_list = np.array(all_list).T
 
-        result_list: List[Dict] = []
-
-        for i in range(len(choices)):
-            tmp_dict = {}
-            for idx, choice in enumerate(all_list[i]):
-                tmp_dict[idx] = choice
-            result_list.append(tmp_dict)
-
-        return result_list
+        return [dict(enumerate(all_list[i])) for i in range(len(choices))]
 
     def fit(self, train_loader, val_loader, epochs):
         """Fits. High Level API
@@ -231,7 +224,8 @@ class MacroTrainer(BaseTrainer):
             if epoch % 5 == 0:
                 if self.evaluator is None:
                     bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
-                    self.build_evaluator(val_loader, bench_path, num_sample=20)
+                    self._build_evaluator(
+                        val_loader, bench_path, num_sample=20)
                 else:
                     kt, ps, sp = self.evaluator.compute_rank_consistency()
                     self.writer.add_scalar(
@@ -299,3 +293,28 @@ class MacroTrainer(BaseTrainer):
         )
         # val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
         return top1_vacc.avg
+
+    def _init_flops(self):
+        """generate flops."""
+        self.model.eval()
+        # note 1: after this process, each module in self.model
+        #       would have the __flops__ attribute.
+        # note 2: this function should be called before
+        #       mutator.prepare_from_supernet()
+        flops, params = get_model_complexity_info(self.model, self.input_shape)
+        return flops, params
+
+    def get_subnet_flops(self, subnet_dict) -> float:
+        """Calculate current subnet flops based on config."""
+        subnet_flops = 0
+        for k, v in self.mutator.search_group.items():
+            current_choice = subnet_dict[k]  # '1' or '2' or 'I'
+            choice_flops = 0
+            for _, module in v[0]._candidate_ops[current_choice].named_modules(
+            ):
+                flops = getattr(module, '__flops__', 0)
+                if flops > 0:
+                    choice_flops += flops
+            # print(f'k: {k} choice: {current_choice} flops: {choice_flops}')
+            subnet_flops += choice_flops
+        return subnet_flops

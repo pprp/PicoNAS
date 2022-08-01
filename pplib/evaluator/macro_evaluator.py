@@ -67,3 +67,28 @@ class MacroEvaluator(Evaluator):
             f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
 
         return kt, ps, sp
+
+    def compute_rank_based_on_flops(self):
+        """compute rank consistency of flops"""
+        true_indicator_list: List[float] = []
+        supernet_indicator_list: List[float] = []
+
+        self.trainer.logger.info('Begin to compute rank consistency...')
+
+        for i, (k, v) in enumerate(self.bench_dict.items()):
+            self.trainer.logger.info(f'evaluating the {i}th architecture.')
+
+            subnet_dict = convert_arch2dict(k)
+            # indicator = self.trainer.metric_score(
+            #     self.dataloader, subnet_dict=subnet_dict)
+            indicator = self.trainer.get_subnet_flops(subnet_dict)
+            supernet_indicator_list.append(indicator)
+            true_indicator_list.append(v[self.type])
+
+        kt = kendalltau(true_indicator_list, supernet_indicator_list)
+        ps = pearson(true_indicator_list, supernet_indicator_list)
+        sp = spearman(true_indicator_list, supernet_indicator_list)
+
+        print(
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+        return kt, ps, sp

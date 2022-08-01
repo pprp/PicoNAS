@@ -1,7 +1,7 @@
 import random
 import unittest
 from typing import Dict, List
-from unittest import TestCase, result
+from unittest import TestCase
 
 import numpy as np
 import torch
@@ -55,35 +55,45 @@ class TestMacroBench(TestCase):
         print(result_list)
 
     def test_model_complexity(self):
-        import copy 
+        import copy
+
         from mmcv.cnn import get_model_complexity_info
         model = MacroBenchmarkSuperNet()
 
         # WARNING: must before mutator prepare_from_supernet
         copymodel = copy.deepcopy(model)
-        copymodel.eval() 
+        copymodel.eval()
         flops, params = get_model_complexity_info(copymodel, (3, 32, 32))
         print(flops, params)
 
-        for name, module in copymodel.named_modules():
-            flops = getattr(module, '__flops__', 0)
-            if flops > 0:
-                print(name, flops)
+        # for name, module in copymodel.named_modules():
+        #     flops = getattr(module, '__flops__', 0)
+        #     if flops > 0:
+        #         print(name, flops)
 
-        # mutator = OneShotMutator()
+        mutator = OneShotMutator()
         # import ipdb; ipdb.set_trace()
-        # mutator.prepare_from_supernet(model)
+        mutator.prepare_from_supernet(copymodel)
 
-        # single_dict = self.generate_spos_path()  # {0: 'xx'}
-        # current_flops = 0
-        
-        # for k, v in mutator.search_group.items():
-        #     current_choice = single_dict[k]  # '1' or '2' or 'I'
-        #     import ipdb; ipdb.set_trace()
-        #     print(f"k: {k} choice: {current_choice} flops: {getattr(v[0]._candidate_ops[current_choice], '__flops__', 0)}")
-        #     current_flops += getattr(v[0]._candidate_ops[current_choice], '__flops__', 0)
+        single_dict = self.generate_spos_path()  # {0: 'xx'}
+        current_flops = 0
 
-        # print("Current flops: ", current_flops)
+        for k, v in mutator.search_group.items():
+            current_choice = single_dict[k]  # '1' or '2' or 'I'
+
+            choice_flops = 0
+            for name, module in v[0]._candidate_ops[
+                    current_choice].named_modules():
+                flops = getattr(module, '__flops__', 0)
+                if flops > 0:
+                    # print(name, flops)
+                    choice_flops += flops
+
+            print(f'k: {k} choice: {current_choice} flops: {choice_flops}')
+
+            current_flops += choice_flops
+
+        print('Current flops: ', current_flops)
 
 
 if __name__ == '__main__':

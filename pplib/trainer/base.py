@@ -74,6 +74,9 @@ class BaseTrainer:
         # input shape for calculate flops 
         self.input_shape = (3, 32, 32) # cifar10 / 100
 
+        # input shape for calculate flops
+        self.input_shape = (3, 32, 32)  # cifar10 / 100
+
     def fit(self, train_loader, val_loader, epochs):
         """Fits. High Level API
 
