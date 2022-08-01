@@ -1,6 +1,8 @@
+import random
 import time
-from typing import Dict
+from typing import Dict, List
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -76,9 +78,12 @@ class MacroTrainer(BaseTrainer):
             # remove gradient from previous passes
             self.optimizer.zero_grad()
 
+            # FairNAS
+            # loss, outputs = self._forward_fairnas(batch_inputs)
+
+            ## Single Path One Shot
             # compute loss
             loss, outputs = self.forward(batch_inputs, mode='loss')
-
             # backprop
             loss.backward()
 
@@ -130,6 +135,22 @@ class MacroTrainer(BaseTrainer):
             self.mutator.set_subnet(rand_subnet)
         return self.model(inputs)
 
+    def _forward_fairnas(self, batch_inputs):
+        """FairNAS Rules."""
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+        fair_list = self._generate_fair_list()
+
+        for i in range(len(fair_list)):
+            subnet_dict = fair_list[i]
+            self.mutator.set_subnet(subnet_dict)
+            outputs = self.model(inputs)
+            loss = self._compute_loss(outputs, labels)
+            loss.backward()
+
+        return loss, outputs
+
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
         """Network forward step. Low Level API"""
         inputs, labels = batch_inputs
@@ -142,6 +163,26 @@ class MacroTrainer(BaseTrainer):
         else:
             self.mutator.set_subnet(subnet_dict)
         return self.model(inputs), labels
+
+    def _generate_fair_list(self) -> List[Dict]:
+        choices = ['I', '1', '2']
+        length = 14
+
+        all_list = []
+        for _ in range(length):
+            all_list.append(random.sample(choices, 3))
+
+        all_list = np.array(all_list).T
+
+        result_list: List[Dict] = []
+
+        for i in range(len(choices)):
+            tmp_dict = {}
+            for idx, choice in enumerate(all_list[i]):
+                tmp_dict[idx] = choice
+            result_list.append(tmp_dict)
+
+        return result_list
 
     def fit(self, train_loader, val_loader, epochs):
         """Fits. High Level API
