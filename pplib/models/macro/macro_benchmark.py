@@ -61,10 +61,7 @@ class InvertedResidual(nn.Module):
         self.conv = nn.Sequential(*layers)
 
     def forward(self, x):
-        if self.use_res_connect:
-            return x + self.conv(x)
-        else:
-            return self.conv(x)
+        return x + self.conv(x) if self.use_res_connect else self.conv(x)
 
 
 class Identity(nn.Module):
@@ -186,6 +183,22 @@ class MacroBenchmarkSuperNet(nn.Module):
     def forward(self, x):
 
         # stem convolution
+        x = self.in_conv(x)
+
+        # main body (list of cells)
+        for i, layer_name in enumerate(self.layers):
+            layer = getattr(self, layer_name)
+            x = layer(x)
+
+        # classifier
+        x = self.features_mixing(x)
+        x = self.out1(x)
+        x = x.view(x.shape[0], -1)
+        x = self.out2(x)
+        return x
+
+    def forward_all(self, x):
+        # for compute flops and params
         x = self.in_conv(x)
 
         # main body (list of cells)

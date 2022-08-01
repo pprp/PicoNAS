@@ -1,3 +1,4 @@
+import copy
 import os
 import time
 import warnings
@@ -5,6 +6,7 @@ from typing import List, Tuple
 
 import torch
 import torch.nn as nn
+from mmcv.cnn import get_model_complexity_info
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
@@ -68,6 +70,9 @@ class BaseTrainer:
 
         # evaluator is to eval the rank consistency
         self.evaluator = None
+        
+        # input shape for calculate flops 
+        self.input_shape = (3, 32, 32) # cifar10 / 100
 
     def fit(self, train_loader, val_loader, epochs):
         """Fits. High Level API
@@ -283,3 +288,22 @@ class BaseTrainer:
 
     def _to_device(self, inputs, device):
         return inputs.to(device)
+
+    def _init_flops(self):
+        """generate flops."""
+        flops_model = copy.deepcopy(self.model)
+        flops_model.eval()
+        if hasattr(flops_model, 'forward_all'):
+            flops_model.forward = flops_model.forward_dummy
+        else:
+            raise NotImplementedError(f'FLOPs counter is currently not currently supported with {flops_model.__class__.__name__}')
+
+        flops, params = get_model_complexity_info(flops_model, self.input_shape)
+        flops_lookup = dict()
+        for name, module in flops_model.named_modules():
+            flops = getattr(module, '__flops__', 0)
+            flops_lookup[name] = flops
+        del (flops_model)
+
+        for name, module in self.architecture.named_modules():
+            module.__flops__ = flops_lookup[name]

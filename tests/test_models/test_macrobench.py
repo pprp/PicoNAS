@@ -28,11 +28,15 @@ class TestMacroBench(TestCase):
 
         print(model(inputs).shape)
 
-    def test_generate_fair(self):
+    def generate_spos_path(self):
         choices = ['I', '1', '2']
         length = 14
 
-        single_path = {i: random.sample(choices, 1)[0] for i in range(length)}
+        return {i: random.sample(choices, 1)[0] for i in range(length)}
+
+    def test_generate_fair(self):
+        choices = ['I', '1', '2']
+        length = 14
 
         all_list = []
         for _ in range(length):
@@ -50,7 +54,36 @@ class TestMacroBench(TestCase):
 
         print(result_list)
 
-        print(single_path)
+    def test_model_complexity(self):
+        import copy 
+        from mmcv.cnn import get_model_complexity_info
+        model = MacroBenchmarkSuperNet()
+
+        # WARNING: must before mutator prepare_from_supernet
+        copymodel = copy.deepcopy(model)
+        copymodel.eval() 
+        flops, params = get_model_complexity_info(copymodel, (3, 32, 32))
+        print(flops, params)
+
+        for name, module in copymodel.named_modules():
+            flops = getattr(module, '__flops__', 0)
+            if flops > 0:
+                print(name, flops)
+
+        # mutator = OneShotMutator()
+        # import ipdb; ipdb.set_trace()
+        # mutator.prepare_from_supernet(model)
+
+        # single_dict = self.generate_spos_path()  # {0: 'xx'}
+        # current_flops = 0
+        
+        # for k, v in mutator.search_group.items():
+        #     current_choice = single_dict[k]  # '1' or '2' or 'I'
+        #     import ipdb; ipdb.set_trace()
+        #     print(f"k: {k} choice: {current_choice} flops: {getattr(v[0]._candidate_ops[current_choice], '__flops__', 0)}")
+        #     current_flops += getattr(v[0]._candidate_ops[current_choice], '__flops__', 0)
+
+        # print("Current flops: ", current_flops)
 
 
 if __name__ == '__main__':
