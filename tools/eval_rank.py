@@ -8,10 +8,10 @@ import torch
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
 from pplib.datasets.build import build_dataloader
+from pplib.evaluator import MacroEvaluator
 from pplib.models import build_model
 from pplib.trainer import build_trainer
 from pplib.utils.config import Config
-from pplib.evaluator import MacroEvaluator
 
 
 def get_args():
@@ -118,11 +118,11 @@ def main():
     else:
         device = torch.device('cpu')
 
-    train_dataloader = build_dataloader(
-        type='train', dataset=cfg.dataset, config=cfg)
+    # train_dataloader = build_dataloader(
+    #     type='train', dataset=cfg.dataset, config=cfg)
 
-    val_dataloader = build_dataloader(
-        type='val', dataset=cfg.dataset, config=cfg)
+    # val_dataloader = build_dataloader(
+    #     type='val', dataset=cfg.dataset, config=cfg)
 
     model = build_model(cfg.model_name)
 
@@ -146,23 +146,26 @@ def main():
     start = time.time()
 
     bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
-    num_samples = [20, 50, 100, 200, 400, None]
+    num_samples = [20, 50, 100, 200, 400, 50000]
     results = []
     for num_sample in num_samples:
-        evaluator = MacroEvaluator(trainer=trainer,
-                                   dataloader=None,
-                                   bench_path=bench_path,
-                                   num_sample=num_sample)
+        evaluator = MacroEvaluator(
+            trainer=trainer,
+            dataloader=None,
+            bench_path=bench_path,
+            num_sample=num_sample)
         kt, ps, sp = evaluator.compute_rank_based_on_flops()
         results.append([kt, ps, sp])
 
-    print('='*60)
+    print('=' * 60)
     print("= Num of Samples == Kendall's Tau ==  Pearson   == Spearman =")
     for num, result in zip(num_samples, results):
-        print(f"=  {num:<6}  \t ==   {result[0]:.4f} \t  ==  {result[1]:.4f} \t ==  {result[2]:.4f} =")
+        print(
+            f'=  {num:<6}  \t ==   {result[0]:.4f} \t  ==  {result[1]:.4f} \t ==  {result[2]:.4f} ='
+        )
 
-    print('='*60)
-    
+    print('=' * 60)
+
     utils.time_record(start)
 
 

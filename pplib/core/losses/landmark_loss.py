@@ -1,7 +1,16 @@
 # https://github.com/kcyu2014/nas-landmarkreg
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
+
+__all__ = [
+    'rank_cross_entropy_loss', 'rank_infinite_loss_v1',
+    'rank_infinite_loss_v2', 'rank_infinite_relu', 'rank_infinite_softplus',
+    'rank_hinge_sign_infinite', 'rank_cross_entropy_focal_loss',
+    'rank_mixed_cross_entropy_loss', 'tanh_sign_infinite', 'tanh_infinite',
+    'tanh_infinite_norelu', 'PairwiseRankLoss'
+]
 
 
 def rank_cross_entropy_loss(l1, l2):
@@ -64,6 +73,20 @@ def tanh_infinite(l1, l2, w1, w2):
 def tanh_infinite_norelu(l1, l2, w1, w2):
     # given the fact that, l1 < l2 == w1 > w2.
     return torch.tanh(l1 - l2) * torch.tanh(w1 - w2)
+
+
+class PairwiseRankLoss(nn.Module):
+    """pairwise ranking loss for rank consistency
+    Args:
+        prior1 (float | int): the prior value of arch1
+        prior2 (float | int): the prior value of arch2
+        loss1: the batch loss of arch1
+        loss2: the batch loss of arch2
+    """
+
+    def forward(self, prior1, prior2, loss1, loss2, coeff=1.):
+        return coeff * F.relu(loss2 - loss1.detach(
+        )) if prior1 < prior2 else coeff * F.relu(loss1.detach() - loss2)
 
 
 _loss_fn = {

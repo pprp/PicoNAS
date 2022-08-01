@@ -70,9 +70,9 @@ class BaseTrainer:
 
         # evaluator is to eval the rank consistency
         self.evaluator = None
-        
-        # input shape for calculate flops 
-        self.input_shape = (3, 32, 32) # cifar10 / 100
+
+        # input shape for calculate flops
+        self.input_shape = (3, 32, 32)  # cifar10 / 100
 
         # input shape for calculate flops
         self.input_shape = (3, 32, 32)  # cifar10 / 100
@@ -299,9 +299,12 @@ class BaseTrainer:
         if hasattr(flops_model, 'forward_all'):
             flops_model.forward = flops_model.forward_dummy
         else:
-            raise NotImplementedError(f'FLOPs counter is currently not currently supported with {flops_model.__class__.__name__}')
+            raise NotImplementedError(
+                f'FLOPs counter is currently not currently supported with {flops_model.__class__.__name__}'
+            )
 
-        flops, params = get_model_complexity_info(flops_model, self.input_shape)
+        flops, params = get_model_complexity_info(flops_model,
+                                                  self.input_shape)
         flops_lookup = dict()
         for name, module in flops_model.named_modules():
             flops = getattr(module, '__flops__', 0)

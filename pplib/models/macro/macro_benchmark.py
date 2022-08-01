@@ -1,5 +1,4 @@
 from typing import List
-from numpy import isin
 
 import torch.nn as nn
 from torch.nn import Sequential

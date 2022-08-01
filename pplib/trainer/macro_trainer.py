@@ -8,6 +8,7 @@ import torch.nn as nn
 from mmcv.cnn import get_model_complexity_info
 
 import pplib.utils.utils as utils
+from pplib.core.losses import PairwiseRankLoss
 from pplib.evaluator import MacroEvaluator
 from pplib.nas.mutators import OneShotMutator
 from pplib.utils.utils import AvgrageMeter, accuracy
@@ -60,7 +61,11 @@ class MacroTrainer(BaseTrainer):
             self.mutator = OneShotMutator()
             self.mutator.prepare_from_supernet(self.model)
 
+        # evaluate the rank consistency
         self.evaluator = None
+
+        # pairwise rank loss
+        self.pairwise_rankloss = PairwiseRankLoss()
 
     def _build_evaluator(self, dataloader, bench_path, num_sample=20):
         self.evaluator = MacroEvaluator(self, dataloader, bench_path,
@@ -86,10 +91,13 @@ class MacroTrainer(BaseTrainer):
             # loss, outputs = self._forward_fairnas(batch_inputs)
 
             # Single Path One Shot
-            # compute loss
-            loss, outputs = self.forward(batch_inputs, mode='loss')
-            # backprop
-            loss.backward()
+            # # compute loss
+            # loss, outputs = self.forward(batch_inputs, mode='loss')
+            # # backprop
+            # loss.backward()
+
+            # SPOS with pairwise rankloss
+            loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():
@@ -152,8 +160,34 @@ class MacroTrainer(BaseTrainer):
             outputs = self.model(inputs)
             loss = self._compute_loss(outputs, labels)
             loss.backward()
-
         return loss, outputs
+
+    def _forward_pairwise_loss(self, batch_inputs):
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
+        # sample the first subnet
+        rand_subnet1 = self.mutator.random_subnet
+        self.mutator.set_subnet(rand_subnet1)
+        outputs = self.model(inputs)
+        loss1 = self._compute_loss(outputs, labels)
+        loss1.backward()
+        flops1 = self.get_subnet_flops(rand_subnet1)
+
+        # sample the second subnet
+        rand_subnet2 = self.mutator.random_subnet
+        self.mutator.set_subnet(rand_subnet2)
+        outputs = self.model(inputs)
+        loss2 = self._compute_loss(outputs, labels)
+        loss2.backward(retain_graph=True)
+        flops2 = self.get_subnet_flops(rand_subnet2)
+
+        # pairwise rank loss
+        loss3 = self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+        loss3.backward()
+
+        return loss2, outputs
 
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
         """Network forward step. Low Level API"""
@@ -297,9 +331,9 @@ class MacroTrainer(BaseTrainer):
     def _init_flops(self):
         """generate flops."""
         self.model.eval()
-        # note 1: after this process, each module in self.model
+        # Note 1: after this process, each module in self.model
         #       would have the __flops__ attribute.
-        # note 2: this function should be called before
+        # Note 2: this function should be called before
         #       mutator.prepare_from_supernet()
         flops, params = get_model_complexity_info(self.model, self.input_shape)
         return flops, params
