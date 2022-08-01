@@ -4,14 +4,13 @@ import time
 
 import init_paths  # noqa: F401
 import torch
-import torch.backends.cudnn as cudnn
 
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
 from pplib.datasets.build import build_dataloader
+from pplib.evaluator import MacroEvaluator
 from pplib.models import build_model
 from pplib.trainer import build_trainer
-from pplib.utils import set_random_seed
 from pplib.utils.config import Config
 
 
@@ -30,9 +29,6 @@ def get_args():
         type=str,
         default='./data/cifar',
         help='path to the dataset')
-
-    parser.add_argument(
-        '--seed', type=int, default=42, help='seed of experiments')
 
     parser.add_argument(
         '--model_name',
@@ -93,7 +89,8 @@ def get_args():
         help='use auto augmentation')
     parser.add_argument(
         '--resize', action='store_true', default=False, help='use resize')
-    return parser.parse_args()
+    args = parser.parse_args()
+    return args
 
 
 def main():
@@ -105,9 +102,6 @@ def main():
         cfg.merge_from_dict(vars(args))
     else:
         cfg = Config(args)
-
-    # set envirs
-    set_random_seed(cfg.seed, deterministic=False)
 
     print(cfg)
 
@@ -151,7 +145,16 @@ def main():
 
     start = time.time()
 
-    trainer.fit(train_dataloader, val_dataloader, cfg.epochs)
+    bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
+    num_samples = [20, 50, 100]
+
+    for num_sample in num_samples:
+        evaluator = MacroEvaluator(
+            trainer=trainer,
+            dataloader=None,
+            bench_path=bench_path,
+            num_sample=num_sample)
+        kt, ps, sp = evaluator.compute_rank_based_on_flops()
 
     utils.time_record(start)
 

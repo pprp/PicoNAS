@@ -184,7 +184,12 @@ class MacroTrainer(BaseTrainer):
         flops2 = self.get_subnet_flops(rand_subnet2)
 
         # pairwise rank loss
-        loss3 = self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+        # lambda settings:
+        #       1. min(2, self.current_epoch/10.)
+        #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+        loss3 = 2 * np.sin(np.pi * 0.8 * self.current_epoch /
+                           self.max_epochs) * self.pairwise_rankloss(
+                               flops1, flops2, loss1, loss2)
         loss3.backward()
 
         return loss2, outputs
@@ -226,6 +231,9 @@ class MacroTrainer(BaseTrainer):
         """
         # track total training time
         total_start_time = time.time()
+
+        # record max epoch
+        self.max_epochs = epochs
 
         # ---- train process ----
         for epoch in range(epochs):

@@ -39,7 +39,9 @@ OMP_NUM_THREADS=1
 # CUDA_VISIBLE_DEVICES=4 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --dataset cifar10 --log_name macro_spos --work_dir ./work_dir --crit ce
 
 ## spos + pairwise rank loss
-CUDA_VISIBLE_DEVICES=4 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --dataset cifar10 --log_name macro_pairwise --work_dir ./work_dir --crit ce
+# warmup : min(2, self.current_epoch/10.)
+# cosine : 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+CUDA_VISIBLE_DEVICES=5 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --dataset cifar10 --log_name macro_pairwise_cosine --work_dir ./work_dir --crit ce
 
 
 # EVAL MACRO FLOPS

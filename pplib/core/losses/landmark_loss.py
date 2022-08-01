@@ -9,7 +9,7 @@ __all__ = [
     'rank_infinite_loss_v2', 'rank_infinite_relu', 'rank_infinite_softplus',
     'rank_hinge_sign_infinite', 'rank_cross_entropy_focal_loss',
     'rank_mixed_cross_entropy_loss', 'tanh_sign_infinite', 'tanh_infinite',
-    'tanh_infinite_norelu', 'PairwiseRankLoss'
+    'tanh_infinite_norelu', 'PairwiseRankLoss', '_loss_fn', 'get_rank_loss_fn'
 ]
 
 
@@ -132,6 +132,8 @@ _loss_fn = {
     rank_cross_entropy_loss,
     'mixed_focal':
     rank_mixed_cross_entropy_loss,
+    'pairwise_rank_loss':
+    PairwiseRankLoss,
 }
 
 
@@ -147,5 +149,5 @@ def get_rank_loss_fn(name, weighted):
     if weighted == 'embed':
         return lambda l1, l2, w: w * _loss_fn[name](l1, l2)
     elif weighted == 'infinite':
-        return _loss_fn[name + '_infinite']
+        return _loss_fn[f'{name}_infinite']
     return _loss_fn[name]

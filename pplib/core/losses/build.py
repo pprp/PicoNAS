@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from .landmark_loss import _loss_fn, get_rank_loss_fn
+
 
 class LSR(nn.Module):
 
@@ -96,6 +98,8 @@ def build_criterion(name):
         criterion = LSR(e=0.2)
     elif name == 'mse':
         criterion = nn.MSELoss()
+    elif name in _loss_fn.keys():
+        criterion = get_rank_loss_fn(name)
     else:
         raise 'Not Implemented.'
     return criterion
