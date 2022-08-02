@@ -10,6 +10,7 @@ from pplib.evaluator import NATSEvaluator
 from pplib.utils.misc import convertTensor2BoardImage
 from .nats_trainer import NATSTrainer
 from .registry import register_trainer
+from pplib.core.losses import CC
 
 
 @register_trainer
@@ -35,8 +36,11 @@ class NATSMAETrainer(NATSTrainer):
         self.method = method
         self.evaluator = None
 
-        # for autoslim distillation
+        # for autoslim
         self.distill_criterion = nn.MSELoss().to(device)
+        
+        # for cc distill
+        self.cc_distill = CC()
 
     def build_evaluator(self, dataloader, bench_path, num_sample=20):
         self.evaluator = NATSEvaluator(self, dataloader, bench_path,
@@ -102,7 +106,7 @@ class NATSMAETrainer(NATSTrainer):
 
         forward_op_lists = self.model.set_forward_cfg('fair')
         for op_list in forward_op_lists:
-            output = self.model(inputs, mask, op_list)
+            output, feat = self.model(inputs, mask, op_list)
             loss = self._compute_loss(output, inputs)
             loss.backward()
         return loss
@@ -120,7 +124,7 @@ class NATSMAETrainer(NATSTrainer):
 
         # max supernet
         max_forward_list = self.model.set_forward_cfg('large')
-        t_output = self.model(inputs, mask, max_forward_list)
+        t_output, t_feat = self.model(inputs, mask, max_forward_list)
         t_loss = self._compute_loss(t_output, inputs)
         t_loss.backward(retain_graph=True)
 
@@ -129,15 +133,50 @@ class NATSMAETrainer(NATSTrainer):
             self.model.set_forward_cfg('uni') for _ in range(2)
         ]
         for mid_forward_list in mid_forward_lists:
-            output = self.model(inputs, mask, mid_forward_list)
+            output, s_feat = self.model(inputs, mask, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
             loss.backward(retain_graph=True)
 
         # min supernet
         min_forward_list = self.model.set_forward_cfg('small')
-        output = self.model(inputs, mask, min_forward_list)
+        output, s_feat = self.model(inputs, mask, min_forward_list)
         loss = self.distill_criterion(output, t_output)
         loss.backward()
+        return t_loss
+
+    def forward_cc_autoslim(self, batch_inputs):
+        inputs, mask, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        mask = self._to_device(mask, self.device)
+        labels = self._to_device(labels, self.device)
+
+        # max supernet
+        max_forward_list = self.model.set_forward_cfg('large')
+        t_output, feat_t = self.model(inputs, mask, max_forward_list)
+        t_loss = self._compute_loss(t_output, inputs)
+        t_loss.backward(retain_graph=True)
+
+        # middle supernet
+        mid_forward_lists = [
+            self.model.set_forward_cfg('uni') for _ in range(2)
+        ]
+        for mid_forward_list in mid_forward_lists:
+            output, feat_s = self.model(inputs, mask, mid_forward_list)
+            loss = self.distill_criterion(output, t_output)
+            loss.backward(retain_graph=True)
+            
+            cc_loss = self.cc_distill(feat_s, feat_t)
+            cc_loss.backward(retain_graph=True)
+
+        # min supernet
+        min_forward_list = self.model.set_forward_cfg('small')
+        output, feat_s = self.model(inputs, mask, min_forward_list)
+        loss = self.distill_criterion(output, t_output)
+        loss.backward(retain_graph=True)
+        
+        cc_loss = self.cc_distill(feat_s, feat_t)
+        cc_loss.backward(retain_graph=True)
+        
         return t_loss
 
     def _train(self, loader):
@@ -153,7 +192,8 @@ class NATSMAETrainer(NATSTrainer):
             # loss = self.forward(batch_inputs, mode='loss')
             # loss.backward()
 
-            loss = self.forward_fairnas(batch_inputs)
+            loss = self.forward_cc_autoslim(batch_inputs)
+            # loss = self.forward_fairnas(batch_inputs)
             # loss = self.forward_autoslim(batch_inputs)
 
             # clear grad
