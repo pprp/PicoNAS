@@ -97,7 +97,10 @@ class MacroTrainer(BaseTrainer):
             # loss.backward()
 
             # SPOS with pairwise rankloss
-            loss, outputs = self._forward_pairwise_loss(batch_inputs)
+            # loss, outputs = self._forward_pairwise_loss(batch_inputs)
+
+            # spos with multi-pair rank loss
+            loss, outputs = self._forward_multi_pairwise_loss(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():
@@ -187,12 +190,58 @@ class MacroTrainer(BaseTrainer):
         # lambda settings:
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+
         loss3 = 2 * np.sin(np.pi * 0.8 * self.current_epoch /
                            self.max_epochs) * self.pairwise_rankloss(
                                flops1, flops2, loss1, loss2)
         loss3.backward()
 
         return loss2, outputs
+
+    def _forward_multi_pairwise_loss(self, batch_inputs):
+        num_pairs = 4
+
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
+        # sample the first subnet
+        rand_subnet1 = self.mutator.random_subnet
+        self.mutator.set_subnet(rand_subnet1)
+        outputs = self.model(inputs)
+        loss1 = self._compute_loss(outputs, labels)
+        flops1 = self.get_subnet_flops(rand_subnet1)
+
+        subnet_list = []
+        loss_list = []
+        flops_list = []
+
+        for _ in range(num_pairs):
+            rand_subnet = self.mutator.random_subnet
+            self.mutator.set_subnet(rand_subnet)
+            outputs = self.model(inputs)
+            loss = self._compute_loss(outputs, labels)
+            flops = self.get_subnet_flops(rand_subnet)
+
+            subnet_list.append(rand_subnet)
+            loss_list.append(loss)
+            flops_list.append(flops)
+
+        rank_loss_list = []
+
+        for i in range(1, num_pairs):
+            for j in range(i):
+                flops1, flops2 = flops_list[i], flops_list[j]
+                loss1, loss2 = loss_list[i], loss_list[j]
+                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1,
+                                                       loss2)
+
+                rank_loss_list.append(tmp_rank_loss)
+
+        sum_loss = sum(loss_list) + sum(rank_loss_list)
+        sum_loss.backward()
+
+        return sum_loss, outputs
 
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
         """Network forward step. Low Level API"""

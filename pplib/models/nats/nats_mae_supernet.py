@@ -20,8 +20,8 @@ class MAESupernetNATS(SupernetNATS):
         super().__init__(target=target)
 
         self.last_channel = 128
-        
-        # avgpool 
+
+        # avgpool
         self.avgpool = nn.AdaptiveAvgPool2d(1)
 
         # convert from dynamic to static
@@ -110,8 +110,8 @@ class MAESupernetNATS(SupernetNATS):
         # convert from dynamic to static
         x = self.last_dynamic_conv(x, forward_op[-1], 0)
         x = self.last_bn(x)
-        
+
         feat = self.avgpool(x)
         feat = feat.view(feat.size(0), -1)
-        
+
         return self.decoder(x), feat

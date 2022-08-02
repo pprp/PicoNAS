@@ -4,7 +4,6 @@ import time
 
 import init_paths  # noqa: F401
 import torch
-import torch.backends.cudnn as cudnn
 
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
@@ -13,7 +12,6 @@ from pplib.models import build_model
 from pplib.trainer import build_trainer
 from pplib.utils import set_random_seed
 from pplib.utils.config import Config
-from pplib.utils import set_random_seed
 
 
 def get_args():
@@ -33,10 +31,7 @@ def get_args():
         help='path to the dataset')
 
     parser.add_argument(
-        '--seed',
-        type=int,
-        default=42,
-        help='seed of experiments')
+        '--seed', type=int, default=42, help='seed of experiments')
 
     parser.add_argument(
         '--model_name',
@@ -97,7 +92,7 @@ def get_args():
         help='use auto augmentation')
     parser.add_argument(
         '--resize', action='store_true', default=False, help='use resize')
-    return  parser.parse_args()
+    return parser.parse_args()
 
 
 def main():

@@ -1,7 +1,8 @@
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
 
 
 class CC(nn.Module):
@@ -27,8 +28,8 @@ class CC(nn.Module):
         sim_mat = torch.matmul(feat, feat.t())
         corr_mat = torch.zeros_like(sim_mat)
 
-        for p in range(self.P_order+1):
-            corr_mat += math.exp(-2*self.gamma) * (2*self.gamma)**p / \
+        for p in range(self.P_order + 1):
+            corr_mat += math.exp(-2 * self.gamma) * (2 * self.gamma) ** p / \
                 math.factorial(p) * torch.pow(sim_mat, p)
 
         return corr_mat

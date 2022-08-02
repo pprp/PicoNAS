@@ -6,11 +6,11 @@ import torch.nn as nn
 import torchvision
 
 import pplib.utils.utils as utils
+from pplib.core.losses import CC
 from pplib.evaluator import NATSEvaluator
 from pplib.utils.misc import convertTensor2BoardImage
 from .nats_trainer import NATSTrainer
 from .registry import register_trainer
-from pplib.core.losses import CC
 
 
 @register_trainer
@@ -38,9 +38,10 @@ class NATSMAETrainer(NATSTrainer):
 
         # for autoslim
         self.distill_criterion = nn.MSELoss().to(device)
-        
+
         # for cc distill
         self.cc_distill = CC()
+        self.lambda_kd = 100.0
 
     def build_evaluator(self, dataloader, bench_path, num_sample=20):
         self.evaluator = NATSEvaluator(self, dataloader, bench_path,
@@ -70,8 +71,8 @@ class NATSMAETrainer(NATSTrainer):
         else:
             forward_op_list = current_op_list if current_op_list is not None else self.model.set_forward_cfg(
                 self.method)
-
-        return self.model(inputs, mask, forward_op_list), inputs
+        outputs, feat = self.model(inputs, mask, forward_op_list)
+        return outputs, inputs
 
     def _loss(self, batch_inputs) -> Tuple:
         """Forward and compute loss. Low Level API"""
@@ -164,8 +165,8 @@ class NATSMAETrainer(NATSTrainer):
             output, feat_s = self.model(inputs, mask, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
             loss.backward(retain_graph=True)
-            
-            cc_loss = self.cc_distill(feat_s, feat_t)
+
+            cc_loss = self.cc_distill(feat_s, feat_t) * self.lambda_kd
             cc_loss.backward(retain_graph=True)
 
         # min supernet
@@ -173,10 +174,10 @@ class NATSMAETrainer(NATSTrainer):
         output, feat_s = self.model(inputs, mask, min_forward_list)
         loss = self.distill_criterion(output, t_output)
         loss.backward(retain_graph=True)
-        
-        cc_loss = self.cc_distill(feat_s, feat_t)
+
+        cc_loss = self.cc_distill(feat_s, feat_t) * self.lambda_kd
         cc_loss.backward(retain_graph=True)
-        
+
         return t_loss
 
     def _train(self, loader):
@@ -284,7 +285,7 @@ class NATSMAETrainer(NATSTrainer):
             # visualize training results
             if epoch % 5 == 0:
                 batch_inputs = next(iter(train_loader))
-                out = self._forward(batch_inputs)
+                out, feat = self._forward(batch_inputs)
 
                 inputs, mask, _ = batch_inputs
                 img_mask = self.model.process_mask(inputs, mask)

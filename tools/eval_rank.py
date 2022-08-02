@@ -7,7 +7,6 @@ import torch
 
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
-from pplib.datasets.build import build_dataloader
 from pplib.evaluator import MacroEvaluator
 from pplib.models import build_model
 from pplib.trainer import build_trainer
