@@ -149,13 +149,12 @@ class NATSMAETrainer(NATSTrainer):
             # remove gradient from previous passes
             self.optimizer.zero_grad()
 
-            # # compute loss
+            # spos
             # loss = self.forward(batch_inputs, mode='loss')
-            # # backprop
             # loss.backward()
 
-            # loss = self.forward_fairnas(batch_inputs)
-            loss = self.forward_autoslim(batch_inputs)
+            loss = self.forward_fairnas(batch_inputs)
+            # loss = self.forward_autoslim(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():

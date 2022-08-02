@@ -17,7 +17,12 @@ OMP_NUM_THREADS=1
 #     python
 
 # NATS MAE
-# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MAESupernetNATS --trainer_name NATSMAETrainer --log_name baseline --work_dir ./work_dir
+# CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MAESupernetNATS --trainer_name NATSMAETrainer --log_name nats_mae_spos --work_dir ./work_dir --crit mse 
+
+# CUDA_VISIBLE_DEVICES=3 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MAESupernetNATS --trainer_name NATSMAETrainer --log_name nats_mae_autoslim --work_dir ./work_dir --crit mse
+
+CUDA_VISIBLE_DEVICES=6 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MAESupernetNATS --trainer_name NATSMAETrainer --log_name nats_mae_fairnas --work_dir ./work_dir --crit mse
+
 
 # NATS
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name SupernetNATS --trainer_name NATSTrainer --log_name nats_spos --dataset cifar10 --log_name spos_nats --crit ce --epochs 100
@@ -41,7 +46,7 @@ OMP_NUM_THREADS=1
 ## spos + pairwise rank loss
 # warmup : min(2, self.current_epoch/10.)
 # cosine : 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
-CUDA_VISIBLE_DEVICES=5 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --dataset cifar10 --log_name macro_pairwise_cosine --work_dir ./work_dir --crit ce
+# CUDA_VISIBLE_DEVICES=5 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --dataset cifar10 --log_name macro_pairwise_cosine --work_dir ./work_dir --crit ce
 
 
 # EVAL MACRO FLOPS

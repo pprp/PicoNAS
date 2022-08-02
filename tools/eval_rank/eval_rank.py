@@ -8,10 +8,10 @@ import torch
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
 from pplib.datasets.build import build_dataloader
-from pplib.evaluator import MacroEvaluator
 from pplib.models import build_model
 from pplib.trainer import build_trainer
 from pplib.utils.config import Config
+from pplib.evaluator import MacroEvaluator
 
 
 def get_args():
@@ -149,11 +149,10 @@ def main():
     num_samples = [20, 50, 100]
 
     for num_sample in num_samples:
-        evaluator = MacroEvaluator(
-            trainer=trainer,
-            dataloader=None,
-            bench_path=bench_path,
-            num_sample=num_sample)
+        evaluator = MacroEvaluator(trainer=trainer,
+                                   dataloader=None,
+                                   bench_path=bench_path,
+                                   num_sample=num_sample)
         kt, ps, sp = evaluator.compute_rank_based_on_flops()
 
     utils.time_record(start)

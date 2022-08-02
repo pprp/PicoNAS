@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
-
 from .landmark_loss import _loss_fn, get_rank_loss_fn
-
 
 class LSR(nn.Module):
 
