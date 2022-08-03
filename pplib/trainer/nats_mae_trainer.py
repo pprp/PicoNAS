@@ -77,7 +77,8 @@ class NATSMAETrainer(NATSTrainer):
     def _loss(self, batch_inputs) -> Tuple:
         """Forward and compute loss. Low Level API"""
         inputs, _, _ = batch_inputs
-        out = self._forward(batch_inputs)
+        inputs = self._to_device(inputs, self.device)
+        out, feat = self._forward(batch_inputs)
         return self._compute_loss(out, inputs)
 
     def metric_score(self, loader, current_op_list):
@@ -197,10 +198,7 @@ class NATSMAETrainer(NATSTrainer):
             # remove gradient from previous passes
             self.optimizer.zero_grad()
 
-            # spos
-            # loss = self.forward(batch_inputs, mode='loss')
-            # loss.backward()
-
+            # loss = self.forward_spos(batch_inputs)
             loss = self.forward_cc_autoslim(batch_inputs)
             # loss = self.forward_fairnas(batch_inputs)
             # loss = self.forward_autoslim(batch_inputs)

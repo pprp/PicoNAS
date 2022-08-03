@@ -1,10 +1,15 @@
+import argparse
 import logging
 import os
+import sys
 import time
+from pathlib import Path
+import random 
 
 import numpy as np
 import torch
 import torch.nn as nn
+from fvcore.common.config import CfgNode
 from scipy import stats
 from sklearn import metrics
 
@@ -53,6 +58,7 @@ def compute_scores(ytest, test_pred):
     except:
         for metric in METRICS:
             metrics_dict[metric] = float('nan')
+
     if np.isnan(metrics_dict['pearson']) or not np.isfinite(
             metrics_dict['pearson']):
         logger.info('Error when computing metrics. ytest and test_pred are:')
@@ -171,3 +177,164 @@ class AttrDict(dict):
     def __init__(self, *args, **kwargs):
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
+
+
+def default_argument_parser():
+    """
+    Returns the argument parser with the default options.
+    Inspired by the implementation of FAIR's detectron2
+    """
+
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--config-file", default=None,
+                        metavar="FILE", help="Path to config file")
+    parser.add_argument(
+        "opts",
+        help="Modify config options using the command-line",
+        default=None,
+        nargs=argparse.REMAINDER,
+    )
+    parser.add_argument("--datapath", default=None, metavar="FILE",
+                        help="Path to the folder with train/test data folders")
+    return parser
+
+
+def parse_args(parser=default_argument_parser(), args=sys.argv[1:]):
+    if "-f" in args:
+        args = args[2:]
+    return parser.parse_args(args)
+
+
+def load_config(path):
+    with open(path) as f:
+        config = CfgNode.load_cfg(f)
+
+    return config
+
+
+def load_default_config():
+    config_paths = "configs/predictor_config.yaml"
+
+    config_path_full = os.path.join(
+        *(
+            [get_project_root()] + config_paths.split('/')
+        )
+    )
+
+    return load_config(config_path_full)
+
+
+def pairwise(iterable):
+    """
+    Iterate pairwise over list.
+    from https://stackoverflow.com/questions/5389507/iterating-over-every-two-elements-in-a-list
+    """
+    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+    a = iter(iterable)
+    return zip(a, a)
+
+
+def get_config_from_args(args=None):
+    """
+    Parses command line arguments and merges them with the defaults
+    from the config file.
+    Prepares experiment directories.
+    Args:
+        args: args from a different argument parser than the default one.
+    """
+
+    if args is None:
+        args = parse_args()
+    logger.info("Command line args: {}".format(args))
+
+    if args.config_file is None:
+        config = load_default_config()
+    else:
+        config = load_config(path=args.config_file)
+
+    # Override file args with ones from command line
+    try:
+        for arg, value in pairwise(args.opts):
+            if "." in arg:
+                arg1, arg2 = arg.split(".")
+                config[arg1][arg2] = type(config[arg1][arg2])(value)
+            else:
+                if arg in config:
+                    t = type(config[arg])
+                elif value.isnumeric():
+                    t = int
+                else:
+                    t = str
+                config[arg] = t(value)
+
+        # load config file
+        config.set_new_allowed(True)
+        config.merge_from_list(args.opts)
+
+    except AttributeError:
+        for arg, value in pairwise(args):
+            config[arg] = value
+
+    if args.datapath is not None:
+        config.train_data_file = os.path.join(args.datapath, 'train.json')
+        config.test_data_file = os.path.join(args.datapath, 'test.json')
+    else:
+        config.train_data_file = None
+        config.test_data_file = None
+
+    # prepare the output directories
+    config.save = "{}/{}/{}/{}/{}/{}".format(
+        config.out_dir,
+        config.config_type,
+        config.search_space,
+        config.dataset,
+        config.predictor,
+        config.seed,
+    )
+    config.data = "{}/data".format(get_project_root())
+
+    create_exp_dir(config.save)
+    create_exp_dir(config.save + "/search")  # required for the checkpoints
+    create_exp_dir(config.save + "/eval")
+
+    return config
+
+
+def get_project_root() -> Path:
+    """
+    Returns the root path of the project.
+    """
+    return Path(__file__).parent.parent
+
+
+def create_exp_dir(path):
+    """
+    Create the experiment directories.
+    """
+    if not os.path.exists(path):
+        os.makedirs(path, exist_ok=True)
+    logger.info("Experiment dir : {}".format(path))
+
+
+def set_seed(seed):
+    """
+    Set the seeds for all used libraries.
+    """
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.enabled = True
+        torch.backends.cudnn.deterministic = True
+        torch.cuda.manual_seed_all(seed)
+
+
+def log_args(args):
+    """
+    Log the args in a nice way.
+    """
+    for arg, val in args.items():
+        logger.info(arg + "." * (50 - len(arg) - len(str(val))) + str(val))

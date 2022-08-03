@@ -2,23 +2,24 @@
 
 import logging
 
-from naslib.evaluators.zc_evaluator import ZeroCostPredictorEvaluator
-from naslib.predictors import ZeroCost
-from naslib.search_spaces import get_search_space
-from naslib.utils import (get_dataset_api, get_zc_benchmark_api, setup_logger,
-                          utils)
+from pplib.evaluator.zc_evaluator import ZeroCostPredictorEvaluator
+from pplib.predictor import ZeroCost
+from pplib.nas.search_spaces import get_search_space
+from pplib.utils.logging import get_logger
+from pplib.utils import (get_dataset_api, get_zc_benchmark_api)
+from pplib.utils.utils import get_config_from_args, set_seed, log_args
 
 # Get the configs from naslib/configs/predictor_config.yaml and the command line arguments
 # The configs include the zero-cost method to use, the search space and dataset/task to use,
 # amongst others.
-config = utils.get_config_from_args()
-utils.set_seed(config.seed)
-logger = setup_logger(f'{config.save}/log.log')
+config = get_config_from_args()
+set_seed(config.seed)
+logger = get_logger('zc', log_file=f'{config.save}/log.log')
 logger.setLevel(logging.INFO)
-utils.log_args(config)
+log_args(config)
 
 # Get the benchmark API for this search space and dataset
-dataset_api = None  #get_dataset_api(config.search_space, config.dataset)
+dataset_api = None  # get_dataset_api(config.search_space, config.dataset)
 zc_api = get_zc_benchmark_api(config.search_space, config.dataset)
 
 # Initialize the search space and predictor

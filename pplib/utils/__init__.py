@@ -10,3 +10,4 @@ from .utils import DropPath  # noqa: F401
 from .utils import accuracy  # noqa: F401
 from .utils import save_checkpoint  # noqa: F401
 from .utils import time_record  # noqa: F401
+from .get_dataset_api import get_zc_benchmark_api  # noqa: F401
