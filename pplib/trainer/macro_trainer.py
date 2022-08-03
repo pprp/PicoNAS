@@ -98,8 +98,8 @@ class MacroTrainer(BaseTrainer):
 
             # SPOS with pairwise rankloss
             # loss, outputs = self._forward_pairwise_loss(batch_inputs)
-
-            # spos with multi-pair rank loss
+            
+            # spos with multi-pair rank loss 
             loss, outputs = self._forward_multi_pairwise_loss(batch_inputs)
 
             # clear grad

@@ -41,7 +41,7 @@ class NATSEvaluator(Evaluator):
         self.trainer.logger.info('Begin to compute rank consistency...')
 
         for i, (k, v) in enumerate(self.bench_dict.items()):
-            print(f'evaluating the {i}th architecture.')
+            print(f'\r evaluating the {i}th architecture.', end='', flush=True)
             current_op_list = convert_channel2idx(k)
             loss = self.trainer.metric_score(
                 self.dataloader, current_op_list=current_op_list)

@@ -41,7 +41,7 @@ class NATSMAETrainer(NATSTrainer):
 
         # for cc distill
         self.cc_distill = CC()
-        self.lambda_kd = 100.0
+        self.lambda_kd = 1000.0
 
     def build_evaluator(self, dataloader, bench_path, num_sample=20):
         self.evaluator = NATSEvaluator(self, dataloader, bench_path,
@@ -151,11 +151,14 @@ class NATSMAETrainer(NATSTrainer):
         mask = self._to_device(mask, self.device)
         labels = self._to_device(labels, self.device)
 
+        mse_loss_list = []
+        cc_loss_list = []
+
         # max supernet
         max_forward_list = self.model.set_forward_cfg('large')
         t_output, feat_t = self.model(inputs, mask, max_forward_list)
         t_loss = self._compute_loss(t_output, inputs)
-        t_loss.backward(retain_graph=True)
+        mse_loss_list.append(t_loss)
 
         # middle supernet
         mid_forward_lists = [
@@ -164,20 +167,25 @@ class NATSMAETrainer(NATSTrainer):
         for mid_forward_list in mid_forward_lists:
             output, feat_s = self.model(inputs, mask, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
-            loss.backward(retain_graph=True)
-
             cc_loss = self.cc_distill(feat_s, feat_t) * self.lambda_kd
-            cc_loss.backward(retain_graph=True)
+            
+            mse_loss_list.append(loss)
+            cc_loss_list.append(cc_loss)
 
         # min supernet
         min_forward_list = self.model.set_forward_cfg('small')
         output, feat_s = self.model(inputs, mask, min_forward_list)
         loss = self.distill_criterion(output, t_output)
-        loss.backward(retain_graph=True)
-
         cc_loss = self.cc_distill(feat_s, feat_t) * self.lambda_kd
-        cc_loss.backward(retain_graph=True)
-
+        
+        mse_loss_list.append(loss)
+        cc_loss_list.append(cc_loss)
+        
+        sum_loss = sum(mse_loss_list) + sum(cc_loss_list) * self.lambda_kd 
+        sum_loss.backward()
+        
+        # self.logger.info(f"mse loss: {sum(mse_loss_list).item()} cc loss: {sum(cc_loss_list).item()}")
+        
         return t_loss
 
     def _train(self, loader):
