@@ -1,10 +1,12 @@
-import numpy as np
 import logging
 
-from naslib.predictors.utils.encodings_nb101 import encode_101, encode_101_spec
-from naslib.predictors.utils.encodings_darts import encode_darts, encode_darts_compact
-from naslib.search_spaces.nasbench101.conversions import convert_tuple_to_spec
+import numpy as np
 
+from pplib.nas.search_spaces.nasbench101.conversions import \
+    convert_tuple_to_spec
+from pplib.predictor.utils.encodings_darts import (encode_darts,
+                                                   encode_darts_compact)
+from pplib.predictor.utils.encodings_nb101 import encode_101, encode_101_spec
 """
 Currently we need search space specific methods.
 The plan is to unify encodings across all search spaces.
@@ -14,23 +16,18 @@ TODO: clean up this file.
 
 logger = logging.getLogger(__name__)
 
-
-one_hot_nasbench201 = [[1,0,0,0,0],
-                       [0,1,0,0,0],
-                       [0,0,1,0,0],
-                       [0,0,0,1,0],
-                       [0,0,0,0,1]]
+one_hot_nasbench201 = [[1, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 1, 0, 0],
+                       [0, 0, 0, 1, 0], [0, 0, 0, 0, 1]]
 
 OPS = ['avg_pool_3x3', 'nor_conv_1x1', 'nor_conv_3x3', 'none', 'skip_connect']
 NUM_OPS = len(OPS)
 
-one_hot_transnasbench201 = [[1,0,0,0],
-                            [0,1,0,0],
-                            [0,0,1,0],
-                            [0,0,0,1]]
+one_hot_transnasbench201 = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0],
+                            [0, 0, 0, 1]]
 
 TRANS_OPS = ['Identity', 'Zero', 'ReLUConvBN3x3', 'ReLUConvBN1x1']
 TRANS_NUM_OPS = len(TRANS_OPS)
+
 
 def encode_adjacency_one_hot_transbench_micro_op_indices(op_indices):
     one_hot = []
@@ -38,24 +35,29 @@ def encode_adjacency_one_hot_transbench_micro_op_indices(op_indices):
         one_hot = [*one_hot, *one_hot_transnasbench201[e]]
     return one_hot
 
+
 def encode_adjacency_one_hot_transbench_micro(arch):
     encoding = arch.get_op_indices()
     return encode_adjacency_one_hot_transbench_micro_op_indices(encoding)
+
 
 def encode_adjacency_one_hot_transbench_macro_op_indices(op_indices):
     one_hot = []
     one_hot_mapping = np.eye(5)
 
     if len(op_indices) < 6:
-        op_indices = op_indices + tuple((0 for i in range(6-len(op_indices))))
+        op_indices = op_indices + tuple(
+            (0 for i in range(6 - len(op_indices))))
 
     for e in op_indices:
         one_hot = [*one_hot, *one_hot_mapping[e]]
     return one_hot
 
+
 def encode_adjacency_one_hot_transbench_macro(arch):
     encoding = arch.get_op_indices()
     return encode_adjacency_one_hot_transbench_macro_op_indices(encoding)
+
 
 def encode_adjacency_one_hot_op_indices(op_indices):
     one_hot = []
@@ -63,16 +65,18 @@ def encode_adjacency_one_hot_op_indices(op_indices):
         one_hot = [*one_hot, *one_hot_nasbench201[e]]
     return one_hot
 
+
 def encode_adjacency_one_hot(arch):
     encoding = arch.get_op_indices()
     return encode_adjacency_one_hot_op_indices(encoding)
 
+
 def get_paths(arch):
-    """ 
+    """
     return all paths from input to output
     """
     ops = arch.get_op_indices()
-    path_blueprints = [[3], [0,4], [1,5], [0,2,5]]
+    path_blueprints = [[3], [0, 4], [1, 5], [0, 2, 5]]
     paths = []
     for blueprint in path_blueprints:
         paths.append([ops[node] for node in blueprint])
@@ -92,9 +96,9 @@ def get_path_indices(arch, num_ops=5):
         elif i in [1, 2]:
             index = num_ops
         else:
-            index = num_ops + num_ops ** 2
+            index = num_ops + num_ops**2
         for j, op in enumerate(path):
-            index += op * num_ops ** j
+            index += op * num_ops**j
         path_indices.append(index)
 
     return tuple(path_indices)
@@ -102,7 +106,7 @@ def get_path_indices(arch, num_ops=5):
 
 def encode_paths(arch, num_ops=5, longest_path_length=3):
     """ output one-hot encoding of paths """
-    num_paths = sum([num_ops ** i for i in range(1, longest_path_length + 1)])
+    num_paths = sum([num_ops**i for i in range(1, longest_path_length + 1)])
     path_indices = get_path_indices(arch, num_ops=num_ops)
     encoding = np.zeros(num_paths)
     for index in path_indices:
@@ -117,19 +121,16 @@ def encode_gcn_nasbench201(arch):
     '''
     ops = arch.get_op_indices()
     # offset ops list by one, add input and output to ops list
-    ops = [op+1 for op in ops]
+    ops = [op + 1 for op in ops]
     ops = [0, *ops, 6]
     #print(ops)
-    ops_onehot = np.array([[i == op for i in range(7)] for op in ops], dtype=np.float32)
-    matrix = np.array(
-            [[0, 1, 1, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0]],dtype=np.float32)
+    ops_onehot = np.array([[i == op for i in range(7)] for op in ops],
+                          dtype=np.float32)
+    matrix = np.array([[0, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 0, 0],
+                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
+                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
+                       [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0]],
+                      dtype=np.float32)
     #matrix = np.transpose(matrix)
     dic = {
         'num_vertices': 8,
@@ -149,34 +150,28 @@ def encode_bonas_nasbench201(arch):
     '''
     ops = arch.get_op_indices()
     # offset ops list by one, add input and output to ops list
-    ops = [op+1 for op in ops]
+    ops = [op + 1 for op in ops]
     ops = [0, *ops, 6]
     #print(ops)
-    ops_onehot = np.array([[i == op for i in range(7)] for op in ops], dtype=np.float32)
-    matrix = np.array(
-            [[0, 1, 1, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0]],dtype=np.float32)
-            
-    matrix = add_global_node(matrix, True)
-    ops_onehot = add_global_node(ops_onehot,False)
+    ops_onehot = np.array([[i == op for i in range(7)] for op in ops],
+                          dtype=np.float32)
+    matrix = np.array([[0, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 0, 0],
+                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
+                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
+                       [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0]],
+                      dtype=np.float32)
 
-    matrix = np.array(matrix,dtype=np.float32)
-    ops_onehot = np.array(ops_onehot,dtype=np.float32)
-    
-    dic = {
-        'adjacency': matrix,
-        'operations': ops_onehot,
-        'val_acc': 0.0
-    }
+    matrix = add_global_node(matrix, True)
+    ops_onehot = add_global_node(ops_onehot, False)
+
+    matrix = np.array(matrix, dtype=np.float32)
+    ops_onehot = np.array(ops_onehot, dtype=np.float32)
+
+    dic = {'adjacency': matrix, 'operations': ops_onehot, 'val_acc': 0.0}
     return dic
 
-def add_global_node( mx, ifAdj):
+
+def add_global_node(mx, ifAdj):
     """add a global node to operation or adjacency matrixs, fill diagonal for adj and transpose adjs"""
     if (ifAdj):
         mx = np.column_stack((mx, np.ones(mx.shape[0], dtype=np.float32)))
@@ -189,6 +184,7 @@ def add_global_node( mx, ifAdj):
         mx[mx.shape[0] - 1][mx.shape[1] - 1] = 1
     return mx
 
+
 def encode_seminas_nasbench201(arch):
     '''
     Input:
@@ -196,17 +192,13 @@ def encode_seminas_nasbench201(arch):
     '''
     ops = arch.get_op_indices()
     # offset ops list by one, add input and output to ops list
-    ops = [op+1 for op in ops]
+    ops = [op + 1 for op in ops]
     ops = [0, *ops, 6]
-    matrix = np.array(
-            [[0, 1, 1, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0]],dtype=np.float32)
+    matrix = np.array([[0, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 0, 0],
+                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
+                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
+                       [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0]],
+                      dtype=np.float32)
     #matrix = np.transpose(matrix)
     dic = {
         'num_vertices': 8,
@@ -218,31 +210,36 @@ def encode_seminas_nasbench201(arch):
 
     return dic
 
+
 def encode_transnasbench101_micro(arch, encoding_type='adjacency_one_hot'):
     if encoding_type == 'adjacency_one_hot':
         return encode_adjacency_one_hot_transbench_micro(arch)
     else:
-        logger.info('{} is not yet supported as a predictor encoding'.format(encoding_type))
+        logger.info('{} is not yet supported as a predictor encoding'.format(
+            encoding_type))
         raise NotImplementedError()
+
 
 def encode_transnasbench101_macro(arch, encoding_type='adjacency_one_hot'):
     if encoding_type == 'adjacency_one_hot':
         return encode_adjacency_one_hot_transbench_macro(arch)
     else:
-        logger.info('{} is not yet supported as a predictor encoding'.format(encoding_type))
+        logger.info('{} is not yet supported as a predictor encoding'.format(
+            encoding_type))
         raise NotImplementedError()
 
+
 def encode_201(arch, encoding_type='adjacency_one_hot'):
-        
+
     if encoding_type == 'adjacency_one_hot':
         return encode_adjacency_one_hot(arch)
-    
+
     elif encoding_type == 'path':
         return encode_paths(arch)
 
     elif encoding_type == 'gcn':
         return encode_gcn_nasbench201(arch)
-    
+
     elif encoding_type == 'bonas':
         return encode_bonas_nasbench201(arch)
 
@@ -250,10 +247,11 @@ def encode_201(arch, encoding_type='adjacency_one_hot'):
         return encode_seminas_nasbench201(arch)
 
     else:
-        logger.info('{} is not yet supported as a predictor encoding'.format(encoding_type))
+        logger.info('{} is not yet supported as a predictor encoding'.format(
+            encoding_type))
         raise NotImplementedError()
 
-        
+
 def encode(arch, encoding_type='adjacency_one_hot', ss_type=None):
     # this method calls either encode_201 or encode_darts based on the search space
 
@@ -268,7 +266,9 @@ def encode(arch, encoding_type='adjacency_one_hot', ss_type=None):
     elif ss_type == 'transbench101_macro':
         return encode_transnasbench101_macro(arch, encoding_type=encoding_type)
     else:
-        raise NotImplementedError('{} is not yet supported for encodings'.format(ss_type))
+        raise NotImplementedError(
+            '{} is not yet supported for encodings'.format(ss_type))
+
 
 def encode_spec(spec, encoding_type='adjacency_one_hot', ss_type=None):
     if ss_type == 'nasbench101':
@@ -284,4 +284,6 @@ def encode_spec(spec, encoding_type='adjacency_one_hot', ss_type=None):
     elif ss_type == 'transbench101_macro' and encoding_type == 'adjacency_one_hot':
         return encode_adjacency_one_hot_transbench_macro_op_indices(spec)
     else:
-        raise NotImplementedError(f'No implementation found for encoding ss_type {ss_type} with {encoding_type}')
+        raise NotImplementedError(
+            f'No implementation found for encoding ss_type {ss_type} with {encoding_type}'
+        )

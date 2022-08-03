@@ -1,6 +1,10 @@
-from naslib.search_spaces.core.graph import Graph
 from torch.utils.data import DataLoader
+
+from pplib.nas.search_spaces.core.graph import Graph
+
+
 class Predictor:
+
     def __init__(self, ss_type=None):
         self.ss_type = ss_type
 

@@ -8,5 +8,6 @@ from .seed import set_random_seed  # noqa: F401
 from .utils import AvgrageMeter  # noqa: F401
 from .utils import DropPath  # noqa: F401
 from .utils import accuracy  # noqa: F401
+from .utils import compute_scores  # noqa: F401
 from .utils import save_checkpoint  # noqa: F401
 from .utils import time_record  # noqa: F401

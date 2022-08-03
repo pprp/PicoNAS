@@ -13,15 +13,16 @@
 # limitations under the License.
 # =============================================================================
 
+import copy
+import types
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import types
-import copy
 
-from .p_utils import *
 from . import measures
 from .measures.model_stats import get_model_stats
+from .p_utils import *
 
 
 def no_op(self, x):
@@ -50,7 +51,7 @@ def find_measures_arrays(
 
     dataload, num_imgs_or_batches, num_classes = dataload_info
 
-    if not hasattr(net_orig, "get_prunable_copy"):
+    if not hasattr(net_orig, 'get_prunable_copy'):
         net_orig.get_prunable_copy = types.MethodType(copynet, net_orig)
 
     # move to cpu to free up mem
@@ -59,11 +60,10 @@ def find_measures_arrays(
     torch.cuda.empty_cache()
 
     # given 1 minibatch of data
-    if dataload == "random":
+    if dataload == 'random':
         inputs, targets = get_some_data(
-            trainloader, num_batches=num_imgs_or_batches, device=device
-        )
-    elif dataload == "grasp":
+            trainloader, num_batches=num_imgs_or_batches, device=device)
+    elif dataload == 'grasp':
         inputs, targets = get_some_data_grasp(
             trainloader,
             num_classes,
@@ -71,7 +71,7 @@ def find_measures_arrays(
             device=device,
         )
     else:
-        raise NotImplementedError(f"dataload {dataload} is not supported")
+        raise NotImplementedError(f'dataload {dataload} is not supported')
 
     done, ds = False, 1
     measure_values = {}
@@ -93,7 +93,7 @@ def find_measures_arrays(
 
             done = True
         except RuntimeError as e:
-            if "out of memory" in str(e):
+            if 'out of memory' in str(e):
                 done = False
                 if ds == inputs.shape[0] // 2:
                     raise ValueError(
@@ -103,7 +103,9 @@ def find_measures_arrays(
                 while inputs.shape[0] % ds != 0:
                     ds += 1
                 torch.cuda.empty_cache()
-                print(f"Caught CUDA OOM, retrying with data split into {ds} parts")
+                print(
+                    f'Caught CUDA OOM, retrying with data split into {ds} parts'
+                )
             else:
                 raise e
 
@@ -136,18 +138,15 @@ def find_measures(
         data_iterator = iter(dataloader)
         x, target = next(data_iterator)
         x_shape = list(x.shape)
-        x_shape[0] = 1 # to prevent overflow
+        x_shape[0] = 1  # to prevent overflow
 
         model_stats = get_model_stats(
-            net_orig,
-            input_tensor_shape=x_shape,
-            clone_model=True
-        )
+            net_orig, input_tensor_shape=x_shape, clone_model=True)
 
         if measure_names[0] == 'flops':
-            measure_score = float(model_stats.Flops)/1e6 # megaflops
+            measure_score = float(model_stats.Flops) / 1e6  # megaflops
         else:
-            measure_score = float(model_stats.parameters)/1e6 # megaparams
+            measure_score = float(model_stats.parameters) / 1e6  # megaparams
         return measure_score
 
     if measures_arr is None:
@@ -161,9 +160,8 @@ def find_measures(
         )
 
     for k, v in measures_arr.items():
-        if k == "jacov" or k == 'epe_nas' or k=='nwot' or k=='zen':
+        if k == 'jacov' or k == 'epe_nas' or k == 'nwot' or k == 'zen':
             measure_score = v
         else:
             measure_score = sum_arr(v)
     return measure_score
-

@@ -1,8 +1,65 @@
+import logging
 import os
 import time
 
+import numpy as np
 import torch
 import torch.nn as nn
+from scipy import stats
+from sklearn import metrics
+
+logger = logging.getLogger(__name__)
+
+
+def compute_scores(ytest, test_pred):
+    ytest = np.array(ytest)
+    test_pred = np.array(test_pred)
+    METRICS = [
+        'mae',
+        'rmse',
+        'pearson',
+        'spearman',
+        'kendalltau',
+        'kt_2dec',
+        'kt_1dec',
+        'full_ytest',
+        'full_testpred',
+    ]
+    metrics_dict = {}
+
+    try:
+        metrics_dict['mae'] = np.mean(abs(test_pred - ytest))
+        metrics_dict['rmse'] = metrics.mean_squared_error(
+            ytest, test_pred, squared=False)
+        metrics_dict['pearson'] = np.abs(np.corrcoef(ytest, test_pred)[1, 0])
+        metrics_dict['spearman'] = stats.spearmanr(ytest, test_pred)[0]
+        metrics_dict['kendalltau'] = stats.kendalltau(ytest, test_pred)[0]
+        metrics_dict['kt_2dec'] = stats.kendalltau(
+            ytest, np.round(test_pred, decimals=2))[0]
+        metrics_dict['kt_1dec'] = stats.kendalltau(
+            ytest, np.round(test_pred, decimals=1))[0]
+        for k in [10, 20]:
+            top_ytest = np.array(
+                [y > sorted(ytest)[max(-len(ytest), -k - 1)] for y in ytest])
+            top_test_pred = np.array([
+                y > sorted(test_pred)[max(-len(test_pred), -k - 1)]
+                for y in test_pred
+            ])
+            metrics_dict['precision_{}'.format(k)] = (
+                sum(top_ytest & top_test_pred) / k)
+        metrics_dict['full_ytest'] = ytest.tolist()
+        metrics_dict['full_testpred'] = test_pred.tolist()
+
+    except:
+        for metric in METRICS:
+            metrics_dict[metric] = float('nan')
+    if np.isnan(metrics_dict['pearson']) or not np.isfinite(
+            metrics_dict['pearson']):
+        logger.info('Error when computing metrics. ytest and test_pred are:')
+        logger.info(ytest)
+        logger.info(test_pred)
+
+    return metrics_dict
 
 
 class AvgrageMeter(object):
@@ -78,8 +135,7 @@ def drop_path(x, drop_prob: float = 0., training: bool = False):
     random_tensor = keep_prob + \
         torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
-    output = x.div(keep_prob) * random_tensor
-    return output
+    return x.div(keep_prob) * random_tensor
 
 
 class DropPath(nn.Module):
@@ -104,8 +160,7 @@ def iter_flatten(iterable):
     it = iter(iterable)
     for e in it:
         if isinstance(e, (list, tuple)):
-            for f in iter_flatten(e):
-                yield f
+            yield from iter_flatten(e)
         else:
             yield e
 
