@@ -8,7 +8,7 @@ import torch.nn as nn
 from mmcv.cnn import get_model_complexity_info
 
 import pplib.utils.utils as utils
-from pplib.core.losses import PairwiseRankLoss
+from pplib.core.losses import CC, PairwiseRankLoss
 from pplib.evaluator import MacroEvaluator
 from pplib.nas.mutators import OneShotMutator
 from pplib.utils.utils import AvgrageMeter, accuracy
@@ -67,6 +67,10 @@ class MacroTrainer(BaseTrainer):
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
 
+        # distill loss
+        self.distill_loss = CC()
+        self.lambda_kd = 1000.0
+
     def _build_evaluator(self, dataloader, bench_path, num_sample=20):
         self.evaluator = MacroEvaluator(self, dataloader, bench_path,
                                         num_sample)
@@ -98,9 +102,13 @@ class MacroTrainer(BaseTrainer):
 
             # SPOS with pairwise rankloss
             # loss, outputs = self._forward_pairwise_loss(batch_inputs)
-            
-            # spos with multi-pair rank loss 
-            loss, outputs = self._forward_multi_pairwise_loss(batch_inputs)
+
+            # spos with pairwise rankloss + cc distill
+            loss, outputs = self._forward_pairwise_loss_with_distill(
+                batch_inputs)
+
+            # spos with multi-pair rank loss
+            # loss, outputs = self._forward_multi_pairwise_loss(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():
@@ -197,6 +205,58 @@ class MacroTrainer(BaseTrainer):
         loss3.backward()
 
         return loss2, outputs
+
+    def _forward_pairwise_loss_with_distill(self, batch_inputs):
+        """
+        Policy:
+            1. use larger flops model as teacher
+            2. use lower loss model as teacher
+        """
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
+        loss_list = []
+
+        # sample the first subnet
+        rand_subnet1 = self.mutator.random_subnet
+        self.mutator.set_subnet(rand_subnet1)
+        outputs, feat1 = self.model.forward_distill(inputs)
+        loss1 = self._compute_loss(outputs, labels)
+        flops1 = self.get_subnet_flops(rand_subnet1)
+        loss_list.append(loss1)
+
+        # sample the second subnet
+        rand_subnet2 = self.mutator.random_subnet
+        self.mutator.set_subnet(rand_subnet2)
+        outputs, feat2 = self.model.forward_distill(inputs)
+        loss2 = self._compute_loss(outputs, labels)
+        flops2 = self.get_subnet_flops(rand_subnet2)
+        loss_list.append(loss2)
+
+        # pairwise rank loss
+        # lambda settings:
+        #       1. min(2, self.current_epoch/10.)
+        #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+
+        loss3 = 2 * np.sin(np.pi * 0.8 * self.current_epoch /
+                           self.max_epochs) * self.pairwise_rankloss(
+                               flops1, flops2, loss1, loss2)
+        loss_list.append(loss3)
+
+        # distill loss
+        if loss2 > loss1:
+            loss4 = self.distill_loss(
+                feat_s=feat2, feat_t=feat1) * self.lambda_kd
+        else:
+            loss4 = self.distill_loss(
+                feat_s=feat1, feat_t=feat2) * self.lambda_kd
+        loss_list.append(loss4)
+
+        loss = sum(loss_list)
+        loss.backward()
+
+        return loss, outputs
 
     def _forward_multi_pairwise_loss(self, batch_inputs):
         num_pairs = 4

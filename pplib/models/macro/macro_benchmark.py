@@ -197,7 +197,7 @@ class MacroBenchmarkSuperNet(nn.Module):
         x = self.out2(x)
         return x
 
-    def forward_all(self, x):
+    def forward_distill(self, x):
         # for compute flops and params
         x = self.in_conv(x)
 
@@ -209,9 +209,9 @@ class MacroBenchmarkSuperNet(nn.Module):
         # classifier
         x = self.features_mixing(x)
         x = self.out1(x)
-        x = x.view(x.shape[0], -1)
-        x = self.out2(x)
-        return x
+        feat = x.view(x.shape[0], -1)
+        x = self.out2(feat)
+        return x, feat
 
 
 if __name__ == '__main__':

@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
+from pplib.datasets import build_dataloader
 from pplib.nas.search_spaces.core.query_metrics import Metric
 from pplib.utils import utils
 
@@ -124,7 +125,8 @@ class ZeroCostPredictorEvaluator(object):
         logger.info('Querying the predictor')
         query_time_start = time.time()
 
-        _, _, test_loader, _, _ = utils.get_train_val_loaders(self.config)
+        test_loader = build_dataloader(type='val', dataset=self.dataset)
+        # _, _, test_loader, _, _ = utils.get_train_val_loaders(self.config)
 
         # Iterate over the architectures, instantiate a graph with each architecture
         # and then query the predictor for the performance of that

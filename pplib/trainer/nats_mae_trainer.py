@@ -169,7 +169,7 @@ class NATSMAETrainer(NATSTrainer):
             output, feat_s = self.model(inputs, mask, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
             cc_loss = self.cc_distill(feat_s, feat_t) * self.lambda_kd
-            
+
             mse_loss_list.append(loss)
             cc_loss_list.append(cc_loss)
 
@@ -178,15 +178,15 @@ class NATSMAETrainer(NATSTrainer):
         output, feat_s = self.model(inputs, mask, min_forward_list)
         loss = self.distill_criterion(output, t_output)
         cc_loss = self.cc_distill(feat_s, feat_t) * self.lambda_kd
-        
+
         mse_loss_list.append(loss)
         cc_loss_list.append(cc_loss)
-        
-        sum_loss = sum(mse_loss_list) + sum(cc_loss_list) * self.lambda_kd 
+
+        sum_loss = sum(mse_loss_list) + sum(cc_loss_list) * self.lambda_kd
         sum_loss.backward()
-        
+
         # self.logger.info(f"mse loss: {sum(mse_loss_list).item()} cc loss: {sum(cc_loss_list).item()}")
-        
+
         return t_loss
 
     def _train(self, loader):

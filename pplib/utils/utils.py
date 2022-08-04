@@ -1,10 +1,10 @@
 import argparse
 import logging
 import os
+import random
 import sys
 import time
 from pathlib import Path
-import random 
 
 import numpy as np
 import torch
@@ -186,23 +186,28 @@ def default_argument_parser():
     """
 
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument("--config-file", default=None,
-                        metavar="FILE", help="Path to config file")
+        formatter_class=argparse.RawDescriptionHelpFormatter, )
     parser.add_argument(
-        "opts",
-        help="Modify config options using the command-line",
+        '--config-file',
+        default=None,
+        metavar='FILE',
+        help='Path to config file')
+    parser.add_argument(
+        'opts',
+        help='Modify config options using the command-line',
         default=None,
         nargs=argparse.REMAINDER,
     )
-    parser.add_argument("--datapath", default=None, metavar="FILE",
-                        help="Path to the folder with train/test data folders")
+    parser.add_argument(
+        '--datapath',
+        default=None,
+        metavar='FILE',
+        help='Path to the folder with train/test data folders')
     return parser
 
 
 def parse_args(parser=default_argument_parser(), args=sys.argv[1:]):
-    if "-f" in args:
+    if '-f' in args:
         args = args[2:]
     return parser.parse_args(args)
 
@@ -215,13 +220,10 @@ def load_config(path):
 
 
 def load_default_config():
-    config_paths = "configs/predictor_config.yaml"
+    config_paths = 'configs/predictor_config.yaml'
 
-    config_path_full = os.path.join(
-        *(
-            [get_project_root()] + config_paths.split('/')
-        )
-    )
+    config_path_full = os.path.join(*([get_project_root()] +
+                                      config_paths.split('/')))
 
     return load_config(config_path_full)
 
@@ -231,7 +233,7 @@ def pairwise(iterable):
     Iterate pairwise over list.
     from https://stackoverflow.com/questions/5389507/iterating-over-every-two-elements-in-a-list
     """
-    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+    's -> (s0, s1), (s2, s3), (s4, s5), ...'
     a = iter(iterable)
     return zip(a, a)
 
@@ -247,7 +249,7 @@ def get_config_from_args(args=None):
 
     if args is None:
         args = parse_args()
-    logger.info("Command line args: {}".format(args))
+    logger.info('Command line args: {}'.format(args))
 
     if args.config_file is None:
         config = load_default_config()
@@ -257,8 +259,8 @@ def get_config_from_args(args=None):
     # Override file args with ones from command line
     try:
         for arg, value in pairwise(args.opts):
-            if "." in arg:
-                arg1, arg2 = arg.split(".")
+            if '.' in arg:
+                arg1, arg2 = arg.split('.')
                 config[arg1][arg2] = type(config[arg1][arg2])(value)
             else:
                 if arg in config:
@@ -285,7 +287,7 @@ def get_config_from_args(args=None):
         config.test_data_file = None
 
     # prepare the output directories
-    config.save = "{}/{}/{}/{}/{}/{}".format(
+    config.save = '{}/{}/{}/{}/{}/{}'.format(
         config.out_dir,
         config.config_type,
         config.search_space,
@@ -293,11 +295,11 @@ def get_config_from_args(args=None):
         config.predictor,
         config.seed,
     )
-    config.data = "{}/data".format(get_project_root())
+    config.data = '{}/data'.format(get_project_root())
 
     create_exp_dir(config.save)
-    create_exp_dir(config.save + "/search")  # required for the checkpoints
-    create_exp_dir(config.save + "/eval")
+    create_exp_dir(config.save + '/search')  # required for the checkpoints
+    create_exp_dir(config.save + '/eval')
 
     return config
 
@@ -315,7 +317,7 @@ def create_exp_dir(path):
     """
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
-    logger.info("Experiment dir : {}".format(path))
+    logger.info('Experiment dir : {}'.format(path))
 
 
 def set_seed(seed):
@@ -337,4 +339,4 @@ def log_args(args):
     Log the args in a nice way.
     """
     for arg, val in args.items():
-        logger.info(arg + "." * (50 - len(arg) - len(str(val))) + str(val))
+        logger.info(arg + '.' * (50 - len(arg) - len(str(val))) + str(val))

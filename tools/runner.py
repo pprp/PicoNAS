@@ -3,11 +3,11 @@
 import logging
 
 from pplib.evaluator.zc_evaluator import ZeroCostPredictorEvaluator
-from pplib.predictor import ZeroCost
 from pplib.nas.search_spaces import get_search_space
+from pplib.predictor import ZeroCost
+from pplib.utils import get_dataset_api, get_zc_benchmark_api
 from pplib.utils.logging import get_logger
-from pplib.utils import (get_dataset_api, get_zc_benchmark_api)
-from pplib.utils.utils import get_config_from_args, set_seed, log_args
+from pplib.utils.utils import get_config_from_args, log_args, set_seed
 
 # Get the configs from naslib/configs/predictor_config.yaml and the command line arguments
 # The configs include the zero-cost method to use, the search space and dataset/task to use,
@@ -37,6 +37,12 @@ predictor_evaluator.adapt_search_space(
     search_space, dataset_api=dataset_api, load_labeled=True)
 
 # Evaluate the predictor
-predictor_evaluator.evaluate(zc_api)
+results = predictor_evaluator.evaluate(zc_api)
+
+for result in results:
+    if isinstance(result, dict):
+        logger.info(result.keys())
+    else:
+        logger.info(result)
 
 logger.info('Correlation experiment complete.')

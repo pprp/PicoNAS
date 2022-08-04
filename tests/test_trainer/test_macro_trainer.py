@@ -20,8 +20,8 @@ class TestMacroTrainer(TestCase):
 
         for fair_subnet in fair_list:
             subnet_flops = trainer.get_subnet_flops(fair_subnet)
-            print(f"geno: {fair_subnet} -> flops: {subnet_flops}")
+            print(f'geno: {fair_subnet} -> flops: {subnet_flops}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
