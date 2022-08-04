@@ -28,17 +28,22 @@ def build_dataset(type='train', dataset='cifar10', config=None, fast=False):
 
     dataset_type = None
 
+    if config:
+        data_dir = getattr(config, 'data_dir', './data/cifar')
+    else:
+        data_dir = './data/cifar'
+
     if dataset == 'cifar10':
         if type == 'train':
             dataset_type = datasets.CIFAR10(
-                root=config.data_dir,
+                root=data_dir,
                 train=True,
                 download=True,
                 transform=build_transforms('cifar10', 'train', config=config),
             )
         elif type == 'val':
             dataset_type = datasets.CIFAR10(
-                root=config.data_dir,
+                root=data_dir,
                 train=False,
                 download=True,
                 transform=build_transforms('cifar10', 'val', config=config),
@@ -47,14 +52,14 @@ def build_dataset(type='train', dataset='cifar10', config=None, fast=False):
     elif dataset == 'cifar100':
         if type == 'train':
             dataset_type = datasets.CIFAR100(
-                root=config.data_dir,
+                root=data_dir,
                 train=True,
                 download=True,
                 transform=build_transforms('cifar10', 'train', config=config),
             )
         elif type == 'val':
             dataset_type = datasets.CIFAR100(
-                root=config.data_dir,
+                root=data_dir,
                 train=False,
                 download=True,
                 transform=build_transforms('cifar10', 'val', config=config),
@@ -62,14 +67,14 @@ def build_dataset(type='train', dataset='cifar10', config=None, fast=False):
     elif dataset == 'simmim':
         if type == 'train':
             dataset_type = datasets.CIFAR10(
-                root=config.data_dir,
+                root=data_dir,
                 train=True,
                 download=True,
                 transform=build_transforms('simmim', 'train', config=config),
             )
         elif type == 'val':
             dataset_type = datasets.CIFAR10(
-                root=config.data_dir,
+                root=data_dir,
                 train=False,
                 download=True,
                 transform=build_transforms('simmim', 'val', config=config),
@@ -99,62 +104,66 @@ def _extracted_from_build_dataset_43(dataset_type):
 def build_dataloader(dataset='cifar10', type='train', config=None):
     assert type in ['train', 'val']
     assert dataset in ['cifar10', 'cifar100', 'simmim']
+
+    if config:
+        batch_size = getattr(config, 'batch_size', 64)
+        nw = getattr(config, 'nw', 4)
+        fast = getattr(config, 'fast', False)
+    else:
+        batch_size = 64
+        nw = 4
+        fast = False
+
     if dataset == 'cifar10':
         if type == 'train':
             dataloader_type = DataLoader(
-                build_dataset(
-                    'train', 'cifar10', config=config, fast=config.fast),
-                batch_size=config.batch_size,
+                build_dataset('train', 'cifar10', config=config, fast=fast),
+                batch_size=batch_size,
                 shuffle=True,
-                num_workers=config.nw,
+                num_workers=nw,
                 pin_memory=True,
             )
         elif type == 'val':
             dataloader_type = DataLoader(
-                build_dataset(
-                    'val', 'cifar10', config=config, fast=config.fast),
-                batch_size=config.batch_size,
+                build_dataset('val', 'cifar10', config=config, fast=fast),
+                batch_size=batch_size,
                 shuffle=False,
-                num_workers=config.nw,
+                num_workers=nw,
                 pin_memory=True,
             )
     elif dataset == 'cifar100':
         if type == 'train':
             dataloader_type = DataLoader(
-                build_dataset(
-                    'train', 'cifar100', config=config, fast=config.fast),
-                batch_size=config.batch_size,
+                build_dataset('train', 'cifar100', config=config, fast=fast),
+                batch_size=batch_size,
                 shuffle=True,
-                num_workers=config.nw,
+                num_workers=nw,
                 pin_memory=True,
             )
         elif type == 'val':
             dataloader_type = DataLoader(
-                build_dataset(
-                    'val', 'cifar100', config=config, fast=config.fast),
-                batch_size=config.batch_size,
+                build_dataset('val', 'cifar100', config=config, fast=fast),
+                batch_size=batch_size,
                 shuffle=False,
-                num_workers=config.nw,
+                num_workers=nw,
                 pin_memory=True,
             )
     elif dataset == 'simmim':
         if type == 'train':
             dataloader_type = DataLoader(
-                build_dataset(
-                    'train', 'simmim', config=config, fast=config.fast),
-                batch_size=config.batch_size,
+                build_dataset('train', 'simmim', config=config, fast=fast),
+                batch_size=batch_size,
                 shuffle=True,
-                num_workers=config.nw,
+                num_workers=nw,
                 pin_memory=True,
                 collate_fn=collate_fn,
             )
         elif type == 'val':
             dataloader_type = DataLoader(
-                build_dataset(
-                    'val', 'simmim', config=config, fast=config.fast),
-                batch_size=config.batch_size,
+                build_dataset('val', 'simmim', config=config, fast=fast),
+                batch_size=batch_size,
                 shuffle=False,
-                num_workers=config.nw,
+                num_workers=nw,
                 pin_memory=True,
                 collate_fn=collate_fn,
             )

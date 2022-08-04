@@ -48,7 +48,7 @@ def build_transforms(dataset='cifar10', type='train', config=None):
         elif dataset == 'simmim':
             post_transform = [SimMIMTransform()]
 
-        if config.cutout:
+        if getattr(config, 'cutout', False):
             post_transform.append(Cutout(1, 8))
 
         transform_type = transforms.Compose(
