@@ -33,6 +33,7 @@ search_space.labeled_archs = [eval(arch) for arch in zc_api.keys()]
 # Initialize the ZeroCostPredictorEvaluator class
 predictor_evaluator = ZeroCostPredictorEvaluator(
     predictor, config=config, zc_api=zc_api)
+
 predictor_evaluator.adapt_search_space(
     search_space, dataset_api=dataset_api, load_labeled=True)
 
