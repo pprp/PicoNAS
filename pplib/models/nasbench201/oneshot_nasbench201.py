@@ -384,3 +384,14 @@ class OneShotNASBench201Network(nn.Module):
         logits = self.classifier(out)
 
         return logits
+
+    def forward_distill(self, inputs):
+        feature = self.stem(inputs)
+        for cell in self.cells:
+            feature = cell(feature)
+
+        out = self.lastact(feature)
+        out = self.global_pooling(out)
+        out = out.view(out.size(0), -1)
+        logits = self.classifier(out)
+        return logits, out

@@ -1,8 +1,11 @@
+import time
 from typing import Dict
 
+import numpy as np
 import torch
 from mmcv.cnn import get_model_complexity_info
 
+import pplib.utils.utils as utils
 from pplib.core.losses import CC, PairwiseRankLoss
 from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
@@ -62,6 +65,82 @@ class NB201Trainer(BaseTrainer):
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
 
+    def _build_evaluator(self, dataloader, bench_path, num_sample=20):
+        self.evaluator = MacroEvaluator(self, dataloader, bench_path,
+                                        num_sample)
+
+    def _train(self, loader):
+        self.model.train()
+
+        train_loss = 0.
+        top1_tacc = AvgrageMeter()
+        top5_tacc = AvgrageMeter()
+
+        for step, batch_inputs in enumerate(loader):
+            # get image and labels
+            inputs, labels = batch_inputs
+            inputs = self._to_device(inputs, self.device)
+            labels = self._to_device(labels, self.device)
+
+            # remove gradient from previous passes
+            self.optimizer.zero_grad()
+
+            # FairNAS
+            # loss, outputs = self._forward_fairnas(batch_inputs)
+
+            # Single Path One Shot
+            # compute loss
+            loss, outputs = self.forward(batch_inputs, mode='loss')
+            # backprop
+            loss.backward()
+
+            # SPOS with pairwise rankloss
+            # loss, outputs = self._forward_pairwise_loss(batch_inputs)
+
+            # spos with pairwise rankloss + cc distill
+            # loss, outputs = self._forward_pairwise_loss_with_distill(
+            #     batch_inputs)
+
+            # spos with multi-pair rank loss
+            # loss, outputs = self._forward_multi_pairwise_loss(batch_inputs)
+
+            # clear grad
+            for p in self.model.parameters():
+                if p.grad is not None and p.grad.sum() == 0:
+                    p.grad = None
+
+            # parameters update
+            self.optimizer.step()
+
+            # compute accuracy
+            n = inputs.size(0)
+            top1, top5 = accuracy(outputs, labels, topk=(1, 5))
+            top1_tacc.update(top1.item(), n)
+            top5_tacc.update(top5.item(), n)
+
+            # accumulate loss
+            train_loss += loss.item()
+
+            # print every 20 iter
+            if step % self.print_freq == 0:
+                self.logger.info(
+                    f'Step: {step} \t Train loss: {loss.item()} Top1 acc: {top1_tacc.avg} Top5 acc: {top5_tacc.avg}'
+                )
+                self.writer.add_scalar(
+                    'train_step_loss',
+                    loss.item(),
+                    global_step=step + self.current_epoch * len(loader))
+                self.writer.add_scalar(
+                    'top1_train_acc',
+                    top1_tacc.avg,
+                    global_step=step + self.current_epoch * len(loader))
+                self.writer.add_scalar(
+                    'top5_train_acc',
+                    top5_tacc.avg,
+                    global_step=step + self.current_epoch * len(loader))
+
+        return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
+
     def _forward(self, batch_inputs):
         """Network forward step. Low Level API"""
         inputs, labels = batch_inputs
@@ -86,6 +165,80 @@ class NB201Trainer(BaseTrainer):
         else:
             self.mutator.set_subnet(subnet_dict)
         return self.model(inputs), labels
+
+    def fit(self, train_loader, val_loader, epochs):
+        """Fits. High Level API
+
+        Fit the model using the given loaders for the given number
+        of epochs.
+
+        Args:
+            train_loader :
+            val_loader :
+            epochs : int
+                Number of training epochs.
+
+        """
+        # track total training time
+        total_start_time = time.time()
+
+        # record max epoch
+        self.max_epochs = epochs
+
+        # ---- train process ----
+        for epoch in range(epochs):
+            self.current_epoch = epoch
+            # track epoch time
+            epoch_start_time = time.time()
+
+            # train
+            tr_loss, top1_tacc, top5_tacc = self._train(train_loader)
+
+            # validate
+            val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
+
+            # save ckpt
+            if epoch % 10 == 0:
+                utils.save_checkpoint({'state_dict': self.model.state_dict()},
+                                      self.log_name,
+                                      epoch + 1,
+                                      tag=f'{self.log_name}_macro')
+
+            self.train_loss_.append(tr_loss)
+            self.val_loss_.append(val_loss)
+
+            epoch_time = time.time() - epoch_start_time
+
+            self.logger.info(
+                f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
+            )
+
+            if epoch % 5 == 0:
+                if self.evaluator is None:
+                    bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
+                    self._build_evaluator(
+                        val_loader, bench_path, num_sample=20)
+                else:
+                    kt, ps, sp = self.evaluator.compute_rank_consistency()
+                    self.writer.add_scalar(
+                        'kendall_tau', kt, global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        'pearson', ps, global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        'spearman', sp, global_step=self.current_epoch)
+
+            self.writer.add_scalar(
+                'train_epoch_loss', tr_loss, global_step=self.current_epoch)
+            self.writer.add_scalar(
+                'valid_epoch_loss', val_loss, global_step=self.current_epoch)
+
+            self.scheduler.step()
+
+        total_time = time.time() - total_start_time
+
+        # final message
+        self.logger.info(
+            f"""End of training. Total time: {round(total_time, 5)} seconds""")
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         self.model.eval()
