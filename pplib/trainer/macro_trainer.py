@@ -134,17 +134,17 @@ class MacroTrainer(BaseTrainer):
                     f'Step: {step} \t Train loss: {loss.item()} Top1 acc: {top1_tacc.avg} Top5 acc: {top5_tacc.avg}'
                 )
                 self.writer.add_scalar(
-                    'train_step_loss',
+                    'STEP_LOSS/train_step_loss',
                     loss.item(),
                     global_step=step + self.current_epoch * len(loader),
                 )
                 self.writer.add_scalar(
-                    'top1_train_acc',
+                    'TRAIN_ACC/top1_train_acc',
                     top1_tacc.avg,
                     global_step=step + self.current_epoch * len(loader),
                 )
                 self.writer.add_scalar(
-                    'top5_train_acc',
+                    'TRAIN_ACC/top5_train_acc',
                     top5_tacc.avg,
                     global_step=step + self.current_epoch * len(loader),
                 )
@@ -386,16 +386,20 @@ class MacroTrainer(BaseTrainer):
                 else:
                     kt, ps, sp = self.evaluator.compute_rank_consistency()
                     self.writer.add_scalar(
-                        'kendall_tau', kt, global_step=self.current_epoch)
+                        'RANK/kendall_tau', kt, global_step=self.current_epoch)
                     self.writer.add_scalar(
-                        'pearson', ps, global_step=self.current_epoch)
+                        'RANK/pearson', ps, global_step=self.current_epoch)
                     self.writer.add_scalar(
-                        'spearman', sp, global_step=self.current_epoch)
+                        'RANK/spearman', sp, global_step=self.current_epoch)
 
             self.writer.add_scalar(
-                'train_epoch_loss', tr_loss, global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss',
+                tr_loss,
+                global_step=self.current_epoch)
             self.writer.add_scalar(
-                'valid_epoch_loss', val_loss, global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss',
+                val_loss,
+                global_step=self.current_epoch)
 
             self.scheduler.step()
 
@@ -433,17 +437,17 @@ class MacroTrainer(BaseTrainer):
                 # print every 20 iter
                 if step % 20 == 0:
                     self.writer.add_scalar(
-                        'val_step_loss',
+                        'STEP_LOSS/valid_step_loss',
                         loss.item(),
                         global_step=step + self.current_epoch * len(loader),
                     )
                     self.writer.add_scalar(
-                        'top1_val_acc',
+                        'VAL_ACC/top1_val_acc',
                         top1_vacc.avg,
                         global_step=step + self.current_epoch * len(loader),
                     )
                     self.writer.add_scalar(
-                        'top5_val_acc',
+                        'VAL_ACC/top5_val_acc',
                         top5_vacc.avg,
                         global_step=step + self.current_epoch * len(loader),
                     )

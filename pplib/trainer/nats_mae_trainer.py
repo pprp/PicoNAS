@@ -228,7 +228,7 @@ class NATSMAETrainer(NATSTrainer):
             if step % self.print_freq == 0:
                 self.logger.info(f'Step: {step} \t Train loss: {loss.item()}')
                 self.writer.add_scalar(
-                    'train_step_loss',
+                    'STEP_LOSS/train_step_loss',
                     loss.item(),
                     global_step=step + self.current_epoch * len(loader),
                 )
@@ -279,11 +279,11 @@ class NATSMAETrainer(NATSTrainer):
                 else:
                     kt, ps, sp = self.evaluator.compute_rank_consistency()
                     self.writer.add_scalar(
-                        'kendall_tau', kt, global_step=self.current_epoch)
+                        'RANK/kendall_tau', kt, global_step=self.current_epoch)
                     self.writer.add_scalar(
-                        'pearson', ps, global_step=self.current_epoch)
+                        'RANK/pearson', ps, global_step=self.current_epoch)
                     self.writer.add_scalar(
-                        'spearman', sp, global_step=self.current_epoch)
+                        'RANK/spearman', sp, global_step=self.current_epoch)
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)
@@ -295,9 +295,13 @@ class NATSMAETrainer(NATSTrainer):
             )
 
             self.writer.add_scalar(
-                'train_epoch_loss', tr_loss, global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss',
+                tr_loss,
+                global_step=self.current_epoch)
             self.writer.add_scalar(
-                'valid_epoch_loss', val_loss, global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss',
+                val_loss,
+                global_step=self.current_epoch)
 
             self.scheduler.step()
 
@@ -359,7 +363,7 @@ class NATSMAETrainer(NATSTrainer):
                     self.logger.info(
                         f'Step: {step} \t Val loss: {loss.item()}')
                     self.writer.add_scalar(
-                        'val_step_loss',
+                        'STEP_LOSS/valid_step_loss',
                         loss.item(),
                         global_step=step + self.current_epoch * len(loader),
                     )

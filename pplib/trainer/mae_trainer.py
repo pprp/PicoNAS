@@ -76,7 +76,7 @@ class MAETrainer(BaseTrainer):
             if i % self.print_freq == 0:
                 self.logger.info(f'Step: {i} \t Train loss: {loss.item()}')
                 self.writer.add_scalar(
-                    'train_step_loss',
+                    'STEP_LOSS/train_step_loss',
                     loss.item(),
                     global_step=i + self.current_epoch * len(loader),
                 )
@@ -136,11 +136,11 @@ class MAETrainer(BaseTrainer):
             )
 
             self.writer.add_scalar(
-                'train_epoch_loss',
+                'EPOCH_LOSS/train_epoch_loss',
                 tr_loss.item(),
                 global_step=self.current_epoch)
             self.writer.add_scalar(
-                'valid_epoch_loss',
+                'EPOCH_LOSS/valid_epoch_loss',
                 val_loss.item(),
                 global_step=self.current_epoch)
 
