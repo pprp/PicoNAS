@@ -61,7 +61,7 @@ class NATSTrainer(BaseTrainer):
     def _train(self, loader):
         self.model.train()
 
-        train_loss = 0.
+        train_loss = 0.0
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
 
@@ -100,15 +100,18 @@ class NATSTrainer(BaseTrainer):
                 self.writer.add_scalar(
                     'train_step_loss',
                     loss.item(),
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
                 self.writer.add_scalar(
                     'top1_train_acc',
                     top1_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
                 self.writer.add_scalar(
                     'top5_train_acc',
                     top5_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
@@ -207,10 +210,12 @@ class NATSTrainer(BaseTrainer):
 
             # save ckpt
             if epoch % 10 == 0:
-                utils.save_checkpoint({'state_dict': self.model.state_dict()},
-                                      self.log_name,
-                                      epoch + 1,
-                                      tag=f'{self.log_name}_macro')
+                utils.save_checkpoint(
+                    {'state_dict': self.model.state_dict()},
+                    self.log_name,
+                    epoch + 1,
+                    tag=f'{self.log_name}_macro',
+                )
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)

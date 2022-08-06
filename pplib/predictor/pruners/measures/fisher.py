@@ -83,7 +83,7 @@ def compute_fisher_per_weight(net,
                         layer.fisher = del_k
                     else:
                         layer.fisher += del_k
-                    del (layer.act)
+                    del layer.act
                     # without deleting this, a nasty memory leak occurs!
                     # related: https://discuss.pytorch.org/t/memory-leak-when-using-forward-hook-and-backward-hook-simultaneously/27555 # noqa: E501
 

@@ -3,11 +3,11 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
+from models.net_ops.cell_ops import OPS, ReLUConvBN
 
 lib_dir = (Path(__file__).parent / '..' / '..').resolve()
 if str(lib_dir) not in sys.path:
     sys.path.insert(0, str(lib_dir))
-from models.net_ops.cell_ops import OPS, ReLUConvBN
 
 
 class MicroCell(nn.Module):
@@ -81,14 +81,16 @@ class MicroCell(nn.Module):
 class ResNetBasicblock(nn.Module):
     expansion = 1
 
-    def __init__(self,
-                 cell_code,
-                 inplanes,
-                 planes,
-                 stride=1,
-                 affine=True,
-                 track_running_stats=True,
-                 activation='relu'):
+    def __init__(
+        self,
+        cell_code,
+        inplanes,
+        planes,
+        stride=1,
+        affine=True,
+        track_running_stats=True,
+        activation='relu',
+    ):
         super(ResNetBasicblock, self).__init__()
         assert cell_code == 'basic'
         assert stride == 1 or stride == 2, 'invalid stride {:}'.format(stride)
@@ -101,7 +103,8 @@ class ResNetBasicblock(nn.Module):
             1,
             affine,
             track_running_stats,
-            activation=activation)
+            activation=activation,
+        )
         self.conv_b = ReLUConvBN(
             planes,
             planes,
@@ -111,7 +114,8 @@ class ResNetBasicblock(nn.Module):
             1,
             affine,
             track_running_stats,
-            activation=activation)
+            activation=activation,
+        )
         self.downsample = None
 
         self.in_dim = inplanes
@@ -127,7 +131,8 @@ class ResNetBasicblock(nn.Module):
                     kernel_size=1,
                     stride=stride,
                     padding=0,
-                    bias=False),
+                    bias=False,
+                ),
                 nn.BatchNorm2d(planes * self.expansion, affine,
                                track_running_stats),
             )

@@ -69,10 +69,12 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
             Default to False.
     """
 
-    def __init__(self,
-                 custom_group: Optional[List[List[str]]] = None,
-                 with_alias: bool = False,
-                 init_cfg: Optional[Dict] = None) -> None:
+    def __init__(
+        self,
+        custom_group: Optional[List[List[str]]] = None,
+        with_alias: bool = False,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
         super().__init__(init_cfg)
 
         if custom_group is None:
@@ -158,9 +160,9 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
         self.module_name2group_id: Dict[str, int] = dict()
         for idx, group in enumerate(self._custom_group):
             for module_name in group:
-                assert module_name in module_name2module, \
-                    f'`{module_name}` is not a module name of supernet, ' \
-                    f'expected module names: {module_name2module.keys()}'
+                assert module_name in module_name2module, (
+                    f'`{module_name}` is not a module name of supernet, '
+                    f'expected module names: {module_name2module.keys()}')
 
                 if module_name in module_name2module:
                     self.module_name2group_id[module_name] = idx
@@ -206,9 +208,9 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
         self.alias2group_id: Dict[str, int] = dict()
         for idx, group in enumerate(self._custom_group):
             for module_name in group:
-                assert module_name in alias2module, \
-                    f'`{module_name}` is not a module name of supernet, ' \
-                    f'expected module names: {alias2module.keys()}'
+                assert module_name in alias2module, (
+                    f'`{module_name}` is not a module name of supernet, '
+                    f'expected module names: {alias2module.keys()}')
 
                 if module_name in alias2module:
                     self.alias2group_id[module_name] = idx
@@ -221,8 +223,7 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
             for module in modules:
                 if len(self.alias2group_id_copy.keys()) > 0:
                     group_id = self.alias2group_id_copy.get(alias_name)
-                    assert group_id is not None, \
-                        f'Get wrong alias name: {alias_name}'
+                    assert group_id is not None, f'Get wrong alias name: {alias_name}'
                 else:
                     group_id = gid
 

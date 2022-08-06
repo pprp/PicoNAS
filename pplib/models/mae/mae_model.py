@@ -72,8 +72,8 @@ class MAE_Encoder(torch.nn.Module):
         self.init_weight()
 
     def init_weight(self):
-        trunc_normal_(self.cls_token, std=.02)
-        trunc_normal_(self.pos_embedding, std=.02)
+        trunc_normal_(self.cls_token, std=0.02)
+        trunc_normal_(self.pos_embedding, std=0.02)
 
     def forward(self, img):
         patches = self.patchify(img)  # [b 192 2 2]
@@ -115,28 +115,33 @@ class MAE_Decoder(torch.nn.Module):
             '(h w) b (c p1 p2) -> b c (h p1) (w p2)',
             p1=patch_size,
             p2=patch_size,
-            h=image_size // patch_size)
+            h=image_size // patch_size,
+        )
 
         self.init_weight()
 
     def init_weight(self):
-        trunc_normal_(self.mask_token, std=.02)
-        trunc_normal_(self.pos_embedding, std=.02)
+        trunc_normal_(self.mask_token, std=0.02)
+        trunc_normal_(self.pos_embedding, std=0.02)
 
     def forward(self, features, backward_indexes):
         T = features.shape[0]
-        backward_indexes = torch.cat([
-            torch.zeros(1, backward_indexes.shape[1]).to(backward_indexes),
-            backward_indexes + 1
-        ],
-                                     dim=0)
-        features = torch.cat([
-            features,
-            self.mask_token.expand(
-                backward_indexes.shape[0] - features.shape[0],
-                features.shape[1], -1)
-        ],
-                             dim=0)
+        backward_indexes = torch.cat(
+            [
+                torch.zeros(1, backward_indexes.shape[1]).to(backward_indexes),
+                backward_indexes + 1,
+            ],
+            dim=0,
+        )
+        features = torch.cat(
+            [
+                features,
+                self.mask_token.expand(
+                    backward_indexes.shape[0] - features.shape[0],
+                    features.shape[1], -1),
+            ],
+            dim=0,
+        )
         features = take_indexes(features, backward_indexes)
         features = features + self.pos_embedding
 

@@ -58,6 +58,7 @@ class TestMacroBench(TestCase):
         import copy
 
         from mmcv.cnn import get_model_complexity_info
+
         model = MacroBenchmarkSuperNet()
 
         # WARNING: must before mutator prepare_from_supernet

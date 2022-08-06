@@ -29,10 +29,12 @@ class DiffMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         :meth:`forward_all` is called when calculating FLOPs.
     """
 
-    def __init__(self,
-                 module_kwargs: Optional[Dict[str, Dict]] = None,
-                 alias: Optional[str] = None,
-                 init_cfg: Optional[Dict] = None) -> None:
+    def __init__(
+        self,
+        module_kwargs: Optional[Dict[str, Dict]] = None,
+        alias: Optional[str] = None,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
         super().__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
 
@@ -90,8 +92,8 @@ class DiffMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
 
     def set_forward_args(self, arch_param: nn.Parameter) -> None:
         """Interface for modifying the arch_param using partial."""
-        forward_with_default_args: PartialType = \
-            partial(self.forward, arch_param=arch_param)
+        forward_with_default_args: PartialType = partial(
+            self.forward, arch_param=arch_param)
         setattr(self, 'forward', forward_with_default_args)
 
 
@@ -120,9 +122,9 @@ class DiffOP(DiffMutable[str, str]):
     ) -> None:
         super().__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
-        assert len(candidate_ops) >= 1, \
-            f'Number of candidate op must greater than or equal to 1, ' \
-            f'but got: {len(candidate_ops)}'
+        assert len(candidate_ops) >= 1, (
+            f'Number of candidate op must greater than or equal to 1, '
+            f'but got: {len(candidate_ops)}')
 
         self._is_fixed = False
         self._candidate_ops = self._build_ops(candidate_ops)
@@ -184,7 +186,7 @@ class DiffOP(DiffMutable[str, str]):
             # forward based on probs
             outputs = list()
             for prob, module in zip(probs, self._candidate_ops.values()):
-                if prob > 0.:
+                if prob > 0.0:
                     outputs.append(prob * module(x))
 
             return sum(outputs)
@@ -227,7 +229,7 @@ class DiffOP(DiffMutable[str, str]):
 
     @property
     def choices(self) -> List[str]:
-        """list: all choices. """
+        """list: all choices."""
         return list(self._candidate_ops.keys())
 
 
@@ -279,9 +281,9 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
         init_cfg: Optional[Dict] = None,
     ) -> None:
         super().__init__(init_cfg=init_cfg)
-        assert len(edges) >= 1, \
-            f'Number of edges must greater than or equal to 1, ' \
-            f'but got: {len(edges)}'
+        assert len(edges) >= 1, (
+            f'Number of edges must greater than or equal to 1, '
+            f'but got: {len(edges)}')
 
         self._with_arch_param = with_arch_param
         self._is_fixed = False
@@ -298,8 +300,8 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
         Returns:
             Tensor: the result of forward the fixed operation.
         """
-        assert self._chosen is not None, \
-            'Please call fix_chosen before calling `forward_fixed`.'
+        assert (self._chosen is not None
+                ), 'Please call fix_chosen before calling `forward_fixed`.'
 
         outputs = list()
         for choice, x in zip(self._unfixed_choices, inputs):
@@ -321,9 +323,9 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
         Returns:
             Tensor: the result of forward with ``arch_param``.
         """
-        assert len(x) == len(self._edges), \
-            f'Length of `edges` {len(self._edges)} should be same as ' \
-            f'the length of inputs {len(x)}.'
+        assert len(x) == len(self._edges), (
+            f'Length of `edges` {len(self._edges)} should be same as '
+            f'the length of inputs {len(x)}.')
 
         if self._with_arch_param:
             probs = self.compute_arch_probs(arch_param=arch_param)
@@ -348,9 +350,9 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
         Returns:
             Tensor: the result of forward all of the ``choice`` operation.
         """
-        assert len(x) == len(self._edges), \
-            f'Lenght of edges {len(self._edges)} should be same as ' \
-            f'the length of inputs {len(x)}.'
+        assert len(x) == len(self._edges), (
+            f'Lenght of edges {len(self._edges)} should be same as '
+            f'the length of inputs {len(x)}.')
 
         outputs = list()
         for op, input in zip(self._edges.values(), x):
@@ -382,7 +384,7 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
 
     @property
     def choices(self) -> List[CHOSEN_TYPE]:
-        """list: all choices. """
+        """list: all choices."""
         return list(self._edges.keys())
 
 

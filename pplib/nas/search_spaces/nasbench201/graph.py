@@ -102,7 +102,8 @@ class NasBench201SearchSpace(Graph):
         self.edges[7, 8].set(
             'op',
             ResNetBasicblock(
-                C_in=self.channels[0], C_out=self.channels[1], stride=2))
+                C_in=self.channels[0], C_out=self.channels[1], stride=2),
+        )
         for i in range(8, 13):
             self.edges[i, i + 1].set('op', cell.copy().set_scope('stage_2'))
 
@@ -110,7 +111,8 @@ class NasBench201SearchSpace(Graph):
         self.edges[13, 14].set(
             'op',
             ResNetBasicblock(
-                C_in=self.channels[1], C_out=self.channels[2], stride=2))
+                C_in=self.channels[1], C_out=self.channels[2], stride=2),
+        )
         for i in range(14, 19):
             self.edges[i, i + 1].set('op', cell.copy().set_scope('stage_3'))
 
@@ -255,7 +257,8 @@ class NasBench201SearchSpace(Graph):
         self.set_op_indices(op_indices)
 
     def sample_random_labeled_architecture(self):
-        assert self.labeled_archs is not None, 'Labeled archs not provided to sample from'
+        assert (self.labeled_archs
+                is not None), 'Labeled archs not provided to sample from'
 
         op_indices = random.choice(self.labeled_archs)
 
@@ -274,7 +277,8 @@ class NasBench201SearchSpace(Graph):
             return self.sample_random_labeled_architecture()
 
         def is_valid_arch(op_indices):
-            return not ((op_indices[0] == op_indices[1] == op_indices[2] == 1) or \
+            return not ((op_indices[0] == op_indices[1] == op_indices[2] == 1)
+                        or
                         (op_indices[2] == op_indices[4] == op_indices[5] == 1))
 
         while True:

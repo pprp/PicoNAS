@@ -24,6 +24,7 @@ def parse_requirements(fname='requirements.txt', with_version=True):
     import re
     import sys
     from os.path import exists
+
     require_fpath = fname
 
     def parse_line(line):
@@ -35,7 +36,7 @@ def parse_requirements(fname='requirements.txt', with_version=True):
         else:
             info = {'line': line}
             if line.startswith('-e '):
-                info['package'] = line.split('#egg=')[1]
+                info['package'] = line.split('# egg=')[1]
             else:
                 # Remove versioning from the package
                 pat = '(' + '|'.join(['>=', '==', '>']) + ')'
@@ -47,7 +48,7 @@ def parse_requirements(fname='requirements.txt', with_version=True):
                     op, rest = parts[1:]
                     if ';' in rest:
                         # Handle platform specific dependencies
-                        # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-platform-specific-dependencies
+                        # http://setuptools.readthedocs.io/en/latest/setuptools.html# declaring-platform-specific-dependencies
                         version, platform_deps = map(str.strip,
                                                      rest.split(';'))
                         info['platform_deps'] = platform_deps
@@ -60,7 +61,7 @@ def parse_requirements(fname='requirements.txt', with_version=True):
         with open(fpath, 'r') as f:
             for line in f.readlines():
                 line = line.strip()
-                if line and not line.startswith('#'):
+                if line and not line.startswith('# '):
                     yield from parse_line(line)
 
     def gen_packages_items():
@@ -108,4 +109,5 @@ if __name__ == '__main__':
         author_email='1115957667@qq.com',
         license='Apache License 2.0',
         install_requires=parse_requirements('requirements.txt'),
-        zip_safe=False)
+        zip_safe=False,
+    )

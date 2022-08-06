@@ -33,7 +33,7 @@ def compute_nwot(net, inputs, targets, split_data=1, loss_fn=None):
         inp = inp[0].view(inp[0].size(0), -1)
         x = (inp > 0).float()  # binary indicator
         K = x @ x.t()
-        K2 = (1. - x) @ (1. - x.t())
+        K2 = (1.0 - x) @ (1.0 - x.t())
         net.K = net.K + K.cpu().numpy() + K2.cpu().numpy()  # hamming distance
 
     def counting_backward_hook(module, inp, out):

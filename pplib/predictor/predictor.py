@@ -27,7 +27,7 @@ class Predictor:
         pass
 
     def query(self, graph: Graph, dataloader: DataLoader) -> float:
-        """ Predict the score of the given model
+        """Predict the score of the given model
 
         Args:
             graph       : Model to score

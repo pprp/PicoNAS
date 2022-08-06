@@ -36,12 +36,14 @@ class TransBench101SearchSpaceMicro(Graph):
 
     QUERYABLE = True
 
-    def __init__(self,
-                 dataset='jigsaw',
-                 use_small_model=True,
-                 create_graph=False,
-                 n_classes=10,
-                 in_channels=3):
+    def __init__(
+        self,
+        dataset='jigsaw',
+        use_small_model=True,
+        create_graph=False,
+        n_classes=10,
+        in_channels=3,
+    ):
         super().__init__()
         if dataset == 'jigsaw':
             self.num_classes = 1000
@@ -96,7 +98,11 @@ class TransBench101SearchSpaceMicro(Graph):
             2
         ] * self.n_modules  # Change to customize number of blocks per module
         self.module_stages = [
-            'r_stage_1', 'n_stage_1', 'r_stage_2', 'n_stage_2', 'r_stage_3'
+            'r_stage_1',
+            'n_stage_1',
+            'r_stage_2',
+            'n_stage_2',
+            'r_stage_3',
         ]
         # self.base_channels = 16 if self.use_small_model else 64 # short: 16
         self.base_channels = 64
@@ -135,7 +141,8 @@ class TransBench101SearchSpaceMicro(Graph):
             'op',
             self._get_decoder_for_task(
                 self.dataset,
-                n_channels=self._get_module_n_output_channels(module)))
+                n_channels=self._get_module_n_output_channels(module)),
+        )
 
     def _get_stem_for_task(self, task):
         if task == 'jigsaw':
@@ -147,15 +154,20 @@ class TransBench101SearchSpaceMicro(Graph):
         else:
             return ops.Stem(C_in=self.in_channels, C_out=self.base_channels)
 
-    def _get_decoder_for_task(self, task, n_channels):  #TODO: Remove harcoding
+    def _get_decoder_for_task(self, task,
+                              n_channels):  # TODO: Remove harcoding
         if task == 'jigsaw':
             return ops.SequentialJigsaw(
-                nn.AdaptiveAvgPool2d(1), nn.Flatten(),
-                nn.Linear(n_channels * 9, self.num_classes))
+                nn.AdaptiveAvgPool2d(1),
+                nn.Flatten(),
+                nn.Linear(n_channels * 9, self.num_classes),
+            )
         elif task in ['class_object', 'class_scene']:
             return ops.Sequential(
-                nn.AdaptiveAvgPool2d(1), nn.Flatten(),
-                nn.Linear(n_channels, self.num_classes))
+                nn.AdaptiveAvgPool2d(1),
+                nn.Flatten(),
+                nn.Linear(n_channels, self.num_classes),
+            )
         elif task == 'autoencoder':
             if self.use_small_model:
                 return ops.GenerativeDecoder((64, 32), (256, 2048))  # Short
@@ -165,8 +177,10 @@ class TransBench101SearchSpaceMicro(Graph):
 
         else:
             return ops.Sequential(
-                nn.AdaptiveAvgPool2d(1), nn.Flatten(),
-                nn.Linear(n_channels, self.num_classes))
+                nn.AdaptiveAvgPool2d(1),
+                nn.Flatten(),
+                nn.Linear(n_channels, self.num_classes),
+            )
 
     def _get_module_n_output_channels(self, module):
         last_cell_in_module = module.edges[1, 2]['op'].op[-1]
@@ -192,7 +206,8 @@ class TransBench101SearchSpaceMicro(Graph):
             downsample = self._is_reduction_stage(stage) and idx == 0
             cell.update_edges(
                 update_func=lambda edge: _set_op(edge, C_in, downsample),
-                private_edge_data=True)
+                private_edge_data=True,
+            )
 
             if downsample:
                 C_in *= 2
@@ -212,13 +227,15 @@ class TransBench101SearchSpaceMicro(Graph):
         container.edges[1, 2].set('op', module)
         return container
 
-    def query(self,
-              metric=None,
-              dataset=None,
-              path=None,
-              epoch=-1,
-              full_lc=False,
-              dataset_api=None):
+    def query(
+        self,
+        metric=None,
+        dataset=None,
+        path=None,
+        epoch=-1,
+        full_lc=False,
+        dataset_api=None,
+    ):
         """
         Query results from transbench 101
         """
@@ -340,7 +357,8 @@ class TransBench101SearchSpaceMicro(Graph):
         self.set_op_indices(op_indices)
 
     def sample_random_labeled_architecture(self):
-        assert self.labeled_archs is not None, 'Labeled archs not provided to sample from'
+        assert (self.labeled_archs
+                is not None), 'Labeled archs not provided to sample from'
 
         op_indices = random.choice(self.labeled_archs)
 
@@ -359,8 +377,9 @@ class TransBench101SearchSpaceMicro(Graph):
             return self.sample_random_labeled_architecture()
 
         def is_valid_arch(op_indices):
-            return not ((op_indices[0] == op_indices[1] == op_indices[2] == 1) or \
-   (op_indices[2] == op_indices[4] == op_indices[5] == 1))
+            return not ((op_indices[0] == op_indices[1] == op_indices[2] == 1)
+                        or
+                        (op_indices[2] == op_indices[4] == op_indices[5] == 1))
 
         while True:
             op_indices = np.random.randint(4, size=(6))
@@ -466,8 +485,10 @@ class TransBench101SearchSpaceMicro(Graph):
         return outputs[0]
 
     def forward_before_global_avg_pool(self, x):
-        if (self.create_graph  and self.dataset in ['ninapro', 'svhn', 'scifar100']) or \
-           (self.dataset in ['class_scene', 'class_object', 'room_layout', 'jigsaw']):
+        if (self.create_graph and self.dataset
+                in ['ninapro', 'svhn', 'scifar100']) or (self.dataset in [
+                    'class_scene', 'class_object', 'room_layout', 'jigsaw'
+                ]):
             return self._forward_before_global_avg_pool(x)
         elif not self.create_graph:
             return self._forward_before_last_conv(x)
@@ -513,13 +534,15 @@ class TransBench101SearchSpaceMacro(Graph):
 
         self.add_edge(1, 2)
 
-    def query(self,
-              metric=None,
-              dataset=None,
-              path=None,
-              epoch=-1,
-              full_lc=False,
-              dataset_api=None):
+    def query(
+        self,
+        metric=None,
+        dataset=None,
+        path=None,
+        epoch=-1,
+        full_lc=False,
+        dataset_api=None,
+    ):
         """
         Query results from transbench 101
         """
@@ -623,7 +646,8 @@ class TransBench101SearchSpaceMacro(Graph):
         self.set_op_indices(op_indices)
 
     def sample_random_labeled_architecture(self):
-        assert self.labeled_archs is not None, 'Labeled archs not provided to sample from'
+        assert (self.labeled_archs
+                is not None), 'Labeled archs not provided to sample from'
 
         op_indices = random.choice(self.labeled_archs)
 
@@ -815,10 +839,13 @@ def _set_op(edge, C_in, downsample):
             C_out = C_in
             stride = 1
 
-    edge.data.set('op', [
-        ops.Identity() if stride == 1 else FactorizedReduce(
-            C_in, C_out, stride, affine=False),
-        ops.Zero(stride=stride, C_in=C_in, C_out=C_out),
-        ops.ReLUConvBN(C_in, C_out, kernel_size=3, stride=stride),
-        ops.ReLUConvBN(C_in, C_out, kernel_size=1, stride=stride),
-    ])
+    edge.data.set(
+        'op',
+        [
+            ops.Identity() if stride == 1 else FactorizedReduce(
+                C_in, C_out, stride, affine=False),
+            ops.Zero(stride=stride, C_in=C_in, C_out=C_out),
+            ops.ReLUConvBN(C_in, C_out, kernel_size=3, stride=stride),
+            ops.ReLUConvBN(C_in, C_out, kernel_size=1, stride=stride),
+        ],
+    )

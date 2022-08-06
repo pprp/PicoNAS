@@ -13,10 +13,8 @@
 # limitations under the License.
 # =============================================================================
 
-import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 def get_some_data(train_dataloader, num_batches, device):

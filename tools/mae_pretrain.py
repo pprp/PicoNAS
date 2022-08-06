@@ -48,12 +48,14 @@ if __name__ == '__main__':
         'data/cifar',
         train=True,
         download=True,
-        transform=Compose([ToTensor(), Normalize(0.5, 0.5)]))
+        transform=Compose([ToTensor(), Normalize(0.5, 0.5)]),
+    )
     val_dataset = torchvision.datasets.CIFAR10(
         'data/cifar',
         train=False,
         download=True,
-        transform=Compose([ToTensor(), Normalize(0.5, 0.5)]))
+        transform=Compose([ToTensor(), Normalize(0.5, 0.5)]),
+    )
     dataloader = torch.utils.data.DataLoader(
         train_dataset, load_batch_size, shuffle=True, num_workers=4)
     writer = SummaryWriter(os.path.join('logdir', 'cifar10', 'mae-pretrain'))
@@ -64,11 +66,14 @@ if __name__ == '__main__':
         model.parameters(),
         lr=args.base_learning_rate * args.batch_size / 256,
         betas=(0.9, 0.95),
-        weight_decay=args.weight_decay)
+        weight_decay=args.weight_decay,
+    )
 
     def lr_func(epoch):
-        return min((epoch + 1) / (args.warmup_epoch + 1e-8),
-                   0.5 * (math.cos(epoch / args.total_epoch * math.pi) + 1))
+        return min(
+            (epoch + 1) / (args.warmup_epoch + 1e-8),
+            0.5 * (math.cos(epoch / args.total_epoch * math.pi) + 1),
+        )
 
     lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
         optim, lr_lambda=lr_func, verbose=True)
@@ -93,7 +98,7 @@ if __name__ == '__main__':
         avg_loss = sum(losses) / len(losses)
         writer.add_scalar('mae_loss', avg_loss, global_step=e)
         print(f'In epoch {e}, average traning loss is {avg_loss}.')
-        ''' visualize the first 16 predicted images on val dataset'''
+        """ visualize the first 16 predicted images on val dataset"""
         model.eval()
         with torch.no_grad():
             val_img = torch.stack([val_dataset[i][0] for i in range(16)])
@@ -105,5 +110,5 @@ if __name__ == '__main__':
             img = rearrange(
                 img, '(v h1 w1) c h w -> c (h1 h) (w1 v w)', w1=2, v=3)
             writer.add_image('mae_image', (img + 1) / 2, global_step=e)
-        ''' save model '''
+        """ save model """
         torch.save(model, args.model_path)

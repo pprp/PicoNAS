@@ -3,7 +3,7 @@
 single path one shot with CIFAR10
 
 
-## MAE
+# MAE
 
 - 1. pretrain:
 
@@ -17,7 +17,7 @@ python tools/mae_pretrain.py
 python tools/train_classifier.py
 ```
 
-## SPOS
+# SPOS
 
 - Search Space 1: Official ShuffleNet-based Search space.
 
@@ -31,7 +31,7 @@ python tools/train_spos.py
 python tools/train_macro.py
 ```
 
-## Rank
+# Rank
 
 To evaluate the rank consistency in nas, run:
 
@@ -40,7 +40,7 @@ python tools/eval_rank.py
 ```
 
 
-## TODO LIST
+# TODO LIST
 
 - [x] NASBench201
 - [ ] LandmarkReg
@@ -57,14 +57,14 @@ python tools/eval_rank.py
 - [ ] KD
 - [ ] Save path
 
-## Thanks
+# Thanks
 
 - MMRazor: https://github.com/open-mmlab/mmrazor
 - SimMIM: https://github.com/microsoft/SimMIM
 - NASLib: https://github.com/automl/NASLib
 - MixPath: https://github.com/xiaomi-automl/MixPath
 
-## NASLib
+# NASLib
 
 runner: 属于入口，兼容各种用法
 
@@ -93,7 +93,7 @@ dataset:
 - cifar100
 
 
-## 方向
+# 方向
 
 修改ratio
 

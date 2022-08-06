@@ -9,7 +9,7 @@ class MixUp(object):
         self.alpha = alpha
 
     def __call__(self, batch):
-        '''Returns mixed inputs, pairs of targets, and lambda'''
+        """Returns mixed inputs, pairs of targets, and lambda"""
         x, y = batch
         lam = np.random.beta(self.alpha, self.alpha)
         batch_size = x.size(0)

@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 from pplib.nas.search_spaces.core.query_metrics import Metric
-from pplib.predictor.utils.encodings import encode, encode_spec
+from pplib.predictor.utils.encodings import encode_spec
 from pplib.predictor.zerocost import ZeroCost
 from pplib.utils import compute_scores
 
@@ -39,7 +39,7 @@ class ZCEnsembleEvaluator(object):
                 elif float('inf') == score:
                     score = 1e9
             else:
-                raise KeyError(f'key not found')
+                raise KeyError('key not found')
                 graph = self.search_space.clone()
                 graph.set_spec(encoding)
                 graph.parse()
@@ -103,8 +103,10 @@ class ZCEnsembleEvaluator(object):
         # Load models to train
         train_models = self.sample_random_models(self.n_train)
 
-        print('len labeled_archs after drawing train samples',
-              len(self.search_space.labeled_archs))
+        print(
+            'len labeled_archs after drawing train samples',
+            len(self.search_space.labeled_archs),
+        )
 
         # Get their ZC scores
         zc_predictors = [
@@ -125,7 +127,8 @@ class ZCEnsembleEvaluator(object):
                 encode_spec(
                     m.arch,
                     encoding_type='adjacency_one_hot',
-                    ss_type=self.search_space.get_type()))
+                    ss_type=self.search_space.get_type(),
+                ))
 
         ytrain = [m.accuracy for m in train_models]
 
@@ -139,8 +142,10 @@ class ZCEnsembleEvaluator(object):
         logger.info(f'Sampling {self.n_test} test models')
         test_models = self.sample_random_models(self.n_test)
 
-        print('len labeled_archs after drawing test samples',
-              len(self.search_space.labeled_archs))
+        print(
+            'len labeled_archs after drawing test samples',
+            len(self.search_space.labeled_archs),
+        )
 
         logger.info('Computing ZC scores')
         self.compute_zc_scores(test_models, zc_predictors, train_loader)
@@ -154,7 +159,8 @@ class ZCEnsembleEvaluator(object):
                 encode_spec(
                     m.arch,
                     encoding_type='adjacency_one_hot',
-                    ss_type=self.search_space.get_type()))
+                    ss_type=self.search_space.get_type(),
+                ))
 
         test_info = [{'zero_cost_scores': m.zc_scores} for m in test_models]
         preds = np.mean(ensemble.query(x_test, test_info), axis=0)

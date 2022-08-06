@@ -27,15 +27,15 @@ class SiameseNet(nn.Module):
 
 def image2tiles4testing(img, num_pieces=9):
     """
-    Generate the 9 pieces input for Jigsaw task.
+        Generate the 9 pieces input for Jigsaw task.
 
-    Parameters:
-    -----------
-        img (tensor): Image to be cropped (1, 3, 720, 1080)
-h
-    Return:
-    -----------
-        img_tiles: tensor (1, 9, 3, 240, 360)
+        Parameters:
+        -----------
+            img (tensor): Image to be cropped (1, 3, 720, 1080)
+    h
+        Return:
+        -----------
+            img_tiles: tensor (1, 9, 3, 240, 360)
     """
 
     if num_pieces != 9:

@@ -12,11 +12,13 @@ from ..mutable_value import MutableValue
 class DynamicLayerNorm(DynamicMixin, LayerNorm):
     """Dynamic mutable for Linear layer."""
 
-    def __init__(self,
-                 normalized_shape: Union[int, MutableValue],
-                 eps: float = 1e-5,
-                 bias: bool = True,
-                 mode: str = 'max') -> None:
+    def __init__(
+        self,
+        normalized_shape: Union[int, MutableValue],
+        eps: float = 1e-5,
+        bias: bool = True,
+        mode: str = 'max',
+    ) -> None:
 
         if isinstance(normalized_shape, MutableValue):
             # TODO get max
@@ -24,8 +26,7 @@ class DynamicLayerNorm(DynamicMixin, LayerNorm):
         elif isinstance(normalized_shape, int):
             self.max_normalized_shape = normalized_shape
         else:
-            raise f'The type of normalized_shape {type(normalized_shape)} is ' \
-                  'not supported, Only int or MutableValue is supported.'
+            raise f'The type of normalized_shape {type(normalized_shape)} is ' 'not supported, Only int or MutableValue is supported.'
 
         super(DynamicLayerNorm, self).__init__(
             normalized_shape=self.max_normalized_shape, eps=eps)
@@ -54,8 +55,10 @@ class DynamicLayerNorm(DynamicMixin, LayerNorm):
                 'The mode of DynamicLayerNorm is `fixed`. '
                 'Please do not call `fix_chosen` function again.')
 
-        normalized_shape = self.normalized_shape.current_value if isinstance(
-            self.normalized_shape, MutableValue) else self.normalized_shape
+        normalized_shape = (
+            self.normalized_shape.current_value if isinstance(
+                self.normalized_shape, MutableValue) else
+            self.normalized_shape)
 
         # new a layer
         temp_weight = self.weight.data[:normalized_shape]
@@ -68,8 +71,7 @@ class DynamicLayerNorm(DynamicMixin, LayerNorm):
         self.is_fixed = True
 
     def forward_fixed(self, x: Tensor) -> Tensor:
-        assert self.is_fixed is True, \
-            'Please call fix_chosen before forward_fixed.'
+        assert self.is_fixed is True, 'Please call fix_chosen before forward_fixed.'
         normalized_shape = self.get_value(self.normalized_shape)
         return F.layer_norm(x, (normalized_shape, ), self.weight, self.bias,
                             self.eps)

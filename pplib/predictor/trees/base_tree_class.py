@@ -9,12 +9,14 @@ from pplib.predictor.utils.encodings import encode
 
 class BaseTree(Predictor):
 
-    def __init__(self,
-                 encoding_type='adjacency_one_hot',
-                 ss_type='nasbench201',
-                 zc=False,
-                 zc_only=False,
-                 hpo_wrapper=False):
+    def __init__(
+        self,
+        encoding_type='adjacency_one_hot',
+        ss_type='nasbench201',
+        zc=False,
+        zc_only=False,
+        hpo_wrapper=False,
+    ):
         super(Predictor, self).__init__()
         self.encoding_type = encoding_type
         self.ss_type = ss_type

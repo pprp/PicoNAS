@@ -20,7 +20,8 @@ def get_args():
         type=str,
         default='spos_cifar10',
         required=True,
-        help='experiment name')
+        help='experiment name',
+    )
     parser.add_argument(
         '--data_dir', type=str, default='./data/', help='path to the dataset')
     parser.add_argument(
@@ -97,7 +98,7 @@ def train(args, epoch, train_data, device, model, criterion, optimizer,
         train_loss += loss.item()
         postfix = {
             'train_loss': '%.6f' % (train_loss / (step + 1)),
-            'train_acc': '%.6f' % top1.avg
+            'train_acc': '%.6f' % top1.avg,
         }
         train_data.set_postfix(log=postfix)
 
@@ -158,7 +159,8 @@ def main():
         model,
         inputs=(torch.randn(1, 3, 32, 32), ) if args.dataset == 'cifar10' else
         (torch.randn(1, 3, 224, 224), ),
-        verbose=False)
+        verbose=False,
+    )
     # print(model)
     print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' %
           ((params / 1e6), (flops / 1e6)))
@@ -178,7 +180,8 @@ def main():
             criterion,
             optimizer,
             scheduler,
-            supernet=True)
+            supernet=True,
+        )
         scheduler.step()
         if (epoch + 1) % args.val_interval == 0:
             validate(
@@ -190,12 +193,14 @@ def main():
                 criterion,
                 supernet=True)
 
-            utils.save_checkpoint({
-                'state_dict': model.state_dict(),
-            },
-                                  'search_supernet',
-                                  epoch + 1,
-                                  tag=f'{args.exp_name}_super')
+            utils.save_checkpoint(
+                {
+                    'state_dict': model.state_dict(),
+                },
+                'search_supernet',
+                epoch + 1,
+                tag=f'{args.exp_name}_super',
+            )
 
     utils.time_record(start)
 

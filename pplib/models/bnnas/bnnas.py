@@ -36,7 +36,8 @@ class BNNAS(nn.Module):
 
         self.first_conv = nn.Sequential(
             conv_bn(3, 40, first_stride),
-            InvertedResidual(40, self.in_channels, 3, 1, 1, 1))
+            InvertedResidual(40, self.in_channels, 3, 1, 1, 1),
+        )
 
         self.layers = nn.ModuleList()
         for channel, num_blocks, stride in self.arch_settings:

@@ -18,7 +18,11 @@ from pplib.nas.search_spaces.core.primitives import AbstractPrimitive
 
 OP_NAMES = ['Identity', 'Zero', 'ReLUConvBN3x3', 'ReLUConvBN1x1', 'AvgPool1x1']
 OP_NAMES_NB201 = [
-    'skip_connect', 'none', 'nor_conv_3x3', 'nor_conv_1x1', 'avg_pool_3x3'
+    'skip_connect',
+    'none',
+    'nor_conv_3x3',
+    'nor_conv_1x1',
+    'avg_pool_3x3',
 ]
 
 EDGE_LIST = ((1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4))
@@ -76,7 +80,7 @@ def convert_op_indices_to_naslib(op_indices, naslib_object):
         edge.data.set('primitives', primitives)  # store for later use
 
     def update_batchnorms(op: AbstractPrimitive) -> AbstractPrimitive:
-        """ Makes batchnorms in the op affine, if they exist """
+        """Makes batchnorms in the op affine, if they exist"""
         init_params = op.init_params
         has_batchnorm = False
 

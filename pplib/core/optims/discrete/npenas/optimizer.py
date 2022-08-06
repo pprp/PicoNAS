@@ -1,4 +1,3 @@
-import collections
 import copy
 import logging
 import random
@@ -16,8 +15,7 @@ from pplib.nas.search_spaces.nasbench101.conversions import (
 from pplib.predictor import ZeroCost
 from pplib.predictor.ensemble import Ensemble
 from pplib.predictor.utils.encodings import encode_spec
-from pplib.utils.logging import log_every_n_seconds
-from pplib.utils.utils import AttrDict, count_parameters_in_MB
+from pplib.utils.utils import count_parameters_in_MB
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +37,7 @@ class Npenas(MetaOptimizer):
         self.num_init = config.search.num_init
         self.num_ensemble = config.search.num_ensemble
         self.predictor_type = config.search.predictor_type
-        #missing acq fn type (its) and acq fn optimization (random sampling)
+        # missing acq fn type (its) and acq fn optimization (random sampling)
         self.encoding_type = config.search.encoding_type  # currently not implemented
         self.num_arches_to_mutate = config.search.num_arches_to_mutate
         self.max_mutations = config.search.max_mutations
@@ -50,8 +48,8 @@ class Npenas(MetaOptimizer):
         self.next_batch = []
         self.history = torch.nn.ModuleList()
 
-        #self.zc = "omni" in self.predictor_type
-        #self.semi = "semi" in self.predictor_type
+        # self.zc = "omni" in self.predictor_type
+        # self.semi = "semi" in self.predictor_type
 
         self.zc = config.search.zc_ensemble
         self.zc_names = config.search.zc_names
@@ -93,7 +91,7 @@ class Npenas(MetaOptimizer):
         if epoch < self.num_init:
             # randomly sample initial architectures
             model = torch.nn.Module()
-            #model.ss = self.search_space.clone()
+            # model.ss = self.search_space.clone()
             self.search_space.sample_random_architecture(
                 dataset_api=self.dataset_api,
                 load_labeled=self.sample_from_zc_api)
@@ -102,7 +100,8 @@ class Npenas(MetaOptimizer):
             model.arch = encode_spec(
                 model.arch_hash,
                 encoding_type='adjacency_one_hot',
-                ss_type=self.search_space.get_type())
+                ss_type=self.search_space.get_type(),
+            )
             model.accuracy = self.zc_api[str(model.arch_hash)]['val_accuracy']
 
             if self.zc and len(self.train_data) <= self.max_zerocost:
@@ -159,11 +158,11 @@ class Npenas(MetaOptimizer):
                         candidate = torch.nn.Module()
                         current_hash = copy.deepcopy(arch)
                         for edit in range(int(self.max_mutations)):
-                            '''
+                            """
                             arch = self.search_space.clone()
                             arch.mutate(candidate, dataset_api=self.dataset_api)
                             candidate = arch
-                            '''
+                            """
                             new_arch_hash = self.mutate_arch(
                                 current_hash, dataset_api=self.dataset_api)
                             current_hash = new_arch_hash
@@ -172,7 +171,8 @@ class Npenas(MetaOptimizer):
                         candidate.arch = encode_spec(
                             candidate.arch_hash,
                             encoding_type='adjacency_one_hot',
-                            ss_type=self.search_space.get_type())
+                            ss_type=self.search_space.get_type(),
+                        )
                         candidate.accuracy = self.zc_api[str(
                             candidate.arch_hash)]['val_accuracy']
                         candidates.append(candidate)
@@ -215,7 +215,7 @@ class Npenas(MetaOptimizer):
 
     def train_statistics(self):
         best_arch = self.get_final_architecture()
-        '''
+        """
         if report_incumbent:
             best_arch = self.get_final_architecture()
                 else:
@@ -235,7 +235,7 @@ class Npenas(MetaOptimizer):
                 Metric.TRAIN_TIME, self.dataset, dataset_api=self.dataset_api
             ),
         )
-        '''
+        """
         return (
             -1,
             self.zc_api[str(best_arch)]['val_accuracy'],
@@ -246,8 +246,11 @@ class Npenas(MetaOptimizer):
     def mutate_arch(self, arch_hash, dataset_api):
         if self.search_space.get_type() == 'nasbench201':
             OP_NAMES = [
-                'Identity', 'Zero', 'ReLUConvBN3x3', 'ReLUConvBN1x1',
-                'AvgPool1x1'
+                'Identity',
+                'Zero',
+                'ReLUConvBN3x3',
+                'ReLUConvBN1x1',
+                'AvgPool1x1',
             ]
 
             op_indices = list(arch_hash)
@@ -296,7 +299,7 @@ class Npenas(MetaOptimizer):
             })
 
         elif self.search_space.get_type() == 'nasbench301':
-            #mutate function doesn't exist? search space is too big
+            # mutate function doesn't exist? search space is too big
             raise NotImplementedError()
 
         elif self.search_space.get_type() == 'transbench101_micro':
@@ -315,7 +318,7 @@ class Npenas(MetaOptimizer):
         elif self.search_space.get_type() == 'transbench101_macro':
             parent_op_indices = list(arch_hash)
 
-            #parent_op_ind = [ind for ind in parent_op_indices if ind]
+            # parent_op_ind = [ind for ind in parent_op_indices if ind]
             def f(g):
                 r = len(g)
                 p = sum([int(i == 4 or i == 3) for i in g])
@@ -344,7 +347,7 @@ class Npenas(MetaOptimizer):
                 dic1[numb] = random.choice(dic2[numb])
 
                 op_indices = g(dic1[1], dic1[2], dic1[3])
-            #while len(op_indices)<6:
+            # while len(op_indices)<6:
             #    op_indices = np.append(op_indices, 0)
 
             return tuple(op_indices)
@@ -353,8 +356,8 @@ class Npenas(MetaOptimizer):
             raise NotImplementedError()
 
     def test_statistics(self):
-        #best_arch = self.get_final_architecture()
-        #return best_arch.query(Metric.RAW, self.dataset, dataset_api=self.dataset_api)
+        # best_arch = self.get_final_architecture()
+        # return best_arch.query(Metric.RAW, self.dataset, dataset_api=self.dataset_api)
         return {}
 
     def get_final_architecture(self):

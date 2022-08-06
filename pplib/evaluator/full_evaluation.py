@@ -8,16 +8,16 @@ from .zc_evaluator import ZeroCostPredictorEvaluator
 DATASETS = {
     'nasbench201': ['cifar10', 'cifar100', 'ImageNet16-120'],
     'nasbench301': ['cifar10'],
-    'transbench101_micro': ['jigsaw', 'class_object', 'class_scene']
+    'transbench101_micro': ['jigsaw', 'class_object', 'class_scene'],
 }
 
 
 def full_evaluate_predictor(
     predictor: Predictor,
     test_size: int = 100,
-    search_spaces=('nasbench201', 'nasbench301', 'transbench101_micro')
+    search_spaces=('nasbench201', 'nasbench301', 'transbench101_micro'),
 ) -> None:
-    """ Evaluate a predictor for all the supported tasks of a given search space
+    """Evaluate a predictor for all the supported tasks of a given search space
 
     Args:
         predictor       : Zero cost predictor to evaluate
@@ -38,9 +38,13 @@ def full_evaluate_predictor(
             config.dataset = dataset
             config.search_space = search_space_name
             config.test_size = test_size
-            config.save = os.path.join(config.out_dir, config.dataset,
-                                       'predictors', config.predictor,
-                                       str(config.seed))
+            config.save = os.path.join(
+                config.out_dir,
+                config.dataset,
+                'predictors',
+                config.predictor,
+                str(config.seed),
+            )
 
             # Get benchmark API and search space graph
             dataset_api = get_dataset_api(search_space_name, dataset)

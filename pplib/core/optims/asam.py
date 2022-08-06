@@ -27,7 +27,7 @@ class ASAM:
                 t_w.abs_().add_(self.eta)
                 p.grad.mul_(t_w)
             wgrads.append(torch.norm(p.grad, p=2))
-        wgrad_norm = torch.norm(torch.stack(wgrads), p=2) + 1.e-16
+        wgrad_norm = torch.norm(torch.stack(wgrads), p=2) + 1.0e-16
         for n, p in self.model.named_parameters():
             if p.grad is None:
                 continue
@@ -59,7 +59,7 @@ class SAM(ASAM):
             if p.grad is None:
                 continue
             grads.append(torch.norm(p.grad, p=2))
-        grad_norm = torch.norm(torch.stack(grads), p=2) + 1.e-16
+        grad_norm = torch.norm(torch.stack(grads), p=2) + 1.0e-16
         for n, p in self.model.named_parameters():
             if p.grad is None:
                 continue

@@ -17,7 +17,8 @@ class TestZenScore(TestCase):
             random_erase=False,
             autoaugmentation=None,
             cutout=None,
-            data_dir='./data/cifar')
+            data_dir='./data/cifar',
+        )
         dataloader = build_dataloader(config=Config(args))
 
         search_space = get_search_space('nasbench201', 'cifar10')

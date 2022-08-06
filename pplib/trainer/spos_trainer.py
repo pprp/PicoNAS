@@ -33,7 +33,8 @@ class SPOSTrainer(BaseTrainer):
             device=device,
             log_name=log_name,
             searching=searching,
-            print_freq=print_freq)
+            print_freq=print_freq,
+        )
         if self.mutator is None:
             self.mutator = OneShotMutator()
             self.mutator.prepare_from_supernet(model)

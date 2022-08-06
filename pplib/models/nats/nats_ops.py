@@ -26,16 +26,37 @@ def get_combination(space, num):
 OPS = {
     'nor_conv_7x7':
     lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
-        C_in, C_out, (7, 7), (stride, stride), (3, 3),
-        (1, 1), affine, track_running_stats),
+        C_in,
+        C_out,
+        (7, 7),
+        (stride, stride),
+        (3, 3),
+        (1, 1),
+        affine,
+        track_running_stats,
+    ),
     'nor_conv_3x3':
     lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
-        C_in, C_out, (3, 3), (stride, stride), (1, 1),
-        (1, 1), affine, track_running_stats),
+        C_in,
+        C_out,
+        (3, 3),
+        (stride, stride),
+        (1, 1),
+        (1, 1),
+        affine,
+        track_running_stats,
+    ),
     'nor_conv_1x1':
     lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
-        C_in, C_out, (1, 1), (stride, stride), (0, 0),
-        (1, 1), affine, track_running_stats),
+        C_in,
+        C_out,
+        (1, 1),
+        (stride, stride),
+        (0, 0),
+        (1, 1),
+        affine,
+        track_running_stats,
+    ),
     'skip_connect':
     lambda C_in, C_out, stride, affine, track_running_stats: Identity()
     if stride == 1 and C_in == C_out else FactorizedReduce(
@@ -67,8 +88,8 @@ class Structure:
                 assert isinstance(node_in, list) or isinstance(
                     node_in, tuple), 'invalid class of in-node : {:}'.format(
                         type(node_in))
-                assert len(node_in) == 2 and node_in[
-                    1] <= idx, 'invalid in-node : {:}'.format(node_in)
+                assert (len(node_in) == 2 and node_in[1] <= idx
+                        ), 'invalid in-node : {:}'.format(node_in)
             self.node_N.append(len(node_info))
             self.nodes.append(tuple(deepcopy(node_info)))
 
@@ -122,8 +143,8 @@ class Structure:
                 if consider_zero is None:
                     x = '(' + nodes[xin] + ')' + '@{:}'.format(op)
                 elif consider_zero:
-                    if op == 'none' or nodes[xin] == '#':
-                        x = '#'  # zero
+                    if op == 'none' or nodes[xin] == '# ':
+                        x = '# '  # zero
                     elif op == 'skip_connect':
                         x = nodes[xin]
                     else:
@@ -146,10 +167,10 @@ class Structure:
         return True
 
     def __repr__(self):
-        return ('{name}({node_num} nodes with {node_info})'.format(
+        return '{name}({node_num} nodes with {node_info})'.format(
             name=self.__class__.__name__,
             node_info=self.tostr(),
-            **self.__dict__))
+            **self.__dict__)
 
     def __len__(self):
         return len(self.nodes) + 1
@@ -203,7 +224,9 @@ class Structure:
         assert isinstance(search_space, list) or isinstance(
             search_space, tuple), 'invalid class of search-space : {:}'.format(
                 type(search_space))
-        assert num >= 2, 'There should be at least two nodes in a neural cell instead of {:}'.format(
+        assert (
+            num >= 2
+        ), 'There should be at least two nodes in a neural cell instead of {:}'.format(
             num)
         all_archs = get_combination(search_space, 1)
         for i, arch in enumerate(all_archs):
@@ -264,15 +287,17 @@ class Identity(nn.Module):
 
 class ReLUConvBN(nn.Module):
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_size,
-                 stride,
-                 padding,
-                 dilation,
-                 affine,
-                 track_running_stats=True):
+    def __init__(
+        self,
+        C_in,
+        C_out,
+        kernel_size,
+        stride,
+        padding,
+        dilation,
+        affine,
+        track_running_stats=True,
+    ):
         super(ReLUConvBN, self).__init__()
         self.relu = nn.ReLU(inplace=False)
         self.sconv = SlimmableConv2d(
@@ -282,7 +307,8 @@ class ReLUConvBN(nn.Module):
             stride=stride,
             padding=padding,
             dilation=dilation,
-            bias=not affine)
+            bias=not affine,
+        )
         self.sbn = SwitchableBatchNorm2d(candidate_Cs)
 
     def forward(self, x, in_idx, out_idx):
@@ -341,8 +367,8 @@ class InferCell(nn.Module):
             ]
             x = '{:}<-({:})'.format(i + 1, ','.join(y))
             laystr.append(x)
-        return string + ', [{:}]'.format(' | '.join(laystr)) + ', {:}'.format(
-            self.genotype.tostr())
+        return (string + ', [{:}]'.format(' | '.join(laystr)) +
+                ', {:}'.format(self.genotype.tostr()))
 
     def forward(self, inputs, in_idx, out_idx):
         nodes = [inputs]
@@ -357,7 +383,8 @@ class InferCell(nn.Module):
                     node_feature = self.layers[_il](
                         nodes[_ii],
                         in_idx=in_idx if _il in [0, 1, 3] else out_idx,
-                        out_idx=out_idx)
+                        out_idx=out_idx,
+                    )
                 node_features += node_feature
             # node_features = sum( self.layers[_il](nodes[_ii], in_idx=in_idx if _ii == 0 else out_idx, out_idx=out_idx) for _il, _ii in zip(node_layers, node_innods) )
             nodes.append(node_features)
@@ -388,7 +415,9 @@ class ResNetBasicblock(nn.Module):
                     kernel_size=1,
                     stride=1,
                     padding=0,
-                    bias=False))
+                    bias=False,
+                ),
+            )
         else:
             self.downsample = None
         self.downsample_s = ReLUConvBN(inplanes, planes, 1, 1, 0, 1, affine,
@@ -437,15 +466,17 @@ class SwitchableBatchNorm2d(nn.Module):
 
 class SlimmableConv2d(nn.Conv2d):
 
-    def __init__(self,
-                 in_channels_list,
-                 out_channels_list,
-                 kernel_size,
-                 stride=1,
-                 padding=0,
-                 dilation=1,
-                 groups_list=[1],
-                 bias=True):
+    def __init__(
+        self,
+        in_channels_list,
+        out_channels_list,
+        kernel_size,
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups_list=[1],
+        bias=True,
+    ):
         super(SlimmableConv2d, self).__init__(
             max(in_channels_list),
             max(out_channels_list),
@@ -454,7 +485,8 @@ class SlimmableConv2d(nn.Conv2d):
             padding=padding,
             dilation=dilation,
             groups=max(groups_list),
-            bias=bias)
+            bias=bias,
+        )
         self.in_channels_list = in_channels_list
         self.out_channels_list = out_channels_list
         self.groups_list = groups_list

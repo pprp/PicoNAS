@@ -4,7 +4,7 @@ import torch.nn as nn
 
 def channel_shuffle(x):
     batchsize, num_channels, height, width = x.data.size()
-    assert (num_channels % 4 == 0)
+    assert num_channels % 4 == 0
     x = x.reshape(batchsize * num_channels // 2, 2, height * width)
     x = x.permute(1, 0, 2)
     x = x.reshape(2, -1, num_channels // 2, height, width)
@@ -34,7 +34,6 @@ class ShuffleModule(nn.Module):
                 bias=False),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             nn.ReLU(inplace=True),
-
             # depth wise conv2d
             nn.Conv2d(
                 self.midc,
@@ -43,9 +42,9 @@ class ShuffleModule(nn.Module):
                 stride=self.stride,
                 padding=self.padding,
                 bias=False,
-                groups=self.midc),
+                groups=self.midc,
+            ),
             nn.BatchNorm2d(self.midc, affine=self.affine),
-
             # point wise conv2d
             nn.Conv2d(
                 self.midc,
@@ -55,7 +54,8 @@ class ShuffleModule(nn.Module):
                 padding=0,
                 bias=False),
             nn.BatchNorm2d(self.ouc, affine=self.affine),
-            nn.ReLU(inplace=True))
+            nn.ReLU(inplace=True),
+        )
 
         if self.stride == 2:
             self.proj = nn.Sequential(
@@ -67,9 +67,9 @@ class ShuffleModule(nn.Module):
                     stride=2,
                     padding=self.padding,
                     bias=False,
-                    groups=self.inc),
+                    groups=self.inc,
+                ),
                 nn.BatchNorm2d(self.inc, affine=self.affine),
-
                 # point wise conv2d
                 nn.Conv2d(
                     self.inc,
@@ -79,7 +79,8 @@ class ShuffleModule(nn.Module):
                     padding=0,
                     bias=False),
                 nn.BatchNorm2d(self.inc, affine=self.affine),
-                nn.ReLU(inplace=True))
+                nn.ReLU(inplace=True),
+            )
 
     def forward(self, x):
         if self.stride == 1:
@@ -112,7 +113,8 @@ class ShuffleXModule(nn.Module):
                 stride=stride,
                 padding=1,
                 bias=False,
-                groups=self.inc),
+                groups=self.inc,
+            ),
             nn.BatchNorm2d(self.inc, affine=self.affine),
             # pw
             nn.Conv2d(
@@ -132,7 +134,8 @@ class ShuffleXModule(nn.Module):
                 stride=1,
                 padding=1,
                 bias=False,
-                groups=self.midc),
+                groups=self.midc,
+            ),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             # pw
             nn.Conv2d(
@@ -152,7 +155,8 @@ class ShuffleXModule(nn.Module):
                 stride=1,
                 padding=1,
                 bias=False,
-                groups=self.midc),
+                groups=self.midc,
+            ),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             # pw
             nn.Conv2d(
@@ -163,7 +167,8 @@ class ShuffleXModule(nn.Module):
                 padding=0,
                 bias=False),
             nn.BatchNorm2d(self.ouc, affine=self.affine),
-            nn.ReLU(inplace=True))
+            nn.ReLU(inplace=True),
+        )
         if stride == 2:
             self.cb_proj = nn.Sequential(
                 # dw
@@ -174,7 +179,8 @@ class ShuffleXModule(nn.Module):
                     stride=2,
                     padding=1,
                     groups=self.inc,
-                    bias=False),
+                    bias=False,
+                ),
                 nn.BatchNorm2d(self.inc, affine=self.affine),
                 # pw
                 nn.Conv2d(
@@ -185,7 +191,8 @@ class ShuffleXModule(nn.Module):
                     padding=0,
                     bias=False),
                 nn.BatchNorm2d(self.inc, affine=self.affine),
-                nn.ReLU(inplace=True))
+                nn.ReLU(inplace=True),
+            )
 
     def forward(self, x):
         if self.stride == 1:
@@ -245,7 +252,8 @@ class InvertedResidual(nn.Module):
                     stride,
                     padding,
                     groups=inp * expand_ratio,
-                    bias=False),
+                    bias=False,
+                ),
                 nn.BatchNorm2d(inp * expand_ratio),
                 nn.ReLU6(inplace=True),
                 # pw-linear

@@ -4,7 +4,7 @@ import numpy as np
 class RandomCropPaste(object):
 
     def __init__(self, size, alpha=1.0, flip_p=0.5):
-        """Randomly flip and paste a cropped image on the same image. """
+        """Randomly flip and paste a cropped image on the same image."""
         self.size = size
         self.alpha = alpha
         self.flip_p = flip_p
@@ -35,7 +35,7 @@ class RandomCropPaste(object):
     def _rand_bbox(self, lam):
         W = self.size
         H = self.size
-        cut_rat = np.sqrt(1. - lam)
+        cut_rat = np.sqrt(1.0 - lam)
         cut_w = np.int(W * cut_rat)
         cut_h = np.int(H * cut_rat)
 

@@ -4,7 +4,7 @@ import torch
 
 
 class CrossEntropyLossSoft(torch.nn.modules.loss._Loss):
-    """ inplace distillation for image classification """
+    """inplace distillation for image classification"""
 
     def forward(self, output, target):
         output_log_prob = torch.nn.functional.log_softmax(output, dim=1)
@@ -15,17 +15,17 @@ class CrossEntropyLossSoft(torch.nn.modules.loss._Loss):
 
 
 class KLLossSoft(torch.nn.modules.loss._Loss):
-    """ inplace distillation for image classification
-            output: output logits of the student network
-            target: output logits of the teacher network
-            T: temperature
+    """inplace distillation for image classification
+    output: output logits of the student network
+    target: output logits of the teacher network
+    T: temperature
     """
 
     def forward(self,
                 output,
                 soft_logits,
                 target=None,
-                temperature=1.,
+                temperature=1.0,
                 alpha=0.9):
         output, soft_logits = output / temperature, soft_logits / temperature
         soft_target_prob = torch.nn.functional.softmax(soft_logits, dim=1)

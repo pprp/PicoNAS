@@ -47,9 +47,13 @@ def get_mb_arch_vector(supernet: SearchableMobileNet,
     return arch_vector
 
 
-def get_mb_angle(base_model: SearchableMobileNet, base_mutator: OneShotMutator,
-                 model: SearchableMobileNet, mutator: OneShotMutator,
-                 subnet_dict: Dict):
+def get_mb_angle(
+    base_model: SearchableMobileNet,
+    base_mutator: OneShotMutator,
+    model: SearchableMobileNet,
+    mutator: OneShotMutator,
+    subnet_dict: Dict,
+):
     cosine = nn.CosineSimilarity(dim=0)
     vec1 = get_mb_arch_vector(base_model, base_mutator, subnet_dict)
     vec2 = get_mb_arch_vector(model, mutator, subnet_dict)

@@ -21,25 +21,25 @@ import numpy as np
 
 def gen_is_edge_fn(bits):
     """Generate a boolean function for the edge connectivity.
-  Given a bitstring FEDCBA and a 4x4 matrix, the generated matrix is
-    [[0, A, B, D],
-     [0, 0, C, E],
-     [0, 0, 0, F],
-     [0, 0, 0, 0]]
-  Note that this function is agnostic to the actual matrix dimension due to
-  order in which elements are filled out (column-major, starting from least
-  significant bit). For example, the same FEDCBA bitstring (0-padded) on a 5x5
-  matrix is
-    [[0, A, B, D, 0],
-     [0, 0, C, E, 0],
-     [0, 0, 0, F, 0],
-     [0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0]]
-  Args:
-    bits: integer which will be interpreted as a bit mask.
-  Returns:
-    vectorized function that returns True when an edge is present.
-  """
+    Given a bitstring FEDCBA and a 4x4 matrix, the generated matrix is
+      [[0, A, B, D],
+       [0, 0, C, E],
+       [0, 0, 0, F],
+       [0, 0, 0, 0]]
+    Note that this function is agnostic to the actual matrix dimension due to
+    order in which elements are filled out (column-major, starting from least
+    significant bit). For example, the same FEDCBA bitstring (0-padded) on a 5x5
+    matrix is
+      [[0, A, B, D, 0],
+       [0, 0, C, E, 0],
+       [0, 0, 0, F, 0],
+       [0, 0, 0, 0, 0],
+       [0, 0, 0, 0, 0]]
+    Args:
+      bits: integer which will be interpreted as a bit mask.
+    Returns:
+      vectorized function that returns True when an edge is present.
+    """
 
     def is_edge(x, y):
         """Is there an edge from x to y (0-indexed)?"""
@@ -54,15 +54,15 @@ def gen_is_edge_fn(bits):
 
 def is_full_dag(matrix):
     """Full DAG == all vertices on a path from vert 0 to (V-1).
-  i.e. no disconnected or "hanging" vertices.
-  It is sufficient to check for:
-    1) no rows of 0 except for row V-1 (only output vertex has no out-edges)
-    2) no cols of 0 except for col 0 (only input vertex has no in-edges)
-  Args:
-    matrix: V x V upper-triangular adjacency matrix
-  Returns:
-    True if the there are no dangling vertices.
-  """
+    i.e. no disconnected or "hanging" vertices.
+    It is sufficient to check for:
+      1) no rows of 0 except for row V-1 (only output vertex has no out-edges)
+      2) no cols of 0 except for col 0 (only input vertex has no in-edges)
+    Args:
+      matrix: V x V upper-triangular adjacency matrix
+    Returns:
+      True if the there are no dangling vertices.
+    """
     shape = np.shape(matrix)
 
     rows = matrix[:shape[0] - 1, :] == 0
@@ -83,13 +83,13 @@ def num_edges(matrix):
 
 def hash_module(matrix, labeling):
     """Computes a graph-invariance MD5 hash of the matrix and label pair.
-  Args:
-    matrix: np.ndarray square upper-triangular adjacency matrix.
-    labeling: list of int labels of length equal to both dimensions of
-      matrix.
-  Returns:
-    MD5 hash of the matrix and labeling.
-  """
+    Args:
+      matrix: np.ndarray square upper-triangular adjacency matrix.
+      labeling: list of int labels of length equal to both dimensions of
+        matrix.
+    Returns:
+      MD5 hash of the matrix and labeling.
+    """
     vertices = np.shape(matrix)[0]
     in_edges = np.sum(matrix, axis=0).tolist()
     out_edges = np.sum(matrix, axis=1).tolist()
@@ -107,8 +107,8 @@ def hash_module(matrix, labeling):
                 hashes[w] for w in range(vertices) if matrix[v, w]
             ]
             new_hashes.append(
-                hashlib.md5((''.join(sorted(in_neighbors)) + '|' + \
-                             ''.join(sorted(out_neighbors)) + '|' + \
+                hashlib.md5((''.join(sorted(in_neighbors)) + '|' +
+                             ''.join(sorted(out_neighbors)) + '|' +
                              hashes[v]).encode('utf-8')).hexdigest())
         hashes = new_hashes
     fingerprint = hashlib.md5(str(sorted(hashes)).encode('utf-8')).hexdigest()
@@ -118,13 +118,13 @@ def hash_module(matrix, labeling):
 
 def permute_graph(graph, label, permutation):
     """Permutes the graph and labels based on permutation.
-  Args:
-    graph: np.ndarray adjacency matrix.
-    label: list of labels of same length as graph dimensions.
-    permutation: a permutation list of ints of same length as graph dimensions.
-  Returns:
-    np.ndarray where vertex permutation[v] is vertex v from the original graph
-  """
+    Args:
+      graph: np.ndarray adjacency matrix.
+      label: list of labels of same length as graph dimensions.
+      permutation: a permutation list of ints of same length as graph dimensions.
+    Returns:
+      np.ndarray where vertex permutation[v] is vertex v from the original graph
+    """
     # vertex permutation[v] in new graph is vertex v in the old graph
     forward_perm = zip(permutation, list(range(len(permutation))))
     inverse_perm = [x[1] for x in sorted(forward_perm)]

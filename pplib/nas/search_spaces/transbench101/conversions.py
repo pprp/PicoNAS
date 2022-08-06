@@ -80,7 +80,7 @@ def convert_op_indices_to_naslib(op_indices, naslib_object):
         if (edge.head, edge.tail) in edge_op_dict:
             for i, op in enumerate(edge.data.op):
                 if op.get_op_name == edge_op_dict[(edge.head, edge.tail)] or (
-                        op.get_op_name == 'FactorizedReduce' and \
+                        op.get_op_name == 'FactorizedReduce' and
                         edge_op_dict[(edge.head, edge.tail)] == 'Identity'):
                     index = i
                     break
@@ -120,8 +120,8 @@ def convert_naslib_to_str(naslib_object):
         'Zero': 'none',
     }
 
-    cell = naslib_object.nodes[2]['subgraph'].edges[1, 2]['op'].op[
-        1]  # TODO: Do this in a clean fashion
+    cell = (naslib_object.nodes[2]['subgraph'].edges[1, 2]['op'].op[1]
+            )  # TODO: Do this in a clean fashion
     assert cell.name == 'cell' and isinstance(cell, Graph)
 
     edge_op_dict = {(i, j): ops_to_nb201[cell.edges[i, j]['op'].get_op_name]

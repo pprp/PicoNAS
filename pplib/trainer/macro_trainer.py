@@ -52,7 +52,8 @@ class MacroTrainer(BaseTrainer):
             scheduler=scheduler,
             device=device,
             log_name=log_name,
-            searching=searching)
+            searching=searching,
+        )
 
         # init flops
         self._init_flops()
@@ -78,7 +79,7 @@ class MacroTrainer(BaseTrainer):
     def _train(self, loader):
         self.model.train()
 
-        train_loss = 0.
+        train_loss = 0.0
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
 
@@ -95,9 +96,9 @@ class MacroTrainer(BaseTrainer):
             # loss, outputs = self._forward_fairnas(batch_inputs)
 
             # Single Path One Shot
-            # # compute loss
+            # compute loss
             # loss, outputs = self.forward(batch_inputs, mode='loss')
-            # # backprop
+            # backprop
             # loss.backward()
 
             # SPOS with pairwise rankloss
@@ -135,15 +136,18 @@ class MacroTrainer(BaseTrainer):
                 self.writer.add_scalar(
                     'train_step_loss',
                     loss.item(),
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
                 self.writer.add_scalar(
                     'top1_train_acc',
                     top1_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
                 self.writer.add_scalar(
                     'top5_train_acc',
                     top5_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
@@ -199,9 +203,9 @@ class MacroTrainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = 2 * np.sin(np.pi * 0.8 * self.current_epoch /
-                           self.max_epochs) * self.pairwise_rankloss(
-                               flops1, flops2, loss1, loss2)
+        loss3 = (2 *
+                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
+                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
         loss3.backward()
 
         return loss2, outputs
@@ -239,9 +243,9 @@ class MacroTrainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = 2 * np.sin(np.pi * 0.8 * self.current_epoch /
-                           self.max_epochs) * self.pairwise_rankloss(
-                               flops1, flops2, loss1, loss2)
+        loss3 = (2 *
+                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
+                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
         loss_list.append(loss3)
 
         # distill loss
@@ -358,10 +362,12 @@ class MacroTrainer(BaseTrainer):
 
             # save ckpt
             if epoch % 10 == 0:
-                utils.save_checkpoint({'state_dict': self.model.state_dict()},
-                                      self.log_name,
-                                      epoch + 1,
-                                      tag=f'{self.log_name}_macro')
+                utils.save_checkpoint(
+                    {'state_dict': self.model.state_dict()},
+                    self.log_name,
+                    epoch + 1,
+                    tag=f'{self.log_name}_macro',
+                )
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)
@@ -429,15 +435,18 @@ class MacroTrainer(BaseTrainer):
                     self.writer.add_scalar(
                         'val_step_loss',
                         loss.item(),
-                        global_step=step + self.current_epoch * len(loader))
+                        global_step=step + self.current_epoch * len(loader),
+                    )
                     self.writer.add_scalar(
                         'top1_val_acc',
                         top1_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader))
+                        global_step=step + self.current_epoch * len(loader),
+                    )
                     self.writer.add_scalar(
                         'top5_val_acc',
                         top5_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader))
+                        global_step=step + self.current_epoch * len(loader),
+                    )
 
         self.logger.info(
             f'Val loss: {loss.item()} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'

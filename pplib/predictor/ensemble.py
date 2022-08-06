@@ -11,15 +11,17 @@ logger = logging.getLogger(__name__)
 
 class Ensemble(Predictor):
 
-    def __init__(self,
-                 encoding_type=None,
-                 num_ensemble=3,
-                 predictor_type='xgb',
-                 zc=True,
-                 ss_type=None,
-                 hpo_wrapper=True,
-                 zc_only=False,
-                 config=None):
+    def __init__(
+        self,
+        encoding_type=None,
+        num_ensemble=3,
+        predictor_type='xgb',
+        zc=True,
+        ss_type=None,
+        hpo_wrapper=True,
+        zc_only=False,
+        config=None,
+    ):
         self.num_ensemble = num_ensemble
         self.predictor_type = predictor_type
         self.encoding_type = encoding_type
@@ -39,7 +41,8 @@ class Ensemble(Predictor):
                 ss_type=self.ss_type,
                 zc=self.zc,
                 encoding_type='adjacency_one_hot',
-                zc_only=self.zc_only)
+                zc_only=self.zc_only,
+            )
         }
 
         return [
@@ -102,11 +105,13 @@ class Ensemble(Predictor):
         self.set_hyperparams(params)
         return params
 
-    def set_pre_computations(self,
-                             unlabeled=None,
-                             xtrain_zc_info=None,
-                             xtest_zc_info=None,
-                             unlabeled_zc_info=None):
+    def set_pre_computations(
+        self,
+        unlabeled=None,
+        xtrain_zc_info=None,
+        xtest_zc_info=None,
+        unlabeled_zc_info=None,
+    ):
         """
         Some predictors have pre_computation steps that are performed outside the
         predictor. E.g., omni needs zerocost metrics computed, and unlabeled data
@@ -117,10 +122,11 @@ class Ensemble(Predictor):
             self.ensemble = self.get_ensemble()
 
         for model in self.ensemble:
-            assert hasattr(model, 'set_pre_computations'), \
-                'set_pre_computations() not implemented'
+            assert hasattr(model, 'set_pre_computations'
+                           ), 'set_pre_computations() not implemented'
             model.set_pre_computations(
                 unlabeled=unlabeled,
                 xtrain_zc_info=xtrain_zc_info,
                 xtest_zc_info=xtest_zc_info,
-                unlabeled_zc_info=unlabeled_zc_info)
+                unlabeled_zc_info=unlabeled_zc_info,
+            )

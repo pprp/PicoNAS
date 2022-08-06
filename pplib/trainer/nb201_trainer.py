@@ -6,7 +6,8 @@ import torch
 from mmcv.cnn import get_model_complexity_info
 
 import pplib.utils.utils as utils
-from pplib.core.losses import CC, PairwiseRankLoss
+from pplib.core.losses import PairwiseRankLoss
+from pplib.evaluator.nb201_evaluator import NB201Evaluator
 from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
 from pplib.utils.utils import AvgrageMeter, accuracy
@@ -50,7 +51,8 @@ class NB201Trainer(BaseTrainer):
             scheduler=scheduler,
             device=device,
             log_name=log_name,
-            searching=searching)
+            searching=searching,
+        )
 
         # init flops
         self._init_flops()
@@ -66,13 +68,13 @@ class NB201Trainer(BaseTrainer):
         self.pairwise_rankloss = PairwiseRankLoss()
 
     def _build_evaluator(self, dataloader, bench_path, num_sample=20):
-        self.evaluator = MacroEvaluator(self, dataloader, bench_path,
+        self.evaluator = NB201Evaluator(self, dataloader, bench_path,
                                         num_sample)
 
     def _train(self, loader):
         self.model.train()
 
-        train_loss = 0.
+        train_loss = 0.0
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
 
@@ -129,15 +131,18 @@ class NB201Trainer(BaseTrainer):
                 self.writer.add_scalar(
                     'train_step_loss',
                     loss.item(),
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
                 self.writer.add_scalar(
                     'top1_train_acc',
                     top1_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
                 self.writer.add_scalar(
                     'top5_train_acc',
                     top5_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
@@ -199,10 +204,12 @@ class NB201Trainer(BaseTrainer):
 
             # save ckpt
             if epoch % 10 == 0:
-                utils.save_checkpoint({'state_dict': self.model.state_dict()},
-                                      self.log_name,
-                                      epoch + 1,
-                                      tag=f'{self.log_name}_macro')
+                utils.save_checkpoint(
+                    {'state_dict': self.model.state_dict()},
+                    self.log_name,
+                    epoch + 1,
+                    tag=f'{self.log_name}_macro',
+                )
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)
@@ -276,15 +283,18 @@ class NB201Trainer(BaseTrainer):
                     self.writer.add_scalar(
                         'val_step_loss',
                         loss.item(),
-                        global_step=step + self.current_epoch * len(loader))
+                        global_step=step + self.current_epoch * len(loader),
+                    )
                     self.writer.add_scalar(
                         'top1_val_acc',
                         top1_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader))
+                        global_step=step + self.current_epoch * len(loader),
+                    )
                     self.writer.add_scalar(
                         'top5_val_acc',
                         top5_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader))
+                        global_step=step + self.current_epoch * len(loader),
+                    )
 
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
@@ -354,9 +364,9 @@ class NB201Trainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = 2 * np.sin(np.pi * 0.8 * self.current_epoch /
-                           self.max_epochs) * self.pairwise_rankloss(
-                               flops1, flops2, loss1, loss2)
+        loss3 = (2 *
+                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
+                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
         loss3.backward()
 
         return loss2, outputs
@@ -394,9 +404,9 @@ class NB201Trainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = 2 * np.sin(np.pi * 0.8 * self.current_epoch /
-                           self.max_epochs) * self.pairwise_rankloss(
-                               flops1, flops2, loss1, loss2)
+        loss3 = (2 *
+                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
+                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
         loss_list.append(loss3)
 
         # distill loss

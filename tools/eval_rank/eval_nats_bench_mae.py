@@ -15,19 +15,22 @@ if __name__ == '__main__':
         '--bench_path',
         type=str,
         default='./data/benchmark/nats_cifar10_acc_rank.yaml',
-        help='benchmark file path')
+        help='benchmark file path',
+    )
 
     parser.add_argument(
         '--ckpt_path',
         type=str,
         default='checkpoints/nats_mae_cosine/xx.pth.tar',
-        help='path of supernet checkpoint.')
+        help='path of supernet checkpoint.',
+    )
 
     parser.add_argument(
         '--num_sample',
         type=int,
         default=10,
-        help='number of sample for rank evaluation.')
+        help='number of sample for rank evaluation.',
+    )
 
     args = parser.parse_args()
 

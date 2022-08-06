@@ -124,8 +124,11 @@ class Zero(AbstractPrimitive):
                 return x[:, :, ::self.stride, ::self.stride].mul(0.0)
         else:
             shape = list(x.shape)
-            shape[1], shape[2], shape[3] = self.C_out, (
-                shape[2] + 1) // self.stride, (shape[3] + 1) // self.stride
+            shape[1], shape[2], shape[3] = (
+                self.C_out,
+                (shape[2] + 1) // self.stride,
+                (shape[3] + 1) // self.stride,
+            )
             zeros = x.new_zeros(shape, dtype=x.dtype, device=x.device)
             return zeros
 
@@ -462,15 +465,17 @@ class ReLUConvBN(AbstractPrimitive):
     Implementation of ReLU activation, followed by 2d convolution and then 2d batch normalization.
     """
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_size,
-                 stride=1,
-                 affine=True,
-                 bias=False,
-                 track_running_stats=True,
-                 **kwargs):
+    def __init__(
+        self,
+        C_in,
+        C_out,
+        kernel_size,
+        stride=1,
+        affine=True,
+        bias=False,
+        track_running_stats=True,
+        **kwargs,
+    ):
         super().__init__(locals())
         self.kernel_size = kernel_size
         pad = 0 if kernel_size == 1 else 1
@@ -778,7 +783,8 @@ class DeconvLayer(nn.Module):
             kernel,
             stride=stride,
             padding=padding,
-            output_padding=1)
+            output_padding=1,
+        )
         self.activation = activation
         if norm == nn.BatchNorm2d:
             self.norm = norm(out_channel)

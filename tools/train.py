@@ -21,7 +21,8 @@ def get_args():
         type=str,
         default='configs/spos/spos_cifar10.py',
         required=False,
-        help='user settings config')
+        help='user settings config',
+    )
     parser.add_argument(
         '--work_dir', type=str, default='./work_dir', help='experiment name')
     parser.add_argument(
@@ -47,7 +48,8 @@ def get_args():
         '--log_name',
         type=str,
         default='NATSMAETrainer',
-        help='name of this experiments')
+        help='name of this experiments',
+    )
 
     parser.add_argument(
         '--crit', type=str, default='mse', help='decide the criterion')
@@ -146,7 +148,8 @@ def main():
         scheduler=scheduler,
         searching=True,
         device=device,
-        log_name=cfg.log_name)
+        log_name=cfg.log_name,
+    )
 
     start = time.time()
 

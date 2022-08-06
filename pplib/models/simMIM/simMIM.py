@@ -16,9 +16,9 @@ class VisionTransformerForSimMIM(VisionTransformer):
         assert self.num_classes == 0
 
         self.mask_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
-        self._trunc_normal_(self.mask_token, std=.02)
+        self._trunc_normal_(self.mask_token, std=0.02)
 
-    def _trunc_normal_(self, tensor, mean=0., std=1.):
+    def _trunc_normal_(self, tensor, mean=0.0, std=1.0):
         trunc_normal_(tensor, mean=mean, std=std, a=-std, b=std)
 
     def forward(self, x, mask):
@@ -63,7 +63,8 @@ class SimMIM(nn.Module):
             nn.Conv2d(
                 in_channels=self.encoder.num_features,
                 out_channels=self.encoder_stride**2 * 3,
-                kernel_size=1),
+                kernel_size=1,
+            ),
             nn.PixelShuffle(self.encoder_stride),
         )
 
@@ -74,8 +75,9 @@ class SimMIM(nn.Module):
         z = self.encoder(x, mask)
         x_rec = self.decoder(z)
 
-        mask = mask.repeat_interleave(self.patch_size, 1).repeat_interleave(
-            self.patch_size, 2).unsqueeze(1).contiguous()
+        mask = (
+            mask.repeat_interleave(self.patch_size, 1).repeat_interleave(
+                self.patch_size, 2).unsqueeze(1).contiguous())
         loss_recon = F.l1_loss(x, x_rec, reduction='none')
         loss = (loss_recon * mask).sum() / (mask.sum() + 1e-5) / self.in_chans
         return loss

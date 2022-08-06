@@ -28,11 +28,15 @@ class PreNorm(nn.Module):
 
 class FeedForward(nn.Module):
 
-    def __init__(self, dim, hidden_dim, dropout=0.):
+    def __init__(self, dim, hidden_dim, dropout=0.0):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(dim, hidden_dim), nn.GELU(), nn.Dropout(dropout),
-            nn.Linear(hidden_dim, dim), nn.Dropout(dropout))
+            nn.Linear(dim, hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, dim),
+            nn.Dropout(dropout),
+        )
 
     def forward(self, x):
         return self.net(x)
@@ -40,7 +44,7 @@ class FeedForward(nn.Module):
 
 class Attention(nn.Module):
 
-    def __init__(self, dim, heads=8, dim_head=64, dropout=0.):
+    def __init__(self, dim, heads=8, dim_head=64, dropout=0.0):
         super().__init__()
         inner_dim = dim_head * heads
         project_out = not (heads == 1 and dim_head == dim)
@@ -53,9 +57,9 @@ class Attention(nn.Module):
 
         self.to_qkv = nn.Linear(dim, inner_dim * 3, bias=False)
 
-        self.to_out = nn.Sequential(
-            nn.Linear(inner_dim, dim),
-            nn.Dropout(dropout)) if project_out else nn.Identity()
+        self.to_out = (
+            nn.Sequential(nn.Linear(inner_dim, dim), nn.Dropout(dropout))
+            if project_out else nn.Identity())
 
     def forward(self, x):
         qkv = self.to_qkv(x).chunk(3, dim=-1)
@@ -74,7 +78,7 @@ class Attention(nn.Module):
 
 class Transformer(nn.Module):
 
-    def __init__(self, dim, depth, heads, dim_head, mlp_dim, dropout=0.):
+    def __init__(self, dim, depth, heads, dim_head, mlp_dim, dropout=0.0):
         super().__init__()
         self.layers = nn.ModuleList([])
         for _ in range(depth):
@@ -86,8 +90,9 @@ class Transformer(nn.Module):
                             dim,
                             heads=heads,
                             dim_head=dim_head,
-                            dropout=dropout)),
-                    PreNorm(dim, FeedForward(dim, mlp_dim, dropout=dropout))
+                            dropout=dropout),
+                    ),
+                    PreNorm(dim, FeedForward(dim, mlp_dim, dropout=dropout)),
                 ]))
 
     def forward(self, x):
@@ -112,27 +117,29 @@ class ViT(nn.Module):
                  pool='cls',
                  channels=3,
                  dim_head=64,
-                 dropout=0.,
-                 emb_dropout=0.):
+                 dropout=0.0,
+                 emb_dropout=0.0):
         super().__init__()
         image_height, image_width = pair(image_size)
         patch_height, patch_width = pair(patch_size)
 
-        assert image_height % patch_height == 0, \
-            'Image dimensions must be divisible by the patch size.'
+        assert (image_height % patch_height == 0
+                ), 'Image dimensions must be divisible by the patch size.'
 
         num_patches = (image_height // patch_height) * (
             image_width // patch_width)
         patch_dim = channels * patch_height * patch_width
         assert pool in {
-            'cls', 'mean'
+            'cls',
+            'mean',
         }, 'pool type must be either cls (cls token) or mean (mean pooling)'
 
         self.to_patch_embedding = nn.Sequential(
             Rearrange(
                 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)',
                 p1=patch_height,
-                p2=patch_width),
+                p2=patch_width,
+            ),
             nn.Linear(patch_dim, dim),
         )
 
@@ -176,7 +183,8 @@ if __name__ == '__main__':
         heads=16,
         mlp_dim=2048,
         dropout=0.1,
-        emb_dropout=0.1)
+        emb_dropout=0.1,
+    )
 
     img = torch.randn(1, 3, 256, 256)
 

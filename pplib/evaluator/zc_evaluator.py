@@ -6,7 +6,6 @@ import time
 
 import numpy as np
 import torch
-from tqdm import tqdm
 
 from pplib.datasets import build_dataloader
 from pplib.nas.search_spaces.core.query_metrics import Metric

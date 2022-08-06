@@ -52,7 +52,8 @@ class Bananas(MetaOptimizer):
         self.zc_api = zc_api
 
     def adapt_search_space(self, search_space, scope=None, dataset_api=None):
-        assert search_space.QUERYABLE, 'Bananas is currently only implemented for benchmarks.'
+        assert (search_space.QUERYABLE
+                ), 'Bananas is currently only implemented for benchmarks.'
 
         self.search_space = search_space.clone()
         self.scope = scope if scope else search_space.OPTIMIZER_SCOPE
@@ -88,7 +89,8 @@ class Bananas(MetaOptimizer):
         model.arch = encode_spec(
             model.arch_hash,
             encoding_type='adjacency_one_hot',
-            ss_type=self.search_space.get_type())
+            ss_type=self.search_space.get_type(),
+        )
         model.accuracy = self.zc_api[str(model.arch_hash)]['val_accuracy']
 
         if self.zc:
@@ -109,7 +111,8 @@ class Bananas(MetaOptimizer):
             predictor_type=self.predictor_type,
             zc=self.config.search.zc_ensemble,
             zc_only=self.config.search.zc_only,
-            config=self.config)
+            config=self.config,
+        )
 
         if self.zc and len(self.train_data) <= self.max_zerocost:
             # pass the zero-cost scores to the ensemble
@@ -137,7 +140,8 @@ class Bananas(MetaOptimizer):
                 model.arch = encode_spec(
                     model.arch_hash,
                     encoding_type='adjacency_one_hot',
-                    ss_type=self.search_space.get_type())
+                    ss_type=self.search_space.get_type(),
+                )
                 model.accuracy = self.zc_api[str(
                     model.arch_hash)]['val_accuracy']
 

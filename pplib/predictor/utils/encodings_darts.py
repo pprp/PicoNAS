@@ -9,8 +9,13 @@ The plan is to unify encodings across all search spaces.
 logger = logging.getLogger(__name__)
 
 OPS = [
-    'max_pool_3x3', 'avg_pool_3x3', 'skip_connect', 'sep_conv_3x3',
-    'sep_conv_5x5', 'dil_conv_3x3', 'dil_conv_5x5'
+    'max_pool_3x3',
+    'avg_pool_3x3',
+    'skip_connect',
+    'sep_conv_3x3',
+    'sep_conv_5x5',
+    'dil_conv_3x3',
+    'dil_conv_5x5',
 ]
 NUM_VERTICES = 4
 INPUT_1 = 'c_k-2'
@@ -19,7 +24,7 @@ OUTPUT = 'c_k'
 
 
 def get_paths(arch):
-    """ return all paths from input to output """
+    """return all paths from input to output"""
 
     path_builder = [[[], [], [], []], [[], [], [], []]]
     paths = [[], []]
@@ -161,7 +166,7 @@ def encode_bonas(arch):
 
 def add_global_node(mx, ifAdj):
     """add a global node to operation or adjacency matrixs, fill diagonal for adj and transpose adjs"""
-    if (ifAdj):
+    if ifAdj:
         mx = np.column_stack((mx, np.ones(mx.shape[0], dtype=np.float32)))
         mx = np.row_stack((mx, np.zeros(mx.shape[1], dtype=np.float32)))
         np.fill_diagonal(mx, 1)
@@ -263,7 +268,7 @@ def encode_gcn(arch):
         'num_vertices': 22,
         'adjacency': matrix_final,
         'operations': ops_onehot,
-        'val_acc': 0.0
+        'val_acc': 0.0,
     }
     return dic
 

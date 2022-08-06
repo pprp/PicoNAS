@@ -46,7 +46,7 @@ def compute_grasp_per_weight(net,
         st = sp * N // split_data
         en = (sp + 1) * N // split_data
 
-        # forward/grad pass #1
+        # forward/grad pass # 1
         grad_w = None
         for _ in range(num_iters):
             # TODO get new data, otherwise num_iters is useless!
@@ -63,7 +63,7 @@ def compute_grasp_per_weight(net,
         st = sp * N // split_data
         en = (sp + 1) * N // split_data
 
-        # forward/grad pass #2
+        # forward/grad pass # 2
         outputs = net.forward(inputs[st:en]) / T
         loss = loss_fn(outputs, targets[st:en])
         grad_f = autograd.grad(

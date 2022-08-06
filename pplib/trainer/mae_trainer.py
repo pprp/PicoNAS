@@ -13,15 +13,17 @@ from .registry import register_trainer
 @register_trainer
 class MAETrainer(BaseTrainer):
 
-    def __init__(self,
-                 model: nn.Module,
-                 mutator: OneShotMutator,
-                 criterion,
-                 optimizer,
-                 scheduler,
-                 device=None,
-                 log_name='mae',
-                 searching: bool = True):
+    def __init__(
+        self,
+        model: nn.Module,
+        mutator: OneShotMutator,
+        criterion,
+        optimizer,
+        scheduler,
+        device=None,
+        log_name='mae',
+        searching: bool = True,
+    ):
         super().__init__(
             model=model,
             mutator=mutator,
@@ -30,7 +32,8 @@ class MAETrainer(BaseTrainer):
             scheduler=scheduler,
             device=device,
             log_name=log_name,
-            searching=searching)
+            searching=searching,
+        )
 
         if self.mutator is None:
             self.mutator = OneShotMutator()
@@ -75,13 +78,14 @@ class MAETrainer(BaseTrainer):
                 self.writer.add_scalar(
                     'train_step_loss',
                     loss.item(),
-                    global_step=i + self.current_epoch * len(loader))
+                    global_step=i + self.current_epoch * len(loader),
+                )
 
         return loss
 
     def _validate(self, loader):
         self.model.eval()
-        val_loss = 0.
+        val_loss = 0.0
 
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
@@ -154,12 +158,14 @@ class MAETrainer(BaseTrainer):
                     'ori_img',
                     convertTensor2BoardImage(img_origin),
                     global_step=self.current_epoch,
-                    dataformats='CHW')
+                    dataformats='CHW',
+                )
                 self.writer.add_image(
                     'mae_img',
                     convertTensor2BoardImage(img_grid),
                     global_step=self.current_epoch,
-                    dataformats='CHW')
+                    dataformats='CHW',
+                )
 
         total_time = time.time() - total_start_time
 

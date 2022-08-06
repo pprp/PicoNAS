@@ -30,16 +30,18 @@ class ReLUConvBN(nn.Module):
         running mean and variance. Default: True
     """
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_size,
-                 stride,
-                 padding,
-                 dilation,
-                 bn_affine=True,
-                 bn_momentum=0.1,
-                 bn_track_running_stats=True):
+    def __init__(
+        self,
+        C_in,
+        C_out,
+        kernel_size,
+        stride,
+        padding,
+        dilation,
+        bn_affine=True,
+        bn_momentum=0.1,
+        bn_track_running_stats=True,
+    ):
         super(ReLUConvBN, self).__init__()
         self.op = nn.Sequential(
             nn.ReLU(inplace=False),
@@ -50,12 +52,15 @@ class ReLUConvBN(nn.Module):
                 stride=stride,
                 padding=padding,
                 dilation=dilation,
-                bias=False),
+                bias=False,
+            ),
             nn.BatchNorm2d(
                 C_out,
                 affine=bn_affine,
                 momentum=bn_momentum,
-                track_running_stats=bn_track_running_stats))
+                track_running_stats=bn_track_running_stats,
+            ),
+        )
 
     def forward(self, x):
         """
@@ -88,13 +93,15 @@ class Pooling(nn.Module):
         the running mean and variance. Default: True
     """
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 stride,
-                 bn_affine=True,
-                 bn_momentum=0.1,
-                 bn_track_running_stats=True):
+    def __init__(
+        self,
+        C_in,
+        C_out,
+        stride,
+        bn_affine=True,
+        bn_momentum=0.1,
+        bn_track_running_stats=True,
+    ):
         super(Pooling, self).__init__()
         if C_in == C_out:
             self.preprocess = None
@@ -144,9 +151,9 @@ class Zero(nn.Module):
         """
         if self.C_in == self.C_out:
             if self.stride == 1:
-                return x.mul(0.)
+                return x.mul(0.0)
             else:
-                return x[:, :, ::self.stride, ::self.stride].mul(0.)
+                return x[:, :, ::self.stride, ::self.stride].mul(0.0)
         else:
             shape = list(x.shape)
             shape[1] = self.C_out
@@ -156,13 +163,15 @@ class Zero(nn.Module):
 
 class FactorizedReduce(nn.Module):
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 stride,
-                 bn_affine=True,
-                 bn_momentum=0.1,
-                 bn_track_running_stats=True):
+    def __init__(
+        self,
+        C_in,
+        C_out,
+        stride,
+        bn_affine=True,
+        bn_momentum=0.1,
+        bn_track_running_stats=True,
+    ):
         super(FactorizedReduce, self).__init__()
         self.stride = stride
         self.C_in = C_in
@@ -187,7 +196,8 @@ class FactorizedReduce(nn.Module):
             C_out,
             affine=bn_affine,
             momentum=bn_momentum,
-            track_running_stats=bn_track_running_stats)
+            track_running_stats=bn_track_running_stats,
+        )
 
     def forward(self, x):
         x = self.relu(x)
@@ -229,14 +239,16 @@ class NASBench201Cell(nn.Module):
             in this cell tracks the running mean and variance. Default: True
     """
 
-    def __init__(self,
-                 cell_id,
-                 C_in,
-                 C_out,
-                 stride,
-                 bn_affine=True,
-                 bn_momentum=0.1,
-                 bn_track_running_stats=True):
+    def __init__(
+        self,
+        cell_id,
+        C_in,
+        C_out,
+        stride,
+        bn_affine=True,
+        bn_momentum=0.1,
+        bn_track_running_stats=True,
+    ):
         super(NASBench201Cell, self).__init__()
 
         self.NUM_NODES = 4
@@ -249,21 +261,48 @@ class NASBench201Cell(nn.Module):
                     'none':
                     Zero(C_in, C_out, stride),
                     'avg_pool_3x3':
-                    Pooling(C_in, C_out, stride if layer_idx == 0 else 1,
-                            bn_affine, bn_momentum, bn_track_running_stats),
+                    Pooling(
+                        C_in,
+                        C_out,
+                        stride if layer_idx == 0 else 1,
+                        bn_affine,
+                        bn_momentum,
+                        bn_track_running_stats,
+                    ),
                     'conv_3x3':
-                    ReLUConvBN(C_in, C_out, 3, stride if layer_idx == 0 else 1,
-                               1, 1, bn_affine, bn_momentum,
-                               bn_track_running_stats),
+                    ReLUConvBN(
+                        C_in,
+                        C_out,
+                        3,
+                        stride if layer_idx == 0 else 1,
+                        1,
+                        1,
+                        bn_affine,
+                        bn_momentum,
+                        bn_track_running_stats,
+                    ),
                     'conv_1x1':
-                    ReLUConvBN(C_in, C_out, 1, stride if layer_idx == 0 else 1,
-                               0, 1, bn_affine, bn_momentum,
-                               bn_track_running_stats),
+                    ReLUConvBN(
+                        C_in,
+                        C_out,
+                        1,
+                        stride if layer_idx == 0 else 1,
+                        0,
+                        1,
+                        bn_affine,
+                        bn_momentum,
+                        bn_track_running_stats,
+                    ),
                     'skip_connect':
                     nn.Identity()
                     if stride == 1 and C_in == C_out else FactorizedReduce(
-                        C_in, C_out, stride if layer_idx == 0 else 1,
-                        bn_affine, bn_momentum, bn_track_running_stats),
+                        C_in,
+                        C_out,
+                        stride if layer_idx == 0 else 1,
+                        bn_affine,
+                        bn_momentum,
+                        bn_track_running_stats,
+                    ),
                 })
                 node_ops.append(
                     DiffOP(
@@ -290,17 +329,28 @@ class NASBench201Cell(nn.Module):
 
 class ResNetBasicBlock(nn.Module):
 
-    def __init__(self,
-                 inplanes,
-                 planes,
-                 stride,
-                 bn_affine=True,
-                 bn_momentum=0.1,
-                 bn_track_running_stats=True):
+    def __init__(
+        self,
+        inplanes,
+        planes,
+        stride,
+        bn_affine=True,
+        bn_momentum=0.1,
+        bn_track_running_stats=True,
+    ):
         super(ResNetBasicBlock, self).__init__()
         assert stride == 1 or stride == 2, 'invalid stride {:}'.format(stride)
-        self.conv_a = ReLUConvBN(inplanes, planes, 3, stride, 1, 1, bn_affine,
-                                 bn_momentum, bn_track_running_stats)
+        self.conv_a = ReLUConvBN(
+            inplanes,
+            planes,
+            3,
+            stride,
+            1,
+            1,
+            bn_affine,
+            bn_momentum,
+            bn_track_running_stats,
+        )
         self.conv_b = ReLUConvBN(planes, planes, 3, 1, 1, 1, bn_affine,
                                  bn_momentum, bn_track_running_stats)
         if stride == 2:
@@ -312,11 +362,20 @@ class ResNetBasicBlock(nn.Module):
                     kernel_size=1,
                     stride=1,
                     padding=0,
-                    bias=False))
+                    bias=False),
+            )
         elif inplanes != planes:
-            self.downsample = ReLUConvBN(inplanes, planes, 1, 1, 0, 1,
-                                         bn_affine, bn_momentum,
-                                         bn_track_running_stats)
+            self.downsample = ReLUConvBN(
+                inplanes,
+                planes,
+                1,
+                1,
+                0,
+                1,
+                bn_affine,
+                bn_momentum,
+                bn_track_running_stats,
+            )
         else:
             self.downsample = None
         self.in_dim = inplanes
@@ -335,12 +394,14 @@ class ResNetBasicBlock(nn.Module):
 
 class DiffNASBench201Network(nn.Module):
 
-    def __init__(self,
-                 stem_out_channels,
-                 num_modules_per_stack,
-                 bn_affine=True,
-                 bn_momentum=0.1,
-                 bn_track_running_stats=True):
+    def __init__(
+        self,
+        stem_out_channels,
+        num_modules_per_stack,
+        bn_affine=True,
+        bn_momentum=0.1,
+        bn_track_running_stats=True,
+    ):
         super(DiffNASBench201Network, self).__init__()
         self.channels = C = stem_out_channels
         self.num_modules = N = num_modules_per_stack
@@ -352,25 +413,38 @@ class DiffNASBench201Network(nn.Module):
 
         self.stem = nn.Sequential(
             nn.Conv2d(3, C, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(C, momentum=self.bn_momentum))
+            nn.BatchNorm2d(C, momentum=self.bn_momentum),
+        )
 
-        layer_channels = [C] * N + [C * 2] + \
-            [C * 2] * N + [C * 4] + [C * 4] * N
-        layer_reductions = [False] * N + [True] + \
-            [False] * N + [True] + [False] * N
+        layer_channels = [C] * N + [C * 2] + [C * 2] * N + [C * 4
+                                                            ] + [C * 4] * N
+        layer_reductions = [False] * N + [True] + [False] * N + [
+            True
+        ] + [False] * N
 
         C_prev = C
         self.cells = nn.ModuleList()
         for i, (C_curr,
                 reduction) in enumerate(zip(layer_channels, layer_reductions)):
             if reduction:
-                cell = ResNetBasicBlock(C_prev, C_curr, 2, self.bn_affine,
-                                        self.bn_momentum,
-                                        self.bn_track_running_stats)
+                cell = ResNetBasicBlock(
+                    C_prev,
+                    C_curr,
+                    2,
+                    self.bn_affine,
+                    self.bn_momentum,
+                    self.bn_track_running_stats,
+                )
             else:
-                cell = NASBench201Cell(i, C_prev, C_curr, 1, self.bn_affine,
-                                       self.bn_momentum,
-                                       self.bn_track_running_stats)
+                cell = NASBench201Cell(
+                    i,
+                    C_prev,
+                    C_curr,
+                    1,
+                    self.bn_affine,
+                    self.bn_momentum,
+                    self.bn_track_running_stats,
+                )
             self.cells.append(cell)
             C_prev = C_curr
 

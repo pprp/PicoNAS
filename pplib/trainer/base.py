@@ -29,16 +29,18 @@ class BaseTrainer:
         searching (bool, optional): [description]. Defaults to True.
     """
 
-    def __init__(self,
-                 model,
-                 mutator,
-                 criterion,
-                 optimizer,
-                 scheduler,
-                 device=None,
-                 log_name='base',
-                 searching: bool = True,
-                 print_freq: int = 100):
+    def __init__(
+        self,
+        model,
+        mutator,
+        criterion,
+        optimizer,
+        scheduler,
+        device=None,
+        log_name='base',
+        searching: bool = True,
+        print_freq: int = 100,
+    ):
 
         self.model = model
         self.mutator = mutator
@@ -104,10 +106,12 @@ class BaseTrainer:
 
             # save ckpt
             if epoch % 10 == 0:
-                utils.save_checkpoint({'state_dict': self.model.state_dict()},
-                                      self.log_name,
-                                      epoch + 1,
-                                      tag=f'{self.log_name}_macro')
+                utils.save_checkpoint(
+                    {'state_dict': self.model.state_dict()},
+                    self.log_name,
+                    epoch + 1,
+                    tag=f'{self.log_name}_macro',
+                )
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)
@@ -178,7 +182,7 @@ class BaseTrainer:
     def _train(self, loader):
         self.model.train()
 
-        train_loss = 0.
+        train_loss = 0.0
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
 
@@ -217,15 +221,18 @@ class BaseTrainer:
                 self.writer.add_scalar(
                     'train_step_loss',
                     loss.item(),
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
                 self.writer.add_scalar(
                     'top1_train_acc',
                     top1_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
                 self.writer.add_scalar(
                     'top5_train_acc',
                     top5_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
@@ -258,15 +265,18 @@ class BaseTrainer:
                     self.writer.add_scalar(
                         'val_step_loss',
                         loss.item(),
-                        global_step=step + self.current_epoch * len(loader))
+                        global_step=step + self.current_epoch * len(loader),
+                    )
                     self.writer.add_scalar(
                         'top1_val_acc',
                         top1_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader))
+                        global_step=step + self.current_epoch * len(loader),
+                    )
                     self.writer.add_scalar(
                         'top5_val_acc',
                         top5_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader))
+                        global_step=step + self.current_epoch * len(loader),
+                    )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
             )
@@ -306,7 +316,7 @@ class BaseTrainer:
         for name, module in flops_model.named_modules():
             flops = getattr(module, '__flops__', 0)
             flops_lookup[name] = flops
-        del (flops_model)
+        del flops_model
 
         for name, module in self.architecture.named_modules():
             module.__flops__ = flops_lookup[name]

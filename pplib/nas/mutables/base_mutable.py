@@ -32,10 +32,12 @@ class BaseMutable(BaseModule, ABC, Generic[CHOICE_TYPE, CHOSEN_TYPE]):
             and `Pretrained`.
     """
 
-    def __init__(self,
-                 module_kwargs: Optional[Dict[str, Dict]] = None,
-                 alias: Optional[str] = None,
-                 init_cfg: Optional[Dict] = None) -> None:
+    def __init__(
+        self,
+        module_kwargs: Optional[Dict[str, Dict]] = None,
+        alias: Optional[str] = None,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
         super().__init__(init_cfg=init_cfg)
 
         self.module_kwargs = module_kwargs
@@ -56,9 +58,9 @@ class BaseMutable(BaseModule, ABC, Generic[CHOICE_TYPE, CHOSEN_TYPE]):
     @is_fixed.setter
     def is_fixed(self, is_fixed: bool) -> None:
         """Set the status of `is_fixed`."""
-        assert isinstance(is_fixed, bool), \
-            f'The type of `is_fixed` need to be bool type, ' \
-            f'but got: {type(is_fixed)}'
+        assert isinstance(
+            is_fixed, bool), (f'The type of `is_fixed` need to be bool type, '
+                              f'but got: {type(is_fixed)}')
         if self._is_fixed:
             raise AttributeError(
                 'The mode of current MUTABLE is `fixed`. '
@@ -86,6 +88,5 @@ class BaseMutable(BaseModule, ABC, Generic[CHOICE_TYPE, CHOSEN_TYPE]):
 
     @property
     def num_choices(self) -> int:
-        """int: length of choices.
-        """
+        """int: length of choices."""
         return len(self.choices)

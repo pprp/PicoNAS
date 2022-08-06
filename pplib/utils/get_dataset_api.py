@@ -9,8 +9,13 @@ throughout the discrete NAS algos, which would lead to memory errors.
 """
 
 TASK_NAMES = [
-    'autoencoder', 'class_object', 'class_scene', 'normal', 'jigsaw',
-    'room_layout', 'segmentsemantic'
+    'autoencoder',
+    'class_object',
+    'class_scene',
+    'normal',
+    'jigsaw',
+    'room_layout',
+    'segmentsemantic',
 ]
 
 
@@ -36,6 +41,7 @@ def get_transbench101_api(dataset):
  from https://www.noahlab.com.hk/opensource/vega/page/doc.html?path=datasets/transnasbench101'
 
     from pplib.nas.search_spaces import TransNASBenchAPI
+
     api = TransNASBenchAPI(datafile_path)
     return {'api': api, 'task': dataset}
 
@@ -61,7 +67,7 @@ def get_nasbench201_api(dataset):
     datafiles = {
         'cifar10': 'nb201_cifar10_full_training.pickle',
         'cifar100': 'nb201_cifar100_full_training.pickle',
-        'ImageNet16-120': 'nb201_ImageNet16_full_training.pickle'
+        'ImageNet16-120': 'nb201_ImageNet16_full_training.pickle',
     }
 
     if dataset not in datafiles.keys():
@@ -87,8 +93,8 @@ def get_nasbench301_api(dataset):
     try:
         import nasbench301
     except ModuleNotFoundError:
-        raise ModuleNotFoundError('No module named \'nasbench301\'. \
-            Please install nasbench301 from https://github.com/automl/nasbench301@no_gin'
+        raise ModuleNotFoundError("No module named 'nasbench301'. \
+            Please install nasbench301 from https://github.com/automl/nasbench301@no_gin"
                                   )
 
     # Paths to v1.0 model files and data file.
@@ -141,7 +147,9 @@ def get_dataset_api(search_space=None, dataset=None):
         return get_nasbench301_api(dataset=dataset)
 
     elif search_space in [
-            'transbench101', 'transbench101_micro', 'transbench101_macro'
+            'transbench101',
+            'transbench101_micro',
+            'transbench101_macro',
     ]:
         return get_transbench101_api(dataset=dataset)
 

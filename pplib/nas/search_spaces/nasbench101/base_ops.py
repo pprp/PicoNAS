@@ -22,8 +22,10 @@ class ConvBnRelu(nn.Module):
                 kernel_size,
                 stride,
                 padding,
-                bias=False), nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True))
+                bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+        )
 
     def forward(self, x):
         return self.conv_bn_relu(x)
@@ -77,5 +79,5 @@ class MaxPool3x3(nn.Module):
 OP_MAP = {
     'conv3x3-bn-relu': Conv3x3BnRelu,
     'conv1x1-bn-relu': Conv1x1BnRelu,
-    'maxpool3x3': MaxPool3x3
+    'maxpool3x3': MaxPool3x3,
 }

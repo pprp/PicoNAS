@@ -17,22 +17,24 @@ OPS = {
     '3':
     lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
         C_in, C_out, (3, 3), stride, (1, 1),
-        (1, 1), affine, track_running_stats)
+        (1, 1), affine, track_running_stats),
 }
 
 
 class ReLUConvBN(nn.Module):
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_size,
-                 stride,
-                 padding,
-                 dilation,
-                 affine,
-                 track_running_stats,
-                 activation='relu'):
+    def __init__(
+        self,
+        C_in,
+        C_out,
+        kernel_size,
+        stride,
+        padding,
+        dilation,
+        affine,
+        track_running_stats,
+        activation='relu',
+    ):
         super(ReLUConvBN, self).__init__()
         if activation == 'leaky':
             ops = [nn.LeakyReLU(0.2, False)]
@@ -48,9 +50,10 @@ class ReLUConvBN(nn.Module):
                 stride=stride,
                 padding=padding,
                 dilation=dilation,
-                bias=False),
+                bias=False,
+            ),
             nn.BatchNorm2d(
-                C_out, affine=affine, track_running_stats=track_running_stats)
+                C_out, affine=affine, track_running_stats=track_running_stats),
         ]
         self.ops = nn.Sequential(*ops)
         self.C_in = C_in
@@ -86,13 +89,16 @@ class Zero(nn.Module):
     def forward(self, x):
         if self.C_in == self.C_out:
             if self.stride == 1:
-                return x.mul(0.)
+                return x.mul(0.0)
             else:
-                return x[:, :, ::self.stride, ::self.stride].mul(0.)
+                return x[:, :, ::self.stride, ::self.stride].mul(0.0)
         else:
             shape = list(x.shape)
-            shape[1], shape[2], shape[3] = self.C_out, (
-                shape[2] + 1) // self.stride, (shape[3] + 1) // self.stride
+            shape[1], shape[2], shape[3] = (
+                self.C_out,
+                (shape[2] + 1) // self.stride,
+                (shape[3] + 1) // self.stride,
+            )
             zeros = x.new_zeros(shape, dtype=x.dtype, device=x.device)
             return zeros
 
@@ -173,7 +179,8 @@ class DeconvLayer(nn.Module):
             kernel,
             stride=stride,
             padding=padding,
-            output_padding=1)
+            output_padding=1,
+        )
         self.activation = activation
         if norm == nn.BatchNorm2d:
             self.norm = norm(out_channel)

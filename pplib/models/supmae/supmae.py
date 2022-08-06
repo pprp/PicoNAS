@@ -25,8 +25,8 @@ def get_1d_sincos_pos_embed_from_grid(embed_dim, pos):
     """
     assert embed_dim % 2 == 0
     omega = np.arange(embed_dim // 2, dtype=np.float)
-    omega /= embed_dim / 2.
-    omega = 1. / 10000**omega  # (D/2,)
+    omega /= embed_dim / 2.0
+    omega = 1.0 / 10000**omega  # (D/2,)
 
     pos = pos.reshape(-1)  # (M,)
     out = np.einsum('m,d->md', pos, omega)  # (M, D/2), outer product
@@ -73,26 +73,27 @@ def get_2d_sincos_pos_embed(embed_dim, grid_size, cls_token=False):
 
 @register_model
 class SupervisedMaskedAutoencoderViT(nn.Module):
-    """ Masked Autoencoder with VisionTransformer backbone
-    """
+    """Masked Autoencoder with VisionTransformer backbone"""
 
-    def __init__(self,
-                 img_size=224,
-                 patch_size=16,
-                 in_chans=3,
-                 embed_dim=1024,
-                 depth=24,
-                 num_heads=16,
-                 decoder_embed_dim=512,
-                 decoder_depth=8,
-                 decoder_num_heads=16,
-                 mlp_ratio=4.,
-                 norm_layer=nn.LayerNorm,
-                 norm_pix_loss=False,
-                 cls_hidden_mlp=3072,
-                 nb_classes=1000,
-                 global_pool=True,
-                 mlp_depth=2):
+    def __init__(
+        self,
+        img_size=224,
+        patch_size=16,
+        in_chans=3,
+        embed_dim=1024,
+        depth=24,
+        num_heads=16,
+        decoder_embed_dim=512,
+        decoder_depth=8,
+        decoder_num_heads=16,
+        mlp_ratio=4.0,
+        norm_layer=nn.LayerNorm,
+        norm_pix_loss=False,
+        cls_hidden_mlp=3072,
+        nb_classes=1000,
+        global_pool=True,
+        mlp_depth=2,
+    ):
         super().__init__()
 
         # --------------------------------------------------------------------------
@@ -112,7 +113,8 @@ class SupervisedMaskedAutoencoderViT(nn.Module):
                 num_heads,
                 mlp_ratio,
                 qkv_bias=True,
-                norm_layer=norm_layer) for i in range(depth)
+                norm_layer=norm_layer,
+            ) for i in range(depth)
         ])
         self.norm = norm_layer(embed_dim)
         # --------------------------------------------------------------------------
@@ -134,7 +136,8 @@ class SupervisedMaskedAutoencoderViT(nn.Module):
                 decoder_num_heads,
                 mlp_ratio,
                 qkv_bias=True,
-                norm_layer=norm_layer) for i in range(decoder_depth)
+                norm_layer=norm_layer,
+            ) for i in range(decoder_depth)
         ])
 
         self.decoder_norm = norm_layer(decoder_embed_dim)
@@ -168,15 +171,17 @@ class SupervisedMaskedAutoencoderViT(nn.Module):
         # initialize (and freeze) pos_embed by sin-cos embedding
         pos_embed = get_2d_sincos_pos_embed(
             self.pos_embed.shape[-1],
-            int(self.patch_embed.num_patches**.5),
-            cls_token=True)
+            int(self.patch_embed.num_patches**0.5),
+            cls_token=True,
+        )
         self.pos_embed.data.copy_(
             torch.from_numpy(pos_embed).float().unsqueeze(0))
 
         decoder_pos_embed = get_2d_sincos_pos_embed(
             self.decoder_pos_embed.shape[-1],
-            int(self.patch_embed.num_patches**.5),
-            cls_token=True)
+            int(self.patch_embed.num_patches**0.5),
+            cls_token=True,
+        )
         self.decoder_pos_embed.data.copy_(
             torch.from_numpy(decoder_pos_embed).float().unsqueeze(0))
 
@@ -186,8 +191,8 @@ class SupervisedMaskedAutoencoderViT(nn.Module):
 
         # timm's trunc_normal_(std=.02) is effectively normal_(std=0.02)
         #     as cutoff is too big (2.)
-        torch.nn.init.normal_(self.cls_token, std=.02)
-        torch.nn.init.normal_(self.mask_token, std=.02)
+        torch.nn.init.normal_(self.cls_token, std=0.02)
+        torch.nn.init.normal_(self.mask_token, std=0.02)
 
         # initialize nn.Linear and nn.LayerNorm
         self.apply(self._init_weights)
@@ -222,7 +227,7 @@ class SupervisedMaskedAutoencoderViT(nn.Module):
         imgs: (N, 3, H, W)
         """
         p = self.patch_embed.patch_size[0]
-        h = w = int(x.shape[1]**.5)
+        h = w = int(x.shape[1]**0.5)
         assert h * w == x.shape[1]
 
         x = x.reshape(shape=(x.shape[0], h, w, p, p, 3))
@@ -330,7 +335,7 @@ class SupervisedMaskedAutoencoderViT(nn.Module):
         if self.norm_pix_loss:
             mean = target.mean(dim=-1, keepdim=True)
             var = target.var(dim=-1, keepdim=True)
-            target = (target - mean) / (var + 1.e-6)**.5
+            target = (target - mean) / (var + 1.0e-6)**0.5
 
         loss = (pred - target)**2
         loss = loss.mean(dim=-1)  # [N, L], mean loss per patch

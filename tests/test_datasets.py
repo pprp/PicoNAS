@@ -42,7 +42,8 @@ class TestDataset(TestCase):
             random_erase=False,
             autoaugmentation=None,
             cutout=None,
-            data_dir='./data/cifar')
+            data_dir='./data/cifar',
+        )
         dataloader = build_dataloader(config=Config(args))
         assert dataloader is not None
 
@@ -69,6 +70,7 @@ class TestDataset(TestCase):
                 break
 
             import matplotlib.pyplot as plt
+
             print(img.shape, mask.shape)
 
             plt.imshow(self.convert2pltimg(img[0]))
@@ -94,7 +96,8 @@ class TestDataset(TestCase):
                 p2=16,
                 c=3,
                 h=2,
-                w=2)
+                w=2,
+            )
 
             # shape: [2, 3, 32, 32] -> [2, 32, 32, 3]
             # masked_img = rearrange(masked_img, 'b c h w -> b h w c')
@@ -105,12 +108,12 @@ class TestDataset(TestCase):
             # mask_token = nn.Parameter(torch.zeros(1, 1, C))
             # mask_token = mask_token.expand(B, L, -1) # [2 1024 3]
 
-            # # mask: [2, 16, 16] => mask: [2, 256] => mask: [2, 256, 1]
+            # mask: [2, 16, 16] => mask: [2, 256] => mask: [2, 256, 1]
             # w = mask.flatten(1).unsqueeze(-1).type_as(mask_token)
 
-            # # img: [2, 1024, 3]
-            # # w: [2, 256, 1]
-            # # mask_token: [2, 1024, 3]
+            # img: [2, 1024, 3]
+            # w: [2, 256, 1]
+            # mask_token: [2, 1024, 3]
             # img = img * (1 - w) + mask_token * w
 
 

@@ -29,8 +29,17 @@ class NATSMAETrainer(NATSTrainer):
         searching: bool = True,
         method: str = 'uni',
     ):
-        super().__init__(model, mutator, optimizer, criterion, scheduler,
-                         device, log_name, searching, method)
+        super().__init__(
+            model,
+            mutator,
+            optimizer,
+            criterion,
+            scheduler,
+            device,
+            log_name,
+            searching,
+            method,
+        )
 
         assert method in {'uni', 'fair'}
         self.method = method
@@ -69,8 +78,9 @@ class NATSMAETrainer(NATSTrainer):
         if self.searching:
             forward_op_list = self.model.set_forward_cfg(self.method)
         else:
-            forward_op_list = current_op_list if current_op_list is not None else self.model.set_forward_cfg(
-                self.method)
+            forward_op_list = (
+                current_op_list if current_op_list is not None else
+                self.model.set_forward_cfg(self.method))
         outputs, feat = self.model(inputs, mask, forward_op_list)
         return outputs, inputs
 
@@ -192,7 +202,7 @@ class NATSMAETrainer(NATSTrainer):
     def _train(self, loader):
         self.model.train()
 
-        train_loss = 0.
+        train_loss = 0.0
 
         for step, batch_inputs in enumerate(loader):
             # remove gradient from previous passes
@@ -220,7 +230,8 @@ class NATSMAETrainer(NATSTrainer):
                 self.writer.add_scalar(
                     'train_step_loss',
                     loss.item(),
-                    global_step=step + self.current_epoch * len(loader))
+                    global_step=step + self.current_epoch * len(loader),
+                )
 
         return train_loss / (step + 1)
 
@@ -254,10 +265,12 @@ class NATSMAETrainer(NATSTrainer):
 
             # save ckpt
             if epoch % 10 == 0:
-                utils.save_checkpoint({'state_dict': self.model.state_dict()},
-                                      self.log_name,
-                                      epoch + 1,
-                                      tag=f'{self.log_name}_macro')
+                utils.save_checkpoint(
+                    {'state_dict': self.model.state_dict()},
+                    self.log_name,
+                    epoch + 1,
+                    tag=f'{self.log_name}_macro',
+                )
 
             if epoch % 5 == 0:
                 if self.evaluator is None:
@@ -305,17 +318,20 @@ class NATSMAETrainer(NATSTrainer):
                     'ori_img',
                     convertTensor2BoardImage(img_origin),
                     global_step=self.current_epoch,
-                    dataformats='CHW')
+                    dataformats='CHW',
+                )
                 self.writer.add_image(
                     'mask_img',
                     convertTensor2BoardImage(img_mask),
                     global_step=self.current_epoch,
-                    dataformats='CHW')
+                    dataformats='CHW',
+                )
                 self.writer.add_image(
                     'mae_img',
                     convertTensor2BoardImage(img_grid),
                     global_step=self.current_epoch,
-                    dataformats='CHW')
+                    dataformats='CHW',
+                )
 
         total_time = time.time() - total_start_time
 
@@ -345,6 +361,7 @@ class NATSMAETrainer(NATSTrainer):
                     self.writer.add_scalar(
                         'val_step_loss',
                         loss.item(),
-                        global_step=step + self.current_epoch * len(loader))
+                        global_step=step + self.current_epoch * len(loader),
+                    )
 
         return val_loss / (step + 1)

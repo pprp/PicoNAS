@@ -21,10 +21,12 @@ class DynamicMutator(BaseMutator):
 
     """
 
-    def __init__(self,
-                 custom_group: Optional[List[List[str]]] = None,
-                 with_alias: bool = False,
-                 init_cfg: Optional[Dict] = None) -> None:
+    def __init__(
+        self,
+        custom_group: Optional[List[List[str]]] = None,
+        with_alias: bool = False,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
         super().__init__(init_cfg)
 
         if custom_group is None:

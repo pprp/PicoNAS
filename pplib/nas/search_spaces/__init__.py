@@ -53,7 +53,8 @@ def get_search_space(name, dataset):
             use_small_model=True,
             create_graph=create_graph,
             n_classes=n_classes,
-            in_channels=in_channels)
+            in_channels=in_channels,
+        )
     elif name == 'nasbench301':
         auxiliary = dataset.lower() == 'cifar10'
         return search_space_cls(

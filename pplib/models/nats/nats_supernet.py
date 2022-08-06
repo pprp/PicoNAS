@@ -27,7 +27,7 @@ def fair_random_op_encoding(num_of_ops, layers):
 
 
 def get_path(str, num):
-    if (num == 1):
+    if num == 1:
         yield from str
     else:
         for x in str:
@@ -58,7 +58,8 @@ class MixOps(nn.Module):
                 self._max_C,
                 1,
                 affine=True,
-                track_running_stats=True)
+                track_running_stats=True,
+            )
 
     def forward(self, x, in_idx, out_idx):
         # Single-path
@@ -117,8 +118,7 @@ class Block(nn.Module):
 
 @register_model
 class SupernetNATS(nn.Module):
-    """Three Blocks, with [2, 2, 1] layers
-    """
+    """Three Blocks, with [2, 2, 1] layers"""
 
     def __init__(self, target='cifar10'):
         super(SupernetNATS, self).__init__()
@@ -144,12 +144,14 @@ class SupernetNATS(nn.Module):
         ]
 
         self.stem = nn.Sequential(
-            SlimmableConv2d([3 for _ in range(len(self.channels))],
-                            self.channels,
-                            kernel_size=3,
-                            stride=1,
-                            padding=1,
-                            bias=False),
+            SlimmableConv2d(
+                [3 for _ in range(len(self.channels))],
+                self.channels,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False,
+            ),
             SwitchableBatchNorm2d(self.channels),
         )
 
@@ -179,7 +181,8 @@ class SupernetNATS(nn.Module):
                 forward_list=forward_op[sum(self._op_layers_list[:i]
                                             ):sum(self._op_layers_list[:(i +
                                                                          1)])],
-                pre_op=pre_op)
+                pre_op=pre_op,
+            )
 
         x = self.gap(x)
         x = x.view(-1, self.candidate_Cs[forward_op[-1]])
@@ -219,15 +222,15 @@ class SupernetNATS(nn.Module):
         self.apply(reset)
 
     def step_start_trigger(self):
-        '''generate fair choices'''
+        """generate fair choices"""
         pass
 
     def get_layers(self, block):
-        '''get num layers of a block'''
+        """get num layers of a block"""
         return self.block_cfgs[block][3]
 
     def get_block(self, block_num):
-        '''get block module to train separately'''
+        """get block module to train separately"""
         return self._blocks[block_num]
 
 

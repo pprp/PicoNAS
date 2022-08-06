@@ -17,9 +17,8 @@ def create_model(encoder_str, task_name):
 
     # model
     cfg['encoder'] = FFEncoder(encoder_str, task_name=cfg['task_name']).network
-    cfg['decoder_input_dim'] = (
-        2048, 16,
-        16) if cfg['encoder_str'] == 'resnet50' else cfg['encoder'].output_dim
+    cfg['decoder_input_dim'] = ((2048, 16, 16) if cfg['encoder_str']
+                                == 'resnet50' else cfg['encoder'].output_dim)
 
     if task_name == 'segmentsemantic':
         model = _create_model_segmentsemantic(cfg)
@@ -54,7 +53,8 @@ def _create_model_segmentsemantic(cfg):
     cfg['decoder'] = SegmentationDecoder(
         cfg['decoder_input_dim'],
         cfg['target_dim'],
-        target_num_channel=cfg['target_num_channel'])
+        target_num_channel=cfg['target_num_channel'],
+    )
     cfg['model'] = Segmentation(cfg['encoder'], cfg['decoder'])
 
     return cfg['model']

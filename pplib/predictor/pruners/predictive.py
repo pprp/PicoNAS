@@ -22,7 +22,7 @@ import torch.nn.functional as F
 
 from . import measures
 from .measures.model_stats import get_model_stats
-from .p_utils import *
+from .p_utils import *  # noqa: F403
 
 
 def no_op(self, x):
@@ -31,7 +31,7 @@ def no_op(self, x):
 
 def copynet(self, bn):
     net = copy.deepcopy(self)
-    if bn == False:
+    if not bn:
         for l in net.modules():
             if isinstance(l, nn.BatchNorm2d) or isinstance(l, nn.BatchNorm1d):
                 l.forward = types.MethodType(no_op, l)
@@ -97,7 +97,7 @@ def find_measures_arrays(
                 done = False
                 if ds == inputs.shape[0] // 2:
                     raise ValueError(
-                        f"Can't split data anymore, but still unable to run. Something is wrong"
+                        "Can't split data anymore, but still unable to run. Something is wrong"
                     )
                 ds += 1
                 while inputs.shape[0] % ds != 0:

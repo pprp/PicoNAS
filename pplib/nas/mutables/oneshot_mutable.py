@@ -28,10 +28,12 @@ class OneShotMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         :meth:`forward_all` is called when calculating FLOPs.
     """
 
-    def __init__(self,
-                 module_kwargs: Optional[Dict[str, Dict]] = None,
-                 alias: Optional[str] = None,
-                 init_cfg: Optional[Dict] = None) -> None:
+    def __init__(
+        self,
+        module_kwargs: Optional[Dict[str, Dict]] = None,
+        alias: Optional[str] = None,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
         super().__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
 
@@ -85,8 +87,10 @@ class OneShotMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
 
     def set_forward_args(self, choice: CHOICE_TYPE) -> None:
         """Interface for modifying the choice using partial."""
-        forward_with_default_args: Callable[[Any, Optional[CHOICE_TYPE]], Any] = \
-            partial(self.forward, choice=choice)  # noqa:E501
+        forward_with_default_args: Callable[[Any, Optional[CHOICE_TYPE]],
+                                            Any] = partial(
+                                                self.forward,
+                                                choice=choice)  # noqa:E501
         setattr(self, 'forward', forward_with_default_args)
 
 
@@ -117,9 +121,9 @@ class OneShotOP(OneShotMutable[str, str]):
     ) -> None:
         super().__init__(
             module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
-        assert len(candidate_ops) >= 1, \
-            f'Number of candidate op must greater than 1, ' \
-            f'but got: {len(candidate_ops)}'
+        assert len(candidate_ops) >= 1, (
+            f'Number of candidate op must greater than 1, '
+            f'but got: {len(candidate_ops)}')
 
         self._is_fixed = False
         self._chosen: Optional[str] = None
@@ -216,13 +220,15 @@ class OneShotOP(OneShotMutable[str, str]):
 
     @property
     def choices(self) -> List[str]:
-        """list: all choices. """
+        """list: all choices."""
         return list(self._candidate_ops.keys())
 
     def set_forward_args(self, choice: CHOICE_TYPE) -> None:
         """Interface for modifying the choice using partial."""
-        forward_with_default_args: Callable[[Any, Optional[CHOICE_TYPE]], Any] = \
-            partial(self.forward, choice=choice)  # noqa:E501
+        forward_with_default_args: Callable[[Any, Optional[CHOICE_TYPE]],
+                                            Any] = partial(
+                                                self.forward,
+                                                choice=choice)  # noqa:E501
         setattr(self, 'forward', forward_with_default_args)
 
 
@@ -243,20 +249,23 @@ class OneShotProbOP(OneShotOP):
             and `Pretrained`.
     """
 
-    def __init__(self,
-                 candidate_ops: Dict[str, Dict],
-                 choice_probs: list = None,
-                 module_kwargs: Optional[Dict[str, Dict]] = None,
-                 alias: Optional[str] = None,
-                 init_cfg: Optional[Dict] = None) -> None:
+    def __init__(
+        self,
+        candidate_ops: Dict[str, Dict],
+        choice_probs: list = None,
+        module_kwargs: Optional[Dict[str, Dict]] = None,
+        alias: Optional[str] = None,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
         super().__init__(
             candidate_ops=candidate_ops,
             module_kwargs=module_kwargs,
             alias=alias,
-            init_cfg=init_cfg)
+            init_cfg=init_cfg,
+        )
         assert choice_probs is not None
-        assert sum(choice_probs) - 1 < np.finfo(np.float64).eps, \
-            f'Please make sure the sum of the {choice_probs} is 1.'
+        assert (sum(choice_probs) - 1 < np.finfo(np.float64).eps
+                ), f'Please make sure the sum of the {choice_probs} is 1.'
         self.choice_probs = choice_probs
 
     @property
@@ -295,10 +304,11 @@ class OneShotPathOP(OneShotOP):
             candidate_ops=candidate_ops,
             module_kwargs=module_kwargs,
             alias=alias,
-            init_cfg=init_cfg)
-        assert len(candidate_ops) >= 1, \
-            f'Number of candidate op must greater than 1, ' \
-            f'but got: {len(candidate_ops)}'
+            init_cfg=init_cfg,
+        )
+        assert len(candidate_ops) >= 1, (
+            f'Number of candidate op must greater than 1, '
+            f'but got: {len(candidate_ops)}')
 
         self._is_fixed = False
         self._chosen: Optional[str] = None
@@ -355,6 +365,7 @@ class OneShotPathOP(OneShotOP):
 
     def forward_choice(self, x: Any, choice: Optional[Dict] = None) -> Tensor:
         import ipdb
+
         ipdb.set_trace()
         path_ids = choice['path']  # eg.[0, 2, 3]
         op_ids = choice['op']  # eg.[1, 1, 2]

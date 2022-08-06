@@ -5,7 +5,7 @@ import logging
 from pplib.evaluator.zc_evaluator import ZeroCostPredictorEvaluator
 from pplib.nas.search_spaces import get_search_space
 from pplib.predictor import ZeroCost
-from pplib.utils import get_dataset_api, get_zc_benchmark_api
+from pplib.utils import get_zc_benchmark_api
 from pplib.utils.logging import get_logger
 from pplib.utils.utils import get_config_from_args, log_args, set_seed
 

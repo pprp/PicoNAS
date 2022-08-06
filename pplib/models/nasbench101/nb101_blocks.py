@@ -9,14 +9,19 @@ class ConvBnRelu(nn.Module):
         self.op = nn.Sequential(
             nn.Conv2d(
                 inplanes, outplanes, kernel_size=1, stride=1, bias=False),
-            nn.BatchNorm2d(outplanes), nn.ReLU(),
+            nn.BatchNorm2d(outplanes),
+            nn.ReLU(),
             nn.Conv2d(
                 outplanes,
                 outplanes,
                 kernel_size=k,
                 stride=1,
                 padding=k // 2,
-                bias=False), nn.BatchNorm2d(outplanes), nn.ReLU())
+                bias=False,
+            ),
+            nn.BatchNorm2d(outplanes),
+            nn.ReLU(),
+        )
 
     def forward(self, x):
         return self.op(x)
@@ -30,8 +35,10 @@ class MaxPool(nn.Module):
         self.op = nn.Sequential(
             nn.Conv2d(
                 inplanes, outplanes, kernel_size=1, stride=1, bias=False),
-            nn.BatchNorm2d(outplanes), nn.ReLU(),
-            nn.MaxPool2d(3, 1, padding=1))
+            nn.BatchNorm2d(outplanes),
+            nn.ReLU(),
+            nn.MaxPool2d(3, 1, padding=1),
+        )
 
     def forward(self, x):
         return self.op(x)

@@ -48,10 +48,10 @@ class MAESupernetNATS(SupernetNATS):
                 kernel_size=3,
                 stride=1,
                 padding=1,
-                bias=True),
+                bias=True,
+            ),
             nn.BatchNorm2d(self.last_channel // 2),
             nn.ReLU(inplace=True),
-
             # x32
             nn.Upsample(scale_factor=2),
             nn.Conv2d(
@@ -82,7 +82,8 @@ class MAESupernetNATS(SupernetNATS):
             p2=num_patch,
             c=3,
             h=2,
-            w=2)
+            w=2,
+        )
         return x
 
     def forward(self,
@@ -108,7 +109,8 @@ class MAESupernetNATS(SupernetNATS):
                 forward_list=forward_op[sum(self._op_layers_list[:i]
                                             ):sum(self._op_layers_list[:(i +
                                                                          1)])],
-                pre_op=pre_op)
+                pre_op=pre_op,
+            )
 
         # convert from dynamic to static
         x = self.last_dynamic_conv(x, forward_op[-1], 0)

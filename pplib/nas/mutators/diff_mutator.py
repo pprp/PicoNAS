@@ -22,10 +22,12 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
             Default to False.
     """
 
-    def __init__(self,
-                 custom_group: Optional[List[List[str]]] = None,
-                 with_alias: bool = False,
-                 init_cfg: Optional[Dict] = None) -> None:
+    def __init__(
+        self,
+        custom_group: Optional[List[List[str]]] = None,
+        with_alias: bool = False,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
         super().__init__(
             custom_group=custom_group,
             with_alias=with_alias,

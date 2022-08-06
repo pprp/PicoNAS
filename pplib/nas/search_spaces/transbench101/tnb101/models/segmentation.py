@@ -24,11 +24,13 @@ class Segmentation(nn.Module):
                 self.encoder = DDP(
                     self.encoder.to(rank),
                     device_ids=[rank],
-                    find_unused_parameters=True)
+                    find_unused_parameters=True,
+                )
                 self.decoder = DDP(
                     self.decoder.to(rank),
                     device_ids=[rank],
-                    find_unused_parameters=True)
+                    find_unused_parameters=True,
+                )
                 self.rank = rank
             else:
                 self.encoder = nn.DataParallel(self.encoder).to(

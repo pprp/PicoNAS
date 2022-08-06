@@ -231,7 +231,8 @@ class NasBench301SearchSpace(Graph):
             'op',
             ops.Stem(
                 C_in=self.in_channels,
-                C_out=self.channels[0] * stem_multiplier))
+                C_out=self.channels[0] * stem_multiplier),
+        )
 
         # edges connecting cells
         for u, v, data in sorted(self.edges(data=True)):
@@ -341,7 +342,8 @@ class NasBench301SearchSpace(Graph):
                     stride=stride,
                     padding=2,
                     dilation=2,
-                    affine=False),
+                    affine=False,
+                ),
                 ops.DilConv(
                     C,
                     C,
@@ -349,7 +351,8 @@ class NasBench301SearchSpace(Graph):
                     stride=stride,
                     padding=4,
                     dilation=2,
-                    affine=False),
+                    affine=False,
+                ),
             ],
         )
 
@@ -362,7 +365,8 @@ class NasBench301SearchSpace(Graph):
         self.update_nodes(
             NasBench301SearchSpace._truncate_input_edges,
             scope=self.OPTIMIZER_SCOPE,
-            single_instances=True)
+            single_instances=True,
+        )
 
     def prepare_evaluation(self):
         """
@@ -502,7 +506,8 @@ class NasBench301SearchSpace(Graph):
         self.set_compact(make_compact_immutable(compact))
 
     def sample_random_labeled_architecture(self):
-        assert self.labeled_archs is not None, 'Labeled archs not provided to sample from'
+        assert (self.labeled_archs
+                is not None), 'Labeled archs not provided to sample from'
 
         op_indices = random.choice(self.labeled_archs)
 

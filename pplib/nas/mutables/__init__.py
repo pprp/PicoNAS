@@ -7,7 +7,14 @@ from .mutable_value import MutableValue
 from .oneshot_mutable import OneShotMutable, OneShotOP, OneShotPathOP
 
 __all__ = [
-    'OneShotOP', 'OneShotMutable', 'DiffOP', 'DiffChoiceRoute',
-    'GumbelChoiceRoute', 'DiffMutable', 'OneShotPathOP', 'MutableValue',
-    'DynamicMixin', 'DynamicLinear'
+    'OneShotOP',
+    'OneShotMutable',
+    'DiffOP',
+    'DiffChoiceRoute',
+    'GumbelChoiceRoute',
+    'DiffMutable',
+    'OneShotPathOP',
+    'MutableValue',
+    'DynamicMixin',
+    'DynamicLinear',
 ]

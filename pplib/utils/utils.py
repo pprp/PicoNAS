@@ -5,7 +5,7 @@ import random
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 import torch
@@ -51,8 +51,8 @@ class Checkpointer(fvCheckpointer):
 
         checkpoint = self._load_file(path)
         incompatible = self._load_model(checkpoint)
-        if (incompatible is not None
-            ):  # handle some existing subclasses that returns None
+        if incompatible is not None:
+            # handle some existing subclasses that returns None
             self._log_incompatible_keys(incompatible)
 
         for key in self.checkpointables if checkpointables is None else checkpointables:
@@ -128,8 +128,8 @@ def compute_scores(ytest, test_pred):
                 y > sorted(test_pred)[max(-len(test_pred), -k - 1)]
                 for y in test_pred
             ])
-            metrics_dict['precision_{}'.format(k)] = (
-                sum(top_ytest & top_test_pred) / k)
+            metrics_dict['precision_{}'.format(k)] = sum(top_ytest
+                                                         & top_test_pred) / k
         metrics_dict['full_ytest'] = ytest.tolist()
         metrics_dict['full_testpred'] = test_pred.tolist()
 
@@ -199,25 +199,25 @@ def time_record(start):
           (hour, minute, second))
 
 
-def drop_path(x, drop_prob: float = 0., training: bool = False):
+def drop_path(x, drop_prob: float = 0.0, training: bool = False):
     """Drop paths (Stochastic Depth) per sample (when applied in main
     path of residual blocks). This is the same as the DropConnect impl
     I created for EfficientNet, etc networks, however, the original name
     is misleading as 'Drop Connect' is a different form of dropout in a
     separate paper...
     See discussion:
-        https://github.com/tensorflow/tpu/issues/494#issuecomment-532968956 ...
+        https://github.com/tensorflow/tpu/issues/494# issuecomment-532968956 ...
     I've opted for changing the layer and argument names to 'drop path'
     rather than mix DropConnect as a layer name and use
     'survival rate' as the argument.
     """
-    if drop_prob == 0. or not training:
+    if drop_prob == 0.0 or not training:
         return x
     keep_prob = 1 - drop_prob
     # work with diff dim tensors, not just 2D ConvNets
     shape = (x.shape[0], ) + (1, ) * (x.ndim - 1)
-    random_tensor = keep_prob + \
-        torch.rand(shape, dtype=x.dtype, device=x.device)
+    random_tensor = keep_prob + torch.rand(
+        shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
     return x.div(keep_prob) * random_tensor
 
@@ -280,7 +280,8 @@ def default_argument_parser():
         '--datapath',
         default=None,
         metavar='FILE',
-        help='Path to the folder with train/test data folders')
+        help='Path to the folder with train/test data folders',
+    )
     return parser
 
 

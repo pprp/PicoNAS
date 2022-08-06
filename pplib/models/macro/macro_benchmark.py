@@ -25,8 +25,11 @@ class ConvBNReLU(nn.Sequential):
                 stride,
                 padding,
                 groups=groups,
-                bias=False), nn.BatchNorm2d(out_planes),
-            nn.ReLU6(inplace=True))
+                bias=False,
+            ),
+            nn.BatchNorm2d(out_planes),
+            nn.ReLU6(inplace=True),
+        )
 
 
 class InvertedResidual(nn.Module):
@@ -53,7 +56,8 @@ class InvertedResidual(nn.Module):
                     hidden_dim,
                     stride=stride,
                     groups=hidden_dim,
-                    kernel_size=self.kernel_size),
+                    kernel_size=self.kernel_size,
+                ),
                 # pw-linear
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup),
@@ -65,9 +69,9 @@ class InvertedResidual(nn.Module):
 
 
 class Identity(nn.Module):
-    '''
+    """
     Identity cell
-    '''
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -120,7 +124,8 @@ class MacroBenchmarkSuperNet(nn.Module):
                 out_channels=channel,
                 num_blocks=num_blocks,
                 stride=stride,
-                block_type=block_type)
+                block_type=block_type,
+            )
             layer_name = f'layer{i+1}'
             self.add_module(layer_name, inverted_res_layer)
             self.layers.append(layer_name)
@@ -142,7 +147,8 @@ class MacroBenchmarkSuperNet(nn.Module):
                     kernel_size=3,
                     stride=2,
                     expand_ratio=3,
-                    use_res_connect=0)
+                    use_res_connect=0,
+                )
             ]
             return Sequential(*layers)
 
@@ -161,7 +167,8 @@ class MacroBenchmarkSuperNet(nn.Module):
                     kernel_size=3,
                     stride=stride,
                     expand_ratio=3,
-                    use_res_connect=1),
+                    use_res_connect=1,
+                ),
                 '2':
                 InvertedResidual(
                     self.in_channels,
@@ -169,7 +176,8 @@ class MacroBenchmarkSuperNet(nn.Module):
                     kernel_size=5,
                     stride=stride,
                     expand_ratio=6,
-                    use_res_connect=1)
+                    use_res_connect=1,
+                ),
             })
             osop = OneShotOP(candidate_ops=candidate_ops)
             layers.append(osop)

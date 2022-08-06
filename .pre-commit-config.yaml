@@ -4,8 +4,8 @@ repos:
     rev: 3.8.3
     hooks:
       - id: flake8
-        args: ["--ignore=E501,E126,W504,E741,E262,W503,E502,E402,E731"]
-  - repo: https://github.com/PyCQA/isort
+        args: ["--ignore=E501,E126,W504,E741,E262,W503,E502,E402,E731,F841,E722,F405"]
+  - repo: https://github.com/timothycrosley/isort
     rev: 5.10.1
     hooks:
       - id: isort

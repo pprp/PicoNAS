@@ -16,8 +16,13 @@ TODO: clean up this file.
 
 logger = logging.getLogger(__name__)
 
-one_hot_nasbench201 = [[1, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 1, 0, 0],
-                       [0, 0, 0, 1, 0], [0, 0, 0, 0, 1]]
+one_hot_nasbench201 = [
+    [1, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 1],
+]
 
 OPS = ['avg_pool_3x3', 'nor_conv_1x1', 'nor_conv_3x3', 'none', 'skip_connect']
 NUM_OPS = len(OPS)
@@ -105,7 +110,7 @@ def get_path_indices(arch, num_ops=5):
 
 
 def encode_paths(arch, num_ops=5, longest_path_length=3):
-    """ output one-hot encoding of paths """
+    """output one-hot encoding of paths"""
     num_paths = sum([num_ops**i for i in range(1, longest_path_length + 1)])
     path_indices = get_path_indices(arch, num_ops=num_ops)
     encoding = np.zeros(num_paths)
@@ -115,51 +120,67 @@ def encode_paths(arch, num_ops=5, longest_path_length=3):
 
 
 def encode_gcn_nasbench201(arch):
-    '''
+    """
     Input:
     a list of categorical ops starting from 0
-    '''
+    """
     ops = arch.get_op_indices()
     # offset ops list by one, add input and output to ops list
     ops = [op + 1 for op in ops]
     ops = [0, *ops, 6]
-    #print(ops)
+    # print(ops)
     ops_onehot = np.array([[i == op for i in range(7)] for op in ops],
                           dtype=np.float32)
-    matrix = np.array([[0, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 0, 0],
-                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
-                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
-                       [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0]],
-                      dtype=np.float32)
-    #matrix = np.transpose(matrix)
+    matrix = np.array(
+        [
+            [0, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ],
+        dtype=np.float32,
+    )
+    # matrix = np.transpose(matrix)
     dic = {
         'num_vertices': 8,
         'adjacency': matrix,
         'operations': ops_onehot,
         'mask': np.array([i < 8 for i in range(8)], dtype=np.float32),
-        'val_acc': 0.0
+        'val_acc': 0.0,
     }
 
     return dic
 
 
 def encode_bonas_nasbench201(arch):
-    '''
+    """
     Input:
     a list of categorical ops starting from 0
-    '''
+    """
     ops = arch.get_op_indices()
     # offset ops list by one, add input and output to ops list
     ops = [op + 1 for op in ops]
     ops = [0, *ops, 6]
-    #print(ops)
+    # print(ops)
     ops_onehot = np.array([[i == op for i in range(7)] for op in ops],
                           dtype=np.float32)
-    matrix = np.array([[0, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 0, 0],
-                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
-                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
-                       [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0]],
-                      dtype=np.float32)
+    matrix = np.array(
+        [
+            [0, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ],
+        dtype=np.float32,
+    )
 
     matrix = add_global_node(matrix, True)
     ops_onehot = add_global_node(ops_onehot, False)
@@ -173,7 +194,7 @@ def encode_bonas_nasbench201(arch):
 
 def add_global_node(mx, ifAdj):
     """add a global node to operation or adjacency matrixs, fill diagonal for adj and transpose adjs"""
-    if (ifAdj):
+    if ifAdj:
         mx = np.column_stack((mx, np.ones(mx.shape[0], dtype=np.float32)))
         mx = np.row_stack((mx, np.zeros(mx.shape[1], dtype=np.float32)))
         np.fill_diagonal(mx, 1)
@@ -186,26 +207,34 @@ def add_global_node(mx, ifAdj):
 
 
 def encode_seminas_nasbench201(arch):
-    '''
+    """
     Input:
     a list of categorical ops starting from 0
-    '''
+    """
     ops = arch.get_op_indices()
     # offset ops list by one, add input and output to ops list
     ops = [op + 1 for op in ops]
     ops = [0, *ops, 6]
-    matrix = np.array([[0, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 0, 0],
-                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
-                       [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
-                       [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0]],
-                      dtype=np.float32)
-    #matrix = np.transpose(matrix)
+    matrix = np.array(
+        [
+            [0, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ],
+        dtype=np.float32,
+    )
+    # matrix = np.transpose(matrix)
     dic = {
         'num_vertices': 8,
         'adjacency': matrix,
         'operations': ops,
         'mask': np.array([i < 8 for i in range(8)], dtype=np.float32),
-        'val_acc': 0.0
+        'val_acc': 0.0,
     }
 
     return dic

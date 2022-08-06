@@ -30,8 +30,10 @@ class SearchableShuffleNetV2(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1,
-                bias=False), nn.BatchNorm2d(self.in_channels, affine=False),
-            nn.ReLU6(inplace=True))
+                bias=False),
+            nn.BatchNorm2d(self.in_channels, affine=False),
+            nn.ReLU6(inplace=True),
+        )
 
         self.layers = nn.ModuleList()
         for channel, num_blocks, stride in self.arch_settings:
@@ -42,7 +44,8 @@ class SearchableShuffleNetV2(nn.Module):
             nn.Conv2d(
                 self.in_channels, self.last_channel, 1, 1, 0, bias=False),
             nn.BatchNorm2d(self.last_channel, affine=False),
-            nn.ReLU6(inplace=True))
+            nn.ReLU6(inplace=True),
+        )
 
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.dropout = nn.Dropout(0.1)
@@ -97,10 +100,10 @@ class SearchableMAE(SearchableShuffleNetV2):
                 kernel_size=3,
                 stride=1,
                 padding=1,
-                bias=True),
+                bias=True,
+            ),
             nn.BatchNorm2d(self.last_channel // 2),
             nn.ReLU(inplace=True),
-
             # x32
             nn.Upsample(scale_factor=2),
             nn.Conv2d(
@@ -131,7 +134,8 @@ class SearchableMAE(SearchableShuffleNetV2):
             p2=patch_size,
             c=3,
             h=2,
-            w=2)
+            w=2,
+        )
         return x
 
     def forward(self, x: Tensor, mask: Tensor) -> Tensor:  # type: ignore

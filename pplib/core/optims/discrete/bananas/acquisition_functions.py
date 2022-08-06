@@ -1,5 +1,4 @@
 import logging
-import sys
 
 import numpy as np
 from scipy.stats import norm
@@ -11,7 +10,7 @@ def acquisition_function(ensemble,
                          ytrain,
                          acq_fn_type='its',
                          explore_factor=0.5,
-                         ei_calibration_factor=5.):
+                         ei_calibration_factor=5.0):
     """
     input:  trained ensemble
             ytrain (because some acquisition functions

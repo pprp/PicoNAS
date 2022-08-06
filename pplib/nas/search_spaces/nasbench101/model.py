@@ -100,7 +100,7 @@ class Cell(nn.Module):
         # vertex_channels[i] = number of output channels of vertex i
         self.vertex_channels = ComputeVertexChannels(in_channels, out_channels,
                                                      self.spec.matrix)
-        #self.vertex_channels = [in_channels] + [out_channels] * (self.num_vertices - 1)
+        # self.vertex_channels = [in_channels] + [out_channels] * (self.num_vertices - 1)
 
         # operation for each node
         self.vertex_op = nn.ModuleList([None])
@@ -135,11 +135,11 @@ class Cell(nn.Module):
                 fan_in.append(self.input_op[t](x))
 
             # First sum all input tensors
-            #vertex_input = torch.stack(fan_in, dim=0).sum(dim=0)
+            # vertex_input = torch.stack(fan_in, dim=0).sum(dim=0)
             vertex_input = sum(fan_in)
 
             # compute vertex ouput by applying vertex op
-            #vertex_input = sum(fan_in) / len(fan_in)
+            # vertex_input = sum(fan_in) / len(fan_in)
             vertex_output = self.vertex_op[t](vertex_input)
             tensors.append(vertex_output)
 
@@ -163,9 +163,9 @@ class Cell(nn.Module):
                 outputs = outputs + self.input_op[self.num_vertices - 1](
                     tensors[0])
 
-            #if self.spec.matrix[0, self.num_vertices-1]:
+            # if self.spec.matrix[0, self.num_vertices-1]:
             #    out_concat.append(self.input_op[self.num_vertices-1](tensors[0]))
-            #outputs = sum(out_concat) / len(out_concat)
+            # outputs = sum(out_concat) / len(out_concat)
 
         return outputs
 

@@ -5,11 +5,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 __all__ = [
-    'rank_cross_entropy_loss', 'rank_infinite_loss_v1',
-    'rank_infinite_loss_v2', 'rank_infinite_relu', 'rank_infinite_softplus',
-    'rank_hinge_sign_infinite', 'rank_cross_entropy_focal_loss',
-    'rank_mixed_cross_entropy_loss', 'tanh_sign_infinite', 'tanh_infinite',
-    'tanh_infinite_norelu', 'PairwiseRankLoss', '_loss_fn', 'get_rank_loss_fn'
+    'rank_cross_entropy_loss',
+    'rank_infinite_loss_v1',
+    'rank_infinite_loss_v2',
+    'rank_infinite_relu',
+    'rank_infinite_softplus',
+    'rank_hinge_sign_infinite',
+    'rank_cross_entropy_focal_loss',
+    'rank_mixed_cross_entropy_loss',
+    'tanh_sign_infinite',
+    'tanh_infinite',
+    'tanh_infinite_norelu',
+    'PairwiseRankLoss',
+    '_loss_fn',
+    'get_rank_loss_fn',
 ]
 
 
@@ -84,9 +93,10 @@ class PairwiseRankLoss(nn.Module):
         loss2: the batch loss of arch2
     """
 
-    def forward(self, prior1, prior2, loss1, loss2, coeff=1.):
-        return coeff * F.relu(loss2 - loss1.detach(
-        )) if prior1 < prior2 else coeff * F.relu(loss1.detach() - loss2)
+    def forward(self, prior1, prior2, loss1, loss2, coeff=1.0):
+        return (coeff *
+                F.relu(loss2 - loss1.detach()) if prior1 < prior2 else coeff *
+                F.relu(loss1.detach() - loss2))
 
 
 _loss_fn = {

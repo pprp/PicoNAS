@@ -25,8 +25,12 @@ def compuate_rank_consistency(loader,
                               trainer: MacroTrainer,
                               type: str = 'val_acc') -> None:
     """compute rank consistency of different types of indicators."""
-    assert type in ['test_acc', 'MMACs', 'val_acc', 'Params'], \
-        f'Not support type {type}.'
+    assert type in [
+        'test_acc',
+        'MMACs',
+        'val_acc',
+        'Params',
+    ], f'Not support type {type}.'
 
     # compute true indicator list
     # [type]: test_acc, MMACs, val_acc, or Params
@@ -55,23 +59,27 @@ if __name__ == '__main__':
         '--json_path',
         type=str,
         default='./data/benchmark/benchmark_cifar10_dataset.json',
-        help='benchmark json file path')
+        help='benchmark json file path',
+    )
     parser.add_argument(
         '--ckpt_path',
         type=str,
         default='checkpoints/path_to_checkpoint.pth.tar',
-        help='path of supernet checkpoint.')
+        help='path of supernet checkpoint.',
+    )
     parser.add_argument(
         '--type',
         type=str,
         choices=['test_acc', 'MMACs', 'val_acc', 'Params'],
         default='test_acc',
-        help='target type to rank.')
+        help='target type to rank.',
+    )
     parser.add_argument(
         '--num_sample',
         type=int,
         default=100,
-        help='number of sample for rank evaluation.')
+        help='number of sample for rank evaluation.',
+    )
 
     args = parser.parse_args()
 

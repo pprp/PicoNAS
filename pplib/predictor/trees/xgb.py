@@ -19,8 +19,8 @@ class XGBoost(BaseTree):
             'max_depth': 6,
             'min_child_weight': 1,
             'colsample_bytree': 1,
-            'learning_rate': .3,
-            'colsample_bylevel': 1
+            'learning_rate': 0.3,
+            'colsample_bylevel': 1,
         }
         return params
 
@@ -32,15 +32,15 @@ class XGBoost(BaseTree):
             params = {
                 'objective': 'reg:squarederror',
                 'eval_metric': 'rmse',
-                #'early_stopping_rounds': 100,
+                # 'early_stopping_rounds': 100,
                 'booster': 'gbtree',
                 'max_depth': int(np.random.choice(range(1, 15))),
                 'min_child_weight': int(np.random.choice(range(1, 10))),
-                'colsample_bytree': np.random.uniform(.0, 1.0),
-                'learning_rate': loguniform(.001, .5),
-                #'alpha': 0.24167936088332426,
-                #'lambda': 31.393252465064943,
-                'colsample_bylevel': np.random.uniform(.0, 1.0),
+                'colsample_bytree': np.random.uniform(0.0, 1.0),
+                'learning_rate': loguniform(0.001, 0.5),
+                # 'alpha': 0.24167936088332426,
+                # 'lambda': 31.393252465064943,
+                'colsample_bylevel': np.random.uniform(0.0, 1.0),
             }
         self.hyperparams = params
         return params
@@ -64,11 +64,13 @@ class XGBoost(BaseTree):
         return super(XGBoost, self).fit(xtrain, ytrain, train_info, params,
                                         **kwargs)
 
-    def set_pre_computations(self,
-                             unlabeled=None,
-                             xtrain_zc_info=None,
-                             xtest_zc_info=None,
-                             unlabeled_zc_info=None):
+    def set_pre_computations(
+        self,
+        unlabeled=None,
+        xtrain_zc_info=None,
+        xtest_zc_info=None,
+        unlabeled_zc_info=None,
+    ):
         if xtrain_zc_info is not None:
             self.xtrain_zc_info = xtrain_zc_info
             self._verify_zc_info(xtrain_zc_info['zero_cost_scores'])

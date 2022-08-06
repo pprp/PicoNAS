@@ -2,7 +2,7 @@ import random
 from typing import Any, List
 
 
-class MutableValue():
+class MutableValue:
     """MutableValue is a new mutable for handling search dimensions
     that are not directly related to a module, such as kernel size,
     out channels, in channels, etc
@@ -11,9 +11,9 @@ class MutableValue():
     def __init__(self, candidates: List[Any], mode: str = 'max') -> None:
         super().__init__()
         self.supported_mode = ['random', 'min', 'max']
-        assert mode in self.supported_mode, \
-            f'The current mode {mode} is not supported.' \
-            f'Supported mode are {self.supported_mode}.'
+        assert mode in self.supported_mode, (
+            f'The current mode {mode} is not supported.'
+            f'Supported mode are {self.supported_mode}.')
 
         self._candidates = candidates
         self._chosen = None
@@ -28,9 +28,9 @@ class MutableValue():
 
     def sample_value(self, mode: str = 'max') -> Any:
         """Get current value based on mode."""
-        assert mode in self.supported_mode, \
-            f'The current mode {mode} is not supported.' \
-            f'Supported mode are {self.supported_mode}.'
+        assert mode in self.supported_mode, (
+            f'The current mode {mode} is not supported.'
+            f'Supported mode are {self.supported_mode}.')
 
         if mode == 'max':
             self._chosen = self._candidates[-1]
@@ -62,6 +62,5 @@ class MutableValue():
 
     @property
     def num_choices(self) -> int:
-        """int: length of choices.
-        """
+        """int: length of choices."""
         return len(self.choices)

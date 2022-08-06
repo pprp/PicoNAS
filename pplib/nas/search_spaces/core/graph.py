@@ -444,12 +444,12 @@ class Graph(torch.nn.Module, nx.DiGraph):
                     self.name, node_idx, log_formats(node)))
 
             # node internal: process input if necessary
-            #if ("subgraph" in node and "comb_op" not in node) or (
-            #"comb_op" in node and "subgraph" not in node
-            #):
-            #log_first_n(
-            #logging.WARN, "Comb_op is ignored if subgraph is defined!", n=1
-            #)
+            # if ("subgraph" in node and "comb_op" not in node) or (
+            # "comb_op" in node and "subgraph" not in node
+            # ):
+            # log_first_n(
+            # logging.WARN, "Comb_op is ignored if subgraph is defined!", n=1
+            # )
             # TODO: merge 'subgraph' and 'comb_op'. It is basicallly the same thing. Also in parse()
             if 'subgraph' in node:
                 x = node['subgraph'].forward_beforeGP(node['input'])
@@ -506,8 +506,10 @@ class Graph(torch.nn.Module, nx.DiGraph):
                                         return torch.nn.Sequential(*ops)(x)
                         # case for the nb101 graph
                         elif isinstance(
-                                edge_data.op, nl.search_spaces.nasbench101.
-                                primitives.ModelWrapper):
+                                edge_data.op,
+                                nl.search_spaces.nasbench101.primitives.
+                                ModelWrapper,
+                        ):
                             return torch.nn.Sequential(
                                 *edge_data.op.model.layers)(
                                     x)

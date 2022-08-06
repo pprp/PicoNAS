@@ -161,7 +161,8 @@ class Config:
             fileDirname=file_dirname,
             fileBasename=file_basename,
             fileBasenameNoExtension=file_basename_no_extension,
-            fileExtname=file_extname)
+            fileExtname=file_extname,
+        )
         with open(filename, encoding='utf-8') as f:
             # Setting encoding explicitly to resolve coding issue on windows
             config_file = f.read()
@@ -264,6 +265,7 @@ class Config:
                 del sys.modules[temp_module_name]
             elif filename.endswith(('.yml', '.yaml', '.json')):
                 import mmcv
+
                 cfg_dict = mmcv.load(temp_config_file.name)
             # close temp file
             temp_config_file.close()
@@ -271,14 +273,13 @@ class Config:
         # check deprecation information
         if DEPRECATION_KEY in cfg_dict:
             deprecation_info = cfg_dict.pop(DEPRECATION_KEY)
-            warning_msg = f'The config file {filename} will be deprecated ' \
-                'in the future.'
+            warning_msg = (f'The config file {filename} will be deprecated '
+                           'in the future.')
             if 'expected' in deprecation_info:
-                warning_msg += f' Please use {deprecation_info["expected"]} ' \
-                    'instead.'
+                warning_msg += f' Please use {deprecation_info["expected"]} ' 'instead.'
             if 'reference' in deprecation_info:
-                warning_msg += ' More information can be found at ' \
-                    f'{deprecation_info["reference"]}'
+                warning_msg += (' More information can be found at '
+                                f'{deprecation_info["reference"]}')
             warnings.warn(warning_msg, DeprecationWarning)
 
         cfg_text = filename + '\n'
@@ -289,8 +290,9 @@ class Config:
         if BASE_KEY in cfg_dict:
             cfg_dir = osp.dirname(filename)
             base_filename = cfg_dict.pop(BASE_KEY)
-            base_filename = base_filename if isinstance(
-                base_filename, list) else [base_filename]
+            base_filename = (
+                base_filename
+                if isinstance(base_filename, list) else [base_filename])
 
             cfg_dict_list = list()
             cfg_text_list = list()
@@ -503,8 +505,7 @@ class Config:
         def _contain_invalid_identifier(dict_str):
             contain_invalid_identifier = False
             for key_name in dict_str:
-                contain_invalid_identifier |= \
-                    (not str(key_name).isidentifier())
+                contain_invalid_identifier |= not str(key_name).isidentifier()
             return contain_invalid_identifier
 
         def _format_dict(input_dict, outest_level=False):
@@ -542,7 +543,8 @@ class Config:
         yapf_style = dict(
             based_on_style='pep8',
             blank_line_before_nested_class_or_def=True,
-            split_before_expression_after_opening_paren=True)
+            split_before_expression_after_opening_paren=True,
+        )
         text, _ = FormatCode(text, style_config=yapf_style, verify=True)
 
         return text
@@ -618,6 +620,7 @@ class Config:
                 will be dumped. Defaults to None.
         """
         import mmcv
+
         cfg_dict = super().__getattribute__('_cfg_dict').to_dict()
         if file is None:
             if self.filename is None or self.filename.endswith('.py'):
@@ -672,7 +675,8 @@ class Config:
         super().__setattr__(
             '_cfg_dict',
             Config._merge_a_into_b(
-                option_cfg_dict, cfg_dict, allow_list_keys=allow_list_keys))
+                option_cfg_dict, cfg_dict, allow_list_keys=allow_list_keys),
+        )
 
 
 class DictAction(Action):
@@ -724,8 +728,8 @@ class DictAction(Action):
             inside these brackets are ignored.
             """
             assert (string.count('(') == string.count(')')) and (
-                string.count('[') == string.count(']')), \
-                f'Imbalanced brackets exist in {string}'
+                string.count('[')
+                == string.count(']')), f'Imbalanced brackets exist in {string}'
             end = len(string)
             for idx, char in enumerate(string):
                 pre = string[:idx]
@@ -737,7 +741,7 @@ class DictAction(Action):
             return end
 
         # Strip ' and " characters and replace whitespace.
-        val = val.strip('\'\"').replace(' ', '')
+        val = val.strip("'\"").replace(' ', '')
         is_tuple = False
         if val.startswith('(') and val.endswith(')'):
             is_tuple = True

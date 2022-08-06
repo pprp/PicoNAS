@@ -91,7 +91,9 @@ class NaiveSyncBatchNorm(BatchNorm2d):
         meansqr = torch.mean(input * input, dim=[0, 2, 3])
 
         if self._stats_mode == '':
-            assert B > 0, 'SyncBatchNorm(stats_mode="") does not support zero batch size.'
+            assert (
+                B > 0
+            ), 'SyncBatchNorm(stats_mode="") does not support zero batch size.'
             vec = torch.cat([mean, meansqr], dim=0)
             vec = AllReduce.apply(vec) * (1.0 / dist.get_world_size())
             mean, meansqr = torch.split(vec, C)
@@ -104,16 +106,19 @@ class NaiveSyncBatchNorm(BatchNorm2d):
                 vec = vec + input.sum(
                 )  # make sure there is gradient w.r.t input
             else:
-                vec = torch.cat([
-                    mean, meansqr,
-                    torch.ones([1], device=mean.device, dtype=mean.dtype)
-                ],
-                                dim=0)
+                vec = torch.cat(
+                    [
+                        mean,
+                        meansqr,
+                        torch.ones([1], device=mean.device, dtype=mean.dtype),
+                    ],
+                    dim=0,
+                )
             vec = AllReduce.apply(vec * B)
 
             total_batch = vec[-1].detach()
-            momentum = total_batch.clamp(
-                max=1) * self.momentum  # no update if total_batch is 0
+            momentum = (total_batch.clamp(max=1) * self.momentum
+                        )  # no update if total_batch is 0
             total_batch = torch.max(
                 total_batch, torch.ones_like(total_batch))  # avoid div-by-zero
             mean, meansqr, _ = torch.split(vec / total_batch, C)
@@ -130,8 +135,10 @@ class NaiveSyncBatchNorm(BatchNorm2d):
         return input * scale + bias
 
     def extra_repr(self):
-        return '{num_features}, eps={eps}, momentum={momentum}, affine={affine}, ' \
-            'track_running_stats={track_running_stats}, _stats_mode={_stats_mode}'.format(**self.__dict__)
+        return (
+            '{num_features}, eps={eps}, momentum={momentum}, affine={affine}, '
+            'track_running_stats={track_running_stats}, _stats_mode={_stats_mode}'
+            .format(**self.__dict__))
 
     @classmethod
     def convert_sync_batchnorm(cls, module, process_group=None):
@@ -139,9 +146,13 @@ class NaiveSyncBatchNorm(BatchNorm2d):
         # print("using NaiveSyncBatchNorm!!")
         module_output = module
         if isinstance(module, torch.nn.modules.batchnorm._BatchNorm):
-            module_output = NaiveSyncBatchNorm(module.num_features, module.eps,
-                                               module.momentum, module.affine,
-                                               module.track_running_stats)
+            module_output = NaiveSyncBatchNorm(
+                module.num_features,
+                module.eps,
+                module.momentum,
+                module.affine,
+                module.track_running_stats,
+            )
             # process_group)
             if module.affine:
                 with torch.no_grad():
@@ -168,7 +179,7 @@ norm_cfg = {
 
 
 def build_norm_layer(cfg, num_features, postfix=''):
-    """ Build normalization layer
+    """Build normalization layer
 
     Args:
         cfg (dict): cfg should contain:

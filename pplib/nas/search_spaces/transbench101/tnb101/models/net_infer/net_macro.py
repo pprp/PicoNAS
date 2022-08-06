@@ -14,8 +14,11 @@ class MacroNet(nn.Module):
                  input_dim=(224, 224),
                  num_classes=75):
         super(MacroNet, self).__init__()
-        assert structure in ['full', 'drop_last', 'backbone'
-                             ], 'unknown structrue: %s' % repr(structure)
+        assert structure in [
+            'full',
+            'drop_last',
+            'backbone',
+        ], 'unknown structrue: %s' % repr(structure)
         self.structure = structure
         self._read_net_code(net_code)
         self.inplanes = self.base_channel
@@ -29,11 +32,13 @@ class MacroNet(nn.Module):
                 stride=2,
                 padding=1,
                 dilation=1,
-                bias=False),
+                bias=False,
+            ),
             nn.BatchNorm2d(
                 self.base_channel // 2, affine=True, track_running_stats=True),
             ReLUConvBN(self.base_channel // 2, self.base_channel, 3, 2, 1, 1,
-                       True, True))
+                       True, True),
+        )
 
         self.layers = []
         for i, layer_type in enumerate(self.macro_code):
@@ -42,17 +47,20 @@ class MacroNet(nn.Module):
             target_channel = self.inplanes * 2 if layer_type % 2 == 0 else self.inplanes
             stride = 2 if layer_type > 2 else 1
             self.feature_dim = [
-                self.feature_dim[0] // stride, self.feature_dim[1] // stride
+                self.feature_dim[0] // stride,
+                self.feature_dim[1] // stride,
             ]
             layer = self._make_layer(self.cell, target_channel, 2, stride,
                                      True, True)
             self.add_module(f'layer{i}', layer)
             self.layers.append(f'layer{i}')
 
-        self.avgpool = nn.AdaptiveAvgPool2d(
-            (1, 1)) if structure in ['drop_last', 'full'] else None
-        self.head = nn.Linear(self.inplanes,
-                              num_classes) if structure in ['full'] else None
+        self.avgpool = (
+            nn.AdaptiveAvgPool2d(
+                (1, 1)) if structure in ['drop_last', 'full'] else None)
+        self.head = (
+            nn.Linear(self.inplanes, num_classes)
+            if structure in ['full'] else None)
 
         if structure == 'full':
             self.output_dim = (1, num_classes)
@@ -89,14 +97,26 @@ class MacroNet(nn.Module):
                     affine=True,
                     track_running_stats=True):
         layers = [
-            cell(self.micro_code, self.inplanes, planes, stride, affine,
-                 track_running_stats)
+            cell(
+                self.micro_code,
+                self.inplanes,
+                planes,
+                stride,
+                affine,
+                track_running_stats,
+            )
         ]
         self.inplanes = planes * cell.expansion
         for _ in range(1, num_blocks):
             layers.append(
-                cell(self.micro_code, self.inplanes, planes, 1, affine,
-                     track_running_stats))
+                cell(
+                    self.micro_code,
+                    self.inplanes,
+                    planes,
+                    1,
+                    affine,
+                    track_running_stats,
+                ))
         return nn.Sequential(*layers)
 
     def _read_net_code(self, net_code):

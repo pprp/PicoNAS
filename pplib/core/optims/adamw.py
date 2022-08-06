@@ -24,13 +24,15 @@ class AdamW(Optimizer):
         https://openreview.net/forum?id=ryQu7f-RZ
     """
 
-    def __init__(self,
-                 params,
-                 lr=1e-3,
-                 betas=(0.9, 0.999),
-                 eps=1e-8,
-                 weight_decay=0,
-                 amsgrad=False):
+    def __init__(
+            self,
+            params,
+            lr=1e-3,
+            betas=(0.9, 0.999),
+            eps=1e-8,
+            weight_decay=0,
+            amsgrad=False,
+    ):
         if lr < 0.0:
             raise ValueError(f'Invalid learning rate: {lr}')
         if eps < 0.0:
@@ -116,6 +118,7 @@ class AdamW(Optimizer):
                 p.data.add_(
                     -step_size,
                     torch.mul(p.data, group['weight_decay']).addcdiv_(
-                        1, exp_avg, denom))
+                        1, exp_avg, denom),
+                )
 
         return loss

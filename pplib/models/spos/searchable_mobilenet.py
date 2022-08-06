@@ -9,7 +9,7 @@ from ..registry import register_model
 @register_model
 class SearchableMobileNet(nn.Module):
 
-    def __init__(self, classes: int = 10, width_mult: float = 1.) -> None:
+    def __init__(self, classes: int = 10, width_mult: float = 1.0) -> None:
         super().__init__()
         self.width_mult = width_mult
         self.arch_settings = [
@@ -31,8 +31,10 @@ class SearchableMobileNet(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1,
-                bias=False), nn.BatchNorm2d(self.in_channels, affine=False),
-            nn.ReLU6(inplace=True))
+                bias=False),
+            nn.BatchNorm2d(self.in_channels, affine=False),
+            nn.ReLU6(inplace=True),
+        )
 
         self.stem_MBConv = InvertedResidual(self.in_channels,
                                             int(24 * width_mult), 3, 1, 1, 1)
@@ -49,7 +51,8 @@ class SearchableMobileNet(nn.Module):
             nn.Conv2d(
                 self.in_channels, self.last_channel, 1, 1, 0, bias=False),
             nn.BatchNorm2d(self.last_channel, affine=False),
-            nn.ReLU6(inplace=True))
+            nn.ReLU6(inplace=True),
+        )
 
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(self.last_channel, classes, bias=False)

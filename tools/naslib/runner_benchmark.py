@@ -41,8 +41,9 @@ else:
 
 archs = load_sampled_architectures(config.search_space, postfix)
 
-end_index = config.start_idx + config.n_models if config.start_idx + \
-    config.n_models < len(archs) else len(archs)
+end_index = (
+    config.start_idx + config.n_models
+    if config.start_idx + config.n_models < len(archs) else len(archs))
 archs_to_evaluate = {
     idx: eval(archs[str(idx)])
     for idx in range(config.start_idx, end_index)
@@ -79,7 +80,7 @@ for i, (idx, arch) in enumerate(archs_to_evaluate.items()):
         zc_score['arch'] = str(arch)
         zc_score[predictor.method_type] = {
             'score': score,
-            'time': end_time - start_time
+            'time': end_time - start_time,
         }
         zc_score['val_accuracy'] = accuracy
         zc_scores.append(zc_score)
@@ -92,7 +93,7 @@ for i, (idx, arch) in enumerate(archs_to_evaluate.items()):
 
         output_file = os.path.join(
             output_dir,
-            f'benchmark--{config.search_space}--{config.dataset}--{config.start_idx}.json'
+            f'benchmark--{config.search_space}--{config.dataset}--{config.start_idx}.json',
         )
 
         with open(output_file, 'w') as f:

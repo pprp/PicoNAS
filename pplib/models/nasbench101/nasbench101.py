@@ -51,8 +51,10 @@ class NASBench101(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1,
-                bias=False), nn.BatchNorm2d(self.init_channels),
-            nn.ReLU(inplace=True))
+                bias=False),
+            nn.BatchNorm2d(self.init_channels),
+            nn.ReLU(inplace=True),
+        )
 
         self.cell_list = nn.ModuleList([])
         for i in range(9):
@@ -79,7 +81,7 @@ class NASBench101(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
+                m.weight.data.normal_(0, math.sqrt(2.0 / n))
                 if m.bias is not None:
                     m.bias.data.zero_()
             elif isinstance(m, nn.BatchNorm2d):
@@ -128,6 +130,7 @@ if __name__ == '__main__':
 
     # op: [2, 0]  path: [0, 2]
     from pplib.nas.mutators import OneShotMutator
+
     choice = random_choice(3)
     print(choice)
 

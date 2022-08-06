@@ -79,7 +79,7 @@ def convert_genotype_to_naslib(genotype, naslib_object):
         'dil_conv_5x5': ('DilConv5x5'),
         'avg_pool_3x3': ('AvgPool'),
         'max_pool_3x3': ('MaxPool'),
-        #"zero": ("Zero"),
+        # "zero": ("Zero"),
     }
     cell_names = ['normal_cell', 'reduction_cell']
 

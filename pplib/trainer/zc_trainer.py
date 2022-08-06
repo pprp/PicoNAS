@@ -72,11 +72,13 @@ class ZCTrainer(object):
             'params': n_parameters,
         })
 
-    def search(self,
-               resume_from='',
-               summary_writer=None,
-               after_epoch: Callable[[int], None] = None,
-               report_incumbent=True):
+    def search(
+        self,
+        resume_from='',
+        summary_writer=None,
+        after_epoch: Callable[[int], None] = None,
+        report_incumbent=True,
+    ):
         """
         Start the architecture search.
         Generates a json file with training statistics.
@@ -166,7 +168,8 @@ class ZCTrainer(object):
                     valid_acc,
                     test_acc,
                     train_time,
-                ) = self.optimizer.train_statistics(
+                ) = (
+                    self.optimizer.train_statistics()
                 )  # .train_statistics(report_incumbent) ZC_TODO: report incumbent missing in predictor
                 train_loss, valid_loss, test_loss = -1, -1, -1
 
@@ -570,7 +573,7 @@ class ZCTrainer(object):
             model=checkpointables.pop('model'),
             save_dir=self.config.save +
             '/search' if search else self.config.save + '/eval',
-            # **checkpointables #NOTE: this is throwing an Error
+            # **checkpointables # NOTE: this is throwing an Error
         )
 
         self.periodic_checkpointer = PeriodicCheckpointer(

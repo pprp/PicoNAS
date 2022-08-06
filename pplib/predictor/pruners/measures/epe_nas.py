@@ -59,7 +59,7 @@ def eval_score_perclass(jacob, labels=None, n_classes=10):
         try:
             corrs = np.array(np.corrcoef(per_class[c]))
 
-            s = np.sum(np.log(abs(corrs) + k))  #/len(corrs)
+            s = np.sum(np.log(abs(corrs) + k))  # /len(corrs)
             if n_classes > 100:
                 s /= len(corrs)
         except Exception:  # defensive programming

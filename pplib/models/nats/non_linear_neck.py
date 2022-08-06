@@ -28,24 +28,23 @@ class NonLinearNeck(BaseModule):
         init_cfg (dict or list[dict], optional): Initialization config dict.
     """
 
-    def __init__(self,
-                 in_channels,
-                 hid_channels,
-                 out_channels,
-                 num_layers=2,
-                 with_bias=False,
-                 with_last_bn=True,
-                 with_last_bn_affine=True,
-                 with_last_bias=False,
-                 with_avg_pool=True,
-                 vit_backbone=False,
-                 norm_cfg=dict(type='SyncBN'),
-                 init_cfg=[
-                     dict(
-                         type='Constant',
-                         val=1,
-                         layer=['_BatchNorm', 'GroupNorm'])
-                 ]):
+    def __init__(
+        self,
+        in_channels,
+        hid_channels,
+        out_channels,
+        num_layers=2,
+        with_bias=False,
+        with_last_bn=True,
+        with_last_bn_affine=True,
+        with_last_bias=False,
+        with_avg_pool=True,
+        vit_backbone=False,
+        norm_cfg=dict(type='SyncBN'),
+        init_cfg=[
+            dict(type='Constant', val=1, layer=['_BatchNorm', 'GroupNorm'])
+        ],
+    ):
         super(NonLinearNeck, self).__init__(init_cfg)
         self.with_avg_pool = with_avg_pool
         self.vit_backbone = vit_backbone
@@ -58,8 +57,7 @@ class NonLinearNeck(BaseModule):
         self.fc_names = []
         self.bn_names = []
         for i in range(1, num_layers):
-            this_channels = out_channels if i == num_layers - 1 \
-                else hid_channels
+            this_channels = out_channels if i == num_layers - 1 else hid_channels
             if i != num_layers - 1:
                 self.add_module(
                     f'fc{i}',
@@ -71,13 +69,15 @@ class NonLinearNeck(BaseModule):
                 self.add_module(
                     f'fc{i}',
                     nn.Linear(
-                        hid_channels, this_channels, bias=with_last_bias))
+                        hid_channels, this_channels, bias=with_last_bias),
+                )
                 if with_last_bn:
                     self.add_module(
                         f'bn{i}',
                         build_norm_layer(
                             dict(**norm_cfg, affine=with_last_bn_affine),
-                            this_channels)[1])
+                            this_channels)[1],
+                    )
                     self.bn_names.append(f'bn{i}')
                 else:
                     self.bn_names.append(None)

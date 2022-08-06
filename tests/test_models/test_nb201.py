@@ -3,6 +3,7 @@ from unittest import TestCase
 
 from pplib.models import DiffNASBench201Network, OneShotNASBench201Network
 from pplib.nas.mutators import DiffMutator, OneShotMutator
+from pplib.utils.get_dataset_api import get_dataset_api
 
 
 class TestNasBench201(TestCase):
@@ -25,16 +26,33 @@ class TestNasBench201(TestCase):
 
         arch_string = ''
 
-        for k, v in random_subnet_dict.items():
+        for i, (k, v) in enumerate(random_subnet_dict.items()):
             # v = 'conv_3x3'
             mapped_op_name = mapping[v]
             alias_name = list(alias2group_id.keys())[k]
             rank = alias_name.split('_')[1][-1]  # 0 or 1 or 2
             arch_string += '|'
-            arch_string += mapped_op_name + '~' + rank
+            arch_string += f'{mapped_op_name}~{rank}'
             arch_string += '|'
+            if i in [0, 2]:
+                arch_string += '+'
+        arch_string = arch_string.replace('||', '|')
 
-        print(arch_string)
+        api = get_dataset_api(search_space='nasbench201', dataset='cifar10')
+        print('=' * 30)
+        print(list(api['nb201_data'].keys())[:3])
+        print('=' * 30)
+        if arch_string in api['nb201_data'].keys():
+            results = api['nb201_data'][arch_string]['cifar10-valid']
+            print(f"train_losses: {results['train_losses'][-5:]}")
+            print(f"eval_losses: {results['eval_losses'][-5:]}")
+            print(f"train_acc1es: {results['train_acc1es'][-5:]}")
+            print(f"eval_acc1es: {results['eval_acc1es'][-5:]}")
+            print(f"cost_info: {results['cost_info']}")
+
+        else:
+            print(f'{arch_string} is not available')
+        print('=' * 30)
 
     def test_oneshot_nb201(self):
         model = OneShotNASBench201Network(16, 5)

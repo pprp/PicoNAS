@@ -7,7 +7,7 @@ from pplib.utils.misc import convert_arch2dict
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
 
-class MacroEvaluator(Evaluator):
+class NB201Evaluator(Evaluator):
 
     def __init__(self,
                  trainer,

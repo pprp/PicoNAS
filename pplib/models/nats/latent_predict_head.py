@@ -53,7 +53,7 @@ class LatentClsHead(BaseModule):
             type='Normal',
             std=0.01,
             layer='Linear',
-        )
+        ),
     ) -> None:
         super(LatentClsHead, self).__init__(init_cfg)
         self.predictor = nn.Linear(in_channels, num_classes)

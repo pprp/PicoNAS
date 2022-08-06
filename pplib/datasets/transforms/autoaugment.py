@@ -5,15 +5,15 @@ from PIL import Image, ImageEnhance, ImageOps
 
 
 class ImageNetPolicy(object):
-    """ Randomly choose one of the best 24 Sub-policies on ImageNet.
-        Example:
-        >>> policy = ImageNetPolicy()
-        >>> transformed = policy(image)
-        Example as a PyTorch Transform:
-        >>> transform=transforms.Compose([
-        >>>     transforms.Resize(256),
-        >>>     ImageNetPolicy(),
-        >>>     transforms.ToTensor()])
+    """Randomly choose one of the best 24 Sub-policies on ImageNet.
+    Example:
+    >>> policy = ImageNetPolicy()
+    >>> transformed = policy(image)
+    Example as a PyTorch Transform:
+    >>> transform=transforms.Compose([
+    >>>     transforms.Resize(256),
+    >>>     ImageNetPolicy(),
+    >>>     transforms.ToTensor()])
     """
 
     def __init__(self, fillcolor=(128, 128, 128)):
@@ -42,7 +42,7 @@ class ImageNetPolicy(object):
             SubPolicy(0.6, 'solarize', 5, 0.6, 'autocontrast', 5, fillcolor),
             SubPolicy(0.6, 'invert', 4, 1.0, 'equalize', 8, fillcolor),
             SubPolicy(0.6, 'color', 4, 1.0, 'contrast', 8, fillcolor),
-            SubPolicy(0.8, 'equalize', 8, 0.6, 'equalize', 3, fillcolor)
+            SubPolicy(0.8, 'equalize', 8, 0.6, 'equalize', 3, fillcolor),
         ]
 
     def __call__(self, img):
@@ -54,8 +54,7 @@ class ImageNetPolicy(object):
 
 
 class CIFAR10Policy(object):
-    """ Randomly choose one of the best 25 Sub-policies on CIFAR10.
-    """
+    """Randomly choose one of the best 25 Sub-policies on CIFAR10."""
 
     def __init__(self, fillcolor=(128, 128, 128)):
         self.policies = [
@@ -83,7 +82,7 @@ class CIFAR10Policy(object):
             SubPolicy(0.9, 'translateY', 9, 0.7, 'translateY', 9, fillcolor),
             SubPolicy(0.9, 'autocontrast', 2, 0.8, 'solarize', 3, fillcolor),
             SubPolicy(0.8, 'equalize', 8, 0.1, 'invert', 3, fillcolor),
-            SubPolicy(0.7, 'translateY', 9, 0.9, 'autocontrast', 1, fillcolor)
+            SubPolicy(0.7, 'translateY', 9, 0.9, 'autocontrast', 1, fillcolor),
         ]
 
     def __call__(self, img):
@@ -95,15 +94,15 @@ class CIFAR10Policy(object):
 
 
 class SVHNPolicy(object):
-    """ Randomly choose one of the best 25 Sub-policies on SVHN.
-        Example:
-        >>> policy = SVHNPolicy()
-        >>> transformed = policy(image)
-        Example as a PyTorch Transform:
-        >>> transform=transforms.Compose([
-        >>>     transforms.Resize(256),
-        >>>     SVHNPolicy(),
-        >>>     transforms.ToTensor()])
+    """Randomly choose one of the best 25 Sub-policies on SVHN.
+    Example:
+    >>> policy = SVHNPolicy()
+    >>> transformed = policy(image)
+    Example as a PyTorch Transform:
+    >>> transform=transforms.Compose([
+    >>>     transforms.Resize(256),
+    >>>     SVHNPolicy(),
+    >>>     transforms.ToTensor()])
     """
 
     def __init__(self, fillcolor=(128, 128, 128)):
@@ -132,7 +131,7 @@ class SVHNPolicy(object):
             SubPolicy(0.8, 'shearY', 4, 0.8, 'invert', 8, fillcolor),
             SubPolicy(0.7, 'shearX', 9, 0.8, 'translateY', 3, fillcolor),
             SubPolicy(0.8, 'shearY', 5, 0.7, 'autocontrast', 3, fillcolor),
-            SubPolicy(0.7, 'shearX', 2, 0.1, 'invert', 5, fillcolor)
+            SubPolicy(0.7, 'shearX', 2, 0.1, 'invert', 5, fillcolor),
         ]
 
     def __call__(self, img):
@@ -145,14 +144,16 @@ class SVHNPolicy(object):
 
 class SubPolicy(object):
 
-    def __init__(self,
-                 p1,
-                 operation1,
-                 magnitude_idx1,
-                 p2,
-                 operation2,
-                 magnitude_idx2,
-                 fillcolor=(128, 128, 128)):
+    def __init__(
+            self,
+            p1,
+            operation1,
+            magnitude_idx1,
+            p2,
+            operation2,
+            magnitude_idx2,
+            fillcolor=(128, 128, 128),
+    ):
         ranges = {
             'shearX': np.linspace(0, 0.3, 10),
             'shearY': np.linspace(0, 0.3, 10),
@@ -167,7 +168,7 @@ class SubPolicy(object):
             'brightness': np.linspace(0.0, 0.9, 10),
             'autocontrast': [0] * 10,
             'equalize': [0] * 10,
-            'invert': [0] * 10
+            'invert': [0] * 10,
         }
 
         def rotate_with_fill(img, magnitude):
@@ -183,26 +184,32 @@ class SubPolicy(object):
                 Image.AFFINE,
                 (1, magnitude * random.choice([-1, 1]), 0, 0, 1, 0),
                 Image.BICUBIC,
-                fillcolor=fillcolor),
+                fillcolor=fillcolor,
+            ),
             'shearY':
             lambda img, magnitude: img.transform(
                 img.size,
                 Image.AFFINE,
                 (1, 0, 0, magnitude * random.choice([-1, 1]), 1, 0),
                 Image.BICUBIC,
-                fillcolor=fillcolor),
+                fillcolor=fillcolor,
+            ),
             'translateX':
             lambda img, magnitude: img.transform(
                 img.size,
-                Image.AFFINE, (1, 0, magnitude * img.size[0] * random.choice(
-                    [-1, 1]), 0, 1, 0),
-                fillcolor=fillcolor),
+                Image.AFFINE,
+                (1, 0, magnitude * img.size[0] * random.choice([-1, 1]), 0, 1,
+                 0),
+                fillcolor=fillcolor,
+            ),
             'translateY':
             lambda img, magnitude: img.transform(
                 img.size,
-                Image.AFFINE, (1, 0, 0, 0, 1, magnitude * img.size[1] * random.
-                               choice([-1, 1])),
-                fillcolor=fillcolor),
+                Image.AFFINE,
+                (1, 0, 0, 0, 1, magnitude * img.size[1] * random.choice(
+                    [-1, 1])),
+                fillcolor=fillcolor,
+            ),
             'rotate':
             lambda img, magnitude: rotate_with_fill(img, magnitude),
             # "rotate": lambda img, magnitude:
@@ -228,7 +235,7 @@ class SubPolicy(object):
             'equalize':
             lambda img, magnitude: ImageOps.equalize(img),
             'invert':
-            lambda img, magnitude: ImageOps.invert(img)
+            lambda img, magnitude: ImageOps.invert(img),
         }
 
         # self.name = "{}_{:.2f}_and_{}_{:.2f}".format(
