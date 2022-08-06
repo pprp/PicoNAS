@@ -294,9 +294,9 @@ class NB201Trainer(BaseTrainer):
                         top5_vacc.avg,
                         global_step=step + self.current_epoch * len(loader),
                     )
-                self.logger.info(
-                    f'Val loss: {loss.item()}'
-                    f'Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}')
+            self.logger.info(
+                f'Val loss: {loss.item()}'
+                f'Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}')
 
         return top1_vacc.avg
 

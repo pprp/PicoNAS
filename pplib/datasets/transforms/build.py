@@ -17,7 +17,7 @@ def build_transforms(dataset='cifar10', type='train', config=None):
             transforms.RandomHorizontalFlip(),
         ]
 
-        if config.get('random_erase', False):
+        if getattr(config, 'random_erase', False):
             mid_transform = [
                 RandomErase(
                     config.random_erase_prob,
@@ -26,7 +26,7 @@ def build_transforms(dataset='cifar10', type='train', config=None):
                     config.random_erase_r,
                 ),
             ]
-        elif config.get('autoaugmentation', False):
+        elif getattr(config, 'autoaugmentation', False):
             mid_transform = [
                 CIFAR10Policy(),
             ]

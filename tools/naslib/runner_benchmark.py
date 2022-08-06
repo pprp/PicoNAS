@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import timeit
+import random 
 
 from pplib.datasets import build_dataloader
 from pplib.nas.search_spaces import get_search_space
@@ -39,67 +40,65 @@ if config.dataset in ['ninapro', 'svhn', 'scifar100']:
 else:
     postfix = ''
 
-archs = load_sampled_architectures(config.search_space, postfix)
+# archs = load_sampled_architectures(config.search_space, postfix)
+archs = [[random.randint(0, 4) for _ in range(6)] for _ in range(100)]
 
 end_index = (
     config.start_idx + config.n_models
     if config.start_idx + config.n_models < len(archs) else len(archs))
-archs_to_evaluate = {
-    idx: eval(archs[str(idx)])
-    for idx in range(config.start_idx, end_index)
-}
+
+archs_to_evaluate = {idx: archs[idx] for idx in range(config.start_idx, end_index)}
 
 utils.set_seed(config.seed)
-train_loader = build_dataloader(dataset='cifar', type='train')
+train_loader = build_dataloader(dataset='cifar10', type='train')
 
 predictor = ZeroCost(method_type=config.predictor)
 
 zc_scores = []
 
 for i, (idx, arch) in enumerate(archs_to_evaluate.items()):
-    try:
-        logger.info(
-            f'{i} \tComputing ZC score for model id {idx} with encoding {arch}'
-        )
-        zc_score = {}
-        graph = search_space.clone()
-        graph.set_spec(arch)
-        graph.parse()
-        if config.dataset in ['ninapro', 'svhn', 'scifar100']:
-            accuracy = api9x[str(arch)]
-        else:
-            accuracy = graph.query(
-                Metric.VAL_ACCURACY, config.dataset, dataset_api=dataset_api)
+    logger.info(
+        f'{i} \tComputing ZC score for model id {idx} with encoding {arch}'
+    )
+    zc_score = {}
+    graph = search_space.clone()
+    graph.set_spec(arch)
+    graph.parse()
+    if config.dataset in ['ninapro', 'svhn', 'scifar100']:
+        accuracy = api9x[str(arch)]
+    else:
+        accuracy = graph.query(
+            Metric.VAL_ACCURACY, config.dataset, dataset_api=dataset_api)
 
-        # Query predictor
-        start_time = timeit.default_timer()
-        score = predictor.query(graph, train_loader)
-        end_time = timeit.default_timer()
+    # Query predictor
+    start_time = timeit.default_timer()
+    score = predictor.query(graph, train_loader)
+    end_time = timeit.default_timer()
 
-        zc_score['idx'] = str(idx)
-        zc_score['arch'] = str(arch)
-        zc_score[predictor.method_type] = {
-            'score': score,
-            'time': end_time - start_time,
-        }
-        zc_score['val_accuracy'] = accuracy
-        zc_scores.append(zc_score)
+    zc_score['idx'] = str(idx)
+    zc_score['arch'] = str(arch)
+    zc_score[predictor.method_type] = {
+        'score': score,
+        'time': end_time - start_time,
+    }
+    zc_score['val_accuracy'] = accuracy
+    zc_scores.append(zc_score)
 
-        output_dir = os.path.join(config.data, 'zc_benchmarks',
-                                  config.predictor)
+    print(f"arch: {arch} score: {score}")
 
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+    # output_dir = os.path.join(config.data, 'zc_benchmarks',
+    #                             config.predictor)
 
-        output_file = os.path.join(
-            output_dir,
-            f'benchmark--{config.search_space}--{config.dataset}--{config.start_idx}.json',
-        )
+    # if not os.path.exists(output_dir):
+    #     os.makedirs(output_dir)
 
-        with open(output_file, 'w') as f:
-            json.dump(zc_scores, f)
-    except Exception as e:
-        logger.info(
-            f'Failed to compute score for model {idx} with arch {arch}!')
+    # output_file = os.path.join(
+    #     output_dir,
+    #     f'benchmark--{config.search_space}--{config.dataset}--{config.start_idx}.json',
+    # )
+
+    # with open(output_file, 'w') as f:
+    #     json.dump(zc_scores, f)
+
 
 logger.info('Done.')

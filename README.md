@@ -2,44 +2,6 @@
 
 single path one shot with CIFAR10
 
-
-# MAE
-
-- 1. pretrain:
-
-```bash
-python tools/mae_pretrain.py
-```
-
-- 2. retrain
-
-```bash
-python tools/train_classifier.py
-```
-
-# SPOS
-
-- Search Space 1: Official ShuffleNet-based Search space.
-
-```python
-python tools/train_spos.py
-```
-
-- Search Space 2: Macro BenchMark-based Search space.
-
-```python
-python tools/train_macro.py
-```
-
-# Rank
-
-To evaluate the rank consistency in nas, run:
-
-```python
-python tools/eval_rank.py
-```
-
-
 # TODO LIST
 
 - [x] NASBench201
@@ -101,18 +63,14 @@ dataset:
 
 # Tensorboard Writer
 
-EPOCH_LOSS/train_epoch_loss
-EPOCH_LOSS/valid_epoch_loss 
-
-STEP_LOSS/train_step_loss 
-STEP_LOSS/valid_step_loss 
-
-TRAIN_ACC/top1_train_acc 
-TRAIN_ACC/top5_train_acc
-
-VAL_ACC/top1_val_acc
-VAL_ACC/top5_val_acc
-
-RANK/kendall_tau 
-RANK/pearson 
-RANK/spearman
+- EPOCH_LOSS/train_epoch_loss
+- EPOCH_LOSS/valid_epoch_loss 
+- STEP_LOSS/train_step_loss 
+- STEP_LOSS/valid_step_loss 
+- TRAIN_ACC/top1_train_acc 
+- TRAIN_ACC/top5_train_acc
+- VAL_ACC/top1_val_acc
+- VAL_ACC/top5_val_acc
+- RANK/kendall_tau 
+- RANK/pearson 
+- RANK/spearman
