@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+
 """
 These are the encoding methods for nasbench101.
 The plan is to unify encodings across all search spaces.

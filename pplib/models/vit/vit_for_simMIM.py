@@ -309,8 +309,7 @@ class RelativePositionBias(nn.Module):
             self.relative_position_index.view(-1)].view(  # noqa: E501
                 self.window_size[0] * self.window_size[1] + 1,
                 self.window_size[0] * self.window_size[1] + 1,
-                -1,
-            )  # noqa: E501
+                -1)  # noqa: E501
         # Wh*Ww,Wh*Ww,nH
         return relative_position_bias.permute(
             2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
