@@ -25,7 +25,6 @@ class TestNasBench201(TestCase):
         }
 
         arch_string = ''
-
         for i, (k, v) in enumerate(random_subnet_dict.items()):
             # v = 'conv_3x3'
             mapped_op_name = mapping[v]

@@ -3,11 +3,12 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from models.net_ops.cell_ops import OPS, ReLUConvBN
 
 lib_dir = (Path(__file__).parent / '..' / '..').resolve()
 if str(lib_dir) not in sys.path:
     sys.path.insert(0, str(lib_dir))
+
+from models.net_ops.cell_ops import OPS, ReLUConvBN
 
 
 class MicroCell(nn.Module):

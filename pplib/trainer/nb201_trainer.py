@@ -58,7 +58,8 @@ class NB201Trainer(BaseTrainer):
         self._init_flops()
 
         if self.mutator is None:
-            self.mutator = OneShotMutator()
+            # use alias to build search group
+            self.mutator = OneShotMutator(with_alias=True)
             self.mutator.prepare_from_supernet(model)
 
         # evaluate the rank consistency
@@ -67,9 +68,8 @@ class NB201Trainer(BaseTrainer):
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
 
-    def _build_evaluator(self, dataloader, bench_path, num_sample=20):
-        self.evaluator = NB201Evaluator(self, dataloader, bench_path,
-                                        num_sample)
+    def _build_evaluator(self, dataloader, num_sample=20):
+        self.evaluator = NB201Evaluator(self, dataloader, num_sample)
 
     def _train(self, loader):
         self.model.train()
@@ -184,6 +184,10 @@ class NB201Trainer(BaseTrainer):
                 Number of training epochs.
 
         """
+        # build evaluator
+        if self.evaluator is None:
+            self._build_evaluator(val_loader, num_sample=20)
+
         # track total training time
         total_start_time = time.time()
 
@@ -221,18 +225,15 @@ class NB201Trainer(BaseTrainer):
             )
 
             if epoch % 5 == 0:
-                if self.evaluator is None:
-                    bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
-                    self._build_evaluator(
-                        val_loader, bench_path, num_sample=20)
-                else:
-                    kt, ps, sp = self.evaluator.compute_rank_consistency()
-                    self.writer.add_scalar(
-                        'kendall_tau', kt, global_step=self.current_epoch)
-                    self.writer.add_scalar(
-                        'pearson', ps, global_step=self.current_epoch)
-                    self.writer.add_scalar(
-                        'spearman', sp, global_step=self.current_epoch)
+                assert self.evaluator is not None
+                kt, ps, sp = self.evaluator.compute_rank_consistency(
+                    self.mutator)
+                self.writer.add_scalar(
+                    'kendall_tau', kt, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'pearson', ps, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'spearman', sp, global_step=self.current_epoch)
 
             self.writer.add_scalar(
                 'train_epoch_loss', tr_loss, global_step=self.current_epoch)
@@ -256,18 +257,15 @@ class NB201Trainer(BaseTrainer):
 
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
-                inputs, labels = batch_inputs
-                inputs = self._to_device(inputs, self.device)
-                labels = self._to_device(labels, self.device)
-
                 # move to device
-                outputs = self._predict(batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(
+                    batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
 
                 # compute accuracy
-                n = inputs.size(0)
+                n = labels.size(0)
                 top1, top5 = accuracy(outputs, labels, topk=(1, 5))
                 top1_vacc.update(top1.item(), n)
                 top5_vacc.update(top5.item(), n)
@@ -275,11 +273,8 @@ class NB201Trainer(BaseTrainer):
                 # accumulate loss
                 val_loss += loss.item()
 
-                # print every 20 iter
-                if step % 20 == 0:
-                    self.logger.info(
-                        f'Step: {step} \t Val loss: {loss.item()}'
-                        f'Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}')
+                # print every 50 iter
+                if step % 50 == 0:
                     self.writer.add_scalar(
                         'val_step_loss',
                         loss.item(),
@@ -295,8 +290,11 @@ class NB201Trainer(BaseTrainer):
                         top5_vacc.avg,
                         global_step=step + self.current_epoch * len(loader),
                     )
+                self.logger.info(
+                    f'Val loss: {loss.item()}'
+                    f'Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}')
 
-        return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
+        return top1_vacc.avg
 
     def _init_flops(self):
         """generate flops."""

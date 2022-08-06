@@ -58,4 +58,4 @@ OMP_NUM_THREADS=1
 
 
 # NB201
-CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name nb201_test --dataset cifar10 --crit ce
+CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name nb201_spos --dataset cifar10 --crit ce
