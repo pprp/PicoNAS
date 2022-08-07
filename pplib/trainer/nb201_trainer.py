@@ -68,6 +68,9 @@ class NB201Trainer(BaseTrainer):
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
 
+        # record current rand_subnet
+        self.rand_subnet = None
+
     def _build_evaluator(self, dataloader, num_sample=50):
         self.evaluator = NB201Evaluator(self, dataloader, num_sample)
 
@@ -126,7 +129,7 @@ class NB201Trainer(BaseTrainer):
             # print every 20 iter
             if step % self.print_freq == 0:
                 self.logger.info(
-                    f'Step: {step:03} Train loss: {loss.item():.4f} Top1 acc: {top1_tacc.avg:.3f} Top5 acc: {top5_tacc.avg:.3f}'
+                    f'Step: {step:03} Train loss: {loss.item():.4f} Top1 acc: {top1_tacc.avg:.3f} Top5 acc: {top5_tacc.avg:.3f} Current geno: {self.evaluator.generate_genotype(self.rand_subnet, self.mutator)}'
                 )
                 self.writer.add_scalar(
                     'STEP_LOSS/train_step_loss',
@@ -154,8 +157,8 @@ class NB201Trainer(BaseTrainer):
 
         # forward pass
         if self.searching:
-            rand_subnet = self.mutator.random_subnet
-            self.mutator.set_subnet(rand_subnet)
+            self.rand_subnet = self.mutator.random_subnet
+            self.mutator.set_subnet(self.rand_subnet)
         return self.model(inputs)
 
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
@@ -165,11 +168,58 @@ class NB201Trainer(BaseTrainer):
         labels = self._to_device(labels, self.device)
         # forward pass
         if subnet_dict is None:
-            rand_subnet = self.mutator.random_subnet
-            self.mutator.set_subnet(rand_subnet)
+            self.rand_subnet = self.mutator.random_subnet
+            self.mutator.set_subnet(self.rand_subnet)
         else:
             self.mutator.set_subnet(subnet_dict)
         return self.model(inputs), labels
+
+    def _validate(self, loader):
+        # self.model.eval()
+
+        val_loss = 0.0
+        top1_vacc = AvgrageMeter()
+        top5_vacc = AvgrageMeter()
+
+        with torch.no_grad():
+            for step, batch_inputs in enumerate(loader):
+                # move to device
+                outputs, labels = self.forward(batch_inputs, mode='predict')
+
+                # compute loss
+                loss = self._compute_loss(outputs, labels)
+
+                # compute accuracy
+                n = labels.size(0)
+                top1, top5 = accuracy(outputs, labels, topk=(1, 5))
+                top1_vacc.update(top1.item(), n)
+                top5_vacc.update(top5.item(), n)
+
+                # accumulate loss
+                val_loss += loss.item()
+
+                # print every 20 iter
+                if step % self.print_freq == 0:
+                    self.writer.add_scalar(
+                        'STEP_LOSS/valid_step_loss',
+                        loss.item(),
+                        global_step=step + self.current_epoch * len(loader),
+                    )
+                    self.writer.add_scalar(
+                        'VAL_ACC/top1_val_acc',
+                        top1_vacc.avg,
+                        global_step=step + self.current_epoch * len(loader),
+                    )
+                    self.writer.add_scalar(
+                        'VAL_ACC/top5_val_acc',
+                        top5_vacc.avg,
+                        global_step=step + self.current_epoch * len(loader),
+                    )
+            self.logger.info(
+                f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg}'
+                f' Top5 acc: {top5_vacc.avg} Current geno: {self.evaluator.generate_genotype(self.rand_subnet, self.mutator)}'
+            )
+        return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def fit(self, train_loader, val_loader, epochs):
         """Fits. High Level API
@@ -253,7 +303,7 @@ class NB201Trainer(BaseTrainer):
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
 
     def metric_score(self, loader, subnet_dict: Dict = None):
-        self.model.eval()
+        # self.model.eval()
 
         val_loss = 0.0
         top1_vacc = AvgrageMeter()
@@ -294,9 +344,9 @@ class NB201Trainer(BaseTrainer):
                         top5_vacc.avg,
                         global_step=step + self.current_epoch * len(loader),
                     )
-            self.logger.info(
-                f'Val loss: {loss.item()}'
-                f'Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}')
+            # self.logger.info(
+            #     f'Val loss: {loss.item()}'
+            #     f'Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}')
 
         return top1_vacc.avg
 

@@ -64,13 +64,13 @@ dataset:
 # Tensorboard Writer
 
 - EPOCH_LOSS/train_epoch_loss
-- EPOCH_LOSS/valid_epoch_loss 
-- STEP_LOSS/train_step_loss 
-- STEP_LOSS/valid_step_loss 
-- TRAIN_ACC/top1_train_acc 
+- EPOCH_LOSS/valid_epoch_loss
+- STEP_LOSS/train_step_loss
+- STEP_LOSS/valid_step_loss
+- TRAIN_ACC/top1_train_acc
 - TRAIN_ACC/top5_train_acc
 - VAL_ACC/top1_val_acc
 - VAL_ACC/top5_val_acc
-- RANK/kendall_tau 
-- RANK/pearson 
+- RANK/kendall_tau
+- RANK/pearson
 - RANK/spearman

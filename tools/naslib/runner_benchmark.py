@@ -1,8 +1,8 @@
 import json
 import logging
 import os
+import random
 import timeit
-import random 
 
 from pplib.datasets import build_dataloader
 from pplib.nas.search_spaces import get_search_space
@@ -47,7 +47,10 @@ end_index = (
     config.start_idx + config.n_models
     if config.start_idx + config.n_models < len(archs) else len(archs))
 
-archs_to_evaluate = {idx: archs[idx] for idx in range(config.start_idx, end_index)}
+archs_to_evaluate = {
+    idx: archs[idx]
+    for idx in range(config.start_idx, end_index)
+}
 
 utils.set_seed(config.seed)
 train_loader = build_dataloader(dataset='cifar10', type='train')
@@ -58,8 +61,7 @@ zc_scores = []
 
 for i, (idx, arch) in enumerate(archs_to_evaluate.items()):
     logger.info(
-        f'{i} \tComputing ZC score for model id {idx} with encoding {arch}'
-    )
+        f'{i} \tComputing ZC score for model id {idx} with encoding {arch}')
     zc_score = {}
     graph = search_space.clone()
     graph.set_spec(arch)
@@ -84,7 +86,7 @@ for i, (idx, arch) in enumerate(archs_to_evaluate.items()):
     zc_score['val_accuracy'] = accuracy
     zc_scores.append(zc_score)
 
-    print(f"arch: {arch} score: {score}")
+    print(f'arch: {arch} score: {score}')
 
     # output_dir = os.path.join(config.data, 'zc_benchmarks',
     #                             config.predictor)
@@ -99,6 +101,5 @@ for i, (idx, arch) in enumerate(archs_to_evaluate.items()):
 
     # with open(output_file, 'w') as f:
     #     json.dump(zc_scores, f)
-
 
 logger.info('Done.')

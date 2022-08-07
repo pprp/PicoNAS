@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 class ZeroCost(Predictor):
 
     def __init__(self, method_type='jacov'):
-        # available zero-cost method types: 
-        #       'jacov', 'snip', 'synflow', 
+        # available zero-cost method types:
+        #       'jacov', 'snip', 'synflow',
         #       'grad_norm', 'fisher', 'grasp'
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
