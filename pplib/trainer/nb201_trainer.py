@@ -1,5 +1,6 @@
+import random
 import time
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -74,6 +75,25 @@ class NB201Trainer(BaseTrainer):
     def _build_evaluator(self, dataloader, num_sample=50):
         self.evaluator = NB201Evaluator(self, dataloader, num_sample)
 
+    def _generate_fair_lists(self) -> List[Dict]:
+        search_group = self.mutator.search_group
+        fair_lists = []
+
+        choices_dict = dict()
+        num_choices = -1
+        for group_id, modules in search_group.items():
+            choices = modules[0].choices
+            choices_dict[group_id] = random.sample(choices, len(choices))
+            num_choices = len(choices)
+
+        for i in range(num_choices):
+            current_dict = dict()
+            for k, v in choices_dict.items():
+                current_dict[k] = v[i]
+            fair_lists.append(current_dict)
+
+        return fair_lists
+
     def _train(self, loader):
         self.model.train()
 
@@ -94,13 +114,11 @@ class NB201Trainer(BaseTrainer):
             # loss, outputs = self._forward_fairnas(batch_inputs)
 
             # Single Path One Shot
-            # compute loss
-            loss, outputs = self.forward(batch_inputs, mode='loss')
-            # backprop
-            loss.backward()
+            # loss, outputs = self.forward(batch_inputs, mode='loss')
+            # loss.backward()
 
             # SPOS with pairwise rankloss
-            # loss, outputs = self._forward_pairwise_loss(batch_inputs)
+            loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
             # spos with pairwise rankloss + cc distill
             # loss, outputs = self._forward_pairwise_loss_with_distill(
@@ -380,15 +398,20 @@ class NB201Trainer(BaseTrainer):
         inputs, labels = batch_inputs
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
-        fair_list = self._generate_fair_list()
+        fair_dicts = self._generate_fair_lists()
 
-        for i in range(len(fair_list)):
-            subnet_dict = fair_list[i]
-            self.mutator.set_subnet(subnet_dict)
+        loss_list = []
+
+        for i in range(len(fair_dicts)):
+            self.rand_subnet = fair_dicts[i]
+            self.mutator.set_subnet(self.rand_subnet)
             outputs = self.model(inputs)
             loss = self._compute_loss(outputs, labels)
-            loss.backward()
-        return loss, outputs
+            loss_list.append(loss)
+
+        sum_loss = sum(loss_list)
+        sum_loss.backward()
+        return sum_loss, outputs
 
     def _forward_pairwise_loss(self, batch_inputs):
         inputs, labels = batch_inputs
@@ -396,20 +419,20 @@ class NB201Trainer(BaseTrainer):
         labels = self._to_device(labels, self.device)
 
         # sample the first subnet
-        rand_subnet1 = self.mutator.random_subnet
-        self.mutator.set_subnet(rand_subnet1)
+        self.rand_subnet = self.mutator.random_subnet
+        self.mutator.set_subnet(self.rand_subnet)
         outputs = self.model(inputs)
         loss1 = self._compute_loss(outputs, labels)
         loss1.backward()
-        flops1 = self.get_subnet_flops(rand_subnet1)
+        flops1 = self.get_subnet_flops(self.rand_subnet)
 
         # sample the second subnet
-        rand_subnet2 = self.mutator.random_subnet
-        self.mutator.set_subnet(rand_subnet2)
+        self.rand_subnet = self.mutator.random_subnet
+        self.mutator.set_subnet(self.rand_subnet)
         outputs = self.model(inputs)
         loss2 = self._compute_loss(outputs, labels)
         loss2.backward(retain_graph=True)
-        flops2 = self.get_subnet_flops(rand_subnet2)
+        flops2 = self.get_subnet_flops(self.rand_subnet)
 
         # pairwise rank loss
         # lambda settings:

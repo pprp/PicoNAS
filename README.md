@@ -1,8 +1,6 @@
-# pplib
+# PPLIB for one shot nas
 
-single path one shot with CIFAR10
-
-# TODO LIST
+## TODO LIST
 
 - [x] NASBench201
 - [ ] LandmarkReg
@@ -19,14 +17,14 @@ single path one shot with CIFAR10
 - [ ] KD
 - [ ] Save path
 
-# Thanks
+## Thanks
 
 - MMRazor: https://github.com/open-mmlab/mmrazor
 - SimMIM: https://github.com/microsoft/SimMIM
 - NASLib: https://github.com/automl/NASLib
 - MixPath: https://github.com/xiaomi-automl/MixPath
 
-# NASLib
+## NASLib
 
 runner: 属于入口，兼容各种用法
 
@@ -55,13 +53,7 @@ dataset:
 - cifar100
 
 
-# 方向
-
-修改ratio
-
-添加siamesesupernetnats
-
-# Tensorboard Writer
+## Tensorboard Writer
 
 - EPOCH_LOSS/train_epoch_loss
 - EPOCH_LOSS/valid_epoch_loss
@@ -74,3 +66,8 @@ dataset:
 - RANK/kendall_tau
 - RANK/pearson
 - RANK/spearman
+
+
+## Important Bugs
+
+- [x] After setting `model.eval()`, the validation accuracy of CIFAR10 in NASBench201 is always 10%. [Torch version=1.8]

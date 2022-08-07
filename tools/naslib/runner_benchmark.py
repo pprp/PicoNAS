@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import random
 import timeit
 
@@ -9,8 +8,7 @@ from pplib.nas.search_spaces import get_search_space
 from pplib.nas.search_spaces.core.query_metrics import Metric
 from pplib.predictor.zerocost import ZeroCost
 from pplib.utils import get_logger, utils
-from pplib.utils.get_dataset_api import (get_dataset_api,
-                                         load_sampled_architectures)
+from pplib.utils.get_dataset_api import get_dataset_api
 
 
 def translate_str(s, replace_str='[]', with_str='()'):
