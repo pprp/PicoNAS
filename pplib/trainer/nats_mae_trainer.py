@@ -52,7 +52,7 @@ class NATSMAETrainer(NATSTrainer):
         self.cc_distill = CC()
         self.lambda_kd = 1000.0
 
-    def build_evaluator(self, dataloader, bench_path, num_sample=20):
+    def build_evaluator(self, dataloader, bench_path, num_sample=50):
         self.evaluator = NATSEvaluator(self, dataloader, bench_path,
                                        num_sample)
 

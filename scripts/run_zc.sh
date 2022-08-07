@@ -9,7 +9,9 @@ echo "Started at $(date)";
 
 searchspace=${1:-nasbench201}
 dataset=${2:-cifar10}
-predictor=${3:-flops}
+
+# 'jacov', 'snip', 'synflow', 'grad_norm', 'fisher', 'grasp', 'zen'
+predictor=${3:-zen}
 start_seed=${4:-9000}
 experiment=${5:-only_zc}
 seed=${6:-0}

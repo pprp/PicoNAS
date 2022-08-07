@@ -47,7 +47,7 @@ class NATSTrainer(BaseTrainer):
         self.method = method
         self.evaluator = None
 
-    def build_evaluator(self, dataloader, bench_path, num_sample=20):
+    def build_evaluator(self, dataloader, bench_path, num_sample=50):
         self.evaluator = NATSEvaluator(self, dataloader, bench_path,
                                        num_sample)
 
@@ -198,7 +198,7 @@ class NATSTrainer(BaseTrainer):
             if epoch % 5 == 0:
                 if self.evaluator is None:
                     bench_path = './data/benchmark/nats_cifar10_acc_rank.yaml'
-                    self.build_evaluator(val_loader, bench_path, num_sample=20)
+                    self.build_evaluator(val_loader, bench_path, num_sample=50)
                 else:
                     kt, ps, sp = self.evaluator.compute_rank_consistency()
                     self.writer.add_scalar(

@@ -72,7 +72,7 @@ class MacroTrainer(BaseTrainer):
         self.distill_loss = CC()
         self.lambda_kd = 1000.0
 
-    def _build_evaluator(self, dataloader, bench_path, num_sample=20):
+    def _build_evaluator(self, dataloader, bench_path, num_sample=50):
         self.evaluator = MacroEvaluator(self, dataloader, bench_path,
                                         num_sample)
 
@@ -382,7 +382,7 @@ class MacroTrainer(BaseTrainer):
                 if self.evaluator is None:
                     bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
                     self._build_evaluator(
-                        val_loader, bench_path, num_sample=20)
+                        val_loader, bench_path, num_sample=50)
                 else:
                     kt, ps, sp = self.evaluator.compute_rank_consistency()
                     self.writer.add_scalar(

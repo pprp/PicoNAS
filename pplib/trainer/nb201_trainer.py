@@ -68,7 +68,7 @@ class NB201Trainer(BaseTrainer):
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
 
-    def _build_evaluator(self, dataloader, num_sample=20):
+    def _build_evaluator(self, dataloader, num_sample=50):
         self.evaluator = NB201Evaluator(self, dataloader, num_sample)
 
     def _train(self, loader):
@@ -153,7 +153,7 @@ class NB201Trainer(BaseTrainer):
         labels = self._to_device(labels, self.device)
 
         # forward pass
-        if self.searching is True:
+        if self.searching:
             rand_subnet = self.mutator.random_subnet
             self.mutator.set_subnet(rand_subnet)
         return self.model(inputs)
@@ -164,7 +164,7 @@ class NB201Trainer(BaseTrainer):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
         # forward pass
-        if self.searching:
+        if subnet_dict is None:
             rand_subnet = self.mutator.random_subnet
             self.mutator.set_subnet(rand_subnet)
         else:
@@ -186,7 +186,7 @@ class NB201Trainer(BaseTrainer):
         """
         # build evaluator
         if self.evaluator is None:
-            self._build_evaluator(val_loader, num_sample=20)
+            self._build_evaluator(val_loader, num_sample=50)
 
         # track total training time
         total_start_time = time.time()
