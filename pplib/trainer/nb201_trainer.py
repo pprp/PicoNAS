@@ -378,6 +378,7 @@ class NB201Trainer(BaseTrainer):
         # Note 2: this function should be called before
         #       mutator.prepare_from_supernet()
         flops, params = get_model_complexity_info(self.model, self.input_shape)
+        self.model.train()
         return flops, params
 
     def get_subnet_flops(self, subnet_dict) -> float:

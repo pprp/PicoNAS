@@ -8,7 +8,7 @@ import torch.nn as nn
 from pplib.models.nasbench201.oneshot_nasbench201 import \
     OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
-from pplib.predictor.pruners.measures.zen import compute_zen_score
+from pplib.predictor.pruners.measures.synflow import compute_synflow_per_weight
 
 
 class ToyModel(nn.Module):
@@ -25,7 +25,7 @@ class ToyModel(nn.Module):
     def forward(self, x):
         x = self.c2(self.c1(x))
         x = self.gap(x)
-        x = x.view(x.shape(0), -1)
+        x = x.view(-1, 32)
         return self.linear(x)
 
     def forward_before_global_avg_pool(self, x):
@@ -34,29 +34,29 @@ class ToyModel(nn.Module):
         return self.c2(x)
 
 
-class TestZenScore(TestCase):
+class TestSynflowScore(TestCase):
 
-    def test_zen_score_with_fixmodel(self):
+    def test_synflow_score_with_fixmodel(self):
         inputs = torch.randn(4, 3, 32, 32)
         for _ in range(3):
             m = ToyModel()
-            score = compute_zen_score(
-                net=m, inputs=inputs, targets=None, repeat=3)
+            score = compute_synflow_per_weight(
+                net=m, inputs=inputs, targets=None, mode='other')
             assert score is not None
 
-    def test_nb201_zen_score_with_mutablemodel(self):
+    def test_nb201_synflow_score_with_mutablemodel(self):
         inputs = torch.randn(4, 3, 32, 32)
 
         m = OneShotNASBench201Network()
         o = OneShotMutator(with_alias=True)
         o.prepare_from_supernet(m)
 
-        for i in range(3):
+        for i in range(10):
             rand_subnet = o.random_subnet
             o.set_subnet(rand_subnet)
-            score = compute_zen_score(
-                net=m, inputs=inputs, targets=None, repeat=5)
-            print(f'The score of {i} th model is {score}')
+            score = compute_synflow_per_weight(
+                net=m, inputs=inputs, targets=None, mode='other')
+            print(f'The score of {i} th model is {score[0].shape}')
 
 
 if __name__ == '__main__':
