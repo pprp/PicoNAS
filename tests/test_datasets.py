@@ -4,7 +4,7 @@ from unittest import TestCase
 import numpy as np
 from einops import rearrange
 
-from pplib.datasets import build_dataloader, build_dataset, build_loader_simmim
+from pplib.datasets import build_dataloader, build_dataset
 from pplib.utils.config import Config
 from pplib.utils.logging import get_logger
 
@@ -17,38 +17,19 @@ class Dict(dict):
 class TestDataset(TestCase):
 
     def test_dataset(self):
-        args = dict(
-            batch_size=64,
-            data_dir='./data/cifar',
-            fast=False,
-            nw=2,
-            random_erase=False,
-            autoaugmentation=None,
-            cutout=None,
-        )
-        dataset = build_dataset(
-            type='train', name='cifar10', config=Config(args))
+        dataset = build_dataset(type='train', dataset='cifar10')
         assert dataset is not None
         for i, (img, label) in enumerate(dataset):
-            if i > 5:
+            if i > 2:
                 break
             # print(img.shape, label)
 
     def test_dataloader(self):
-        args = dict(
-            batch_size=64,
-            fast=False,
-            nw=2,
-            random_erase=False,
-            autoaugmentation=None,
-            cutout=None,
-            data_dir='./data/cifar',
-        )
-        dataloader = build_dataloader(config=Config(args))
+        dataloader = build_dataloader(type='train', dataset='cifar10')
         assert dataloader is not None
 
         for i, (img, label) in enumerate(dataloader):
-            if i > 5:
+            if i > 2:
                 break
             # print(img.shape, label.shape)
 
@@ -61,8 +42,7 @@ class TestDataset(TestCase):
         return img
 
     def test_dataloader_simmim(self):
-        logger = get_logger('test')
-        loader = build_loader_simmim(logger)
+        loader = build_dataloader(type='val', dataset='simmim')
 
         # import ipdb; ipdb.set_trace()
         for i, (img, mask, _) in enumerate(loader):

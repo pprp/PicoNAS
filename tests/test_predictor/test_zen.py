@@ -1,35 +1,62 @@
+import random
 import unittest
 from unittest import TestCase
 
-from pplib.datasets import build_dataloader
-from pplib.nas.search_spaces import get_search_space
-from pplib.utils.config import Config
-from pplib.utils.get_dataset_api import get_zc_benchmark_api
+import torch
+import torch.nn as nn
+
+from pplib.models.nasbench201.oneshot_nasbench201 import \
+    OneShotNASBench201Network
+from pplib.nas.mutators import OneShotMutator
+from pplib.predictor.pruners.measures.zen import compute_zen_score
+
+
+class ToyModel(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        current_c = random.randint(8, 20)
+        self.c1 = nn.Conv2d(3, current_c, kernel_size=3, stride=1, padding=1)
+        self.relu = nn.ReLU()
+        self.c2 = nn.Conv2d(current_c, 32, kernel_size=1, stride=2, padding=0)
+        self.gap = nn.AdaptiveAvgPool2d(1)
+        self.linear = nn.Linear(32, 10)
+
+    def forward(self, x):
+        x = self.c2(self.c1(x))
+        x = self.gap(x)
+        x = x.view(x.shape(0), -1)
+        return self.linear(x)
+
+    def forward_before_global_avg_pool(self, x):
+        x = self.c1(x)
+        x = self.relu(x)
+        return self.c2(x)
 
 
 class TestZenScore(TestCase):
 
-    def test_zen_score(self):
-        args = dict(
-            batch_size=64,
-            fast=False,
-            nw=2,
-            random_erase=False,
-            autoaugmentation=None,
-            cutout=None,
-            data_dir='./data/cifar',
-        )
-        dataloader = build_dataloader(config=Config(args))
+    def test_zen_score_with_fixmodel(self):
+        inputs = torch.randn(4, 3, 32, 32)
+        for _ in range(3):
+            m = ToyModel()
+            score = compute_zen_score(
+                net=m, inputs=inputs, targets=None, repeat=3)
+            assert score is not None
 
-        search_space = get_search_space('nasbench201', 'cifar10')
-        zc_api = get_zc_benchmark_api('nasbench201', 'cifar10')  # dict
-        search_space.instantiate_model = False
-        search_space.labeled_archs = [eval(arch) for arch in zc_api.keys()]
+    def test_nb201_zen_score_with_mutablemodel(self):
+        inputs = torch.randn(4, 3, 32, 32)
 
-        loss_fn = search_space.get_loss_fn()
+        m = OneShotNASBench201Network()
+        o = OneShotMutator()
+        o.prepare_from_supernet(m)
 
-        assert dataloader is not None
-        assert loss_fn is not None
+        for i in range(3):
+            rand_subnet = o.random_subnet
+            o.set_subnet(rand_subnet)
+            score = compute_zen_score(
+                net=m, inputs=inputs, targets=None, repeat=5)
+            print(f'The score of {i} th model is {score}')
 
 
 if __name__ == '__main__':

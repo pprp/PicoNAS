@@ -467,3 +467,9 @@ class OneShotNASBench201Network(nn.Module):
         out = out.view(out.size(0), -1)
         logits = self.classifier(out)
         return logits, out
+
+    def forward_before_global_avg_pool(self, inputs):
+        feature = self.stem(inputs)
+        for cell in self.cells:
+            feature = cell(feature)
+        return self.lastact(feature)

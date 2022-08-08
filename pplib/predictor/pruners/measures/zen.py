@@ -47,7 +47,7 @@ def compute_zen_score(
     dtype = torch.half if fp16 else torch.float32
 
     with torch.no_grad():
-        for repeat_count in range(repeat):
+        for _ in range(repeat):
             network_weight_gaussian_init(net)
             input = torch.randn(
                 size=list(inputs.shape), device=device, dtype=dtype)
