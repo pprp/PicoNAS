@@ -51,12 +51,16 @@ def get_args():
         help='name of this experiments',
     )
 
+    # ******************************* settings *******************************#
+
     parser.add_argument(
         '--crit', type=str, default='mse', help='decide the criterion')
     parser.add_argument(
         '--optims', type=str, default='sgd', help='decide the optimizer')
     parser.add_argument(
         '--sched', type=str, default='cosine', help='decide the scheduler')
+    parser.add_argument(
+        '--p_lambda', type=float, default=1, help='decide the scheduler')
 
     parser.add_argument(
         '--classes', type=int, default=10, help='dataset classes')
@@ -149,6 +153,7 @@ def main():
         searching=True,
         device=device,
         log_name=cfg.log_name,
+        p_lambda=cfg.p_lambda,
     )
 
     start = time.time()

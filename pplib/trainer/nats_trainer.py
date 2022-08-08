@@ -56,7 +56,7 @@ class NATSTrainer(BaseTrainer):
         inputs, labels = batch_inputs
         labels = self._to_device(labels, self.device)
         out = self._forward(batch_inputs)
-        return self._compute_loss(out, labels), out, labels
+        return self._compute_loss(out, labels), out
 
     def _train(self, loader):
         self.model.train()
@@ -68,12 +68,11 @@ class NATSTrainer(BaseTrainer):
         for step, batch_inputs in enumerate(loader):
             # remove gradient from previous passes
             self.optimizer.zero_grad()
+            labels = self._to_device(batch_inputs[1], self.device)
 
             # compute loss
-            loss, outputs, labels = self.forward(batch_inputs, mode='loss')
-
-            # backprop
-            loss.backward()
+            # loss, outputs = self.forward_spos(batch_inputs)
+            loss, outputs = self.forward_fairnas(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():
@@ -84,7 +83,7 @@ class NATSTrainer(BaseTrainer):
             self.optimizer.step()
 
             # compute accuracy
-            n = labels.size(0)
+            n = outputs.size(0)
             top1, top5 = accuracy(outputs, labels, topk=(1, 5))
             top1_tacc.update(top1.item(), n)
             top5_tacc.update(top5.item(), n)
@@ -123,8 +122,6 @@ class NATSTrainer(BaseTrainer):
 
         # forward pass
         if self.searching is True:
-            # rand_subnet = self.mutator.random_subnet
-            # self.mutator.set_subnet(rand_subnet)
             forward_op_list = self.model.set_forward_cfg(self.method)
         return self.model(inputs, list(forward_op_list))
 
@@ -244,33 +241,34 @@ class NATSTrainer(BaseTrainer):
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
 
     def forward_fairnas(self, batch_inputs):
-        inputs, mask, labels = batch_inputs
+        inputs, labels = batch_inputs
         inputs = self._to_device(inputs, self.device)
-        mask = self._to_device(mask, self.device)
         labels = self._to_device(labels, self.device)
+        loss_list = []
 
         forward_op_lists = self.model.set_forward_cfg('fair')
         for op_list in forward_op_lists:
-            output, feat = self.model(inputs, mask, op_list)
-            loss = self._compute_loss(output, inputs)
-            loss.backward()
-        return loss
+            output = self.model(inputs, op_list)
+            loss = self._compute_loss(output, labels)
+            loss_list.append(loss)
+        sum_loss = sum(loss_list)
+        sum_loss.backward()
+        return sum_loss, output
 
     def forward_spos(self, batch_inputs):
-        loss = self.forward(batch_inputs, mode='loss')
+        loss, outputs = self.forward(batch_inputs, mode='loss')
         loss.backward()
-        return loss
+        return loss, outputs
 
     def forward_autoslim(self, batch_inputs):
-        inputs, mask, labels = batch_inputs
+        inputs, labels = batch_inputs
         inputs = self._to_device(inputs, self.device)
-        mask = self._to_device(mask, self.device)
         labels = self._to_device(labels, self.device)
 
         # max supernet
         max_forward_list = self.model.set_forward_cfg('large')
-        t_output, t_feat = self.model(inputs, mask, max_forward_list)
-        t_loss = self._compute_loss(t_output, inputs)
+        t_output, t_feat = self.model(inputs, max_forward_list)
+        t_loss = self._compute_loss(t_output, labels)
         t_loss.backward(retain_graph=True)
 
         # middle supernet
@@ -278,21 +276,20 @@ class NATSTrainer(BaseTrainer):
             self.model.set_forward_cfg('uni') for _ in range(2)
         ]
         for mid_forward_list in mid_forward_lists:
-            output, s_feat = self.model(inputs, mask, mid_forward_list)
+            output, s_feat = self.model(inputs, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
             loss.backward(retain_graph=True)
 
         # min supernet
         min_forward_list = self.model.set_forward_cfg('small')
-        output, s_feat = self.model(inputs, mask, min_forward_list)
+        output, s_feat = self.model(inputs, min_forward_list)
         loss = self.distill_criterion(output, t_output)
         loss.backward()
-        return t_loss
+        return t_loss, output
 
     def forward_cc_autoslim(self, batch_inputs):
-        inputs, mask, labels = batch_inputs
+        inputs, labels = batch_inputs
         inputs = self._to_device(inputs, self.device)
-        mask = self._to_device(mask, self.device)
         labels = self._to_device(labels, self.device)
 
         mse_loss_list = []
@@ -300,8 +297,8 @@ class NATSTrainer(BaseTrainer):
 
         # max supernet
         max_forward_list = self.model.set_forward_cfg('large')
-        t_output, feat_t = self.model(inputs, mask, max_forward_list)
-        t_loss = self._compute_loss(t_output, inputs)
+        t_output, feat_t = self.model(inputs, max_forward_list)
+        t_loss = self._compute_loss(t_output, labels)
         mse_loss_list.append(t_loss)
 
         # middle supernet
@@ -309,7 +306,7 @@ class NATSTrainer(BaseTrainer):
             self.model.set_forward_cfg('uni') for _ in range(2)
         ]
         for mid_forward_list in mid_forward_lists:
-            output, feat_s = self.model(inputs, mask, mid_forward_list)
+            output, feat_s = self.model(inputs, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
             cc_loss = self.cc_distill(feat_s, feat_t) * self.lambda_kd
 
@@ -318,7 +315,7 @@ class NATSTrainer(BaseTrainer):
 
         # min supernet
         min_forward_list = self.model.set_forward_cfg('small')
-        output, feat_s = self.model(inputs, mask, min_forward_list)
+        output, feat_s = self.model(inputs, min_forward_list)
         loss = self.distill_criterion(output, t_output)
         cc_loss = self.cc_distill(feat_s, feat_t) * self.lambda_kd
 
@@ -330,4 +327,50 @@ class NATSTrainer(BaseTrainer):
 
         # self.logger.info(f"mse loss: {sum(mse_loss_list).item()} cc loss: {sum(cc_loss_list).item()}")
 
-        return t_loss
+        return t_loss, output
+
+    def _validate(self, loader):
+        # self.model.eval()
+
+        val_loss = 0.0
+        top1_vacc = AvgrageMeter()
+        top5_vacc = AvgrageMeter()
+
+        with torch.no_grad():
+            for step, batch_inputs in enumerate(loader):
+                # move to device
+                outputs, labels = self.forward(batch_inputs, mode='predict')
+
+                # compute loss
+                loss = self._compute_loss(outputs, labels)
+
+                # compute accuracy
+                n = labels.size(0)
+                top1, top5 = accuracy(outputs, labels, topk=(1, 5))
+                top1_vacc.update(top1.item(), n)
+                top5_vacc.update(top5.item(), n)
+
+                # accumulate loss
+                val_loss += loss.item()
+
+                # print every 20 iter
+                if step % self.print_freq == 0:
+                    self.writer.add_scalar(
+                        'STEP_LOSS/valid_step_loss',
+                        loss.item(),
+                        global_step=step + self.current_epoch * len(loader),
+                    )
+                    self.writer.add_scalar(
+                        'VAL_ACC/top1_val_acc',
+                        top1_vacc.avg,
+                        global_step=step + self.current_epoch * len(loader),
+                    )
+                    self.writer.add_scalar(
+                        'VAL_ACC/top5_val_acc',
+                        top5_vacc.avg,
+                        global_step=step + self.current_epoch * len(loader),
+                    )
+            self.logger.info(
+                f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
+            )
+        return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg

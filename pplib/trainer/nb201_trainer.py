@@ -2,7 +2,6 @@ import random
 import time
 from typing import Dict, List
 
-import numpy as np
 import torch
 from mmcv.cnn import get_model_complexity_info
 
@@ -43,6 +42,7 @@ class NB201Trainer(BaseTrainer):
         device: torch.device = torch.device('cuda'),
         log_name='macro',
         searching: bool = True,
+        p_lambda: float = 1.,
     ):
         super().__init__(
             model=model,
@@ -68,6 +68,8 @@ class NB201Trainer(BaseTrainer):
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
+        # TODO temp vars for grid search
+        self._lambda = p_lambda
 
         # record current rand_subnet
         self.rand_subnet = None
@@ -111,14 +113,14 @@ class NB201Trainer(BaseTrainer):
             self.optimizer.zero_grad()
 
             # FairNAS
-            loss, outputs = self._forward_fairnas(batch_inputs)
+            # loss, outputs = self._forward_fairnas(batch_inputs)
 
             # Single Path One Shot
             # loss, outputs = self.forward(batch_inputs, mode='loss')
             # loss.backward()
 
             # SPOS with pairwise rankloss
-            # loss, outputs = self._forward_pairwise_loss(batch_inputs)
+            loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
             # spos with pairwise rankloss + cc distill
             # loss, outputs = self._forward_pairwise_loss_with_distill(
@@ -439,9 +441,8 @@ class NB201Trainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = (2 *
-                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
+        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1,
+                                                      loss2)
         loss3.backward()
 
         return loss2, outputs
@@ -479,9 +480,8 @@ class NB201Trainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = (2 *
-                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
+        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1,
+                                                      loss2)
         loss_list.append(loss3)
 
         # distill loss

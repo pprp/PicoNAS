@@ -455,7 +455,6 @@ class OneShotNASBench201Network(nn.Module):
         out = self.global_pooling(out)
         out = out.view(out.size(0), -1)
         logits = self.classifier(out)
-
         return logits
 
     def forward_distill(self, inputs):
