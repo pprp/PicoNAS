@@ -48,10 +48,10 @@ class TestZenScore(TestCase):
         inputs = torch.randn(4, 3, 32, 32)
 
         m = OneShotNASBench201Network()
-        o = OneShotMutator()
+        o = OneShotMutator(with_alias=True)
         o.prepare_from_supernet(m)
 
-        for i in range(3):
+        for i in range(300):
             rand_subnet = o.random_subnet
             o.set_subnet(rand_subnet)
             score = compute_zen_score(

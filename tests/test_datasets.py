@@ -5,8 +5,6 @@ import numpy as np
 from einops import rearrange
 
 from pplib.datasets import build_dataloader, build_dataset
-from pplib.utils.config import Config
-from pplib.utils.logging import get_logger
 
 
 class Dict(dict):

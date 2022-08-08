@@ -1,7 +1,11 @@
+import math
 from typing import List
+
+import torch
 
 from pplib.evaluator.base import Evaluator
 from pplib.nas.mutators import OneShotMutator
+from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.get_dataset_api import get_dataset_api
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
@@ -20,7 +24,7 @@ class NB201Evaluator(Evaluator):
 
     def __init__(self,
                  trainer,
-                 dataloader,
+                 dataloader=None,
                  num_sample: int = None,
                  dataset: str = 'cifar10',
                  type: str = 'eval_acc1es'):
@@ -150,6 +154,49 @@ class NB201Evaluator(Evaluator):
             results = self.query_result(genotype, cost_key='flops')
             generated_indicator_list.append(results)
             self.type = tmp_type
+
+        kt = kendalltau(true_indicator_list, generated_indicator_list)
+        ps = pearson(true_indicator_list, generated_indicator_list)
+        sp = spearman(true_indicator_list, generated_indicator_list)
+
+        print(
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+
+        return kt, ps, sp
+
+    def compute_rank_consistency_by_zenscore(self) -> List:
+        """compute rank consistency based on flops."""
+        true_indicator_list: List[float] = []
+        generated_indicator_list: List[float] = []
+
+        self.trainer.logger.info('Begin to compute rank consistency...')
+        num_sample = 50 if self.num_sample is None else self.num_sample
+
+        self.trainer.mutator.prepare_from_supernet(self.trainer.model)
+
+        for _ in range(num_sample):
+            # sample random subnet by mutator
+            random_subnet_dict = self.trainer.mutator.random_subnet
+
+            # get true indictor by query nb201 api
+            genotype = self.generate_genotype(random_subnet_dict,
+                                              self.trainer.mutator)
+            results = self.query_result(genotype)  # type is eval_acc1es
+            true_indicator_list.append(results)
+
+            # get score based on zenscore
+            self.trainer.mutator.set_subnet(random_subnet_dict)
+            zenscore = compute_zen_score(
+                self.trainer.model,
+                inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
+                targets=None,
+                repeat=5)
+
+            print(f'score: {zenscore:.2f} geno: {genotype}')
+            if math.isnan(zenscore) or math.isinf(zenscore):
+                generated_indicator_list.append(0)
+            else:
+                generated_indicator_list.append(zenscore)
 
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
