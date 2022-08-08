@@ -242,3 +242,92 @@ class NATSTrainer(BaseTrainer):
         # final message
         self.logger.info(
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
+
+    def forward_fairnas(self, batch_inputs):
+        inputs, mask, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        mask = self._to_device(mask, self.device)
+        labels = self._to_device(labels, self.device)
+
+        forward_op_lists = self.model.set_forward_cfg('fair')
+        for op_list in forward_op_lists:
+            output, feat = self.model(inputs, mask, op_list)
+            loss = self._compute_loss(output, inputs)
+            loss.backward()
+        return loss
+
+    def forward_spos(self, batch_inputs):
+        loss = self.forward(batch_inputs, mode='loss')
+        loss.backward()
+        return loss
+
+    def forward_autoslim(self, batch_inputs):
+        inputs, mask, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        mask = self._to_device(mask, self.device)
+        labels = self._to_device(labels, self.device)
+
+        # max supernet
+        max_forward_list = self.model.set_forward_cfg('large')
+        t_output, t_feat = self.model(inputs, mask, max_forward_list)
+        t_loss = self._compute_loss(t_output, inputs)
+        t_loss.backward(retain_graph=True)
+
+        # middle supernet
+        mid_forward_lists = [
+            self.model.set_forward_cfg('uni') for _ in range(2)
+        ]
+        for mid_forward_list in mid_forward_lists:
+            output, s_feat = self.model(inputs, mask, mid_forward_list)
+            loss = self.distill_criterion(output, t_output)
+            loss.backward(retain_graph=True)
+
+        # min supernet
+        min_forward_list = self.model.set_forward_cfg('small')
+        output, s_feat = self.model(inputs, mask, min_forward_list)
+        loss = self.distill_criterion(output, t_output)
+        loss.backward()
+        return t_loss
+
+    def forward_cc_autoslim(self, batch_inputs):
+        inputs, mask, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        mask = self._to_device(mask, self.device)
+        labels = self._to_device(labels, self.device)
+
+        mse_loss_list = []
+        cc_loss_list = []
+
+        # max supernet
+        max_forward_list = self.model.set_forward_cfg('large')
+        t_output, feat_t = self.model(inputs, mask, max_forward_list)
+        t_loss = self._compute_loss(t_output, inputs)
+        mse_loss_list.append(t_loss)
+
+        # middle supernet
+        mid_forward_lists = [
+            self.model.set_forward_cfg('uni') for _ in range(2)
+        ]
+        for mid_forward_list in mid_forward_lists:
+            output, feat_s = self.model(inputs, mask, mid_forward_list)
+            loss = self.distill_criterion(output, t_output)
+            cc_loss = self.cc_distill(feat_s, feat_t) * self.lambda_kd
+
+            mse_loss_list.append(loss)
+            cc_loss_list.append(cc_loss)
+
+        # min supernet
+        min_forward_list = self.model.set_forward_cfg('small')
+        output, feat_s = self.model(inputs, mask, min_forward_list)
+        loss = self.distill_criterion(output, t_output)
+        cc_loss = self.cc_distill(feat_s, feat_t) * self.lambda_kd
+
+        mse_loss_list.append(loss)
+        cc_loss_list.append(cc_loss)
+
+        sum_loss = sum(mse_loss_list) + sum(cc_loss_list) * self.lambda_kd
+        sum_loss.backward()
+
+        # self.logger.info(f"mse loss: {sum(mse_loss_list).item()} cc loss: {sum(cc_loss_list).item()}")
+
+        return t_loss
