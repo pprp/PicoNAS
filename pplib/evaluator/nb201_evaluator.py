@@ -5,6 +5,7 @@ import torch
 
 from pplib.evaluator.base import Evaluator
 from pplib.nas.mutators import OneShotMutator
+from pplib.predictor.pruners.measures.synflow import compute_synflow_per_weight
 from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.get_dataset_api import get_dataset_api
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
@@ -164,7 +165,7 @@ class NB201Evaluator(Evaluator):
 
         return kt, ps, sp
 
-    def compute_rank_consistency_by_zenscore(self) -> List:
+    def compute_rank_consistency_by_zerometric(self) -> List:
         """compute rank consistency based on flops."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
@@ -186,17 +187,32 @@ class NB201Evaluator(Evaluator):
 
             # get score based on zenscore
             self.trainer.mutator.set_subnet(random_subnet_dict)
-            zenscore = compute_zen_score(
+            # zenscore = compute_zen_score(
+            #     self.trainer.model,
+            #     inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
+            #     targets=None,
+            #     repeat=5)
+
+            # ***************************************************** #
+            score_list = compute_synflow_per_weight(
                 self.trainer.model,
                 inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
                 targets=None,
-                repeat=5)
+                mode='other',
+            )
+            result_list = []
 
-            print(f'score: {zenscore:.2f} geno: {genotype}')
-            if math.isnan(zenscore) or math.isinf(zenscore):
+            for score in score_list:
+                result_list.append(score.sum())
+            score = sum(result_list)
+
+            # ****************************************************** #
+
+            print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
+            if math.isnan(score) or math.isinf(score):
                 generated_indicator_list.append(0)
             else:
-                generated_indicator_list.append(zenscore)
+                generated_indicator_list.append(score.cpu().detach().numpy())
 
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)

@@ -54,9 +54,16 @@ class TestSynflowScore(TestCase):
         for i in range(10):
             rand_subnet = o.random_subnet
             o.set_subnet(rand_subnet)
-            score = compute_synflow_per_weight(
-                net=m, inputs=inputs, targets=None, mode='other')
-            print(f'The score of {i} th model is {score[0].shape}')
+            score_list = compute_synflow_per_weight(
+                net=m, inputs=inputs, targets=None, mode='channel')
+            result_list = []
+
+            for score in score_list:
+                result_list.append(score.sum())
+
+            score = sum(result_list)
+
+            print(f'The score of {i} th model is {score}')
 
 
 if __name__ == '__main__':

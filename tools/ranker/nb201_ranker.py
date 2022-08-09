@@ -142,7 +142,7 @@ def main():
 
     evaluator = NB201Evaluator(trainer)
 
-    evaluator.compute_rank_consistency_by_zenscore()
+    evaluator.compute_rank_consistency_by_zerometric()
 
     utils.time_record(start)
 
