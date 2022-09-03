@@ -6,7 +6,6 @@ import torch
 from pplib.evaluator.base import Evaluator
 from pplib.nas.mutators import OneShotMutator
 from pplib.predictor.pruners.measures.synflow import compute_synflow_per_weight
-from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.get_dataset_api import get_dataset_api
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 

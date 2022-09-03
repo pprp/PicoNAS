@@ -153,7 +153,7 @@ def main():
         searching=True,
         device=device,
         log_name=cfg.log_name,
-        p_lambda=cfg.p_lambda,
+        # p_lambda=cfg.p_lambda,
     )
 
     start = time.time()

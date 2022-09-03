@@ -27,7 +27,7 @@ OMP_NUM_THREADS=1
 
 
 # NATS
-CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name SupernetNATS --trainer_name NATSTrainer --log_name nats_fairnas_fixevalbug --dataset cifar10 --crit ce --epochs 200
+# CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name SupernetNATS --trainer_name NATSTrainer --log_name nats_fairnas_fixevalbug --dataset cifar10 --crit ce --epochs 200
 
 # SPOS
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name SearchableShuffleNetV2 --trainer_name SPOSTrainer --log_name spos --dataset cifar10
@@ -35,7 +35,7 @@ CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.
 
 
 # SPOS MAE
-# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name SearchableMAE --trainer_name MAETrainer --log_name spos --dataset simmim --crit mse
+CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name SearchableMAE --trainer_name MAETrainer --log_name spos --dataset simmim --crit mse
 
 # MACRO
 # fairnas
