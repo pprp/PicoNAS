@@ -11,6 +11,7 @@ scikit-learn
 tqdm
 ConfigSpace
 mmcv
+mmengine
 einops
 timm
 # thop
