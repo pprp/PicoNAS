@@ -698,6 +698,7 @@ class SuccessiveHalvingPyramid:
         self.K_init = K_init
         self.K_proposal = K_proposal
         self.epoch_list = epoch_list
+        self.prior = prior
 
         # init N levels
         self.pyramid = [Level() for _ in range(N)]
@@ -705,6 +706,7 @@ class SuccessiveHalvingPyramid:
         for _ in range(K_init):
             current_brick = Brick(self.mutator.random_subnet)
             self.pyramid[0].append(current_brick)
+            # TODO add prior score calculation
 
     def perform(self, train_loader, val_loader):
         """From Level 1 to Level K:
@@ -713,8 +715,37 @@ class SuccessiveHalvingPyramid:
             - Update Level info(num_iters, val_acc).
             - Upgrade top r * k arch to level-(i+1).
         """
-
+        K = self.K_proposal
         for i in range(self.N):
             # In each Level
             # Get corresponding epochs
             epoch = self.epoch_list[i]
+
+            # Get current level
+            level = self.pyramid[i]
+
+            # Sort by prior scores
+            level.sort_by_prior()
+
+            # Train top r * K
+            for brick in level[:int(self.move_ratio * K)]:
+                subnet_cfg = brick.subnet_cfg
+
+                # TODO
+                self.trainer.fit(train_loader, val_loader, epoch, subnet_cfg)
+
+                brick.num_iters += epoch
+                brick.val_acc = self.trainer._validate(val_loader)
+
+            # Upgrade top r * K
+            if i < self.N:
+                level.sort_by_val()
+                for i in range(int(self.move_ratio * K)):
+                    brick = level.pop()
+                    self.pyramid[i + 1].append(brick)
+
+    def add_new_proposal(self):
+        for _ in range(self.K_proposal):
+            current_brick = Brick(self.mutator.random_subnet)
+            self.pyramid[0].append(current_brick)
+            # TODO add prior score calculation
