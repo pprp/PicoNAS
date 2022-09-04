@@ -202,6 +202,11 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
         # record current rand_subnet
         self.rand_subnet = None
 
+        # Forward Specific Subnet flag
+        #  => is_specific is True: cooperate with SH
+        #  => is_specific is False: normal mode
+        self.is_specific = False
+
     def _build_evaluator(self, num_sample=50):
         return NB201Evaluator(self, num_sample)
 
@@ -302,6 +307,9 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
 
+        if self.is_specific:
+            return self.model(inputs)
+
         # forward pass
         if self.searching:
             self.rand_subnet = self.mutator.random_subnet
@@ -313,6 +321,10 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
         inputs, labels = batch_inputs
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
+
+        if self.is_specific:
+            return self.model(inputs), labels
+
         # forward pass
         if subnet_dict is None:
             self.rand_subnet = self.mutator.random_subnet
@@ -530,3 +542,78 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
         sum_loss = sum(loss_list)
         sum_loss.backward()
         return sum_loss, outputs
+
+    def fit_specific(self, train_loader, val_loader, epochs,
+                     subnet_cfg: dict) -> None:
+        """Fits. High Level API
+        Fit the model using the given loaders for the given number
+        of epochs.
+        """
+        # change the flag
+        self.is_specific = True
+        self.mutator.set_subnet(subnet_cfg)
+
+        # track total training time
+        total_start_time = time.time()
+
+        # record max epoch
+        self.max_epochs = epochs
+
+        # ---- train process ----
+        for epoch in range(epochs):
+            self.current_epoch = epoch
+            # track epoch time
+            epoch_start_time = time.time()
+
+            # train
+            tr_loss, top1_tacc, top5_tacc = self._train(train_loader)
+
+            # validate
+            val_loss, top1_vacc, top5_vacc = self._validate_specific(
+                val_loader)
+
+            # save ckpt
+            if epoch % 10 == 0:
+                utils.save_checkpoint(
+                    {'state_dict': self.model.state_dict()},
+                    self.log_name,
+                    epoch + 1,
+                    tag=f'{self.log_name}_macro',
+                )
+
+            self.train_loss_.append(tr_loss)
+            self.val_loss_.append(val_loss)
+
+            epoch_time = time.time() - epoch_start_time
+
+            self.logger.info(
+                f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
+            )
+
+            if epoch % 5 == 0:
+                assert self.evaluator is not None
+                kt, ps, sp = self.evaluator.compute_rank_consistency(
+                    self.mutator)
+                self.writer.add_scalar(
+                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'RANK/pearson', ps, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'RANK/spearman', sp, global_step=self.current_epoch)
+
+            self.writer.add_scalar(
+                'EPOCH_LOSS/train_epoch_loss',
+                tr_loss,
+                global_step=self.current_epoch)
+            self.writer.add_scalar(
+                'EPOCH_LOSS/valid_epoch_loss',
+                val_loss,
+                global_step=self.current_epoch)
+
+            self.scheduler.step()
+
+        total_time = time.time() - total_start_time
+
+        # final message
+        self.logger.info(
+            f"""End of training. Total time: {round(total_time, 5)} seconds""")

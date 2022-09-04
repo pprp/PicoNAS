@@ -1,4 +1,4 @@
-# PPLIB for one shot nas
+# A Library for One-Shot Neural Architecture Search
 
 ## TODO LIST
 

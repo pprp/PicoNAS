@@ -208,14 +208,14 @@ class SuccessiveHalvingPyramid:
             for brick in level[:int(self.move_ratio * K)]:
                 subnet_cfg = brick.subnet_cfg
 
-                # TODO
-                self.trainer.fit(train_loader, val_loader, epoch, subnet_cfg)
+                self.trainer.fit_specific(train_loader, val_loader, epoch,
+                                          subnet_cfg)
 
                 brick.num_iters += epoch
                 brick.val_acc = self.trainer._validate(val_loader)
 
             # Upgrade top r * K
-            if i < self.N:
+            if i + 1 < self.N:
                 level.sort_by_val()
                 for i in range(int(self.move_ratio * K)):
                     brick = level.pop()

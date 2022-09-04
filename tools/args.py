@@ -24,17 +24,17 @@ def get_args():
     parser.add_argument(
         '--model_name',
         type=str,
-        default='MAESupernetNATS',
+        default='OneShotNASBench201Network',
         help='name of model')
     parser.add_argument(
         '--trainer_name',
         type=str,
-        default='NATSMAETrainer',
+        default='NB201Trainer',
         help='name of trainer')
     parser.add_argument(
         '--log_name',
         type=str,
-        default='NATSMAETrainer',
+        default='NB201Trainer',
         help='name of this experiments',
     )
 
