@@ -185,6 +185,14 @@ class SuccessiveHalvingPyramid:
             current_brick.prior_score = prior_score
             self.pyramid[0].append(current_brick)
 
+    def __repr__(self) -> str:
+        res = ''
+        for i, level in enumerate(self.pyramid):
+            res += f' => level-{i} len: {len(level)}'
+            for brick in level:
+                res += f' ==> {brick}'
+        return res
+
     def perform(self, train_loader, val_loader):
         """From Level 1 to Level K:
             - Sort by prior scores.
@@ -280,7 +288,6 @@ class SuccessiveHalvingPyramid:
             Perform SH Pyramid process.
             Using Pairwise Ranking Loss.
             Add new Proposal.
-
         """
         # M = self.K_init
         # Tranverse for 10 times.
