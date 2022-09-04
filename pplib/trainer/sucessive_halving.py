@@ -1,6 +1,7 @@
 import random
 from typing import Dict, List, Union
 
+from pplib.core.losses import PairwiseRankLoss
 from .nb201_trainer import NB201Trainer
 
 
@@ -174,6 +175,8 @@ class SuccessiveHalvingPyramid:
         self.epoch_list = epoch_list
         self.prior = prior
 
+        self.pairwise_rankloss = PairwiseRankLoss()
+
         # init N levels
         self.pyramid = [Level() for _ in range(N)]
         # init first level
@@ -225,7 +228,8 @@ class SuccessiveHalvingPyramid:
             # Upgrade top r * K
             if i + 1 < self.N:
                 level.sort_by_val()
-                for i in range(int(self.move_ratio * K)):
+
+                for _ in range(int(self.move_ratio * K)):
                     brick = level.pop()
                     self.pyramid[i + 1].append(brick)
             K *= self.move_ratio
@@ -239,7 +243,7 @@ class SuccessiveHalvingPyramid:
             current_brick.prior_score = prior_score
             self.pyramid[0].append(current_brick)
 
-    def pairwise_rankloss(self, train_loader):
+    def pairwise_ranking(self, train_loader):
         iter_loader = iter(train_loader)
 
         # sort by prior score
@@ -254,8 +258,7 @@ class SuccessiveHalvingPyramid:
             current_brick = random.sample(
                 current_level.data[:len(current_level) // 2], 1)[0]
             next_brick = random.sample(next_level.data[:len(next_level) // 2],
-                                       1)
-
+                                       1)[0]
             inputs, labels = iter_loader.next()
             inputs = inputs.cuda()
             labels = labels.cuda()
@@ -291,7 +294,7 @@ class SuccessiveHalvingPyramid:
         """
         # M = self.K_init
         # Tranverse for 10 times.
-        for i in range(epoch):
+        for _ in range(epoch):
             self.perform(train_loader, val_loader)
-            self.pairwise_rankloss()
+            self.pairwise_ranking(train_loader)
             self.add_new_proposal()

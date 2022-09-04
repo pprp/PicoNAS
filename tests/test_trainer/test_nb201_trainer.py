@@ -2,9 +2,10 @@ import random
 import unittest
 from unittest import TestCase
 
-from pplib.trainer.nb201_trainer import NB201Trainer
-from pplib.trainer.sucessive_halving import (Brick, Level,
-                                             SuccessiveHalvingPyramid)
+# from pplib.trainer.nb201_trainer import NB201Trainer
+from pplib.trainer.sucessive_halving import Brick, Level
+
+# SuccessiveHalvingPyramid
 
 
 class TestNB201Trainer(TestCase):

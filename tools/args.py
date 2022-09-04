@@ -41,7 +41,7 @@ def get_args():
     # ******************************* settings *******************************#
 
     parser.add_argument(
-        '--crit', type=str, default='mse', help='decide the criterion')
+        '--crit', type=str, default='ce', help='decide the criterion')
     parser.add_argument(
         '--optims', type=str, default='sgd', help='decide the optimizer')
     parser.add_argument(
@@ -74,7 +74,7 @@ def get_args():
         help='validate and save frequency')
     # ******************************* dataset *******************************#
     parser.add_argument(
-        '--dataset', type=str, default='simmim', help='path to the dataset')
+        '--dataset', type=str, default='cifar10', help='path to the dataset')
     parser.add_argument('--cutout', action='store_true', help='use cutout')
     parser.add_argument(
         '--cutout_length', type=int, default=16, help='cutout length')
