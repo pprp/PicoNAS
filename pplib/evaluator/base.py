@@ -3,9 +3,8 @@ from abc import abstractmethod
 
 class Evaluator:
 
-    def __init__(self, trainer, dataloader, bench_path=None):
+    def __init__(self, trainer, bench_path=None):
         self.trainer = trainer
-        self.dataloader = dataloader
         self.bench_path = bench_path
 
     @abstractmethod

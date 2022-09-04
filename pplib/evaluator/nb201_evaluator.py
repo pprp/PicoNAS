@@ -2,10 +2,12 @@ import math
 from typing import List
 
 import torch
+from torch import Tensor
 
 from pplib.evaluator.base import Evaluator
 from pplib.nas.mutators import OneShotMutator
-from pplib.predictor.pruners.measures.synflow import compute_synflow_per_weight
+# from pplib.predictor.pruners.measures.synflow import compute_synflow_per_weight
+from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.get_dataset_api import get_dataset_api
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
@@ -15,7 +17,6 @@ class NB201Evaluator(Evaluator):
 
     Args:
         trainer (NB201Trainer): _description_
-        dataloader (_type_): _description_
         num_sample (int, optional): _description_. Defaults to None.
         search_space (str, optional): _description_. Defaults to 'nasbench201'.
         dataset (str, optional): _description_. Defaults to 'cifar10'.
@@ -24,13 +25,11 @@ class NB201Evaluator(Evaluator):
 
     def __init__(self,
                  trainer,
-                 dataloader=None,
                  num_sample: int = None,
                  dataset: str = 'cifar10',
                  type: str = 'eval_acc1es'):
-        super().__init__(trainer, dataloader)
+        super().__init__(trainer)
         self.trainer = trainer
-        self.dataloader = dataloader
         self.num_sample = num_sample
         self.type = type
         self.search_space = 'nasbench201'
@@ -99,7 +98,8 @@ class NB201Evaluator(Evaluator):
         else:
             raise f'Not supported type: {self.type}.'
 
-    def compute_rank_consistency(self, mutator: OneShotMutator) -> List:
+    def compute_rank_consistency(self, dataloader,
+                                 mutator: OneShotMutator) -> List:
         """compute rank consistency of different types of indicators."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
@@ -117,8 +117,7 @@ class NB201Evaluator(Evaluator):
             true_indicator_list.append(results)
 
             # get score based on supernet
-            results = self.trainer.metric_score(self.dataloader,
-                                                random_subnet_dict)
+            results = self.trainer.metric_score(dataloader, random_subnet_dict)
             generated_indicator_list.append(results)
 
         kt = kendalltau(true_indicator_list, generated_indicator_list)
@@ -130,8 +129,7 @@ class NB201Evaluator(Evaluator):
 
         return kt, ps, sp
 
-    def compute_rank_consistency_by_flops(self,
-                                          mutator: OneShotMutator) -> List:
+    def compute_rank_consistency_by_flops(self) -> List:
         """compute rank consistency based on flops."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
@@ -141,10 +139,11 @@ class NB201Evaluator(Evaluator):
 
         for _ in range(num_sample):
             # sample random subnet by mutator
-            random_subnet_dict = mutator.random_subnet
+            random_subnet_dict = self.trainer.mutator.random_subnet
 
             # get true indictor by query nb201 api
-            genotype = self.generate_genotype(random_subnet_dict, mutator)
+            genotype = self.generate_genotype(random_subnet_dict,
+                                              self.trainer.mutator)
             results = self.query_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
 
@@ -163,6 +162,15 @@ class NB201Evaluator(Evaluator):
             f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
 
         return kt, ps, sp
+
+    def query_zerometric(self, subnet_cfg: dict) -> float:
+        self.trainer.mutator.set_subnet(subnet_cfg)
+        zenscore = compute_zen_score(
+            self.trainer.model,
+            inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
+            targets=None,
+            repeat=5)
+        return zenscore
 
     def compute_rank_consistency_by_zerometric(self) -> List:
         """compute rank consistency based on flops."""
@@ -186,24 +194,24 @@ class NB201Evaluator(Evaluator):
 
             # get score based on zenscore
             self.trainer.mutator.set_subnet(random_subnet_dict)
-            # zenscore = compute_zen_score(
-            #     self.trainer.model,
-            #     inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
-            #     targets=None,
-            #     repeat=5)
-
-            # ***************************************************** #
-            score_list = compute_synflow_per_weight(
+            score = compute_zen_score(
                 self.trainer.model,
                 inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
                 targets=None,
-                mode='other',
-            )
-            result_list = []
+                repeat=5)
 
-            for score in score_list:
-                result_list.append(score.sum())
-            score = sum(result_list)
+            # ***************************************************** #
+            # score_list = compute_synflow_per_weight(
+            #     self.trainer.model,
+            #     inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
+            #     targets=None,
+            #     mode='other',
+            # )
+            # result_list = []
+
+            # for score in score_list:
+            #     result_list.append(score.sum())
+            # score = sum(result_list)
 
             # ****************************************************** #
 
@@ -211,7 +219,11 @@ class NB201Evaluator(Evaluator):
             if math.isnan(score) or math.isinf(score):
                 generated_indicator_list.append(0)
             else:
-                generated_indicator_list.append(score.cpu().detach().numpy())
+                if isinstance(score, Tensor):
+                    generated_indicator_list.append(
+                        score.cpu().detach().numpy())
+                else:
+                    generated_indicator_list.append(score)
 
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)

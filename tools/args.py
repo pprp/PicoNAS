@@ -1,15 +1,4 @@
 import argparse
-import os
-import time
-
-import torch
-
-import pplib.utils.utils as utils
-from pplib.core import build_criterion, build_optimizer, build_scheduler
-from pplib.evaluator import MacroEvaluator
-from pplib.models import build_model
-from pplib.trainer import build_trainer
-from pplib.utils.config import Config
 
 
 def get_args():
@@ -30,6 +19,9 @@ def get_args():
         help='path to the dataset')
 
     parser.add_argument(
+        '--seed', type=int, default=42, help='seed of experiments')
+
+    parser.add_argument(
         '--model_name',
         type=str,
         default='MAESupernetNATS',
@@ -46,12 +38,16 @@ def get_args():
         help='name of this experiments',
     )
 
+    # ******************************* settings *******************************#
+
     parser.add_argument(
         '--crit', type=str, default='mse', help='decide the criterion')
     parser.add_argument(
         '--optims', type=str, default='sgd', help='decide the optimizer')
     parser.add_argument(
         '--sched', type=str, default='cosine', help='decide the scheduler')
+    parser.add_argument(
+        '--p_lambda', type=float, default=1, help='decide the scheduler')
 
     parser.add_argument(
         '--classes', type=int, default=10, help='dataset classes')
@@ -89,87 +85,4 @@ def get_args():
         help='use auto augmentation')
     parser.add_argument(
         '--resize', action='store_true', default=False, help='use resize')
-    args = parser.parse_args()
-    return args
-
-
-def main():
-    args = get_args()
-
-    # merge argparse and config file
-    if args.config is not None:
-        cfg = Config.fromfile(args.config)
-        cfg.merge_from_dict(vars(args))
-    else:
-        cfg = Config(args)
-
-    print(cfg)
-
-    # dump config files
-    cfg.work_dir = os.path.join(cfg.work_dir, cfg.trainer_name)
-    if not os.path.exists(cfg.work_dir):
-        os.makedirs(cfg.work_dir)
-    current_exp_name = f'{cfg.model_name}-{cfg.trainer_name}-{cfg.log_name}.yaml'
-    cfg.dump(os.path.join(cfg.work_dir, current_exp_name))
-
-    if torch.cuda.is_available():
-        print('Train on GPU!')
-        device = torch.device('cuda')
-    else:
-        device = torch.device('cpu')
-
-    # train_dataloader = build_dataloader(
-    #     type='train', dataset=cfg.dataset, config=cfg)
-
-    # val_dataloader = build_dataloader(
-    #     type='val', dataset=cfg.dataset, config=cfg)
-
-    model = build_model(cfg.model_name)
-
-    criterion = build_criterion(cfg.crit).to(device)
-    optimizer = build_optimizer(model, cfg)
-    scheduler = build_scheduler(cfg, optimizer)
-
-    model = model.to(device)
-
-    trainer = build_trainer(
-        cfg.trainer_name,
-        model=model,
-        mutator=None,
-        optimizer=optimizer,
-        criterion=criterion,
-        scheduler=scheduler,
-        searching=True,
-        device=device,
-        log_name=cfg.log_name,
-    )
-
-    start = time.time()
-
-    bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
-    num_samples = [20, 50, 100, 200, 400, 50000]
-    results = []
-    for num_sample in num_samples:
-        evaluator = MacroEvaluator(
-            trainer=trainer,
-            dataloader=None,
-            bench_path=bench_path,
-            num_sample=num_sample,
-        )
-        kt, ps, sp = evaluator.compute_rank_based_on_flops()
-        results.append([kt, ps, sp])
-
-    print('=' * 60)
-    print("= Num of Samples == Kendall's Tau ==  Pearson   == Spearman =")
-    for num, result in zip(num_samples, results):
-        print(
-            f'=  {num:<6}  \t ==   {result[0]:.4f} \t  ==  {result[1]:.4f} \t ==  {result[2]:.4f} ='
-        )
-
-    print('=' * 60)
-
-    utils.time_record(start)
-
-
-if __name__ == '__main__':
-    main()
+    return parser.parse_args()

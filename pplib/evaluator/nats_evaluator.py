@@ -10,10 +10,9 @@ from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
 class NATSEvaluator(Evaluator):
 
-    def __init__(self, trainer, dataloader, bench_path, num_sample=None):
-        super().__init__(trainer, dataloader, bench_path)
+    def __init__(self, trainer, bench_path, num_sample=None):
+        super().__init__(trainer, bench_path)
         self.trainer = trainer
-        self.dataloader = dataloader
         self.bench_path = bench_path
         self.num_sample = num_sample
 
@@ -33,7 +32,7 @@ class NATSEvaluator(Evaluator):
         sampled_keys = random.sample(bench_dict.keys(), k=self.num_sample)
         return {arch: bench_dict[arch] for arch in sampled_keys}
 
-    def compute_rank_consistency(self):
+    def compute_rank_consistency(self, dataloader):
         """compute rank consistency of different types of indicators."""
         true_indicator_list: List[float] = []
         supernet_indicator_list: List[float] = []
@@ -44,7 +43,7 @@ class NATSEvaluator(Evaluator):
             print(f'\r evaluating the {i}th architecture.', end='', flush=True)
             current_op_list = convert_channel2idx(k)
             loss = self.trainer.metric_score(
-                self.dataloader, current_op_list=current_op_list)
+                dataloader, current_op_list=current_op_list)
 
             supernet_indicator_list.append(loss)
             true_indicator_list.append(v)

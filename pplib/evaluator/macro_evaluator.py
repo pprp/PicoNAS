@@ -9,15 +9,9 @@ from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
 class MacroEvaluator(Evaluator):
 
-    def __init__(self,
-                 trainer,
-                 dataloader,
-                 bench_path,
-                 num_sample=None,
-                 type='test_acc'):
-        super().__init__(trainer, dataloader, bench_path)
+    def __init__(self, trainer, bench_path, num_sample=None, type='test_acc'):
+        super().__init__(trainer, bench_path)
         self.trainer = trainer
-        self.dataloader = dataloader
         self.bench_path = bench_path
         self.num_sample = num_sample
         self.type = type
@@ -46,7 +40,7 @@ class MacroEvaluator(Evaluator):
         sampled_keys = random.sample(bench_dict.keys(), k=self.num_sample)
         return {arch: bench_dict[arch] for arch in sampled_keys}
 
-    def compute_rank_consistency(self):
+    def compute_rank_consistency(self, dataloader):
         """compute rank consistency of different types of indicators."""
         true_indicator_list: List[float] = []
         supernet_indicator_list: List[float] = []
@@ -58,7 +52,7 @@ class MacroEvaluator(Evaluator):
 
             subnet_dict = convert_arch2dict(k)
             indicator = self.trainer.metric_score(
-                self.dataloader, subnet_dict=subnet_dict)
+                dataloader, subnet_dict=subnet_dict)
 
             supernet_indicator_list.append(indicator)
             true_indicator_list.append(v[self.type])

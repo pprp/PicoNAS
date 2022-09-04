@@ -142,7 +142,8 @@ def main():
 
     evaluator = NB201Evaluator(trainer)
 
-    evaluator.compute_rank_consistency_by_zerometric()
+    # evaluator.compute_rank_consistency_by_zerometric()
+    evaluator.compute_rank_consistency_by_flops()
 
     utils.time_record(start)
 
