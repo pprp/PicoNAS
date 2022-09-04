@@ -75,7 +75,7 @@ def main():
     SHPyramid = SuccessiveHalvingPyramid(trainer=trainer)
 
     SHPyramid.fit(
-        train_loader=train_dataloader, val_loader=val_dataloader, epoch=10)
+        train_loader=train_dataloader, val_loader=val_dataloader, epoch=200)
 
     utils.time_record(start)
 

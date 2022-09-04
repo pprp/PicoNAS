@@ -2,7 +2,7 @@ import random
 from typing import Dict, List, Union
 
 from pplib.core.losses import PairwiseRankLoss
-from .nb201_trainer import NB201Trainer
+from pplib.trainer.nb201_trainer import NB201Trainer
 
 
 class Brick:

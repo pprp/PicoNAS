@@ -3,7 +3,7 @@ import unittest
 from unittest import TestCase
 
 # from pplib.trainer.nb201_trainer import NB201Trainer
-from pplib.trainer.sucessive_halving import Brick, Level
+from pplib.structures.sucessive_halving import Brick, Level
 
 # SuccessiveHalvingPyramid
 
