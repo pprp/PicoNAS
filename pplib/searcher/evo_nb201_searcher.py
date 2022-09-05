@@ -226,4 +226,8 @@ class EvolutionSearcher(object):
 
             self.candidates.sort(
                 key=lambda x: self.vis_dict[str(x)]['err'], reverse=False)
-            self.logger.info(self.candidates[0])
+            best_subnet = self.candidates[0]
+            genotype = self.trainer.evaluator.generate_genotype(best_subnet, self.trainer.mutator)
+            results = self.trainer.evaluator.query_result(genotype, cost_key='eval_acc1es')
+            self.logger.info(f"Best Subnet: {best_subnet} Genotype: {genotype} Eval Acc: {results}")
+            

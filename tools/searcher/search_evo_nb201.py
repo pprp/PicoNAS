@@ -157,11 +157,6 @@ def main():
     start = time.time()
     print('Begin to search....')
     searcher = EvolutionSearcher(
-        max_epochs=5,
-        select_num=5,
-        population_num=25,
-        crossover_num=12,
-        mutation_num=12,
         trainer=trainer,
         train_loader=train_dataloader,
         val_loader=val_dataloader)
