@@ -1,9 +1,5 @@
-import argparse
-import functools
-import os
 import random
 import sys
-import time
 from typing import List
 
 import numpy as np
@@ -11,9 +7,6 @@ import torch
 
 from pplib.trainer.nb201_trainer import NB201Trainer
 from pplib.utils.logging import get_logger
-
-# from flops import get_subnet_flops
-# from tester import get_subnet_err # BN Calibration + test
 
 torch.manual_seed(0)
 torch.cuda.manual_seed_all(0)
@@ -25,18 +18,36 @@ sys.setrecursionlimit(10000)
 
 
 class EvolutionSearcher(object):
+    """_summary_
 
-    def __init__(self,
-                 max_epochs: int = 20,
-                 select_num: int = 10,
-                 population_num: int = 50,
-                 mutate_prob: float = 0.1,
-                 crossover_num: int = 25,
-                 mutation_num: int = 25,
-                 flops_limit: float = 300,
-                 trainer: NB201Trainer = None,
-                 train_loader=None,
-                 val_loader=None):
+    Args:
+        max_epochs (int, optional): _description_. Defaults to 20.
+        select_num (int, optional): _description_. Defaults to 10.
+        population_num (int, optional): _description_. Defaults to 50.
+        mutate_prob (float, optional): _description_. Defaults to 0.1.
+        crossover_num (int, optional): _description_. Defaults to 25.
+        mutation_num (int, optional): _description_. Defaults to 25.
+        flops_limit (float, optional): _description_. Defaults to 300.
+        trainer (NB201Trainer, optional): _description_. Defaults to None.
+        train_loader (_type_, optional): _description_. Defaults to None.
+        val_loader (_type_, optional): _description_. Defaults to None.
+    """
+
+    def __init__(
+            self,
+            max_epochs: int = 20,
+            select_num: int = 10,
+            population_num: int = 50,
+            mutate_prob: float = 0.1,
+            crossover_num: int = 25,
+            mutation_num: int = 25,
+            flops_limit: float = 300,
+            trainer: NB201Trainer = None,
+            model_path:
+        str = './checkpoints/nb201_pair_0.0/nb201_pair_0.0_macro_ckpt_0061.pth.tar',  # noqa: E501
+            train_loader=None,
+            val_loader=None):
+
         self.max_epochs = max_epochs
         self.select_num = select_num
         self.population_num = population_num
@@ -51,11 +62,8 @@ class EvolutionSearcher(object):
         self.model = self.trainer.model
         self.logger = get_logger(name='evoluation_searcher')
 
-        # self.model = torch.nn.DataParallel(self.model).cuda()
-        # supernet_state_dict = torch.load(
-        #     '../Supernet/models/checkpoint-latest.pth.tar')['state_dict']
-        # self.model.load_state_dict(supernet_state_dict)
-        # self.checkpoint_name = os.path.join(self.log_dir, 'checkpoint.pth.tar')
+        state_dict = torch.load(model_path)['state_dict']
+        self.model.load_state_dict(state_dict)
 
         self.memory = []
         # visited
@@ -65,31 +73,6 @@ class EvolutionSearcher(object):
         self.epoch = 0
         # candidate subnet configs
         self.candidates = []
-
-    # def save_checkpoint(self):
-    #     if not os.path.exists(self.log_dir):
-    #         os.makedirs(self.log_dir)
-    #     info = {}
-    #     info['memory'] = self.memory
-    #     info['candidates'] = self.candidates
-    #     info['vis_dict'] = self.vis_dict
-    #     info['keep_top_k'] = self.keep_top_k
-    #     info['epoch'] = self.epoch
-    #     torch.save(info, self.checkpoint_name)
-    #     print('save checkpoint to', self.checkpoint_name)
-
-    # def load_checkpoint(self):
-    #     if not os.path.exists(self.checkpoint_name):
-    #         return False
-    #     info = torch.load(self.checkpoint_name)
-    #     self.memory = info['memory']
-    #     self.candidates = info['candidates']
-    #     self.vis_dict = info['vis_dict']
-    #     self.keep_top_k = info['keep_top_k']
-    #     self.epoch = info['epoch']
-
-    #     print('load checkpoint from', self.checkpoint_name)
-    #     return True
 
     def is_legal(self, subnet):
         """Judge whether the subnet is visited."""
@@ -131,6 +114,7 @@ class EvolutionSearcher(object):
                 yield current_subnet
 
     def get_random(self, num):
+        """Get `num` random subnets."""
         self.logger.info('random select ........')
         subnet_iter = self.yield_random_subnet()
 
@@ -139,27 +123,30 @@ class EvolutionSearcher(object):
             if not self.is_legal(subnet):
                 continue
             self.candidates.append(subnet)
-            self.logger.info('random {}/{}'.format(len(self.candidates), num))
-        self.logger.info('random_num = {}'.format(len(self.candidates)))
+            self.logger.info(f'random {len(self.candidates)}/{num}')
+        self.logger.info(f'random_num = {len(self.candidates)}')
 
     def get_mutation(self, k, mutation_num, mutate_prob):
         assert k in self.keep_top_k
         self.logger.info('mutation ......')
         res = []
-        iter = 0
+
         max_iters = mutation_num * 10
+        subnet_iter = self.yield_random_subnet()
 
-        def random_func():
-            subnet = list(choice(self.keep_top_k[k]))
-            for i in range(self.nr_layer):
+        def mutate_subnet(subnet: dict):
+            convert_to = [
+                'conv_3x3', 'skip_connect', 'conv_1x1', 'avg_pool_3x3'
+            ]
+            for key, value in subnet.items():
                 if np.random.random_sample() < mutate_prob:
-                    subnet[i] = np.random.randint(self.nr_state)
-            return tuple(subnet)
+                    subnet[key] = random.sample(convert_to, 1)[0]
+            return subnet
 
-        subnet_iter = self.stack_random_subnet(random_func)
         while len(res) < mutation_num and max_iters > 0:
             max_iters -= 1
             subnet = next(subnet_iter)
+            subnet = mutate_subnet(subnet)
             if not self.is_legal(subnet):
                 continue
             res.append(subnet)
@@ -172,18 +159,22 @@ class EvolutionSearcher(object):
         assert k in self.keep_top_k
         self.logger.info('crossover ......')
         res = []
-        iter = 0
         max_iters = 10 * crossover_num
 
-        def random_func():
-            p1 = choice(self.keep_top_k[k])
-            p2 = choice(self.keep_top_k[k])
-            return tuple(choice([i, j]) for i, j in zip(p1, p2))
+        def crossover_subnet(subnet1: dict, subnet2: dict):
+            new_subnet = {}
+            for (k1, v1), (k2, v2) in zip(subnet1.items(), subnet2.items()):
+                assert k1 == k2
+                new_subnet[k1] = random.choice([v1, v2])
+            return new_subnet
 
-        subnet_iter = self.stack_random_subnet(random_func)
+        subnet_iter = self.yield_random_subnet()
         while len(res) < crossover_num and max_iters > 0:
             max_iters -= 1
-            subnet = next(subnet_iter)
+            subnet1 = next(subnet_iter)
+            subnet2 = next(subnet_iter)
+            subnet = crossover_subnet(subnet1, subnet2)
+
             if not self.is_legal(subnet):
                 continue
             res.append(subnet)
@@ -203,6 +194,7 @@ class EvolutionSearcher(object):
 
         self.load_checkpoint()
 
+        # Append `population_num` subnet to candidates.
         self.get_random(self.population_num)
 
         while self.epoch < self.max_epochs:
@@ -236,42 +228,3 @@ class EvolutionSearcher(object):
             self.get_random(self.population_num)
 
             self.epoch += 1
-
-        self.save_checkpoint()
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--log-dir', type=str, default='log')
-    parser.add_argument('--max-epochs', type=int, default=20)
-    parser.add_argument('--select-num', type=int, default=10)
-    parser.add_argument('--population-num', type=int, default=50)
-    parser.add_argument('--mutate_prob', type=float, default=0.1)
-    parser.add_argument('--crossover-num', type=int, default=25)
-    parser.add_argument('--mutation-num', type=int, default=25)
-    parser.add_argument('--flops-limit', type=float, default=330 * 1e6)
-    parser.add_argument('--max-train-iters', type=int, default=200)
-    parser.add_argument('--max-test-iters', type=int, default=40)
-    parser.add_argument('--train-batch-size', type=int, default=128)
-    parser.add_argument('--test-batch-size', type=int, default=200)
-    args = parser.parse_args()
-
-    t = time.time()
-
-    searcher = EvolutionSearcher(args)
-
-    searcher.search()
-
-    print('total searching time = {:.2f} hours'.format(
-        (time.time() - t) / 3600))
-
-
-if __name__ == '__main__':
-    try:
-        main()
-        os._exit(0)
-    except:
-        import traceback
-        traceback.print_exc()
-        time.sleep(1)
-        os._exit(1)
