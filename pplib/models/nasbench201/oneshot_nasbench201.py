@@ -297,7 +297,7 @@ class NASBench201Cell(nn.Module):
                 node_ops.append(
                     OneShotOP(
                         candidate_ops=candidate_op,
-                        alias=f'node{i}_edge{layer_idx}'))
+                        alias=f'node{i}_edge{layer_idx}'))  # with alias
             self.layers.append(node_ops)
         self.in_dim = C_in
         self.out_dim = C_out

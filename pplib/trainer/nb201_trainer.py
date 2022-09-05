@@ -189,7 +189,7 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
         self._init_flops()
 
         if self.mutator is None:
-            # use alias to build search group
+            # Note: use alias to build search group
             self.mutator = OneShotMutator(with_alias=True)
             self.mutator.prepare_from_supernet(model)
 
@@ -522,6 +522,56 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
             # print(f'k: {k} choice: {current_choice} flops: {choice_flops}')
             subnet_flops += choice_flops
         return subnet_flops
+
+    def get_subnet_error(self,
+                         subnet_dict: Dict,
+                         train_loader=None,
+                         val_loader=None) -> float:
+        """Calculate the subnet of validation error.
+        Including:
+        1. BN calibration
+        2. Start test
+        """
+        # Process dataloader
+        assert train_loader is not None
+        assert val_loader is not None
+
+        # Info about dataloader
+        train_iter = iter(train_loader)
+        val_iter = iter(val_loader)
+        max_train_iters = 200
+        max_test_iters = 40
+
+        self.mutator.set_subnet(subnet_dict)
+
+        # Clear bn statics
+        for m in self.model.modules():
+            if isinstance(m, torch.nn.BatchNorm2d):
+                m.running_mean = torch.zeros_like(m.running_mean)
+                m.running_var = torch.ones_like(m.running_var)
+
+        # BN Calibration
+        self.model.train()
+        for _ in range(max_train_iters):
+            data, target = next(train_iter)
+            data, target = data.to(self.device), target.to(self.device)
+            output = self.model(data)
+            del data, target, output
+
+        # Start test
+        top1_vacc = AvgrageMeter()
+        top5_vacc = AvgrageMeter()
+
+        for _ in range(max_test_iters):
+            data, target = next(val_iter)
+            data, target = data.to(self.device), target.to(self.device)
+            output = self.model(data)
+            n = target.size(0)
+            top1, top5 = accuracy(output, target, topk=(1, 5))
+            top1_vacc.update(top1.item(), n)
+            top5_vacc.update(top5.item(), n)
+
+        return 1 - top1_vacc.avg, 1 - top5_vacc.avg
 
     def _forward_fairnas(self, batch_inputs):
         """FairNAS Rules."""
