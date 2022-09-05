@@ -25,6 +25,7 @@ def get_args():
     )
     parser.add_argument(
         '--work_dir', type=str, default='./work_dir', help='experiment name')
+
     parser.add_argument(
         '--data_dir',
         type=str,
@@ -37,24 +38,24 @@ def get_args():
     parser.add_argument(
         '--model_name',
         type=str,
-        default='MAESupernetNATS',
+        default='OneShotNASBench201Network',
         help='name of model')
     parser.add_argument(
         '--trainer_name',
         type=str,
-        default='NATSMAETrainer',
+        default='NB201Trainer',
         help='name of trainer')
     parser.add_argument(
         '--log_name',
         type=str,
-        default='NATSMAETrainer',
+        default='NB201Trainer',
         help='name of this experiments',
     )
 
     # ******************************* settings *******************************#
 
     parser.add_argument(
-        '--crit', type=str, default='mse', help='decide the criterion')
+        '--crit', type=str, default='ce', help='decide the criterion')
     parser.add_argument(
         '--optims', type=str, default='sgd', help='decide the optimizer')
     parser.add_argument(
@@ -66,7 +67,7 @@ def get_args():
     parser.add_argument(
         '--num_choices', type=int, default=4, help='number choices per layer')
     parser.add_argument(
-        '--batch_size', type=int, default=256, help='batch size')
+        '--batch_size', type=int, default=128, help='batch size')
     parser.add_argument('--epochs', type=int, default=200, help='batch size')
     parser.add_argument(
         '--lr', type=float, default=0.025, help='initial learning rate')
@@ -85,7 +86,7 @@ def get_args():
         help='validate and save frequency')
     # ******************************* dataset *******************************#
     parser.add_argument(
-        '--dataset', type=str, default='simmim', help='path to the dataset')
+        '--dataset', type=str, default='cifar10', help='path to the dataset')
     parser.add_argument('--cutout', action='store_true', help='use cutout')
     parser.add_argument(
         '--cutout_length', type=int, default=16, help='cutout length')
@@ -154,8 +155,13 @@ def main():
     )
 
     start = time.time()
-
+    print('Begin to search....')
     searcher = EvolutionSearcher(
+        max_epochs=5,
+        select_num=5,
+        population_num=25,
+        crossover_num=12,
+        mutation_num=12,
         trainer=trainer,
         train_loader=train_dataloader,
         val_loader=val_dataloader)

@@ -1,6 +1,6 @@
 import random
 import sys
-from typing import List
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -41,10 +41,9 @@ class EvolutionSearcher(object):
             mutate_prob: float = 0.1,
             crossover_num: int = 25,
             mutation_num: int = 25,
-            flops_limit: float = 300,
+            flops_limit: float = 330 * 1e6,
             trainer: NB201Trainer = None,
-            model_path:
-        str = './checkpoints/nb201_pair_0.0/nb201_pair_0.0_macro_ckpt_0061.pth.tar',  # noqa: E501
+            model_path: str = None,  # noqa: E501
             train_loader=None,
             val_loader=None):
 
@@ -62,6 +61,10 @@ class EvolutionSearcher(object):
         self.model = self.trainer.model
         self.logger = get_logger(name='evoluation_searcher')
 
+        self.logger.info('Loading model weights....')
+        if model_path is None:
+            model_path = './checkpoints/test_nb201_spos/test_nb201_spos_macro_ckpt_0001.pth.tar'
+
         state_dict = torch.load(model_path)['state_dict']
         self.model.load_state_dict(state_dict)
 
@@ -74,21 +77,17 @@ class EvolutionSearcher(object):
         # candidate subnet configs
         self.candidates = []
 
-    def is_legal(self, subnet):
+    def is_legal(self, subnet: Dict):
         """Judge whether the subnet is visited."""
-        assert isinstance(subnet, tuple) and len(subnet) == self.nr_layer
-
-        if subnet not in self.vis_dict:
-            self.vis_dict[subnet] = {}
-        info = self.vis_dict[subnet]
+        if str(subnet) not in self.vis_dict:
+            self.vis_dict[str(subnet)] = {}
+        info = self.vis_dict[str(subnet)]
 
         if 'visited' in info:
             return False
 
         if 'flops' not in info:
             info['flops'] = self.trainer.get_subnet_flops(subnet)
-
-        self.logger.info(subnet, info['flops'])
 
         if info['flops'] > self.flops_limit:
             self.logger.info('flops limit exceed')
@@ -109,22 +108,20 @@ class EvolutionSearcher(object):
     def yield_random_subnet(self):
         while True:
             current_subnet = self.trainer.mutator.random_subnet
-            if current_subnet not in self.vis_dict:
-                self.vis_dict[current_subnet] = {}
+            # Dict is not a hashable type
+            if str(current_subnet) not in self.vis_dict:
+                self.vis_dict[str(current_subnet)] = {}
                 yield current_subnet
 
     def get_random(self, num):
         """Get `num` random subnets."""
         self.logger.info('random select ........')
         subnet_iter = self.yield_random_subnet()
-
         while len(self.candidates) < num:
             subnet = next(subnet_iter)
             if not self.is_legal(subnet):
                 continue
             self.candidates.append(subnet)
-            self.logger.info(f'random {len(self.candidates)}/{num}')
-        self.logger.info(f'random_num = {len(self.candidates)}')
 
     def get_mutation(self, k, mutation_num, mutate_prob):
         assert k in self.keep_top_k
@@ -134,7 +131,7 @@ class EvolutionSearcher(object):
         max_iters = mutation_num * 10
         subnet_iter = self.yield_random_subnet()
 
-        def mutate_subnet(subnet: dict):
+        def mutate_subnet(subnet: Dict):
             convert_to = [
                 'conv_3x3', 'skip_connect', 'conv_1x1', 'avg_pool_3x3'
             ]
@@ -150,7 +147,6 @@ class EvolutionSearcher(object):
             if not self.is_legal(subnet):
                 continue
             res.append(subnet)
-            self.logger.info('mutation {}/{}'.format(len(res), mutation_num))
 
         self.logger.info('mutation_num = {}'.format(len(res)))
         return res
@@ -161,7 +157,7 @@ class EvolutionSearcher(object):
         res = []
         max_iters = 10 * crossover_num
 
-        def crossover_subnet(subnet1: dict, subnet2: dict):
+        def crossover_subnet(subnet1: Dict, subnet2: Dict):
             new_subnet = {}
             for (k1, v1), (k2, v2) in zip(subnet1.items(), subnet2.items()):
                 assert k1 == k2
@@ -178,7 +174,6 @@ class EvolutionSearcher(object):
             if not self.is_legal(subnet):
                 continue
             res.append(subnet)
-            self.logger.info('crossover {}/{}'.format(len(res), crossover_num))
 
         self.logger.info('crossover_num = {}'.format(len(res)))
         return res
@@ -192,13 +187,11 @@ class EvolutionSearcher(object):
                 self.population_num - self.mutation_num - self.crossover_num,
                 self.max_epochs))
 
-        self.load_checkpoint()
-
         # Append `population_num` subnet to candidates.
         self.get_random(self.population_num)
 
         while self.epoch < self.max_epochs:
-            self.logger.info('epoch = {}'.format(self.epoch))
+            self.logger.info(f'epoch = {self.epoch}')
 
             self.memory.append([])
             for subnet in self.candidates:
@@ -207,17 +200,19 @@ class EvolutionSearcher(object):
             self.update_top_k(
                 self.candidates,
                 k=self.select_num,
-                key=lambda x: self.vis_dict[x]['err'])
+                key=lambda x: self.vis_dict[str(x)]['err'])
             self.update_top_k(
-                self.candidates, k=50, key=lambda x: self.vis_dict[x]['err'])
+                self.candidates,
+                k=50,
+                key=lambda x: self.vis_dict[str(x)]['err'])
 
-            self.logger.info('epoch = {} : top {} result'.format(
-                self.epoch, len(self.keep_top_k[50])))
+            self.logger.info(
+                f'epoch = {self.epoch} : top {len(self.keep_top_k[50])} result'
+            )
             for i, subnet in enumerate(self.keep_top_k[50]):
-                self.logger.info('No.{} {} Top-1 err = {}'.format(
-                    i + 1, subnet, self.vis_dict[subnet]['err']))
-                ops = [i for i in subnet]
-                self.logger.info(ops)
+                self.logger.info(
+                    f'No.{i+1} {subnet} Top-1 err = {self.vis_dict[str(subnet)]["err"]}'
+                )
 
             mutation = self.get_mutation(self.select_num, self.mutation_num,
                                          self.mutate_prob)
@@ -228,3 +223,7 @@ class EvolutionSearcher(object):
             self.get_random(self.population_num)
 
             self.epoch += 1
+
+            self.candidates.sort(
+                key=lambda x: self.vis_dict[str(x)]['err'], reverse=False)
+            self.logger.info(self.candidates[0])

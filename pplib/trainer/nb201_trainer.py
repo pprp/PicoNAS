@@ -171,7 +171,7 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
         criterion=None,
         scheduler=None,
         device: torch.device = torch.device('cuda'),
-        log_name='macro',
+        log_name='nasbench201',
         searching: bool = True,
     ):
         super().__init__(
@@ -409,7 +409,7 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
                     {'state_dict': self.model.state_dict()},
                     self.log_name,
                     epoch + 1,
-                    tag=f'{self.log_name}_macro',
+                    tag=f'{self.log_name}_nb201',
                 )
 
             self.train_loss_.append(tr_loss)
@@ -424,7 +424,7 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
             if epoch % 5 == 0:
                 assert self.evaluator is not None
                 kt, ps, sp = self.evaluator.compute_rank_consistency(
-                    self.mutator)
+                    val_loader, self.mutator)
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch)
                 self.writer.add_scalar(
@@ -628,7 +628,7 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
                     {'state_dict': self.model.state_dict()},
                     self.log_name,
                     epoch + 1,
-                    tag=f'{self.log_name}_macro',
+                    tag=f'{self.log_name}_nb201',
                 )
 
             self.train_loss_.append(tr_loss)
