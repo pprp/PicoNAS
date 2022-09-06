@@ -85,6 +85,7 @@ class EvolutionSearcher(object):
         """Judge whether the subnet is visited."""
         if str(subnet) not in self.vis_dict:
             self.vis_dict[str(subnet)] = {}
+
         info = self.vis_dict[str(subnet)]
 
         if 'visited' in info:
@@ -96,6 +97,7 @@ class EvolutionSearcher(object):
         if info['flops'] > self.flops_limit:
             self.logger.info('flops limit exceed')
             return False
+
         info['err'] = self.trainer.get_subnet_error(subnet, self.train_loader,
                                                     self.val_loader)
         info['visited'] = True
@@ -106,6 +108,10 @@ class EvolutionSearcher(object):
         assert k in self.keep_top_k
         t = self.keep_top_k[k]
         t += candidates
+        # remove duplicates
+        tmp_list = list(set([str(i) for i in t]))
+        t = [eval(i) for i in tmp_list]
+        # sort the list
         t.sort(key=key, reverse=reverse)
         self.keep_top_k[k] = t[:k]
 
@@ -120,11 +126,7 @@ class EvolutionSearcher(object):
     def yield_top_subnet(self):
         """Generate subnet from ``keep_top_k``"""
         while True:
-            subnet = random.sample(self.keep_top_k[self.select_num], 1)[0]
-            if not self.is_legal(subnet):
-                continue
-            yield subnet
-            # self.candidates.append(subnet)
+            yield random.sample(self.keep_top_k[self.select_num], 1)[0]
 
     def get_random(self, num):
         """Get `num` random subnets."""
@@ -134,6 +136,7 @@ class EvolutionSearcher(object):
             subnet = next(subnet_iter)
             if not self.is_legal(subnet):
                 continue
+            self.logger.info(f'Add random subnet {subnet}')
             self.candidates.append(subnet)
 
     def get_mutation(self, k, mutation_num, mutate_prob):
@@ -223,9 +226,10 @@ class EvolutionSearcher(object):
                 f'epoch = {self.epoch} : top {len(self.keep_top_k[50])} result'
             )
             for i, subnet in enumerate(self.keep_top_k[50]):
-                self.logger.info(
-                    f'No.{i+1} {subnet} Top-1 err = {self.vis_dict[str(subnet)]["err"]}'
-                )
+                if i < 5:
+                    self.logger.info(
+                        f'No.{i+1} {subnet} Top-1 err = {self.vis_dict[str(subnet)]["err"]}'
+                    )
 
             mutation = self.get_mutation(self.select_num, self.mutation_num,
                                          self.mutate_prob)
@@ -237,10 +241,7 @@ class EvolutionSearcher(object):
 
             self.epoch += 1
 
-            self.candidates.sort(
-                key=lambda x: self.vis_dict[str(x)]['err'], reverse=False)
-
-            top3_subnet = self.candidates[:3]
+            top3_subnet = self.keep_top_k[self.select_num][:3]
             tmp_recorder = []
             for i in range(3):
                 genotype = self.trainer.evaluator.generate_genotype(
@@ -249,7 +250,7 @@ class EvolutionSearcher(object):
                     genotype, cost_key='eval_acc1es')
                 tmp_recorder.append(results)
                 self.logger.info(
-                    f'Best Subnet: {top3_subnet[i]} Genotype: {genotype} Eval Acc: {results}'
+                    f'Best Subnet: {top3_subnet[i]} Search top1 err: {self.vis_dict[str(top3_subnet[i])]["err"]} True Top1 Acc: {results}'
                 )
 
             self.recorder.append(tmp_recorder)
