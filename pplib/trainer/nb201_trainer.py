@@ -571,7 +571,7 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
             top1_vacc.update(top1.item(), n)
             top5_vacc.update(top5.item(), n)
 
-        return 1 - top1_vacc.avg, 1 - top5_vacc.avg
+        return 100 - top1_vacc.avg, 100 - top5_vacc.avg
 
     def _forward_fairnas(self, batch_inputs):
         """FairNAS Rules."""

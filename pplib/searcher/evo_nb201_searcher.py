@@ -63,7 +63,7 @@ class EvolutionSearcher(object):
 
         self.logger.info('Loading model weights....')
         if model_path is None:
-            model_path = './checkpoints/test_nb201_spos/test_nb201_spos_macro_ckpt_0001.pth.tar'
+            model_path = './checkpoints/test_nb201_spos/test_nb201_spos_macro_ckpt_0191.pth.tar'
 
         state_dict = torch.load(model_path)['state_dict']
         self.model.load_state_dict(state_dict)
@@ -74,8 +74,12 @@ class EvolutionSearcher(object):
         # select 10 (`select_num`) archs from 50 archs.
         self.keep_top_k = {self.select_num: [], 50: []}
         self.epoch = 0
-        # candidate subnet configs
+        # candidate is a list of subnet configs
         self.candidates = []
+
+        # recorder for draw
+        # eg: [[a1,a2,a3], [t1,t2,t3]]
+        self.recorder = []
 
     def is_legal(self, subnet: Dict):
         """Judge whether the subnet is visited."""
@@ -113,6 +117,15 @@ class EvolutionSearcher(object):
                 self.vis_dict[str(current_subnet)] = {}
                 yield current_subnet
 
+    def yield_top_subnet(self):
+        """Generate subnet from ``keep_top_k``"""
+        while True:
+            subnet = random.sample(self.keep_top_k[self.select_num], 1)[0]
+            if not self.is_legal(subnet):
+                continue
+            yield subnet
+            # self.candidates.append(subnet)
+
     def get_random(self, num):
         """Get `num` random subnets."""
         self.logger.info('random select ........')
@@ -129,7 +142,7 @@ class EvolutionSearcher(object):
         res = []
 
         max_iters = mutation_num * 10
-        subnet_iter = self.yield_random_subnet()
+        subnet_iter = self.yield_top_subnet()
 
         def mutate_subnet(subnet: Dict):
             convert_to = [
@@ -164,7 +177,7 @@ class EvolutionSearcher(object):
                 new_subnet[k1] = random.choice([v1, v2])
             return new_subnet
 
-        subnet_iter = self.yield_random_subnet()
+        subnet_iter = self.yield_top_subnet()
         while len(res) < crossover_num and max_iters > 0:
             max_iters -= 1
             subnet1 = next(subnet_iter)
@@ -226,8 +239,31 @@ class EvolutionSearcher(object):
 
             self.candidates.sort(
                 key=lambda x: self.vis_dict[str(x)]['err'], reverse=False)
-            best_subnet = self.candidates[0]
-            genotype = self.trainer.evaluator.generate_genotype(best_subnet, self.trainer.mutator)
-            results = self.trainer.evaluator.query_result(genotype, cost_key='eval_acc1es')
-            self.logger.info(f"Best Subnet: {best_subnet} Genotype: {genotype} Eval Acc: {results}")
-            
+
+            top3_subnet = self.candidates[:3]
+            tmp_recorder = []
+            for i in range(3):
+                genotype = self.trainer.evaluator.generate_genotype(
+                    top3_subnet[i], self.trainer.mutator)
+                results = self.trainer.evaluator.query_result(
+                    genotype, cost_key='eval_acc1es')
+                tmp_recorder.append(results)
+                self.logger.info(
+                    f'Best Subnet: {top3_subnet[i]} Genotype: {genotype} Eval Acc: {results}'
+                )
+
+            self.recorder.append(tmp_recorder)
+
+        self.draw_evalution_process()
+
+    def draw_evalution_process(self):
+        splited_recoder = [[
+            self.recorder[j][i] for j in range(len(self.recorder))
+        ] for i in range(3)]
+        import matplotlib.pyplot as plt
+        x = list(range(len(self.recorder)))
+        for i in range(3):
+            plt.scatter(
+                x, splited_recoder[i], marker='o', c='y', cmap='coolwarm')
+
+        plt.savefig('./evo_nb201_process.png')
