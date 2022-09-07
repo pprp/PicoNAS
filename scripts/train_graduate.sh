@@ -2,7 +2,7 @@
 
 # 命名规范：graduate_{search_space}_{method}_{description}_{exp NO.}
 # 记录内容：运行时间，图表下载 (tensorboard)
-# 注意事项：备份结果。
+# 注意事项：备份结果, 检查代码和执行bash是否一致。
 
 
 PYTHONPATH="$(dirname $0)/..":$PYTHONPATH \
@@ -18,7 +18,13 @@ start=`date +%s`
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_midsubnet_exp1.1 --dataset cifar10 --crit ce --lr 0.025
 
 # 第四章 实验1.2 min subnet
-CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_minsubnet_exp1.2 --dataset cifar10 --crit ce --lr 0.025
+# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_minsubnet_exp1.2 --dataset cifar10 --crit ce --lr 0.025
+
+
+# 第五章 实验2.0 macro benchmark + random type
+CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_randomtype_exp2.0 --dataset cifar10 --crit ce --lr 0.025
+
+
 
 end=`date +%s`
 runtime=$((end-start))

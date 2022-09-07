@@ -304,7 +304,7 @@ class NB201_Balance_Trainer(BaseTrainer, SampleStrategyMixin):
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
 
-        self.mutator.set_subnet(self.mid_subnet)
+        self.mutator.set_subnet(self.min_subnet)
 
         for step, batch_inputs in enumerate(loader):
             # get image and labels

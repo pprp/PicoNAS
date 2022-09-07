@@ -11,10 +11,10 @@ import pplib.utils.utils as utils
 from pplib.core.losses import CC, PairwiseRankLoss
 from pplib.evaluator import MacroEvaluator
 from pplib.nas.mutators import OneShotMutator
+from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 from .registry import register_trainer
-from pplib.predictor.pruners.measures.zen import compute_zen_score
 
 
 @register_trainer
@@ -64,7 +64,8 @@ class MacroTrainer(BaseTrainer):
             self.mutator.prepare_from_supernet(self.model)
 
         # evaluate the rank consistency
-        self.evaluator = None
+        bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
+        self.evaluator = self._build_evaluator(bench_path, num_sample=50)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -73,9 +74,69 @@ class MacroTrainer(BaseTrainer):
         self.distill_loss = CC()
         self.lambda_kd = 1000.0
 
-    def _build_evaluator(self, dataloader, bench_path, num_sample=50):
-        self.evaluator = MacroEvaluator(self, dataloader, bench_path,
-                                        num_sample)
+    def _build_evaluator(self, bench_path, num_sample=50):
+        return MacroEvaluator(self, bench_path, num_sample, 'test_acc')
+
+    def sample_subnet_by_type(self, type: str = 'random') -> List[Dict]:
+        """Return two subnets based on ``type``.
+
+        Type:
+            - ``random``: random sample two subnet.
+            - ``hamming``: sample subnet with hamming distance.
+            - ``adaptive``: sample subnet with adaptive hamming distance.
+        """
+
+        def hamming_dist(dct1, dct2):
+            dist = 0
+            for (k1, v1), (k2, v2) in zip(dct1.items(), dct2.items()):
+                assert k1 == k2
+                dist += 1 if v1 != v2 else 0
+            return dist
+
+        def adaptive_hamming_dist(dct1, dct2):
+            """
+            Distance between I and 1 2 is set to 2
+            Distance between 1 and 2 is set to 0.5
+            """
+            dist = 0
+            for (k1, v1), (k2, v2) in zip(dct1.items(), dct2.items()):
+                assert k1 == k2
+                if v1 == v2:
+                    continue
+                if set([v1, v2]) == set(['1', '2']):
+                    dist += 0.5
+                elif set([v1, v2]) == set(['1', 'I']):
+                    dist += 2
+                elif set([v1, v2]) == set(['1', '2']):
+                    dist += 2
+            return dist
+
+        assert type in ['random', 'hamming', 'adaptive']
+        if type == 'random':
+            return self.mutator.random_subnet, self.mutator.random_subnet
+        elif type == 'hamming':
+            # mean: 9.312 std 1.77
+            subnet1 = self.mutator.random_subnet
+            max_iter = 10
+            subnet2 = self.mutator.random_subnet
+            while hamming_dist(subnet1, subnet2) < 9.3 and max_iter > 0:
+                subnet2 = self.mutator.random_subnet
+            if max_iter > 0:
+                return subnet1, subnet2
+            else:
+                return subnet1, self.mutator.random_subnet
+        elif type == 'adaptive':
+            # mean: 7.789 std 2.90
+            subnet1 = self.mutator.random_subnet
+            max_iter = 10
+            subnet2 = self.mutator.random_subnet
+            while adaptive_hamming_dist(subnet1,
+                                        subnet2) < 7.789 and max_iter > 0:
+                subnet2 = self.mutator.random_subnet
+            if max_iter > 0:
+                return subnet1, subnet2
+            else:
+                return subnet1, self.mutator.random_subnet
 
     def _train(self, loader):
         self.model.train()
@@ -103,11 +164,11 @@ class MacroTrainer(BaseTrainer):
             # loss.backward()
 
             # SPOS with pairwise rankloss
-            # loss, outputs = self._forward_pairwise_loss(batch_inputs)
+            loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
             # spos with pairwise rankloss + cc distill
-            loss, outputs = self._forward_pairwise_loss_with_distill(
-                batch_inputs)
+            # loss, outputs = self._forward_pairwise_loss_with_distill(
+            # batch_inputs)
 
             # spos with multi-pair rank loss
             # loss, outputs = self._forward_multi_pairwise_loss(batch_inputs)
@@ -184,20 +245,20 @@ class MacroTrainer(BaseTrainer):
         labels = self._to_device(labels, self.device)
 
         # sample the first subnet
-        rand_subnet1 = self.mutator.random_subnet
-        self.mutator.set_subnet(rand_subnet1)
+        subnet1, subnet2 = self.sample_subnet_by_type(type='random')
+
+        self.mutator.set_subnet(subnet1)
         outputs = self.model(inputs)
         loss1 = self._compute_loss(outputs, labels)
         loss1.backward()
-        flops1 = self.get_subnet_flops(rand_subnet1)
+        flops1 = self.get_subnet_flops(subnet1)
 
         # sample the second subnet
-        rand_subnet2 = self.mutator.random_subnet
-        self.mutator.set_subnet(rand_subnet2)
+        self.mutator.set_subnet(subnet2)
         outputs = self.model(inputs)
         loss2 = self._compute_loss(outputs, labels)
         loss2.backward(retain_graph=True)
-        flops2 = self.get_subnet_flops(rand_subnet2)
+        flops2 = self.get_subnet_flops(subnet2)
 
         # pairwise rank loss
         # lambda settings:
@@ -224,19 +285,19 @@ class MacroTrainer(BaseTrainer):
         loss_list = []
 
         # sample the first subnet
-        rand_subnet1 = self.mutator.random_subnet
-        self.mutator.set_subnet(rand_subnet1)
+        subnet1 = self.mutator.random_subnet
+        self.mutator.set_subnet(subnet1)
         outputs, feat1 = self.model.forward_distill(inputs)
         loss1 = self._compute_loss(outputs, labels)
-        flops1 = self.get_subnet_flops(rand_subnet1)
+        flops1 = self.get_subnet_flops(subnet1)
         loss_list.append(loss1)
 
         # sample the second subnet
-        rand_subnet2 = self.mutator.random_subnet
-        self.mutator.set_subnet(rand_subnet2)
+        subnet2 = self.mutator.random_subnet
+        self.mutator.set_subnet(subnet2)
         outputs, feat2 = self.model.forward_distill(inputs)
         loss2 = self._compute_loss(outputs, labels)
-        flops2 = self.get_subnet_flops(rand_subnet2)
+        flops2 = self.get_subnet_flops(subnet2)
         loss_list.append(loss2)
 
         # pairwise rank loss
@@ -271,11 +332,11 @@ class MacroTrainer(BaseTrainer):
         labels = self._to_device(labels, self.device)
 
         # sample the first subnet
-        rand_subnet1 = self.mutator.random_subnet
-        self.mutator.set_subnet(rand_subnet1)
+        subnet1 = self.mutator.random_subnet
+        self.mutator.set_subnet(subnet1)
         outputs = self.model(inputs)
         loss1 = self._compute_loss(outputs, labels)
-        flops1 = self.get_subnet_flops(rand_subnet1)
+        flops1 = self.get_subnet_flops(subnet1)
 
         subnet_list = []
         loss_list = []
@@ -380,18 +441,13 @@ class MacroTrainer(BaseTrainer):
             )
 
             if epoch % 5 == 0:
-                if self.evaluator is None:
-                    bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
-                    self._build_evaluator(
-                        val_loader, bench_path, num_sample=50)
-                else:
-                    kt, ps, sp = self.evaluator.compute_rank_consistency()
-                    self.writer.add_scalar(
-                        'RANK/kendall_tau', kt, global_step=self.current_epoch)
-                    self.writer.add_scalar(
-                        'RANK/pearson', ps, global_step=self.current_epoch)
-                    self.writer.add_scalar(
-                        'RANK/spearman', sp, global_step=self.current_epoch)
+                kt, ps, sp = self.evaluator.compute_rank_consistency()
+                self.writer.add_scalar(
+                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'RANK/pearson', ps, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'RANK/spearman', sp, global_step=self.current_epoch)
 
             self.writer.add_scalar(
                 'EPOCH_LOSS/train_epoch_loss',

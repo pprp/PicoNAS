@@ -8,8 +8,17 @@ from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
 
 class MacroEvaluator(Evaluator):
+    """MacroEvaluator
+
+    Args:
+        trainer (_type_): _description_
+        bench_path (_type_): _description_
+        num_sample (_type_, optional): _description_. Defaults to None.
+        type (str, optional): _description_. Defaults to 'test_acc'.
+    """
 
     def __init__(self, trainer, bench_path, num_sample=None, type='test_acc'):
+
         super().__init__(trainer, bench_path)
         self.trainer = trainer
         self.bench_path = bench_path
