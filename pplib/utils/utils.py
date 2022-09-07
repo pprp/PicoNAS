@@ -197,6 +197,7 @@ def time_record(start):
     second = duration - hour * 3600 - minute * 60
     print('Elapsed time: hour: %d, minute: %d, second: %f' %
           (hour, minute, second))
+    return f'Elapsed time: hour: {hour}, minute: {minute}, second: {second}'
 
 
 def drop_path(x, drop_prob: float = 0.0, training: bool = False):
