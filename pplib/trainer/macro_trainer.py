@@ -441,7 +441,8 @@ class MacroTrainer(BaseTrainer):
             )
 
             if epoch % 5 == 0:
-                kt, ps, sp = self.evaluator.compute_rank_consistency()
+                kt, ps, sp = self.evaluator.compute_rank_consistency(
+                    val_loader)
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch)
                 self.writer.add_scalar(
