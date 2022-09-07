@@ -14,6 +14,7 @@ from pplib.nas.mutators import OneShotMutator
 from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 from .registry import register_trainer
+from pplib.predictor.pruners.measures.zen import compute_zen_score
 
 
 @register_trainer
@@ -482,3 +483,32 @@ class MacroTrainer(BaseTrainer):
             # print(f'k: {k} choice: {current_choice} flops: {choice_flops}')
             subnet_flops += choice_flops
         return subnet_flops
+
+    def get_subnet_zenscore(self, subnet_dict) -> float:
+        """Calculate zenscore based on subnet dict."""
+        import copy
+        m = copy.deepcopy(self.model)
+        o = OneShotMutator(with_alias=True)
+        o.prepare_from_supernet(m)
+        o.set_subnet(subnet_dict)
+
+        # for cifar10,cifar100,imagenet16
+        score = compute_zen_score(
+            net=m, inputs=torch.randn(4, 3, 32, 32), targets=None, repeat=5)
+        del m
+        del o
+        return score
+
+    def get_subnet_params(self, subnet_dict) -> float:
+        """Calculate current subnet params based on mmcv."""
+        subnet_params = 0
+        for k, v in self.mutator.search_group.items():
+            current_choice = subnet_dict[k]
+            choice_params = 0
+            for _, module in v[0]._candidate_ops[current_choice].named_modules(
+            ):
+                params = getattr(module, '__params__', 0)
+                if params > 0:
+                    choice_params += params
+            subnet_params += choice_params
+        return subnet_params
