@@ -65,11 +65,9 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
         """
 
         arch_params = nn.ParameterDict()
-
         for group_id, modules in self.search_group.items():
             group_arch_param = self.build_arch_param(modules[0].num_choices)
             arch_params[str(group_id)] = group_arch_param
-
         return arch_params
 
     def modify_supernet_forward(self, arch_params):
@@ -80,11 +78,9 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
         function to assign the corresponding `arch_param` to each
         `DiffMutable`.
         """
-
-        for group_id, modules in self.search_group.items():
-            if group_id in arch_params.keys():
-                for module in modules:
-                    module.set_forward_args(arch_param=arch_params[group_id])
+        for group_id, mutables in self.search_group.items():
+            for m in mutables:
+                m.set_forward_args(arch_param=arch_params[str(group_id)])
 
     @property
     def mutable_class_type(self) -> Type[DiffMutable]:

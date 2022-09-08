@@ -62,6 +62,7 @@ class NB201_Darts_Trainer(BaseTrainer):
             # Note: use alias to build search group
             self.mutator = DiffMutator(with_alias=True)
             self.mutator.prepare_from_supernet(model)
+            self.mutator.arch_params.to(self.device)
 
         # evaluate the rank consistency
         # self.evaluator = self._build_evaluator(num_sample=50)
@@ -75,13 +76,13 @@ class NB201_Darts_Trainer(BaseTrainer):
         # optimizer for arch; origin optimizer for supernet
         self.arch_optimizer = torch.optim.Adam(
             self.mutator.parameters(),
-            lr=1e-4,
+            lr=3e-4,
             betas=(0.5, 0.999),
             weight_decay=1e-3,
         )
 
         # unroll
-        self.unroll = False
+        self.unroll = True
 
     # def _build_evaluator(self, num_sample=50):
     #     return NB201Evaluator(self, num_sample)
@@ -171,15 +172,15 @@ class NB201_Darts_Trainer(BaseTrainer):
         output = self.model(val_x)
         loss = self.criterion(output, val_y)
 
-        w_model, w_ctrl = tuple(self.model.parameters()), tuple(
+        w_model, w_arch = tuple(self.model.parameters()), tuple(
             self.mutator.parameters())
-        w_grads = torch.autograd.grad(loss, w_model + w_ctrl)
+        w_grads = torch.autograd.grad(loss, w_model + w_arch)
         d_model, d_ctrl = w_grads[:len(w_model)], w_grads[len(w_model):]
 
         # compute hessian and final gradients
         hessian = self._compute_hessian(backup_params, d_model, trn_x, trn_y)
         with torch.no_grad():
-            for param, d, h in zip(w_ctrl, d_ctrl, hessian):
+            for param, d, h in zip(w_arch, d_ctrl, hessian):
                 # gradient = dalpha - lr * hessian
                 param.grad = d - lr * h
 
@@ -219,7 +220,6 @@ class NB201_Darts_Trainer(BaseTrainer):
             self.logger.warning(
                 f'In computing hessian, norm is smaller than 1E-8, cause eps to be {norm.item()}.'
             )
-
         dalphas = []
         for e in [eps, -2.0 * eps]:
             with torch.no_grad():
@@ -234,9 +234,7 @@ class NB201_Darts_Trainer(BaseTrainer):
 
     def search_subnet(self):
         """Search subnet by mutator."""
-        subnet = self.mutator.sample_choices()
-        self.mutator.set_choices(subnet)
-        return subnet
+        return self.mutator.sample_choices()
 
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
         """Network forward step. Low Level API"""
@@ -336,6 +334,8 @@ class NB201_Darts_Trainer(BaseTrainer):
             self.logger.info(
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
+
+            self.logger.info(f'==> export subnet: {self.search_subnet()}')
 
             # if epoch % 5 == 0:
             #     assert self.evaluator is not None
