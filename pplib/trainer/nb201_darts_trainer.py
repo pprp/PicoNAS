@@ -8,7 +8,7 @@ from mmcv.cnn import get_model_complexity_info
 
 import pplib.utils.utils as utils
 from pplib.core.losses import PairwiseRankLoss
-from pplib.evaluator.nb201_evaluator import NB201Evaluator
+# from pplib.evaluator.nb201_evaluator import NB201Evaluator
 from pplib.models.nasbench201 import DiffNASBench201Network
 from pplib.nas.mutators import DiffMutator
 from pplib.utils.utils import AvgrageMeter, accuracy
@@ -64,7 +64,7 @@ class NB201_Darts_Trainer(BaseTrainer):
             self.mutator.prepare_from_supernet(model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(num_sample=50)
+        # self.evaluator = self._build_evaluator(num_sample=50)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -83,8 +83,8 @@ class NB201_Darts_Trainer(BaseTrainer):
         # unroll
         self.unroll = False
 
-    def _build_evaluator(self, num_sample=50):
-        return NB201Evaluator(self, num_sample)
+    # def _build_evaluator(self, num_sample=50):
+    #     return NB201Evaluator(self, num_sample)
 
     def _train(self, train_loader, valid_loader):
         self.model.train()
@@ -134,7 +134,7 @@ class NB201_Darts_Trainer(BaseTrainer):
             # print every 20 iter
             if step % self.print_freq == 0:
                 self.logger.info(
-                    f'Step: {step:03} Train loss: {loss.item():.4f} Top1 acc: {top1_tacc.avg:.3f} Top5 acc: {top5_tacc.avg:.3f} Current geno: {self.evaluator.generate_genotype(self.rand_subnet, self.mutator)}'
+                    f'Step: {step:03} Train loss: {loss.item():.4f} Top1 acc: {top1_tacc.avg:.3f} Top5 acc: {top5_tacc.avg:.3f}'
                 )
                 self.writer.add_scalar(
                     'STEP_LOSS/train_step_loss',
@@ -168,7 +168,6 @@ class NB201_Darts_Trainer(BaseTrainer):
 
         # calculate unrolled loss on validation data
         # keep gradients for model here for compute hessian
-        self.mutator.modify_supernet_forward()
         output = self.model(val_x)
         loss = self.criterion(output, val_y)
 
@@ -192,7 +191,6 @@ class NB201_Darts_Trainer(BaseTrainer):
         Compute unrolled weights w`
         """
         # don't need zero_grad, using autograd to calculate gradients
-        self.mutator.modify_supernet_forward()
         output = self.model(x)
         loss = self.criterion(output, y)
         gradients = torch.autograd.grad(loss, self.model.parameters())
@@ -227,13 +225,18 @@ class NB201_Darts_Trainer(BaseTrainer):
             with torch.no_grad():
                 for p, d in zip(self.model.parameters(), dw):
                     p += e * d
-            self.mutator.modify_supernet_forward()
             output = self.model(trn_x)
             loss = self.criterion(output, trn_y)
             dalphas.append(
                 torch.autograd.grad(loss, self.mutator.parameters()))
         dalpha_pos, dalpha_neg = dalphas
         return [(p - n) / 2.0 * eps for p, n in zip(dalpha_pos, dalpha_neg)]
+
+    def search_subnet(self):
+        """Search subnet by mutator."""
+        subnet = self.mutator.sample_choices()
+        self.mutator.set_choices(subnet)
+        return subnet
 
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
         """Network forward step. Low Level API"""
@@ -242,10 +245,7 @@ class NB201_Darts_Trainer(BaseTrainer):
         labels = self._to_device(labels, self.device)
 
         # forward pass
-        if subnet_dict is None:
-            self.rand_subnet = self.mutator.random_subnet
-            self.mutator.set_subnet(self.rand_subnet)
-        else:
+        if subnet_dict is not None:
             self.mutator.set_subnet(subnet_dict)
         return self.model(inputs), labels
 
@@ -292,8 +292,7 @@ class NB201_Darts_Trainer(BaseTrainer):
                     )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg}'
-                f' Top5 acc: {top5_vacc.avg} Current geno: {self.evaluator.generate_genotype(self.rand_subnet, self.mutator)}'
-            )
+                f' Top5 acc: {top5_vacc.avg}')
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def fit(self, train_loader, val_loader, epochs):
@@ -314,7 +313,8 @@ class NB201_Darts_Trainer(BaseTrainer):
             epoch_start_time = time.time()
 
             # train
-            tr_loss, top1_tacc, top5_tacc = self._train(train_loader)
+            tr_loss, top1_tacc, top5_tacc = self._train(
+                train_loader, val_loader)
 
             # validate
             val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
@@ -337,16 +337,16 @@ class NB201_Darts_Trainer(BaseTrainer):
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
-            if epoch % 5 == 0:
-                assert self.evaluator is not None
-                kt, ps, sp = self.evaluator.compute_rank_consistency(
-                    val_loader, self.mutator)
-                self.writer.add_scalar(
-                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/pearson', ps, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/spearman', sp, global_step=self.current_epoch)
+            # if epoch % 5 == 0:
+            #     assert self.evaluator is not None
+            #     kt, ps, sp = self.evaluator.compute_rank_consistency(
+            #         val_loader, self.mutator)
+            #     self.writer.add_scalar(
+            #         'RANK/kendall_tau', kt, global_step=self.current_epoch)
+            #     self.writer.add_scalar(
+            #         'RANK/pearson', ps, global_step=self.current_epoch)
+            #     self.writer.add_scalar(
+            #         'RANK/spearman', sp, global_step=self.current_epoch)
 
             self.writer.add_scalar(
                 'EPOCH_LOSS/train_epoch_loss',

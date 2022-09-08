@@ -83,7 +83,6 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
         self._search_group: Optional[Dict[int, List[MUTABLE_TYPE]]] = None
         self._with_alias = with_alias
 
-    # TODO
     # should be a class property
     @property
     @abstractmethod

@@ -232,6 +232,10 @@ class DiffOP(DiffMutable[str, str]):
         """list: all choices."""
         return list(self._candidate_ops.keys())
 
+    def sample_choice(self, arch_param):
+        """Sample choice based on arch_parameters."""
+        return self.choices[torch.argmax(arch_param).item()]
+
 
 class DiffChoiceRoute(DiffMutable[str, List[str]]):
     """A type of ``MUTABLES`` for Neural Architecture Search, which can select

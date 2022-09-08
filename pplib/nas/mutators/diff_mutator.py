@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
+import torch
 import torch.nn as nn
 
 from pplib.nas.mutables import DiffMutable
@@ -33,6 +34,10 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
             with_alias=with_alias,
             init_cfg=init_cfg)
 
+    def build_arch_param(self, num_choices) -> nn.Parameter:
+        """Build learnable architecture parameters."""
+        return nn.Parameter(torch.randn(num_choices) * 1e-3)
+
     def prepare_from_supernet(self, supernet: nn.Module) -> None:
         """Inherit from ``BaseMutator``'s, generate `arch_params` in DARTS.
 
@@ -43,6 +48,7 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
 
         super().prepare_from_supernet(supernet)
         self.arch_params = self.build_arch_params(supernet)
+        self.modify_supernet_forward(self.arch_params)
 
     def build_arch_params(self, supernet):
         """This function will build many arch params, which are generally used
@@ -58,23 +64,15 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
                 the supernet.
         """
 
-        arch_params: Dict[int, nn.Parameter] = dict()
+        arch_params = nn.ParameterDict()
 
-        for module_name, module in supernet.named_modules():
-            if isinstance(module, self.mutable_class_type):
-                if self._with_alias:
-                    group_id = self.alias2group_id[module.alias]
-                else:
-                    group_id = self.module_name2group_id[module_name]
-
-                if group_id not in arch_params:
-                    group_arch_param = module.build_arch_param()
-                    if group_arch_param is not None:
-                        arch_params[group_id] = group_arch_param
+        for group_id, modules in self.search_group.items():
+            group_arch_param = self.build_arch_param(modules[0].num_choices)
+            arch_params[str(group_id)] = group_arch_param
 
         return arch_params
 
-    def modify_supernet_forward(self):
+    def modify_supernet_forward(self, arch_params):
         """Modify the DiffMutable's default arch_param in forward.
 
         The `arch_param` is along to `DiffMutator`, while the
@@ -84,10 +82,9 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
         """
 
         for group_id, modules in self.search_group.items():
-            if group_id in self.arch_params.keys():
+            if group_id in arch_params.keys():
                 for module in modules:
-                    module.set_forward_args(
-                        arch_param=self.arch_params[group_id])
+                    module.set_forward_args(arch_param=arch_params[group_id])
 
     @property
     def mutable_class_type(self) -> Type[DiffMutable]:
@@ -97,3 +94,31 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
             Type[DiffMutable]: Class type of differentiable mutable.
         """
         return DiffMutable
+
+    def sample_choices(self):
+        """Sampling by search groups.
+        The sampling result of the first mutable of each group is the sampling
+        result of this group.
+        Returns:
+            Dict[int, Any]: Random choices dict.
+        """
+
+        choices = dict()
+        for group_id, mutables in self.search_group.items():
+            arch_parm = self.arch_params[str(group_id)]
+            choice = mutables[0].sample_choice(arch_parm)
+            choices[group_id] = choice
+        return choices
+
+    def set_choices(self, choices: Dict[int, Any]) -> None:
+        """Set mutables' current choice according to choices sample by
+        :func:`sample_choices`.
+        Args:
+            choices (Dict[int, Any]): Choices dict. The key is group_id in
+                search groups, and the value is the sampling results
+                corresponding to this group.
+        """
+        for group_id, mutables in self.search_group.items():
+            choice = choices[group_id]
+            for m in mutables:
+                m.current_choice = choice

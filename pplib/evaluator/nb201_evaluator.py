@@ -1,11 +1,11 @@
 import math
-from typing import List
+from typing import List, Union
 
 import torch
 from torch import Tensor
 
 from pplib.evaluator.base import Evaluator
-from pplib.nas.mutators import OneShotMutator
+from pplib.nas.mutators import DiffMutator, OneShotMutator
 # from pplib.predictor.pruners.measures.synflow import compute_synflow_per_weight
 from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.get_dataset_api import get_dataset_api
@@ -56,7 +56,7 @@ class NB201Evaluator(Evaluator):
         return api['nb201_data']
 
     def generate_genotype(self, subnet_dict: dict,
-                          mutator: OneShotMutator) -> str:
+                          mutator: Union[OneShotMutator, DiffMutator]) -> str:
         """subnet_dict represent the subnet dict of mutator."""
         # Please make sure that the mutator have been called the
         # `prepare_from_supernet` function.
