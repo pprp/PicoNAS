@@ -1,74 +1,135 @@
 # draw line with
-import random
+import csv
+from typing import List
 
 import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 
 matplotlib.use('agg')
-import matplotlib.pyplot as plt
 
 
-def plot_curve(
-    save_path,
-    total_epoch,
-):
+def process_csv(csv_path) -> List:
+    epoch_list = []
+    train_loss_list = []
+    with open(csv_path, 'r') as f:
+        cr = csv.reader(f)
+        for i, contents in enumerate(cr):
+            if i == 0:
+                continue
+            epoch = int(contents[1])
+            train_loss = float(contents[2])
+            epoch_list.append(epoch)
+            train_loss_list.append(train_loss)
+    return epoch_list, train_loss_list
 
-    title = 'the accuracy/loss curve of train/val'
+
+def plot_train_curve():
+    train_max_subnet_csv_path = './data/csv/run-graduate_nb201_spos_maxsubnet_exp1.0-tag-STEP_LOSS_train_step_loss.csv'
+    x, y = process_csv(train_max_subnet_csv_path)
+
+    train_min_subnet_csv_path = './data/csv/run-graduate_nb201_spos_minsubnet_exp1.2-tag-STEP_LOSS_train_step_loss.csv'
+    x3, y3 = process_csv(train_min_subnet_csv_path)
+
+    # figsize setting
     dpi = 100
     width, height = 1600, 1000
-    legend_fontsize = 10
+    legend_fontsize = 12
     figsize = width / float(dpi), height / float(dpi)
-
     fig = plt.figure(figsize=figsize)
-    x_axis = np.array([i for i in range(total_epoch)])  # epochs
-    y_axis = np.zeros(total_epoch)
 
-    plt.xlim(0, total_epoch)
-    plt.ylim(0, 100)
-    interval_y = 5
-    interval_x = 5
-    plt.xticks(np.arange(0, total_epoch + interval_x, interval_x))
-    plt.yticks(np.arange(0, 100 + interval_y, interval_y))
+    # plot range setting
+    plt.xlim(0, max(x))
+    plt.ylim(0, 0.7)
+
+    # plot grid background
+    interval_x = 2000  # TODO
+    interval_y = 0.05  # TODO
+    plt.xticks(np.arange(0, max(x) + interval_x, interval_x))
+    plt.yticks(np.arange(0, 0.7 + interval_y, interval_y))
     plt.grid()
-    plt.title(title, fontsize=20)
-    plt.xlabel('the training epoch', fontsize=16)
-    plt.ylabel('accuracy', fontsize=16)
 
-    y_axis[:] = [random.randint(0, 100) for i in range(total_epoch)]
-    plt.plot(
-        x_axis, y_axis, color='g', linestyle='-', label='train-accuracy', lw=2)
-    plt.legend(loc=4, fontsize=legend_fontsize)
+    # plot title and label
+    # plt.title("EXP", fontsize=20)  # TODO
+    plt.xlabel('The searching iter', fontsize=16)  # TODO
+    plt.ylabel('The loss', fontsize=16)  # TODO
 
-    y_axis[:] = [random.randint(0, 100) for i in range(total_epoch)]
+    # plot curve [linestyle: '-' or ':'] [color: 'g' or 'y']
     plt.plot(
-        x_axis, y_axis, color='y', linestyle='-', label='valid-accuracy', lw=2)
-    plt.legend(loc=4, fontsize=legend_fontsize)
+        x, y, color='g', linestyle='-', label='Train loss (Max subnet)',
+        lw=2)  # TODO
+    plt.legend(loc=2, fontsize=legend_fontsize)  # TODO
 
-    y_axis[:] = [random.randint(0, 5) for i in range(total_epoch)]
     plt.plot(
-        x_axis,
-        y_axis * 50,
+        x3,
+        y3,
+        color='r',
+        linestyle='-',
+        label='Train loss (Min subnet)',
+        lw=2)  # TODO
+    plt.legend(loc=2, fontsize=legend_fontsize)  # TODO
+
+    # save figure
+    fig.savefig('./test2.png', dpi=dpi, bbox_inches='tight')  # TODO
+    plt.close(fig)
+
+
+def plot_valid_curve():
+
+    valid_max_subnet_csv_path = './data/csv/run-graduate_nb201_spos_maxsubnet_exp1.0-tag-STEP_LOSS_valid_step_loss.csv'
+    x2, y2 = process_csv(valid_max_subnet_csv_path)
+
+    valid_min_subnet_csv_path = './data/csv/run-graduate_nb201_spos_minsubnet_exp1.2-tag-STEP_LOSS_valid_step_loss.csv'
+    x4, y4 = process_csv(valid_min_subnet_csv_path)
+
+    # figsize setting
+    dpi = 100
+    width, height = 1600, 1000
+    legend_fontsize = 12
+    figsize = width / float(dpi), height / float(dpi)
+    fig = plt.figure(figsize=figsize)
+
+    # plot range setting
+    plt.xlim((0, max(x2)))
+    plt.ylim((0.4, 0.8))
+
+    # plot grid background
+    interval_x = 1000  # TODO
+    interval_y = 0.05  # TODO
+    plt.xticks(np.arange(0, max(x2) + interval_x, interval_x))
+    plt.yticks(np.arange(0.25, 0.8 + interval_y, interval_y))
+    plt.grid()
+
+    # plot title and label
+    # plt.title("EXP", fontsize=20)  # TODO
+    plt.xlabel('The searching iter', fontsize=16)  # TODO
+    plt.ylabel('The loss', fontsize=16)  # TODO
+
+    # plot curve [linestyle: '-' or ':'] [color: 'g' or 'y']
+
+    plt.plot(
+        x2,
+        y2,
         color='g',
         linestyle=':',
-        label='train-loss-x50',
-        lw=2)
-    plt.legend(loc=4, fontsize=legend_fontsize)
+        label='Valid loss (Max subnet)',
+        lw=2)  # TODO
+    plt.legend(loc=2, fontsize=legend_fontsize)  # TODO
 
-    y_axis[:] = [random.randint(0, 5) for i in range(total_epoch)]
     plt.plot(
-        x_axis,
-        y_axis * 50,
-        color='y',
+        x4,
+        y4,
+        color='r',
         linestyle=':',
-        label='valid-loss-x50',
-        lw=2)
-    plt.legend(loc=4, fontsize=legend_fontsize)
+        label='Valid loss (Min subnet)',
+        lw=2)  # TODO
+    plt.legend(loc=2, fontsize=legend_fontsize)  # TODO
 
-    if save_path is not None:
-        fig.savefig(save_path, dpi=dpi, bbox_inches='tight')
-        print('---- save figure {} into {}'.format(title, save_path))
+    # save figure
+    fig.savefig('./test3.png', dpi=dpi, bbox_inches='tight')  # TODO
     plt.close(fig)
 
 
 if __name__ == '__main__':
-    plot_curve('./test2.png', total_epoch=100)
+    plot_train_curve()
+    plot_valid_curve()
