@@ -15,8 +15,8 @@ def pearson(vector1, vector2):
     p_sum = sum([vector1[i] * vector2[i] for i in range(n)])
     # 分子num，分母den
     num = p_sum - (sum1 * sum2 / n)
-    den = math.sqrt(
-        (sum1_pow - pow(sum1, 2) / n) * (sum2_pow - pow(sum2, 2) / n))
+    den = math.sqrt((sum1_pow - pow(sum1, 2) / n) *
+                    (sum2_pow - pow(sum2, 2) / n) + 0.00001)
     if den == 0:
         return 0.0
     return num / den

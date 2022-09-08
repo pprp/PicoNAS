@@ -67,6 +67,7 @@ class TestNasBench201(TestCase):
         dfmutator = DiffMutator(with_alias=True)
         dfmutator.prepare_from_supernet(model)
 
+        print(dfmutator.arch_params.shape)
         print(dfmutator.search_group.keys())
 
 

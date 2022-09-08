@@ -158,7 +158,10 @@ def main():
 
     train_transform, valid_transform = data_transforms_cifar10(args)
     train_data = dset.CIFAR10(
-        root=args.data, train=True, download=True, transform=train_transform)
+        root=args.data_dir,
+        train=True,
+        download=True,
+        transform=train_transform)
 
     num_train = len(train_data)
     indices = list(range(num_train))

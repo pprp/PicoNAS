@@ -74,7 +74,7 @@ class NB201_Darts_Trainer(BaseTrainer):
 
         # optimizer for arch; origin optimizer for supernet
         self.arch_optimizer = torch.optim.Adam(
-            self.mutator.arch_parameters(),
+            self.mutator.parameters(),
             lr=1e-4,
             betas=(0.5, 0.999),
             weight_decay=1e-3,
@@ -109,7 +109,9 @@ class NB201_Darts_Trainer(BaseTrainer):
             if self.unroll:
                 self._unrolled_backward(trn_x, trn_y, val_x, val_y)
             else:
-                self._backward(trn_x, trn_y)
+                output = self.model(trn_x)
+                loss = self.criterion(output, trn_y)
+                loss.backward()
             self.arch_optimizer.step()
 
             # phase 2: supernet parameter update
@@ -166,8 +168,10 @@ class NB201_Darts_Trainer(BaseTrainer):
 
         # calculate unrolled loss on validation data
         # keep gradients for model here for compute hessian
-        self.sample_search()
-        _, loss = self._logits_and_loss(val_x, val_y)
+        self.mutator.modify_supernet_forward()
+        output = self.model(val_x)
+        loss = self.criterion(output, val_y)
+
         w_model, w_ctrl = tuple(self.model.parameters()), tuple(
             self.mutator.parameters())
         w_grads = torch.autograd.grad(loss, w_model + w_ctrl)
@@ -183,13 +187,14 @@ class NB201_Darts_Trainer(BaseTrainer):
         # restore weights
         self._restore_weights(backup_params)
 
-    def _compute_virtual_model(self, X, y, lr, momentum, weight_decay):
+    def _compute_virtual_model(self, x, y, lr, momentum, weight_decay):
         """
         Compute unrolled weights w`
         """
         # don't need zero_grad, using autograd to calculate gradients
-        self.sample_search()
-        _, loss = self._logits_and_loss(X, y)
+        self.mutator.modify_supernet_forward()
+        output = self.model(x)
+        loss = self.criterion(output, y)
         gradients = torch.autograd.grad(loss, self.model.parameters())
         with torch.no_grad():
             for w, g in zip(self.model.parameters(), gradients):
@@ -212,27 +217,23 @@ class NB201_Darts_Trainer(BaseTrainer):
         self._restore_weights(backup_params)
         norm = torch.cat([w.view(-1) for w in dw]).norm()
         eps = 0.01 / norm
-        if norm < 1E-8:
+        if norm < 1e-08:
             self.logger.warning(
-                'In computing hessian, norm is smaller than 1E-8, cause eps to be %.6f.',
-                norm.item())
+                f'In computing hessian, norm is smaller than 1E-8, cause eps to be {norm.item()}.'
+            )
 
         dalphas = []
-        for e in [eps, -2. * eps]:
-            # w+ = w + eps*dw`, w- = w - eps*dw`
+        for e in [eps, -2.0 * eps]:
             with torch.no_grad():
                 for p, d in zip(self.model.parameters(), dw):
                     p += e * d
-
-            self.sample_search()
-            _, loss = self._logits_and_loss(trn_x, trn_y)
+            self.mutator.modify_supernet_forward()
+            output = self.model(trn_x)
+            loss = self.criterion(output, trn_y)
             dalphas.append(
                 torch.autograd.grad(loss, self.mutator.parameters()))
-
-        # dalpha { L_trn(w+) }, # dalpha { L_trn(w-) }
         dalpha_pos, dalpha_neg = dalphas
-        hessian = [(p - n) / 2. * eps for p, n in zip(dalpha_pos, dalpha_neg)]
-        return hessian
+        return [(p - n) / 2.0 * eps for p, n in zip(dalpha_pos, dalpha_neg)]
 
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
         """Network forward step. Low Level API"""

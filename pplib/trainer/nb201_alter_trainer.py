@@ -1,3 +1,8 @@
+"""
+第四章 均衡采样策略 alter subnet
+alter sample max subnet and min subnet.
+"""
+
 import random
 import time
 from typing import Dict, List
@@ -8,7 +13,7 @@ from mmcv.cnn import get_model_complexity_info
 from torch import Tensor
 
 import pplib.utils.utils as utils
-from pplib.core.losses import KLDivergence, PairwiseRankLoss
+from pplib.core.losses import PairwiseRankLoss
 from pplib.evaluator.nb201_evaluator import NB201Evaluator
 from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
@@ -19,7 +24,7 @@ from .registry import register_trainer
 
 
 @register_trainer
-class NB201_Balance_Trainer(BaseTrainer):
+class NB201_Alter_Trainer(BaseTrainer):
     """Trainer for NB201 with Balanced Sampler
 
     1. eval experiments. max subnet, mid subet, min subnet
@@ -68,21 +73,13 @@ class NB201_Balance_Trainer(BaseTrainer):
             self.mutator.prepare_from_supernet(model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(num_sample=50)
+        # self.evaluator = self._build_evaluator(num_sample=50)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
 
         # record current rand_subnet
         self.rand_subnet = None
-
-        # Forward Specific Subnet flag
-        #  => is_specific is True: cooperate with SH
-        #  => is_specific is False: normal mode
-        self.is_specific = False
-
-        # kl loss
-        self.kl_loss = KLDivergence(loss_weight=1)
 
         self.max_subnet = {
             0: 'conv_3x3',
@@ -92,14 +89,7 @@ class NB201_Balance_Trainer(BaseTrainer):
             4: 'conv_3x3',
             5: 'conv_3x3'
         }
-        self.mid_subnet = {
-            0: 'conv_3x3',
-            1: 'conv_3x3',
-            2: 'conv_1x1',
-            3: 'conv_1x1',
-            4: 'conv_1x1',
-            5: 'conv_1x1'
-        }
+
         self.min_subnet = {
             0: 'conv_3x3',
             1: 'conv_3x3',
@@ -109,13 +99,18 @@ class NB201_Balance_Trainer(BaseTrainer):
             5: 'skip_connect'
         }
 
+        # flag to sample max/min subnet alterly
+        # when ``alter_flag`` is True: sample max subnet
+        # when ``alter_flag`` is False: sample min subnet
+        self.alter_flag = True
+
     def _build_evaluator(self, num_sample=50):
         return NB201Evaluator(self, num_sample)
 
-    def sample_subnet_by_policy(self,
-                                policy: str = 'balanced',
-                                n_samples: int = 3) -> Dict:
-        assert policy in ['zenscore', 'flops', 'params']
+    def policy_sampler(self,
+                       policy: str = 'balanced',
+                       n_samples: int = 3) -> Dict:
+        assert policy in {'zenscore', 'flops', 'params'}
         n_subnets = [self.mutator.random_subnet for _ in range(n_samples)]
 
         def minmaxscaler(n_list: Tensor) -> Tensor:
@@ -128,48 +123,21 @@ class NB201_Balance_Trainer(BaseTrainer):
                 [self.get_subnet_flops(i) for i in n_subnets])
             res = minmaxscaler(n_flops)
             res = F.softmax(res, dim=0)
-            # Find the max
             max_idx = res.argmax()
-            # Get corresponding subnet
             subnet = n_subnets[max_idx]
-
         elif policy == 'params':
-            n_params = torch.tensor(
-                [self.get_subnet_params(i) for i in n_subnets])
+            n_params = [self.get_subnet_params(i) for i in n_subnets]
             res = minmaxscaler(n_params)
             res = F.softmax(res, dim=0)
-            # Find the max
             max_idx = res.argmax()
             subnet = n_subnets[max_idx]
-
         elif policy == 'zenscore':
-            n_zenscore = torch.tensor(
-                [self.get_subnet_zenscore(i) for i in n_subnets])
+            n_zenscore = [self.get_subnet_zenscore(i) for i in n_subnets]
             res = minmaxscaler(n_zenscore)
             res = F.softmax(res, dim=0)
-            # Find the max
             max_idx = res.argmax()
             subnet = n_subnets[max_idx]
-
         return subnet
-
-    def _generate_fair_lists(self) -> List[Dict]:
-        search_group = self.mutator.search_group
-        fair_lists = []
-
-        choices_dict = dict()
-        num_choices = -1
-        for group_id, modules in search_group.items():
-            choices = modules[0].choices
-            choices_dict[group_id] = random.sample(choices, len(choices))
-            num_choices = len(choices)
-
-        for i in range(num_choices):
-            current_dict = dict()
-            for k, v in choices_dict.items():
-                current_dict[k] = v[i]
-            fair_lists.append(current_dict)
-        return fair_lists
 
     def _train(self, loader):
         self.model.train()
@@ -177,8 +145,6 @@ class NB201_Balance_Trainer(BaseTrainer):
         train_loss = 0.0
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
-
-        self.mutator.set_subnet(self.min_subnet)
 
         for step, batch_inputs in enumerate(loader):
             # get image and labels
@@ -189,18 +155,22 @@ class NB201_Balance_Trainer(BaseTrainer):
             # remove gradient from previous passes
             self.optimizer.zero_grad()
 
-            # Fair Sampling Rules
-            loss, outputs = self._forward_fairnas(batch_inputs)
+            # FairNAS
+            # loss, outputs = self._forward_fairnas(batch_inputs)
 
-            # Uniform Sampling Rules
-            # loss, outputs = self._forward_uniform(batch_inputs)
+            # Single Path One Shot
+            loss, outputs = self.forward(batch_inputs, mode='loss')
+            loss.backward()
 
-            # Balanced Sampling Rules
-            # loss, outputs = self._forward_balanced(
-            #     batch_inputs, policy='zenscore')
+            # SPOS with pairwise rankloss
+            # loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
-            # Sandwich Sampling Rule
-            loss, outputs = self._forward_sandwich(batch_inputs)
+            # spos with pairwise rankloss + cc distill
+            # loss, outputs = self._forward_pairwise_loss_with_distill(
+            #     batch_inputs)
+
+            # spos with multi-pair rank loss
+            # loss, outputs = self._forward_multi_pairwise_loss(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():
@@ -248,13 +218,13 @@ class NB201_Balance_Trainer(BaseTrainer):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
 
-        if self.is_specific:
-            return self.model(inputs)
+        if self.alter_flag:
+            self.mutator.set_subnet(self.max_subnet)
+            self.alter_flag = False
+        else:
+            self.mutator.set_subnet(self.min_subnet)
+            self.alter_flag = True
 
-        # forward pass
-        # if self.searching:
-        #     self.rand_subnet = self.mutator.random_subnet
-        #     self.mutator.set_subnet(self.rand_subnet)
         return self.model(inputs)
 
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
@@ -263,26 +233,27 @@ class NB201_Balance_Trainer(BaseTrainer):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
 
-        if self.is_specific:
-            return self.model(inputs), labels
-
         # forward pass
-        # if subnet_dict is None:
-        #     self.rand_subnet = self.mutator.random_subnet
-        #     self.mutator.set_subnet(self.rand_subnet)
-        # else:
-        #     self.mutator.set_subnet(subnet_dict)
+        if subnet_dict is not None:
+            self.mutator.set_subnet(subnet_dict)
+
         return self.model(inputs), labels
 
-    def _validate(self, loader):
+    def _validate(self, val_loader, subnet_type='max'):
         # self.model.eval()
+        assert subnet_type in ['max', 'min']
+
+        if subnet_type == 'max':
+            self.mutator.set_subnet(self.max_subnet)
+        else:
+            self.mutator.set_subnet(self.min_subnet)
 
         val_loss = 0.0
         top1_vacc = AvgrageMeter()
         top5_vacc = AvgrageMeter()
 
         with torch.no_grad():
-            for step, batch_inputs in enumerate(loader):
+            for step, batch_inputs in enumerate(val_loader):
                 # move to device
                 outputs, labels = self.forward(batch_inputs, mode='predict')
 
@@ -301,19 +272,22 @@ class NB201_Balance_Trainer(BaseTrainer):
                 # print every 20 iter
                 if step % self.print_freq == 0:
                     self.writer.add_scalar(
-                        'STEP_LOSS/valid_step_loss',
+                        f'STEP_LOSS/valid_step_loss_type:{subnet_type}',
                         loss.item(),
-                        global_step=step + self.current_epoch * len(loader),
+                        global_step=step +
+                        self.current_epoch * len(val_loader),
                     )
                     self.writer.add_scalar(
-                        'VAL_ACC/top1_val_acc',
+                        f'VAL_ACC/top1_val_acc_type:{subnet_type}',
                         top1_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
+                        global_step=step +
+                        self.current_epoch * len(val_loader),
                     )
                     self.writer.add_scalar(
-                        'VAL_ACC/top5_val_acc',
+                        f'VAL_ACC/top5_val_acc_type:{subnet_type}',
                         top5_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
+                        global_step=step +
+                        self.current_epoch * len(val_loader),
                     )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg}'
@@ -340,8 +314,13 @@ class NB201_Balance_Trainer(BaseTrainer):
             # train
             tr_loss, top1_tacc, top5_tacc = self._train(train_loader)
 
-            # validate
-            val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
+            # validate max subnet
+            val_loss, top1_vacc, top5_vacc = self._validate(
+                val_loader, subnet_type='max')
+
+            # validate min subnet
+            val_loss, top1_vacc, top5_vacc = self._validate(
+                val_loader, subnet_type='min')
 
             # save ckpt
             if epoch % 10 == 0:
@@ -361,17 +340,6 @@ class NB201_Balance_Trainer(BaseTrainer):
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
-            if epoch % 5 == 0:
-                assert self.evaluator is not None
-                kt, ps, sp = self.evaluator.compute_rank_consistency(
-                    val_loader, self.mutator)
-                self.writer.add_scalar(
-                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/pearson', ps, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/spearman', sp, global_step=self.current_epoch)
-
             self.writer.add_scalar(
                 'EPOCH_LOSS/train_epoch_loss',
                 tr_loss,
@@ -388,38 +356,6 @@ class NB201_Balance_Trainer(BaseTrainer):
         # final message
         self.logger.info(
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
-
-    def _forward_pairwise_loss(self, batch_inputs):
-        inputs, labels = batch_inputs
-        inputs = self._to_device(inputs, self.device)
-        labels = self._to_device(labels, self.device)
-
-        # sample the first subnet
-        self.rand_subnet = self.mutator.random_subnet
-        self.mutator.set_subnet(self.rand_subnet)
-        outputs = self.model(inputs)
-        loss1 = self._compute_loss(outputs, labels)
-        loss1.backward()
-        flops1 = self.get_subnet_flops(self.rand_subnet)
-
-        # sample the second subnet
-        self.rand_subnet = self.mutator.random_subnet
-        self.mutator.set_subnet(self.rand_subnet)
-        outputs = self.model(inputs)
-        loss2 = self._compute_loss(outputs, labels)
-        loss2.backward(retain_graph=True)
-        flops2 = self.get_subnet_flops(self.rand_subnet)
-
-        # pairwise rank loss
-        # lambda settings:
-        #       1. min(2, self.current_epoch/10.)
-        #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
-
-        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1,
-                                                      loss2)
-        loss3.backward()
-
-        return loss2, outputs
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         # self.model.eval()
@@ -519,10 +455,7 @@ class NB201_Balance_Trainer(BaseTrainer):
 
         # for cifar10,cifar100,imagenet16
         score = compute_zen_score(
-            net=m,
-            inputs=torch.randn(4, 3, 32, 32).to(self.device),
-            targets=None,
-            repeat=5)
+            net=m, inputs=torch.randn(4, 3, 32, 32), targets=None, repeat=5)
         del m
         del o
         return score
@@ -597,46 +530,20 @@ class NB201_Balance_Trainer(BaseTrainer):
         sum_loss.backward()
         return sum_loss, outputs
 
-    def _forward_uniform(self, batch_inputs):
-        """Single Path One Shot."""
-        inputs, labels = batch_inputs
-        inputs = self._to_device(inputs, self.device)
-        labels = self._to_device(labels, self.device)
+    def _generate_fair_lists(self) -> List[Dict]:
+        search_group = self.mutator.search_group
+        fair_lists = []
 
-        self.mutator.set_subnet(self.mutator.random_subnet)
-        outputs = self.model(inputs)
-        loss = self._compute_loss(outputs, labels)
-        loss.backward()
-        return loss, outputs
+        choices_dict = dict()
+        num_choices = -1
+        for group_id, modules in search_group.items():
+            choices = modules[0].choices
+            choices_dict[group_id] = random.sample(choices, len(choices))
+            num_choices = len(choices)
 
-    def _forward_balanced(self, batch_inputs, policy='zenscore'):
-        """Balanced Sampling Rules.
-            Policy can be `zenscore`, `flops`, `params`
-        """
-        inputs, labels = batch_inputs
-        inputs = self._to_device(inputs, self.device)
-        labels = self._to_device(labels, self.device)
-
-        subnet = self.sample_subnet_by_policy(policy=policy)
-        self.mutator.set_subnet(subnet)
-        outputs = self.model(inputs)
-        loss = self._compute_loss(outputs, labels)
-        loss.backward()
-        return loss, outputs
-
-    def _forward_sandwich(self, batch_inputs):
-        inputs, labels = batch_inputs
-        inputs = self._to_device(inputs, self.device)
-        labels = self._to_device(labels, self.device)
-
-        with torch.no_grad():
-            self.mutator.set_subnet(self.max_subnet)
-            teacher_output = self.model(inputs)
-
-        self.mutator.set_subnet(self.mutator.random_subnet)
-        student_output = self.model(inputs)
-
-        loss = self.kl_loss(student_output, teacher_output) + \
-            self._compute_loss(student_output, labels)
-        loss.backward()
-        return loss, student_output
+        for i in range(num_choices):
+            current_dict = dict()
+            for k, v in choices_dict.items():
+                current_dict[k] = v[i]
+            fair_lists.append(current_dict)
+        return fair_lists

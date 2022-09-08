@@ -35,7 +35,7 @@ OMP_NUM_THREADS=1
 
 
 # SPOS MAE
-CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name SearchableMAE --trainer_name MAETrainer --log_name spos --dataset simmim --crit mse
+# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name SearchableMAE --trainer_name MAETrainer --log_name spos --dataset simmim --crit mse
 
 # MACRO
 # fairnas
@@ -61,3 +61,10 @@ CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name nb201_spos_higher_lr --dataset cifar10 --crit ce --lr 0.05
 
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name nb201_spos_w_sc --dataset cifar10 --crit ce --lr 0.025
+
+
+# Test NB201 Darts algorithm
+# CUDA_VISIBLE_DEVICES=1 python tools/train_darts.py --config configs/spos/spos_cifar10.py --model_name DiffNASBench201Network --trainer_name NB201_Darts_Trainer --log_name test_nb201_darts_test_exp0.0 --dataset cifar10 --crit ce --lr 0.025
+
+# Test NB201 with Different sampling Strategy
+CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_uniformsampling_exp3.0 --dataset cifar10 --crit ce --lr 0.025

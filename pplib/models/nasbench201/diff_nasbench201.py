@@ -208,7 +208,6 @@ class FactorizedReduce(nn.Module):
         return out
 
 
-@register_model
 class NASBench201Cell(nn.Module):
     """
     Builtin cell structure of NAS Bench 201. One cell contains
@@ -392,12 +391,13 @@ class ResNetBasicBlock(nn.Module):
         return inputs + basicblock
 
 
+@register_model
 class DiffNASBench201Network(nn.Module):
 
     def __init__(
         self,
-        stem_out_channels,
-        num_modules_per_stack,
+        stem_out_channels=16,
+        num_modules_per_stack=5,
         bn_affine=True,
         bn_momentum=0.1,
         bn_track_running_stats=True,
