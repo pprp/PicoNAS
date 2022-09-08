@@ -29,6 +29,8 @@ CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.
 # 第五章 实验2.0 macro benchmark + random type
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_randomtype_exp2.0 --dataset cifar10 --crit ce --lr 0.025
 
+# 第五章 实验2.1 macro benchmark + hamming type
+# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_hammingtype_exp2.1 --dataset cifar10 --crit ce --lr 0.025
 
 
 end=`date +%s`

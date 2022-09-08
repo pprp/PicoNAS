@@ -178,8 +178,6 @@ class NB201_Balance_Trainer(BaseTrainer):
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
 
-        self.mutator.set_subnet(self.min_subnet)
-
         for step, batch_inputs in enumerate(loader):
             # get image and labels
             inputs, labels = batch_inputs
@@ -190,17 +188,17 @@ class NB201_Balance_Trainer(BaseTrainer):
             self.optimizer.zero_grad()
 
             # Fair Sampling Rules
-            loss, outputs = self._forward_fairnas(batch_inputs)
+            # loss, outputs = self._forward_fairnas(batch_inputs)
 
             # Uniform Sampling Rules
-            # loss, outputs = self._forward_uniform(batch_inputs)
+            loss, outputs = self._forward_uniform(batch_inputs)
 
             # Balanced Sampling Rules
             # loss, outputs = self._forward_balanced(
             #     batch_inputs, policy='zenscore')
 
             # Sandwich Sampling Rule
-            loss, outputs = self._forward_sandwich(batch_inputs)
+            # loss, outputs = self._forward_sandwich(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():

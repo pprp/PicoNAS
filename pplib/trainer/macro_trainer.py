@@ -245,7 +245,7 @@ class MacroTrainer(BaseTrainer):
         labels = self._to_device(labels, self.device)
 
         # sample the first subnet
-        subnet1, subnet2 = self.sample_subnet_by_type(type='random')
+        subnet1, subnet2 = self.sample_subnet_by_type(type='hamming')
 
         self.mutator.set_subnet(subnet1)
         outputs = self.model(inputs)
