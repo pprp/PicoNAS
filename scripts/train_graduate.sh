@@ -21,10 +21,14 @@ start=`date +%s`
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_minsubnet_exp1.2 --dataset cifar10 --crit ce --lr 0.025
 
 # 第四章 实验1.3 alter subnet
-CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Alter_Trainer --log_name graduate_nb201_spos_altersubnet_exp1.3 --dataset cifar10 --crit ce --lr 0.025
+# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Alter_Trainer --log_name graduate_nb201_spos_altersubnet_exp1.3 --dataset cifar10 --crit ce --lr 0.025
 
 # 第四章 实验3.0 uniform sampling cifar10
 # CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_uniformsampling_exp3.0 --dataset cifar10 --crit ce --lr 0.025
+
+# 第四章 实验3.1 fair sampling cifar10
+CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_fairnas_fairsampling_exp3.1 --dataset cifar10 --crit ce --lr 0.025
+
 
 # 第五章 实验2.0 macro benchmark + random type
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_randomtype_exp2.0 --dataset cifar10 --crit ce --lr 0.025

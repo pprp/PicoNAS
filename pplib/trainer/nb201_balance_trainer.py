@@ -188,10 +188,10 @@ class NB201_Balance_Trainer(BaseTrainer):
             self.optimizer.zero_grad()
 
             # Fair Sampling Rules
-            # loss, outputs = self._forward_fairnas(batch_inputs)
+            loss, outputs = self._forward_fairnas(batch_inputs)
 
             # Uniform Sampling Rules
-            loss, outputs = self._forward_uniform(batch_inputs)
+            # loss, outputs = self._forward_uniform(batch_inputs)
 
             # Balanced Sampling Rules
             # loss, outputs = self._forward_balanced(
@@ -201,9 +201,9 @@ class NB201_Balance_Trainer(BaseTrainer):
             # loss, outputs = self._forward_sandwich(batch_inputs)
 
             # clear grad
-            for p in self.model.parameters():
-                if p.grad is not None and p.grad.sum() == 0:
-                    p.grad = None
+            # for p in self.model.parameters():
+            #     if p.grad is not None and p.grad.sum() == 0:
+            #         p.grad = None
 
             # parameters update
             self.optimizer.step()
