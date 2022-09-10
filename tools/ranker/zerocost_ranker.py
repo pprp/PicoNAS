@@ -3,10 +3,11 @@ import os
 import time
 
 import torch
+from pplib import evaluator
 
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
-from pplib.evaluator import MacroEvaluator
+from pplib.evaluator import MacroEvaluator, NB201Evaluator
 from pplib.models import build_model
 from pplib.trainer import build_trainer
 from pplib.utils.config import Config
@@ -32,17 +33,17 @@ def get_args():
     parser.add_argument(
         '--model_name',
         type=str,
-        default='MAESupernetNATS',
+        default='OneShotNASBench201Network',
         help='name of model')
     parser.add_argument(
         '--trainer_name',
         type=str,
-        default='NATSMAETrainer',
+        default='NB201Trainer',
         help='name of trainer')
     parser.add_argument(
         '--log_name',
         type=str,
-        default='NATSMAETrainer',
+        default='NB201Trainer',
         help='name of this experiments',
     )
 
@@ -146,17 +147,20 @@ def main():
 
     start = time.time()
 
-    bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
-    num_samples = [20, 50, 100, 200, 400, 50000]
+    num_samples = [20, 50, 100, 200, 500, 1000]
     results = []
     for num_sample in num_samples:
-        evaluator = MacroEvaluator(
+        # bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
+        # _evaluator = MacroEvaluator(
+        #     trainer=trainer,
+        #     bench_path=bench_path,
+        #     num_sample=num_sample,
+        # )
+        _evaluator = NB201Evaluator(
             trainer=trainer,
-            dataloader=None,
-            bench_path=bench_path,
-            num_sample=num_sample,
+            num_sample=num_sample
         )
-        kt, ps, sp = evaluator.compute_rank_based_on_flops()
+        kt, ps, sp = _evaluator.compute_rank_based_on_nwot()
         results.append([kt, ps, sp])
 
     print('=' * 60)

@@ -10,6 +10,7 @@ from pplib.core.losses import PairwiseRankLoss
 from pplib.evaluator.nb201_evaluator import NB201Evaluator
 from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
+from pplib.predictor.pruners.measures.nwot import compute_nwot
 from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 from .registry import register_trainer
@@ -522,6 +523,23 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
             # print(f'k: {k} choice: {current_choice} flops: {choice_flops}')
             subnet_flops += choice_flops
         return subnet_flops
+
+    def get_subnet_nwot(self, subnet_dict) -> float:
+        """Calculate zenscore based on subnet dict."""
+        import copy
+        m = copy.deepcopy(self.model)
+        o = OneShotMutator(with_alias=True)
+        o.prepare_from_supernet(m)
+        o.set_subnet(subnet_dict)
+
+        # for cifar10,cifar100,imagenet16
+        score = compute_nwot(
+            net=m,
+            inputs=torch.randn(4, 3, 32, 32).to('cuda'),
+            targets=torch.randn(4).to('cuda'))
+        del m
+        del o
+        return score
 
     def get_subnet_error(self,
                          subnet_dict: Dict,

@@ -129,7 +129,7 @@ class NB201Evaluator(Evaluator):
 
         return kt, ps, sp
 
-    def compute_rank_consistency_by_flops(self) -> List:
+    def compute_rank_by_flops(self) -> List:
         """compute rank consistency based on flops."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
@@ -172,7 +172,7 @@ class NB201Evaluator(Evaluator):
             repeat=5)
         return zenscore
 
-    def compute_rank_consistency_by_zerometric(self) -> List:
+    def compute_rank_by_zerometric(self) -> List:
         """compute rank consistency based on flops."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
@@ -214,6 +214,48 @@ class NB201Evaluator(Evaluator):
             # score = sum(result_list)
 
             # ****************************************************** #
+
+            print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
+            if math.isnan(score) or math.isinf(score):
+                generated_indicator_list.append(0)
+            else:
+                if isinstance(score, Tensor):
+                    generated_indicator_list.append(
+                        score.cpu().detach().numpy())
+                else:
+                    generated_indicator_list.append(score)
+
+        kt = kendalltau(true_indicator_list, generated_indicator_list)
+        ps = pearson(true_indicator_list, generated_indicator_list)
+        sp = spearman(true_indicator_list, generated_indicator_list)
+
+        print(
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+
+        return kt, ps, sp
+
+    def compute_rank_based_on_nwot(self) -> List:
+        """compute rank consistency based on nwot."""
+        true_indicator_list: List[float] = []
+        generated_indicator_list: List[float] = []
+
+        self.trainer.logger.info('Begin to compute rank consistency...')
+        num_sample = 50 if self.num_sample is None else self.num_sample
+
+        self.trainer.mutator.prepare_from_supernet(self.trainer.model)
+
+        for _ in range(num_sample):
+            # sample random subnet by mutator
+            random_subnet_dict = self.trainer.mutator.random_subnet
+
+            # get true indictor by query nb201 api
+            genotype = self.generate_genotype(random_subnet_dict,
+                                              self.trainer.mutator)
+            results = self.query_result(genotype)  # type is eval_acc1es
+            true_indicator_list.append(results)
+
+            # get score based on zenscore
+            score = self.trainer.get_subnet_nwot(random_subnet_dict)
 
             print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
             if math.isnan(score) or math.isinf(score):
