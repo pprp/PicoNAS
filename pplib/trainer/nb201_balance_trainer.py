@@ -115,7 +115,7 @@ class NB201_Balance_Trainer(BaseTrainer):
     def sample_subnet_by_policy(self,
                                 policy: str = 'balanced',
                                 n_samples: int = 3) -> Dict:
-        assert policy in ['zenscore', 'flops', 'params']
+        assert policy in {'zenscore', 'flops', 'params'}
         n_subnets = [self.mutator.random_subnet for _ in range(n_samples)]
 
         def minmaxscaler(n_list: Tensor) -> Tensor:
@@ -201,9 +201,9 @@ class NB201_Balance_Trainer(BaseTrainer):
             # loss, outputs = self._forward_sandwich(batch_inputs)
 
             # clear grad
-            # for p in self.model.parameters():
-            #     if p.grad is not None and p.grad.sum() == 0:
-            #         p.grad = None
+            for p in self.model.parameters():
+                if p.grad is not None and p.grad.sum() == 0:
+                    p.grad = None
 
             # parameters update
             self.optimizer.step()
@@ -246,13 +246,13 @@ class NB201_Balance_Trainer(BaseTrainer):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
 
-        if self.is_specific:
-            return self.model(inputs)
+        # if self.is_specific:
+        #     return self.model(inputs)
 
         # forward pass
-        # if self.searching:
-        #     self.rand_subnet = self.mutator.random_subnet
-        #     self.mutator.set_subnet(self.rand_subnet)
+        if self.searching:
+            self.rand_subnet = self.mutator.random_subnet
+            self.mutator.set_subnet(self.rand_subnet)
         return self.model(inputs)
 
     def _predict(self, batch_inputs, subnet_dict: Dict = None):
@@ -261,15 +261,15 @@ class NB201_Balance_Trainer(BaseTrainer):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
 
-        if self.is_specific:
-            return self.model(inputs), labels
+        # if self.is_specific:
+        #     return self.model(inputs), labels
 
         # forward pass
-        # if subnet_dict is None:
-        #     self.rand_subnet = self.mutator.random_subnet
-        #     self.mutator.set_subnet(self.rand_subnet)
-        # else:
-        #     self.mutator.set_subnet(subnet_dict)
+        if subnet_dict is None:
+            self.rand_subnet = self.mutator.random_subnet
+            self.mutator.set_subnet(self.rand_subnet)
+        else:
+            self.mutator.set_subnet(subnet_dict)
         return self.model(inputs), labels
 
     def _validate(self, loader):

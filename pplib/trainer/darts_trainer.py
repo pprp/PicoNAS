@@ -17,7 +17,7 @@ from .registry import register_trainer
 
 
 @register_trainer
-class NB201_Darts_Trainer(BaseTrainer):
+class Darts_Trainer(BaseTrainer):
     """Trainer for NB201 Benchmark with Darts algo.
 
     Args:
@@ -88,8 +88,6 @@ class NB201_Darts_Trainer(BaseTrainer):
     #     return NB201Evaluator(self, num_sample)
 
     def _train(self, train_loader, valid_loader):
-        self.model.train()
-
         train_loss = 0.0
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
@@ -106,16 +104,20 @@ class NB201_Darts_Trainer(BaseTrainer):
             val_y = self._to_device(val_y, self.device)
 
             # phase 1: arch parameter update
+            self.model.eval()
+            self.mutator.train()
             self.arch_optimizer.zero_grad()
             if self.unroll:
                 self._unrolled_backward(trn_x, trn_y, val_x, val_y)
             else:
-                output = self.model(trn_x)
-                loss = self.criterion(output, trn_y)
+                output = self.model(val_x)
+                loss = self.criterion(output, val_y)
                 loss.backward()
             self.arch_optimizer.step()
 
             # phase 2: supernet parameter update
+            self.model.train()
+            self.mutator.eval()
             self.optimizer.zero_grad()
             outputs = self.model(trn_x)
             loss = self.criterion(outputs, trn_y)
@@ -153,6 +155,10 @@ class NB201_Darts_Trainer(BaseTrainer):
                     global_step=step + self.current_epoch * len(train_loader),
                 )
 
+        # FOR DEBUG
+        for k, v in self.mutator.arch_params.items():
+            self.logger.info(f'current arch_param: key: {k}: value: {v}')
+
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
     def _unrolled_backward(self, trn_x, trn_y, val_x, val_y):
@@ -175,12 +181,12 @@ class NB201_Darts_Trainer(BaseTrainer):
         w_model, w_arch = tuple(self.model.parameters()), tuple(
             self.mutator.parameters())
         w_grads = torch.autograd.grad(loss, w_model + w_arch)
-        d_model, d_ctrl = w_grads[:len(w_model)], w_grads[len(w_model):]
+        d_model, d_arch = w_grads[:len(w_model)], w_grads[len(w_model):]
 
         # compute hessian and final gradients
         hessian = self._compute_hessian(backup_params, d_model, trn_x, trn_y)
         with torch.no_grad():
-            for param, d, h in zip(w_arch, d_ctrl, hessian):
+            for param, d, h in zip(w_arch, d_arch, hessian):
                 # gradient = dalpha - lr * hessian
                 param.grad = d - lr * h
 
