@@ -3,11 +3,10 @@ import os
 import time
 
 import torch
-from pplib import evaluator
 
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
-from pplib.evaluator import MacroEvaluator, NB201Evaluator
+from pplib.evaluator import MacroEvaluator, NB201Evaluator  # noqa: F401
 from pplib.models import build_model
 from pplib.trainer import build_trainer
 from pplib.utils.config import Config
@@ -156,10 +155,7 @@ def main():
         #     bench_path=bench_path,
         #     num_sample=num_sample,
         # )
-        _evaluator = NB201Evaluator(
-            trainer=trainer,
-            num_sample=num_sample
-        )
+        _evaluator = NB201Evaluator(trainer=trainer, num_sample=num_sample)
         kt, ps, sp = _evaluator.compute_rank_based_on_nwot()
         results.append([kt, ps, sp])
 

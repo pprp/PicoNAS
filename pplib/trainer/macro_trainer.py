@@ -133,7 +133,8 @@ class MacroTrainer(BaseTrainer):
             subnet2 = self.mutator.random_subnet
 
             # 调参，调大或者调小 (1) 7.789 (2) 5 (3) 11
-            while adaptive_hamming_dist(subnet1, subnet2) < 5 and max_iter > 0:
+            while adaptive_hamming_dist(subnet1,
+                                        subnet2) < 11 and max_iter > 0:
                 subnet2 = self.mutator.random_subnet
             if max_iter > 0:
                 return subnet1, subnet2
@@ -470,7 +471,7 @@ class MacroTrainer(BaseTrainer):
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
 
     def metric_score(self, loader, subnet_dict: Dict = None):
-        self.model.eval()
+        # self.model.eval()
 
         val_loss = 0.0
         top1_vacc = AvgrageMeter()

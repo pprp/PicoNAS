@@ -42,9 +42,8 @@ class TestNWOT(TestCase):
         targets = torch.randn(4)
         for _ in range(3):
             m = ToyModel()
-            score = compute_nwot(
-                net=m, inputs=inputs, targets=targets)
-            print(f"Score of toy model: {score}")
+            score = compute_nwot(net=m, inputs=inputs, targets=targets)
+            print(f'Score of toy model: {score}')
             assert score is not None
 
     def test_nb201_nwot_with_mutablemodel(self):
@@ -58,8 +57,7 @@ class TestNWOT(TestCase):
         for i in range(30):
             rand_subnet = o.random_subnet
             o.set_subnet(rand_subnet)
-            score = compute_nwot(
-                net=m, inputs=inputs, targets=targets)
+            score = compute_nwot(net=m, inputs=inputs, targets=targets)
             print(f'The score of {i} th model is {score}')
 
 

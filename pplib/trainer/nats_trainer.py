@@ -138,7 +138,7 @@ class NATSTrainer(BaseTrainer):
         return self.model(inputs, forward_op_list), labels
 
     def metric_score(self, loader, current_op_list):
-        self.model.eval()
+        # self.model.eval()
 
         val_loss = 0.0
         top1_vacc = AvgrageMeter()

@@ -211,6 +211,69 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
     def _build_evaluator(self, num_sample=50):
         return NB201Evaluator(self, num_sample)
 
+    def sample_subnet_by_type(self, type: str = 'random') -> List[Dict]:
+        """Return two subnets based on ``type``.
+
+        Type:
+            - ``random``: random sample two subnet.
+            - ``hamming``: sample subnet with hamming distance.
+            - ``adaptive``: sample subnet with adaptive hamming distance.
+        """
+
+        def hamming_dist(dct1, dct2):
+            dist = 0
+            for (k1, v1), (k2, v2) in zip(dct1.items(), dct2.items()):
+                assert k1 == k2
+                dist += 1 if v1 != v2 else 0
+            return dist
+
+        def adaptive_hamming_dist(dct1, dct2):
+            """
+            Distance between I and 1 2 is set to 2
+            Distance between 1 and 2 is set to 0.5
+            """
+            dist = 0
+            for (k1, v1), (k2, v2) in zip(dct1.items(), dct2.items()):
+                assert k1 == k2
+                if v1 == v2:
+                    continue
+                if set([v1, v2]) == set(['1', '2']):
+                    dist += 0.5
+                elif set([v1, v2]) == set(['1', 'I']):
+                    dist += 2
+                elif set([v1, v2]) == set(['1', '2']):
+                    dist += 2
+            return dist
+
+        assert type in ['random', 'hamming', 'adaptive']
+        if type == 'random':
+            return self.mutator.random_subnet, self.mutator.random_subnet
+        elif type == 'hamming':
+            # mean: 9.312 std 1.77
+            subnet1 = self.mutator.random_subnet
+            max_iter = 10
+            subnet2 = self.mutator.random_subnet
+            while hamming_dist(subnet1, subnet2) < 9.3 and max_iter > 0:
+                subnet2 = self.mutator.random_subnet
+            if max_iter > 0:
+                return subnet1, subnet2
+            else:
+                return subnet1, self.mutator.random_subnet
+        elif type == 'adaptive':
+            # mean: 7.789 std 2.90
+            subnet1 = self.mutator.random_subnet
+            max_iter = 10
+            subnet2 = self.mutator.random_subnet
+
+            # 调参，调大或者调小 (1) 7.789 (2) 5 (3) 11
+            while adaptive_hamming_dist(subnet1,
+                                        subnet2) < 11 and max_iter > 0:
+                subnet2 = self.mutator.random_subnet
+            if max_iter > 0:
+                return subnet1, subnet2
+            else:
+                return subnet1, self.mutator.random_subnet
+
     def _generate_fair_lists(self) -> List[Dict]:
         search_group = self.mutator.search_group
         fair_lists = []

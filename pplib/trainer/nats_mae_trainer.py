@@ -92,7 +92,7 @@ class NATSMAETrainer(NATSTrainer):
         return self._compute_loss(out, inputs)
 
     def metric_score(self, loader, current_op_list):
-        self.model.eval()
+        # self.model.eval()
 
         val_loss = 0.0
 

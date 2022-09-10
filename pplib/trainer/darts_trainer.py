@@ -104,7 +104,7 @@ class Darts_Trainer(BaseTrainer):
             val_y = self._to_device(val_y, self.device)
 
             # phase 1: arch parameter update
-            self.model.eval()
+            # self.model.eval()
             self.mutator.train()
             self.arch_optimizer.zero_grad()
             if self.unroll:
@@ -117,7 +117,7 @@ class Darts_Trainer(BaseTrainer):
 
             # phase 2: supernet parameter update
             self.model.train()
-            self.mutator.eval()
+            # self.mutator.eval()
             self.optimizer.zero_grad()
             outputs = self.model(trn_x)
             loss = self.criterion(outputs, trn_y)
