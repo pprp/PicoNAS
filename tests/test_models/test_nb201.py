@@ -1,6 +1,9 @@
 import unittest
 from unittest import TestCase
 
+import numpy as np
+import seaborn as sns
+
 from pplib.models import DiffNASBench201Network, OneShotNASBench201Network
 from pplib.nas.mutators import DiffMutator, OneShotMutator
 from pplib.utils.get_dataset_api import get_dataset_api
@@ -71,6 +74,61 @@ class TestNasBench201(TestCase):
             print(f'param shape: {param.shape}')
 
         print(dfmutator.search_group.keys())
+
+    def test_calculate_distance(self):
+        model = OneShotNASBench201Network()
+        mutator = OneShotMutator(with_alias=True)
+        mutator.prepare_from_supernet(model)
+
+        # mean 4.5 std 1.06
+        def dis3(dct1, dct2):
+            dist = 0
+            for (k1, v1), (k2, v2) in zip(dct1.items(), dct2.items()):
+                assert k1 == k2
+                dist += 1 if v1 != v2 else 0
+            return dist
+
+        # mean 6.7 std 2.23
+        def dis4(dct1, dct2):
+            """
+            Distance between conv is set to 0.5
+            Distance between conv and other is set to 2
+            Distance between other and other is set to 0.5
+            """
+            dist = 0
+            for (k1, v1), (k2, v2) in zip(dct1.items(), dct2.items()):
+                assert k1 == k2
+                if v1 == v2:
+                    continue
+                if 'conv' in v1 and 'conv' in v2:
+                    dist += 0.5
+                elif 'conv' in v1 and ('skip' in v2 or 'pool' in v2):
+                    dist += 2
+                elif 'conv' in v2 and ('skip' in v1 or 'pool' in v1):
+                    dist += 2
+                elif 'skip' in v1 and 'pool' in v2:
+                    dist += 0.5
+                elif 'skip' in v2 and 'pool' in v1:
+                    dist += 0.5
+                else:
+                    raise NotImplementedError(f'v1: {v1} v2: {v2}')
+            return dist
+
+        dst_list = []
+        for i in range(1000):
+            sg1 = mutator.random_subnet
+            sg2 = mutator.random_subnet
+            dst = dis4(sg1, sg2)
+            dst_list.append(dst)
+
+        import matplotlib.pyplot as plt
+        fig, axes = plt.subplots()
+        ax1 = sns.scatterplot(x=list(range(len(dst_list))), y=dst_list)
+        plt.savefig('./test_dis4.png')
+
+        print(
+            f'mean: {np.mean(dst_list)} std: {np.std(dst_list)} max: {max(dst_list)} min: {min(dst_list)}'
+        )
 
 
 if __name__ == '__main__':

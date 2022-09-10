@@ -2,6 +2,7 @@ import random
 import time
 from typing import Dict, List
 
+import numpy as np
 import torch
 from mmcv.cnn import get_model_complexity_info
 
@@ -16,139 +17,8 @@ from .base import BaseTrainer
 from .registry import register_trainer
 
 
-class SampleStrategyMixin:
-
-    def _forward_pairwise_loss(self, batch_inputs):
-        inputs, labels = batch_inputs
-        inputs = self._to_device(inputs, self.device)
-        labels = self._to_device(labels, self.device)
-
-        # sample the first subnet
-        self.rand_subnet = self.mutator.random_subnet
-        self.mutator.set_subnet(self.rand_subnet)
-        outputs = self.model(inputs)
-        loss1 = self._compute_loss(outputs, labels)
-        loss1.backward()
-        flops1 = self.get_subnet_flops(self.rand_subnet)
-
-        # sample the second subnet
-        self.rand_subnet = self.mutator.random_subnet
-        self.mutator.set_subnet(self.rand_subnet)
-        outputs = self.model(inputs)
-        loss2 = self._compute_loss(outputs, labels)
-        loss2.backward(retain_graph=True)
-        flops2 = self.get_subnet_flops(self.rand_subnet)
-
-        # pairwise rank loss
-        # lambda settings:
-        #       1. min(2, self.current_epoch/10.)
-        #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
-
-        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1,
-                                                      loss2)
-        loss3.backward()
-
-        return loss2, outputs
-
-    def _forward_pairwise_loss_with_distill(self, batch_inputs):
-        """
-        Policy:
-            1. use larger flops model as teacher
-            2. use lower loss model as teacher
-        """
-        inputs, labels = batch_inputs
-        inputs = self._to_device(inputs, self.device)
-        labels = self._to_device(labels, self.device)
-
-        loss_list = []
-
-        # sample the first subnet
-        rand_subnet1 = self.mutator.random_subnet
-        self.mutator.set_subnet(rand_subnet1)
-        outputs, feat1 = self.model.forward_distill(inputs)
-        loss1 = self._compute_loss(outputs, labels)
-        flops1 = self.get_subnet_flops(rand_subnet1)
-        loss_list.append(loss1)
-
-        # sample the second subnet
-        rand_subnet2 = self.mutator.random_subnet
-        self.mutator.set_subnet(rand_subnet2)
-        outputs, feat2 = self.model.forward_distill(inputs)
-        loss2 = self._compute_loss(outputs, labels)
-        flops2 = self.get_subnet_flops(rand_subnet2)
-        loss_list.append(loss2)
-
-        # pairwise rank loss
-        # lambda settings:
-        #       1. min(2, self.current_epoch/10.)
-        #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
-
-        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1,
-                                                      loss2)
-        loss_list.append(loss3)
-
-        # distill loss
-        if loss2 > loss1:
-            loss4 = self.distill_loss(
-                feat_s=feat2, feat_t=feat1) * self.lambda_kd
-        else:
-            loss4 = self.distill_loss(
-                feat_s=feat1, feat_t=feat2) * self.lambda_kd
-        loss_list.append(loss4)
-
-        loss = sum(loss_list)
-        loss.backward()
-
-        return loss, outputs
-
-    def _forward_multi_pairwise_loss(self, batch_inputs):
-        num_pairs = 4
-
-        inputs, labels = batch_inputs
-        inputs = self._to_device(inputs, self.device)
-        labels = self._to_device(labels, self.device)
-
-        # sample the first subnet
-        rand_subnet1 = self.mutator.random_subnet
-        self.mutator.set_subnet(rand_subnet1)
-        outputs = self.model(inputs)
-        loss1 = self._compute_loss(outputs, labels)
-        flops1 = self.get_subnet_flops(rand_subnet1)
-
-        subnet_list = []
-        loss_list = []
-        flops_list = []
-
-        for _ in range(num_pairs):
-            rand_subnet = self.mutator.random_subnet
-            self.mutator.set_subnet(rand_subnet)
-            outputs = self.model(inputs)
-            loss = self._compute_loss(outputs, labels)
-            flops = self.get_subnet_flops(rand_subnet)
-
-            subnet_list.append(rand_subnet)
-            loss_list.append(loss)
-            flops_list.append(flops)
-
-        rank_loss_list = []
-
-        for i in range(1, num_pairs):
-            for j in range(i):
-                flops1, flops2 = flops_list[i], flops_list[j]
-                loss1, loss2 = loss_list[i], loss_list[j]
-                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1,
-                                                       loss2)
-
-                rank_loss_list.append(tmp_rank_loss)
-
-        sum_loss = sum(loss_list) + sum(rank_loss_list)
-        sum_loss.backward()
-
-        return sum_loss, outputs
-
-
 @register_trainer
-class NB201Trainer(BaseTrainer, SampleStrategyMixin):
+class NB201Trainer(BaseTrainer):
     """Trainer for Macro Benchmark.
 
     Args:
@@ -229,45 +99,52 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
 
         def adaptive_hamming_dist(dct1, dct2):
             """
-            Distance between I and 1 2 is set to 2
-            Distance between 1 and 2 is set to 0.5
+            Distance between conv is set to 0.5
+            Distance between conv and other is set to 2
+            Distance between other and other is set to 0.5
             """
             dist = 0
             for (k1, v1), (k2, v2) in zip(dct1.items(), dct2.items()):
                 assert k1 == k2
                 if v1 == v2:
                     continue
-                if set([v1, v2]) == set(['1', '2']):
+                if 'conv' in v1 and 'conv' in v2:
                     dist += 0.5
-                elif set([v1, v2]) == set(['1', 'I']):
+                elif 'conv' in v1 and ('skip' in v2 or 'pool' in v2):
                     dist += 2
-                elif set([v1, v2]) == set(['1', '2']):
+                elif 'conv' in v2 and ('skip' in v1 or 'pool' in v1):
                     dist += 2
+                elif 'skip' in v1 and 'pool' in v2:
+                    dist += 0.5
+                elif 'skip' in v2 and 'pool' in v1:
+                    dist += 0.5
+                else:
+                    raise NotImplementedError(f'v1: {v1} v2: {v2}')
             return dist
 
         assert type in ['random', 'hamming', 'adaptive']
         if type == 'random':
             return self.mutator.random_subnet, self.mutator.random_subnet
         elif type == 'hamming':
-            # mean: 9.312 std 1.77
+            # mean: 4.5 std 1.06
             subnet1 = self.mutator.random_subnet
             max_iter = 10
             subnet2 = self.mutator.random_subnet
-            while hamming_dist(subnet1, subnet2) < 9.3 and max_iter > 0:
+            while hamming_dist(subnet1, subnet2) < 4.5 and max_iter > 0:
                 subnet2 = self.mutator.random_subnet
             if max_iter > 0:
                 return subnet1, subnet2
             else:
                 return subnet1, self.mutator.random_subnet
         elif type == 'adaptive':
-            # mean: 7.789 std 2.90
+            # mean: 6.7 std 2.23
             subnet1 = self.mutator.random_subnet
             max_iter = 10
             subnet2 = self.mutator.random_subnet
 
-            # 调参，调大或者调小 (1) 7.789 (2) 5 (3) 11
+            # 调参，调大或者调小 (1) 6.7 (2) 5 (3) 11
             while adaptive_hamming_dist(subnet1,
-                                        subnet2) < 11 and max_iter > 0:
+                                        subnet2) < 6.7 and max_iter > 0:
                 subnet2 = self.mutator.random_subnet
             if max_iter > 0:
                 return subnet1, subnet2
@@ -312,11 +189,11 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
             # loss, outputs = self._forward_fairnas(batch_inputs)
 
             # Single Path One Shot
-            loss, outputs = self.forward(batch_inputs, mode='loss')
-            loss.backward()
+            # loss, outputs = self.forward(batch_inputs, mode='loss')
+            # loss.backward()
 
             # SPOS with pairwise rankloss
-            # loss, outputs = self._forward_pairwise_loss(batch_inputs)
+            loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
             # spos with pairwise rankloss + cc distill
             # loss, outputs = self._forward_pairwise_loss_with_distill(
@@ -345,7 +222,7 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
             # print every 20 iter
             if step % self.print_freq == 0:
                 self.logger.info(
-                    f'Step: {step:03} Train loss: {loss.item():.4f} Top1 acc: {top1_tacc.avg:.3f} Top5 acc: {top5_tacc.avg:.3f} Current geno: {self.evaluator.generate_genotype(self.rand_subnet, self.mutator)}'
+                    f'Step: {step:03} Train loss: {loss.item():.4f} Top1 acc: {top1_tacc.avg:.3f} Top5 acc: {top5_tacc.avg:.3f}'
                 )
                 self.writer.add_scalar(
                     'STEP_LOSS/train_step_loss',
@@ -440,8 +317,7 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
                     )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg}'
-                f' Top5 acc: {top5_vacc.avg} Current geno: {self.evaluator.generate_genotype(self.rand_subnet, self.mutator)}'
-            )
+                f' Top5 acc: {top5_vacc.avg}')
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def fit(self, train_loader, val_loader, epochs):
@@ -748,3 +624,132 @@ class NB201Trainer(BaseTrainer, SampleStrategyMixin):
         # final message
         self.logger.info(
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
+
+    def _forward_pairwise_loss(self, batch_inputs):
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
+        subnet1, subnet2 = self.sample_subnet_by_type(type='adaptive')
+
+        # sample the first subnet
+        self.mutator.set_subnet(subnet1)
+        outputs = self.model(inputs)
+        loss1 = self._compute_loss(outputs, labels)
+        loss1.backward()
+        flops1 = self.get_subnet_flops(subnet1)
+
+        # sample the second subnet
+        self.mutator.set_subnet(subnet2)
+        outputs = self.model(inputs)
+        loss2 = self._compute_loss(outputs, labels)
+        loss2.backward(retain_graph=True)
+        flops2 = self.get_subnet_flops(subnet2)
+
+        # pairwise rank loss
+        # lambda settings:
+        #       1. min(2, self.current_epoch/10.)
+        #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+
+        loss3 = (2 *
+                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
+                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
+        loss3.backward()
+
+        return loss2, outputs
+
+    def _forward_pairwise_loss_with_distill(self, batch_inputs):
+        """
+        Policy:
+            1. use larger flops model as teacher
+            2. use lower loss model as teacher
+        """
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
+        loss_list = []
+
+        # sample the first subnet
+        rand_subnet1 = self.mutator.random_subnet
+        self.mutator.set_subnet(rand_subnet1)
+        outputs, feat1 = self.model.forward_distill(inputs)
+        loss1 = self._compute_loss(outputs, labels)
+        flops1 = self.get_subnet_flops(rand_subnet1)
+        loss_list.append(loss1)
+
+        # sample the second subnet
+        rand_subnet2 = self.mutator.random_subnet
+        self.mutator.set_subnet(rand_subnet2)
+        outputs, feat2 = self.model.forward_distill(inputs)
+        loss2 = self._compute_loss(outputs, labels)
+        flops2 = self.get_subnet_flops(rand_subnet2)
+        loss_list.append(loss2)
+
+        # pairwise rank loss
+        # lambda settings:
+        #       1. min(2, self.current_epoch/10.)
+        #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+
+        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1,
+                                                      loss2)
+        loss_list.append(loss3)
+
+        # distill loss
+        if loss2 > loss1:
+            loss4 = self.distill_loss(
+                feat_s=feat2, feat_t=feat1) * self.lambda_kd
+        else:
+            loss4 = self.distill_loss(
+                feat_s=feat1, feat_t=feat2) * self.lambda_kd
+        loss_list.append(loss4)
+
+        loss = sum(loss_list)
+        loss.backward()
+
+        return loss, outputs
+
+    def _forward_multi_pairwise_loss(self, batch_inputs):
+        num_pairs = 4
+
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
+        # sample the first subnet
+        rand_subnet1 = self.mutator.random_subnet
+        self.mutator.set_subnet(rand_subnet1)
+        outputs = self.model(inputs)
+        loss1 = self._compute_loss(outputs, labels)
+        flops1 = self.get_subnet_flops(rand_subnet1)
+
+        subnet_list = []
+        loss_list = []
+        flops_list = []
+
+        for _ in range(num_pairs):
+            rand_subnet = self.mutator.random_subnet
+            self.mutator.set_subnet(rand_subnet)
+            outputs = self.model(inputs)
+            loss = self._compute_loss(outputs, labels)
+            flops = self.get_subnet_flops(rand_subnet)
+
+            subnet_list.append(rand_subnet)
+            loss_list.append(loss)
+            flops_list.append(flops)
+
+        rank_loss_list = []
+
+        for i in range(1, num_pairs):
+            for j in range(i):
+                flops1, flops2 = flops_list[i], flops_list[j]
+                loss1, loss2 = loss_list[i], loss_list[j]
+                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1,
+                                                       loss2)
+
+                rank_loss_list.append(tmp_rank_loss)
+
+        sum_loss = sum(loss_list) + sum(rank_loss_list)
+        sum_loss.backward()
+
+        return sum_loss, outputs

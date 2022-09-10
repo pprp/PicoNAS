@@ -30,7 +30,7 @@ start=`date +%s`
 
 # 第四章 实验2.2 基于params采样
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_paramspolicysampler_exp2.2 --dataset cifar10 --crit ce --lr 0.025
-CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_balanced_paramspolicysampler_exp2.2/graduate_nb201_balanced_paramspolicysampler_exp2.2_nb201_ckpt_0191.pth.tar'
+# CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_balanced_paramspolicysampler_exp2.2/graduate_nb201_balanced_paramspolicysampler_exp2.2_nb201_ckpt_0191.pth.tar'
 
 
 # 第四章 实验2.3 基于zenscore采样
@@ -44,8 +44,10 @@ CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_path '/
 # 第四章 实验3.1 fair sampling cifar10
 # CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_fairnas_fairsampling_exp3.1 --dataset cifar10 --crit ce --lr 0.025
 # 进化搜索
-CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_fairnas_fairsampling_exp3.1/graduate_nb201_fairnas_fairsampling_exp3.1_nb201_ckpt_0191.pth.tar'
+# CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_fairnas_fairsampling_exp3.1/graduate_nb201_fairnas_fairsampling_exp3.1_nb201_ckpt_0191.pth.tar'
 
+# 第四章 实验3.2 sandwich sampling cifar10
+# CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_sandwich-sampling_exp3.2 --dataset cifar10 --crit ce --lr 0.025
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -56,14 +58,15 @@ CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_path '/
 # 第五章 实验2.1 macro benchmark + hamming type
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_hammingtype_exp2.1 --dataset cifar10 --crit ce --lr 0.025
 
-# # 第五章 实验2.2 macro benchmark + adaptive hamming type
+# 第五章 实验2.2 macro benchmark + adaptive hamming type
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptivetype_exp2.2 --dataset cifar10 --crit ce --lr 0.025
-
 # 调参 设置dis更小
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptivetype-smallerdis_exp2.2 --dataset cifar10 --crit ce --lr 0.025
-
 # 调参 设置dis更大
-CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptivetype-largerdis_exp2.2 --dataset cifar10 --crit ce --lr 0.025
+# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptivetype-largerdis_exp2.2 --dataset cifar10 --crit ce --lr 0.025
+
+# 第五章 实验2.3 nb201 + hamming type
+# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_hammingtype_exp2.3 --dataset cifar10 --crit ce --lr 0.025
 
 end=`date +%s`
 runtime=$((end-start))
