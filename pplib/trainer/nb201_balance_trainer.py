@@ -194,11 +194,11 @@ class NB201_Balance_Trainer(BaseTrainer):
             # loss, outputs = self._forward_uniform(batch_inputs)
 
             # Balanced Sampling Rules
-            loss, outputs = self._forward_balanced(
-                batch_inputs, policy='params')
+            # loss, outputs = self._forward_balanced(
+            #     batch_inputs, policy='params')
 
             # Sandwich Sampling Rule
-            # loss, outputs = self._forward_sandwich(batch_inputs)
+            loss, outputs = self._forward_sandwich(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():
@@ -627,14 +627,22 @@ class NB201_Balance_Trainer(BaseTrainer):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
 
-        with torch.no_grad():
-            self.mutator.set_subnet(self.max_subnet)
-            teacher_output = self.model(inputs)
+        # execuate full-network
+        self.mutator.set_subnet(self.max_subnet)
+        teacher_output = self.model(inputs)
+        loss = self._compute_loss(teacher_output, labels)
 
-        self.mutator.set_subnet(self.mutator.random_subnet)
+        # execuate min-network
+        self.mutator.set_subnet(self.min_subnet)
         student_output = self.model(inputs)
-
-        loss = self.kl_loss(student_output, teacher_output) + \
-            self._compute_loss(student_output, labels)
+        loss = self.kl_loss(student_output, teacher_output.detach())
         loss.backward()
+
+        # random sample two subnet
+        for _ in range(2):
+            self.mutator.set_subnet(self.mutator.random_subnet)
+            student_output = self.model(inputs)
+            loss = self.kl_loss(student_output, teacher_output.detach())
+            loss.backward()
+
         return loss, student_output
