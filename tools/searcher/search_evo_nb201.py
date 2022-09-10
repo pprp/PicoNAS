@@ -25,6 +25,8 @@ def get_args():
     )
     parser.add_argument(
         '--work_dir', type=str, default='./work_dir', help='experiment name')
+    parser.add_argument(
+        '--model_path', type=str, default='', help='model path')
 
     parser.add_argument(
         '--data_dir',
@@ -156,6 +158,8 @@ def main():
 
     start = time.time()
     print('Begin to search....')
+
+    # set model path
     searcher = EvolutionSearcher(
         max_epochs=20,
         select_num=8,
@@ -164,7 +168,8 @@ def main():
         mutation_num=8,
         trainer=trainer,
         train_loader=train_dataloader,
-        val_loader=val_dataloader)
+        val_loader=val_dataloader,
+        model_path=cfg.model_path)
 
     searcher.search()
 

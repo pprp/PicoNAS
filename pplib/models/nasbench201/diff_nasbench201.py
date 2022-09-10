@@ -157,8 +157,7 @@ class Zero(nn.Module):
         else:
             shape = list(x.shape)
             shape[1] = self.C_out
-            zeros = x.new_zeros(shape, dtype=x.dtype, device=x.device)
-            return zeros
+            return x.new_zeros(shape, dtype=x.dtype, device=x.device)
 
 
 class FactorizedReduce(nn.Module):

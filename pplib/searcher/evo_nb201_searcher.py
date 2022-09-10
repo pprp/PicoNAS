@@ -61,9 +61,9 @@ class EvolutionSearcher(object):
         self.model = self.trainer.model
         self.logger = get_logger(name='evoluation_searcher')
 
-        self.logger.info('Loading model weights....')
         if model_path is None:
             model_path = './checkpoints/test_nb201_spos/test_nb201_spos_macro_ckpt_0191.pth.tar'
+        self.logger.info(f'Loading model weights from {model_path}')
 
         state_dict = torch.load(model_path)['state_dict']
         self.model.load_state_dict(state_dict)
