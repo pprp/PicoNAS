@@ -33,8 +33,11 @@ start=`date +%s`
 # CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_balanced_paramspolicysampler_exp2.2/graduate_nb201_balanced_paramspolicysampler_exp2.2_nb201_ckpt_0191.pth.tar'
 
 
-# 第四章 实验2.3 基于zenscore采样
+# 第四章 实验2.3 基于nwot采样
+# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_nwot-policysampler_exp2.3 --dataset cifar10 --crit ce --lr 0.025
 
+# 第四章 实验2.4 基于zenscore采样
+# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_nwot-policysampler_exp2.3 --dataset cifar10 --crit ce --lr 0.025
 
 # 第四章 实验3.0 uniform sampling cifar10
 # 排序一致性有点问题，为0，不正常。
@@ -48,6 +51,9 @@ start=`date +%s`
 
 # 第四章 实验3.2 sandwich sampling cifar10
 # CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_sandwich-sampling_exp3.2 --dataset cifar10 --crit ce --lr 0.025
+# 进化搜索
+# CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_spos_sandwich-sampling_exp3.2/graduate_nb201_spos_sandwich-sampling_exp3.2_nb201_ckpt_0191.pth.tar'
+
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -65,8 +71,12 @@ start=`date +%s`
 # 调参 设置dis更大
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptivetype-largerdis_exp2.2 --dataset cifar10 --crit ce --lr 0.025
 
-# 第五章 实验2.3 nb201 + hamming type
+# 第五章 实验2.3 nb201 + adaptive hamming type
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_hammingtype_exp2.3 --dataset cifar10 --crit ce --lr 0.025
+
+# 第五章 实验2.4 nb201 + origin hamming type
+# CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_origin-hamming-type_exp2.4 --dataset cifar10 --crit ce --lr 0.025
+
 
 end=`date +%s`
 runtime=$((end-start))

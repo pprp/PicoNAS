@@ -40,24 +40,24 @@ def get_args():
     parser.add_argument(
         '--model_name',
         type=str,
-        default='MAESupernetNATS',
+        default='DiffNASBench201Network',
         help='name of model')
     parser.add_argument(
         '--trainer_name',
         type=str,
-        default='NATSMAETrainer',
+        default='Darts_Trainer',
         help='name of trainer')
     parser.add_argument(
         '--log_name',
         type=str,
-        default='NATSMAETrainer',
+        default='test_darts_Darts_Trainer-epoch50',
         help='name of this experiments',
     )
 
     # ******************************* settings *******************************#
 
     parser.add_argument(
-        '--crit', type=str, default='mse', help='decide the criterion')
+        '--crit', type=str, default='ce', help='decide the criterion')
     parser.add_argument(
         '--optims', type=str, default='sgd', help='decide the optimizer')
     parser.add_argument(

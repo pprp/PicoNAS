@@ -14,7 +14,7 @@ def build_transforms(dataset='cifar10', type='train', config=None):
     if type == 'train':
         base_transform = [
             transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
+            transforms.RandomHorizontalFlip(0.5),
         ]
 
         if getattr(config, 'random_erase', False):

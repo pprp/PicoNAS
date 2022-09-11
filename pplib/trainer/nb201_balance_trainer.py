@@ -12,6 +12,7 @@ from pplib.core.losses import KLDivergence, PairwiseRankLoss
 from pplib.evaluator.nb201_evaluator import NB201Evaluator
 from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
+from pplib.predictor.pruners.measures.nwot import compute_nwot
 from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
@@ -115,7 +116,7 @@ class NB201_Balance_Trainer(BaseTrainer):
     def sample_subnet_by_policy(self,
                                 policy: str = 'balanced',
                                 n_samples: int = 3) -> Dict:
-        assert policy in {'zenscore', 'flops', 'params'}
+        assert policy in {'zenscore', 'flops', 'params', 'nwot'}
         n_subnets = [self.mutator.random_subnet for _ in range(n_samples)]
 
         def minmaxscaler(n_list: Tensor) -> Tensor:
@@ -146,6 +147,13 @@ class NB201_Balance_Trainer(BaseTrainer):
             n_zenscore = torch.tensor(
                 [self.get_subnet_zenscore(i) for i in n_subnets])
             res = minmaxscaler(n_zenscore)
+            res = F.softmax(res, dim=0)
+            # Find the max
+            max_idx = res.argmax()
+            subnet = n_subnets[max_idx]
+        elif policy == 'nwot':
+            n_nwot = torch.tensor([self.get_subnet_nwot(i) for i in n_subnets])
+            res = minmaxscaler(n_nwot)
             res = F.softmax(res, dim=0)
             # Find the max
             max_idx = res.argmax()
@@ -194,11 +202,10 @@ class NB201_Balance_Trainer(BaseTrainer):
             # loss, outputs = self._forward_uniform(batch_inputs)
 
             # Balanced Sampling Rules
-            # loss, outputs = self._forward_balanced(
-            #     batch_inputs, policy='params')
+            loss, outputs = self._forward_balanced(batch_inputs, policy='nwot')
 
             # Sandwich Sampling Rule
-            loss, outputs = self._forward_sandwich(batch_inputs)
+            # loss, outputs = self._forward_sandwich(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():
@@ -525,6 +532,23 @@ class NB201_Balance_Trainer(BaseTrainer):
         del o
         return score
 
+    def get_subnet_nwot(self, subnet_dict) -> float:
+        """Calculate nwot based on subnet dict."""
+        import copy
+        m = copy.deepcopy(self.model)
+        o = OneShotMutator(with_alias=True)
+        o.prepare_from_supernet(m)
+        o.set_subnet(subnet_dict)
+
+        # for cifar10,cifar100,imagenet16
+        score = compute_nwot(
+            net=m,
+            inputs=torch.randn(4, 3, 32, 32).to('cuda'),
+            targets=torch.randn(4).to('cuda'))
+        del m
+        del o
+        return score
+
     def get_subnet_error(self,
                          subnet_dict: Dict,
                          train_loader=None,
@@ -609,7 +633,7 @@ class NB201_Balance_Trainer(BaseTrainer):
 
     def _forward_balanced(self, batch_inputs, policy='zenscore'):
         """Balanced Sampling Rules.
-            Policy can be `zenscore`, `flops`, `params`
+            Policy can be `zenscore`, `flops`, `params`, `nwot`
         """
         inputs, labels = batch_inputs
         inputs = self._to_device(inputs, self.device)
@@ -631,6 +655,7 @@ class NB201_Balance_Trainer(BaseTrainer):
         self.mutator.set_subnet(self.max_subnet)
         teacher_output = self.model(inputs)
         loss = self._compute_loss(teacher_output, labels)
+        loss.backward()
 
         # execuate min-network
         self.mutator.set_subnet(self.min_subnet)
