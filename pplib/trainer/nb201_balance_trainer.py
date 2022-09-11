@@ -199,10 +199,10 @@ class NB201_Balance_Trainer(BaseTrainer):
             # loss, outputs = self._forward_fairnas(batch_inputs)
 
             # Uniform Sampling Rules
-            # loss, outputs = self._forward_uniform(batch_inputs)
+            loss, outputs = self._forward_uniform(batch_inputs)
 
             # Balanced Sampling Rules
-            loss, outputs = self._forward_balanced(batch_inputs, policy='nwot')
+            # loss, outputs = self._forward_balanced(batch_inputs, policy='nwot')
 
             # Sandwich Sampling Rule
             # loss, outputs = self._forward_sandwich(batch_inputs)

@@ -9,7 +9,7 @@ from ..registry import register_model
 @register_model
 class SearchableMobileNet(nn.Module):
 
-    def __init__(self, classes: int = 10, width_mult: float = 1.0) -> None:
+    def __init__(self, num_classes: int = 10, width_mult: float = 1.0) -> None:
         super().__init__()
         self.width_mult = width_mult
         self.arch_settings = [
@@ -55,7 +55,7 @@ class SearchableMobileNet(nn.Module):
         )
 
         self.gap = nn.AdaptiveAvgPool2d(1)
-        self.classifier = nn.Linear(self.last_channel, classes, bias=False)
+        self.classifier = nn.Linear(self.last_channel, num_classes, bias=False)
 
     def _make_layer(self, out_channels: int, num_blocks: int,
                     stride: int) -> nn.Sequential:

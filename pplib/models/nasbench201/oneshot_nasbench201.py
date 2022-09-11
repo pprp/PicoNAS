@@ -392,11 +392,12 @@ class OneShotNASBench201Network(nn.Module):
         bn_affine=True,
         bn_momentum=0.1,
         bn_track_running_stats=True,
+        num_classes=10,
     ):
         super(OneShotNASBench201Network, self).__init__()
         self.channels = C = stem_out_channels
         self.num_modules = N = num_modules_per_stack
-        self.num_labels = 10
+        self.num_labels = num_classes
 
         self.bn_momentum = bn_momentum
         self.bn_affine = bn_affine

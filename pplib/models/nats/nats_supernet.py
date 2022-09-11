@@ -120,7 +120,7 @@ class Block(nn.Module):
 class SupernetNATS(nn.Module):
     """Three Blocks, with [2, 2, 1] layers"""
 
-    def __init__(self, target='cifar10'):
+    def __init__(self, target='cifar10', num_classes=10):
         super(SupernetNATS, self).__init__()
         self.max_num_Cs = 5
         self.candidate_Cs = [8, 16, 24, 32, 40, 48, 56, 64]
@@ -135,7 +135,7 @@ class SupernetNATS(nn.Module):
         self._op_layers_list = [2, 2, 1] if target == 'cifar10' else [2, 1, 2]
 
         # number of class
-        self._num_classes = 10 if target == 'cifar10' else 100
+        self._num_classes = num_classes
 
         # generate channel list
         self.channels = [

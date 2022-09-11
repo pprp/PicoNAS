@@ -10,7 +10,7 @@ from ..registry import register_model
 @register_model
 class SearchableShuffleNetV2(nn.Module):
 
-    def __init__(self, classes=10) -> None:
+    def __init__(self, num_classes=10) -> None:
         super().__init__()
 
         self.arch_settings = [
@@ -49,7 +49,7 @@ class SearchableShuffleNetV2(nn.Module):
 
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.dropout = nn.Dropout(0.1)
-        self.classifier = nn.Linear(self.last_channel, classes, bias=False)
+        self.classifier = nn.Linear(self.last_channel, num_classes, bias=False)
 
     def _make_layer(self, out_channels: int, num_blocks: int,
                     stride: int) -> nn.Sequential:

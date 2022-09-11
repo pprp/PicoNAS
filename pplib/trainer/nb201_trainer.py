@@ -189,11 +189,11 @@ class NB201Trainer(BaseTrainer):
             # loss, outputs = self._forward_fairnas(batch_inputs)
 
             # Single Path One Shot
-            # loss, outputs = self.forward(batch_inputs, mode='loss')
-            # loss.backward()
+            loss, outputs = self.forward(batch_inputs, mode='loss')
+            loss.backward()
 
             # SPOS with pairwise rankloss
-            loss, outputs = self._forward_pairwise_loss(batch_inputs)
+            # loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
             # spos with pairwise rankloss + cc distill
             # loss, outputs = self._forward_pairwise_loss_with_distill(

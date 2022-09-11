@@ -48,7 +48,17 @@ def main():
     val_dataloader = build_dataloader(
         type='val', dataset=cfg.dataset, config=cfg)
 
-    model = build_model(cfg.model_name)
+    if cfg.dataset == 'cifar10':
+        num_classes = 10
+    elif cfg.dataset == 'cifar100':
+        num_classes = 100
+    elif cfg.dataset == 'imagenet16':
+        num_classes = 120
+    else:
+        raise NotImplementedError(
+            f'Not Support Type of datasets: {cfg.dataset}.')
+
+    model = build_model(cfg.model_name, num_classes=num_classes)
 
     criterion = build_criterion(cfg.crit).to(device)
     optimizer = build_optimizer(model, cfg)

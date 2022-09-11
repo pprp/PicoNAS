@@ -393,18 +393,17 @@ class ResNetBasicBlock(nn.Module):
 @register_model
 class DiffNASBench201Network(nn.Module):
 
-    def __init__(
-        self,
-        stem_out_channels=16,
-        num_modules_per_stack=5,
-        bn_affine=True,
-        bn_momentum=0.1,
-        bn_track_running_stats=True,
-    ):
+    def __init__(self,
+                 stem_out_channels=16,
+                 num_modules_per_stack=5,
+                 bn_affine=True,
+                 bn_momentum=0.1,
+                 bn_track_running_stats=True,
+                 num_classes=10):
         super(DiffNASBench201Network, self).__init__()
         self.channels = C = stem_out_channels
         self.num_modules = N = num_modules_per_stack
-        self.num_labels = 10
+        self.num_labels = num_classes
 
         self.bn_momentum = bn_momentum
         self.bn_affine = bn_affine
