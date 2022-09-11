@@ -234,6 +234,7 @@ class DiffOP(DiffMutable[str, str]):
 
     def sample_choice(self, arch_param):
         """Sample choice based on arch_parameters."""
+        arch_param = F.softmax(arch_param)
         return self.choices[torch.argmax(arch_param).item()]
 
 

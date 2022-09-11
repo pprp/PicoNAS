@@ -82,7 +82,7 @@ class Darts_Trainer(BaseTrainer):
         )
 
         # unroll
-        self.unroll = True
+        self.unroll = False
 
     # def _build_evaluator(self, num_sample=50):
     #     return NB201Evaluator(self, num_sample)
@@ -157,7 +157,9 @@ class Darts_Trainer(BaseTrainer):
 
         # FOR DEBUG
         for k, v in self.mutator.arch_params.items():
-            self.logger.info(f'current arch_param: key: {k}: value: {v}')
+            self.logger.info(
+                f'current arch_param: key: {k}: value: {nn.functional.softmax(v, dim=-1).cpu()}'
+            )
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
@@ -183,9 +185,10 @@ class Darts_Trainer(BaseTrainer):
         w_grads = torch.autograd.grad(loss, w_model + w_arch)
         d_model, d_arch = w_grads[:len(w_model)], w_grads[len(w_model):]
 
-        # compute hessian and final gradients
+        # compute hessian and final gradients [expression (8) from paper]
         hessian = self._compute_hessian(backup_params, d_model, trn_x, trn_y)
         with torch.no_grad():
+            # Compute expression (7) from paper
             for param, d, h in zip(w_arch, d_arch, hessian):
                 # gradient = dalpha - lr * hessian
                 param.grad = d - lr * h
