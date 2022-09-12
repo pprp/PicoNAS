@@ -52,6 +52,7 @@ class NB201_Alter_Trainer(BaseTrainer):
         device: torch.device = torch.device('cuda'),
         log_name='nasbench201',
         searching: bool = True,
+        dataset: str = 'cifar10',
     ):
         super().__init__(
             model=model,
@@ -62,6 +63,7 @@ class NB201_Alter_Trainer(BaseTrainer):
             device=device,
             log_name=log_name,
             searching=searching,
+            dataset=dataset,
         )
 
         # init flops
@@ -73,7 +75,8 @@ class NB201_Alter_Trainer(BaseTrainer):
             self.mutator.prepare_from_supernet(model)
 
         # evaluate the rank consistency
-        # self.evaluator = self._build_evaluator(num_sample=50)
+        self.evaluator = self._build_evaluator(
+            num_sample=50, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -104,8 +107,8 @@ class NB201_Alter_Trainer(BaseTrainer):
         # when ``alter_flag`` is False: sample min subnet
         self.alter_flag = True
 
-    def _build_evaluator(self, num_sample=50):
-        return NB201Evaluator(self, num_sample)
+    def _build_evaluator(self, num_sample=50, dataset='cifar10'):
+        return NB201Evaluator(self, num_sample, dataset=dataset)
 
     def policy_sampler(self,
                        policy: str = 'balanced',

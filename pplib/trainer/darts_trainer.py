@@ -43,6 +43,7 @@ class Darts_Trainer(BaseTrainer):
         device: torch.device = torch.device('cuda'),
         log_name='nasbench201',
         searching: bool = True,
+        dataset: str = 'cifar10',
     ):
         super().__init__(
             model=model,
@@ -53,6 +54,7 @@ class Darts_Trainer(BaseTrainer):
             device=device,
             log_name=log_name,
             searching=searching,
+            dataset=dataset,
         )
 
         # init flops
@@ -65,7 +67,7 @@ class Darts_Trainer(BaseTrainer):
             self.mutator.arch_params.to(self.device)
 
         # evaluate the rank consistency
-        # self.evaluator = self._build_evaluator(num_sample=50)
+        # self.evaluator = self._build_evaluator(num_sample=50, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -84,8 +86,8 @@ class Darts_Trainer(BaseTrainer):
         # unroll
         self.unroll = True
 
-    # def _build_evaluator(self, num_sample=50):
-    #     return NB201Evaluator(self, num_sample)
+    # def _build_evaluator(self, num_sample=50, dataset='cifar10'):
+    #     return NB201Evaluator(self, num_sample, dataset=dataset)
 
     def _train(self, train_loader, valid_loader):
         train_loss = 0.0

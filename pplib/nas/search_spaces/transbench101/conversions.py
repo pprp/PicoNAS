@@ -5,7 +5,6 @@ from pplib.nas.search_spaces.nasbench101.conversions import get_children
 from pplib.nas.search_spaces.nasbench101.primitives import ModelWrapper
 from pplib.nas.search_spaces.transbench101.tnb101.model_builder import \
     create_model
-
 """
 There are three representations
 'naslib': the NASBench201SearchSpace object

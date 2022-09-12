@@ -52,9 +52,8 @@ class NATSMAETrainer(NATSTrainer):
         self.cc_distill = CC()
         self.lambda_kd = 1000.0
 
-    def build_evaluator(self, dataloader, bench_path, num_sample=50):
-        self.evaluator = NATSEvaluator(self, dataloader, bench_path,
-                                       num_sample)
+    def build_evaluator(self, num_sample=50):
+        self.evaluator = NATSEvaluator(self, num_sample=num_sample)
 
     def _forward(self, batch_inputs):
         """Network forward step. Low Level API"""
@@ -274,8 +273,7 @@ class NATSMAETrainer(NATSTrainer):
 
             if epoch % 5 == 0:
                 if self.evaluator is None:
-                    bench_path = './data/benchmark/nats_cifar10_acc_rank.yaml'
-                    self.build_evaluator(val_loader, bench_path, num_sample=50)
+                    self.build_evaluator(val_loader, num_sample=50)
                 else:
                     kt, ps, sp = self.evaluator.compute_rank_consistency()
                     self.writer.add_scalar(

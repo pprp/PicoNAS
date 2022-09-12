@@ -12,7 +12,7 @@ class NATSEvaluator(Evaluator):
 
     def __init__(self,
                  trainer,
-                 bench_path,
+                 bench_path=None,
                  num_sample=None,
                  dataset='cifar10'):
         super().__init__(trainer, bench_path)
@@ -20,6 +20,8 @@ class NATSEvaluator(Evaluator):
 
         self.trainer = trainer
         self.bench_path = bench_path
+        if self.bench_path is None:
+            self.bench_path = './data/benchmark/nats_cifar10_acc_rank.yaml'
         self.num_sample = num_sample
 
         self.bench_dict = self.load_benchmark()

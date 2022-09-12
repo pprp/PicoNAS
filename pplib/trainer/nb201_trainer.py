@@ -632,7 +632,8 @@ class NB201Trainer(BaseTrainer):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
 
-        subnet1, subnet2 = self.sample_subnet_by_type(type='adaptive')
+        # random, hamming, adaptive
+        subnet1, subnet2 = self.sample_subnet_by_type(type='random')
 
         # sample the first subnet
         self.mutator.set_subnet(subnet1)

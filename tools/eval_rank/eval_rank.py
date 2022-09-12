@@ -153,8 +153,7 @@ def main():
     for num_sample in num_samples:
         evaluator = MacroEvaluator(
             trainer=trainer,
-            dataloader=None,
-            dataset='cifar10'
+            dataset='cifar10',
             num_sample=num_sample,
         )
         kt, ps, sp = evaluator.compute_rank_based_on_flops()

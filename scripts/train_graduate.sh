@@ -81,12 +81,13 @@ start=`date +%s`
 # 第五章 实验2.5 nb201 + random sample + CIFAR-100
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_random-type-cifar100_exp2.5 --dataset cifar100 --crit ce --lr 0.1
 
-
 # 第五章 实验2.6 nb201 + random sample + ImageNet16
-# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_random-type-imagenet16_exp2.6 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16
+# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_random-type-imagenet16_exp2.6 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16
+
 
 # 第五章 实验2.7 Macro + random sample + CIFAR-100
-# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptive-type-cifar100_exp2.2 --dataset cifar100 --crit ce --lr 0.025
+# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptive-type-cifar100_exp2.2 --dataset cifar100 --crit ce --lr 0.025
+
 
 # 第五章 实验2.8 nb201 + hamming sample + CIFAR-100
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_hamming-type-cifar100_exp2.8 --dataset cifar100 --crit ce --lr 0.1

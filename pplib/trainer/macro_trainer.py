@@ -65,8 +65,7 @@ class MacroTrainer(BaseTrainer):
             self.mutator.prepare_from_supernet(self.model)
 
         # evaluate the rank consistency
-        bench_path =
-        self.evaluator = self._build_evaluator(bench_path, num_sample=50)
+        self.evaluator = self._build_evaluator(num_sample=50)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
