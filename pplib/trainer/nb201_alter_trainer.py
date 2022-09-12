@@ -53,6 +53,7 @@ class NB201_Alter_Trainer(BaseTrainer):
         log_name='nasbench201',
         searching: bool = True,
         dataset: str = 'cifar10',
+        **kwargs,
     ):
         super().__init__(
             model=model,
@@ -64,6 +65,7 @@ class NB201_Alter_Trainer(BaseTrainer):
             log_name=log_name,
             searching=searching,
             dataset=dataset,
+            **kwargs,
         )
 
         # init flops

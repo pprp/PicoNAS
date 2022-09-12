@@ -23,6 +23,7 @@ class SPOSTrainer(BaseTrainer):
         log_name: str = 'spos',
         searching: bool = True,
         print_freq: int = 100,
+        **kwargs,
     ):
         super().__init__(
             model=model,
@@ -34,7 +35,7 @@ class SPOSTrainer(BaseTrainer):
             log_name=log_name,
             searching=searching,
             print_freq=print_freq,
-        )
+            **kwargs)
         if self.mutator is None:
             self.mutator = OneShotMutator()
             self.mutator.prepare_from_supernet(model)

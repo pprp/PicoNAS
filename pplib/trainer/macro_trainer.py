@@ -45,6 +45,7 @@ class MacroTrainer(BaseTrainer):
         device: torch.device = torch.device('cuda'),
         log_name='macro',
         searching: bool = True,
+        **kwargs,
     ):
         super().__init__(
             model=model,
@@ -55,6 +56,7 @@ class MacroTrainer(BaseTrainer):
             device=device,
             log_name=log_name,
             searching=searching,
+            **kwargs,
         )
 
         # init flops

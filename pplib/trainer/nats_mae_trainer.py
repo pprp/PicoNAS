@@ -28,17 +28,19 @@ class NATSMAETrainer(NATSTrainer):
         log_name='nats',
         searching: bool = True,
         method: str = 'uni',
+        **kwargs,
     ):
         super().__init__(
-            model,
-            mutator,
-            optimizer,
-            criterion,
-            scheduler,
-            device,
-            log_name,
-            searching,
-            method,
+            model=model,
+            mutator=mutator,
+            optimizer=optimizer,
+            criterion=criterion,
+            scheduler=scheduler,
+            device=device,
+            log_name=log_name,
+            searching=searching,
+            method=method,
+            **kwargs,
         )
 
         assert method in {'uni', 'fair'}

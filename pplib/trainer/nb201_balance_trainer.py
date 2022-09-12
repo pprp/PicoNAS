@@ -49,6 +49,7 @@ class NB201_Balance_Trainer(BaseTrainer):
         log_name='nasbench201',
         searching: bool = True,
         dataset: str = 'cifar10',
+        **kwargs,
     ):
         super().__init__(
             model=model,
@@ -60,6 +61,7 @@ class NB201_Balance_Trainer(BaseTrainer):
             log_name=log_name,
             searching=searching,
             dataset=dataset,
+            **kwargs,
         )
 
         # init flops
@@ -112,6 +114,13 @@ class NB201_Balance_Trainer(BaseTrainer):
             4: 'skip_connect',
             5: 'skip_connect'
         }
+
+        # process type from kwargs
+        if 'type' in kwargs:
+            self.type = kwargs['type']
+            assert self.type in {'zenscore', 'flops', 'params', 'nwot'}
+        else:
+            self.type = None
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample=num_sample, dataset=dataset)
@@ -205,8 +214,13 @@ class NB201_Balance_Trainer(BaseTrainer):
             # loss, outputs = self._forward_uniform(batch_inputs)
 
             # Balanced Sampling Rules
-            loss, outputs = self._forward_balanced(
-                batch_inputs, policy='zenscore')
+            if self.type is None:
+                # default setting
+                loss, outputs = self._forward_balanced(
+                    batch_inputs, policy='zenscore')
+            else:
+                loss, outputs = self._forward_balanced(
+                    batch_inputs, policy=self.type)
 
             # Sandwich Sampling Rule
             # loss, outputs = self._forward_sandwich(batch_inputs)

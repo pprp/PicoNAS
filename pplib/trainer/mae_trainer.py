@@ -23,6 +23,7 @@ class MAETrainer(BaseTrainer):
         device=None,
         log_name='mae',
         searching: bool = True,
+        **kwargs,
     ):
         super().__init__(
             model=model,
@@ -33,6 +34,7 @@ class MAETrainer(BaseTrainer):
             device=device,
             log_name=log_name,
             searching=searching,
+            **kwargs,
         )
 
         if self.mutator is None:

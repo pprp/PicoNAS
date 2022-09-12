@@ -40,6 +40,7 @@ class NATSTrainer(BaseTrainer):
         searching: bool = True,
         method: str = 'uni',
         dataset: str = 'dataset',
+        **kwargs,
     ):
         super().__init__(
             model=model,
@@ -50,7 +51,8 @@ class NATSTrainer(BaseTrainer):
             device=device,
             log_name=log_name,
             searching=searching,
-            dataset=dataset)
+            dataset=dataset,
+            **kwargs)
 
         assert method in {'uni', 'fair'}
         self.method = method

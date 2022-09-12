@@ -29,19 +29,18 @@ class BaseTrainer:
         searching (bool, optional): [description]. Defaults to True.
     """
 
-    def __init__(
-        self,
-        model,
-        mutator,
-        criterion,
-        optimizer,
-        scheduler,
-        device=None,
-        log_name='base',
-        searching: bool = True,
-        print_freq: int = 100,
-        dataset: str = 'cifar10',
-    ):
+    def __init__(self,
+                 model,
+                 mutator,
+                 criterion,
+                 optimizer,
+                 scheduler,
+                 device=None,
+                 log_name='base',
+                 searching: bool = True,
+                 print_freq: int = 100,
+                 dataset: str = 'cifar10',
+                 **kwargs):
 
         self.model = model
         self.mutator = mutator
