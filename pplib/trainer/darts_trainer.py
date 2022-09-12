@@ -79,37 +79,34 @@ class Darts_Trainer(BaseTrainer):
 
         # optimizer for arch; origin optimizer for supernet
         self.arch_optimizer = torch.optim.Adam(
-            self.mutator.arch_params.values(),
-            lr=3e-4,  # /10
+            self.mutator.parameters(),
+            lr=3e-4,
             betas=(0.5, 0.999),
             weight_decay=1e-3,
         )
 
         # unroll
-        self.unroll = True
+        self.unroll = False
 
     # def _build_evaluator(self, num_sample=50, dataset='cifar10'):
     #     return NB201Evaluator(self, num_sample, dataset=dataset)
 
     def _train(self, train_loader, valid_loader):
+        self.model.train()
         train_loss = 0.0
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
 
-        for step, (train_batch,
-                   valid_batch) in enumerate(zip(train_loader, valid_loader)):
+        for step, ((trn_x, trn_y),
+                   (val_x,
+                    val_y)) in enumerate(zip(train_loader, valid_loader)):
             # get image and labels
-            trn_x, trn_y = train_batch
-            val_x, val_y = valid_batch
-
             trn_x = self._to_device(trn_x, self.device)
             trn_y = self._to_device(trn_y, self.device)
             val_x = self._to_device(val_x, self.device)
             val_y = self._to_device(val_y, self.device)
 
             # phase 1: arch parameter update
-            self.model.eval()
-            self.mutator.train()
             self.arch_optimizer.zero_grad()
             if self.unroll:
                 self._unrolled_backward(trn_x, trn_y, val_x, val_y)
@@ -120,8 +117,6 @@ class Darts_Trainer(BaseTrainer):
             self.arch_optimizer.step()
 
             # phase 2: supernet parameter update
-            self.model.train()
-            self.mutator.eval()
             self.optimizer.zero_grad()
             outputs = self.model(trn_x)
             loss = self.criterion(outputs, trn_y)
@@ -185,7 +180,7 @@ class Darts_Trainer(BaseTrainer):
         loss = self.criterion(output, val_y)
 
         w_model, w_arch = tuple(self.model.parameters()), tuple(
-            self.mutator.arch_params.values())
+            self.mutator.parameters())
         w_grads = torch.autograd.grad(loss, w_model + w_arch)
         d_model, d_arch = w_grads[:len(w_model)], w_grads[len(w_model):]
 
@@ -234,14 +229,14 @@ class Darts_Trainer(BaseTrainer):
                 f'In computing hessian, norm is smaller than 1E-8, cause eps to be {norm.item()}.'
             )
         dalphas = []
-        for e in [eps, -2.0 * eps]:
+        for e in [eps, -2. * eps]:
             with torch.no_grad():
                 for p, d in zip(self.model.parameters(), dw):
                     p += e * d
             output = self.model(trn_x)
             loss = self.criterion(output, trn_y)
             dalphas.append(
-                torch.autograd.grad(loss, self.mutator.arch_params.values()))
+                torch.autograd.grad(loss, self.mutator.parameters()))
         dalpha_pos, dalpha_neg = dalphas
         return [(p - n) / 2.0 * eps for p, n in zip(dalpha_pos, dalpha_neg)]
 

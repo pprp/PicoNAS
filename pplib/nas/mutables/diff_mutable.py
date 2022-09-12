@@ -159,7 +159,7 @@ class DiffOP(DiffMutable[str, str]):
         Returns:
             Tensor: the result of forward the fixed operation.
         """
-        return self._candidate_ops[self._chosen](x)
+        return sum(self._candidates[choice](x) for choice in self._chosen)
 
     def forward_arch_param(self,
                            x: Any,

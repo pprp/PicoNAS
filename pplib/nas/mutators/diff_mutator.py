@@ -47,10 +47,10 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
         """
 
         super().prepare_from_supernet(supernet)
-        self.arch_params = self.build_arch_params(supernet)
+        self.arch_params = self.build_arch_params()
         self.modify_supernet_forward(self.arch_params)
 
-    def build_arch_params(self, supernet):
+    def build_arch_params(self):
         """This function will build many arch params, which are generally used
         in differentiable search algorithms, such as Darts' series. Each
         group_id corresponds to an arch param, so the Mutables with the same

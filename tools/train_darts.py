@@ -177,8 +177,7 @@ def main():
     val_loader = torch.utils.data.DataLoader(
         train_data,
         batch_size=args.batch_size,
-        sampler=torch.utils.data.sampler.SubsetRandomSampler(
-            indices[split:num_train]),
+        sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:]),
         pin_memory=True,
         num_workers=2)
 
