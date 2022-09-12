@@ -75,14 +75,14 @@ class Darts_Trainer(BaseTrainer):
 
         # optimizer for arch; origin optimizer for supernet
         self.arch_optimizer = torch.optim.Adam(
-            self.mutator.parameters(),
-            lr=3e-4,
+            self.mutator.arch_params.values(),
+            lr=3e-4,  # /10
             betas=(0.5, 0.999),
             weight_decay=1e-3,
         )
 
         # unroll
-        self.unroll = False
+        self.unroll = True
 
     # def _build_evaluator(self, num_sample=50):
     #     return NB201Evaluator(self, num_sample)
@@ -104,7 +104,7 @@ class Darts_Trainer(BaseTrainer):
             val_y = self._to_device(val_y, self.device)
 
             # phase 1: arch parameter update
-            # self.model.eval()
+            self.model.eval()
             self.mutator.train()
             self.arch_optimizer.zero_grad()
             if self.unroll:
@@ -117,7 +117,7 @@ class Darts_Trainer(BaseTrainer):
 
             # phase 2: supernet parameter update
             self.model.train()
-            # self.mutator.eval()
+            self.mutator.eval()
             self.optimizer.zero_grad()
             outputs = self.model(trn_x)
             loss = self.criterion(outputs, trn_y)
@@ -181,7 +181,7 @@ class Darts_Trainer(BaseTrainer):
         loss = self.criterion(output, val_y)
 
         w_model, w_arch = tuple(self.model.parameters()), tuple(
-            self.mutator.parameters())
+            self.mutator.arch_params.values())
         w_grads = torch.autograd.grad(loss, w_model + w_arch)
         d_model, d_arch = w_grads[:len(w_model)], w_grads[len(w_model):]
 
@@ -237,7 +237,7 @@ class Darts_Trainer(BaseTrainer):
             output = self.model(trn_x)
             loss = self.criterion(output, trn_y)
             dalphas.append(
-                torch.autograd.grad(loss, self.mutator.parameters()))
+                torch.autograd.grad(loss, self.mutator.arch_params.values()))
         dalpha_pos, dalpha_neg = dalphas
         return [(p - n) / 2.0 * eps for p, n in zip(dalpha_pos, dalpha_neg)]
 
