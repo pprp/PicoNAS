@@ -44,6 +44,7 @@ class NB201Trainer(BaseTrainer):
         device: torch.device = torch.device('cuda'),
         log_name='nasbench201',
         searching: bool = True,
+        dataset: str = 'cifar10',
     ):
         super().__init__(
             model=model,
@@ -54,7 +55,7 @@ class NB201Trainer(BaseTrainer):
             device=device,
             log_name=log_name,
             searching=searching,
-        )
+            dataset=dataset)
 
         # init flops
         self._init_flops()
@@ -65,7 +66,8 @@ class NB201Trainer(BaseTrainer):
             self.mutator.prepare_from_supernet(model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(num_sample=50)
+        self.evaluator = self._build_evaluator(
+            num_sample=50, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -78,8 +80,8 @@ class NB201Trainer(BaseTrainer):
         #  => is_specific is False: normal mode
         self.is_specific = False
 
-    def _build_evaluator(self, num_sample=50):
-        return NB201Evaluator(self, num_sample)
+    def _build_evaluator(self, num_sample=50, dataset='cifar10'):
+        return NB201Evaluator(self, num_sample, dataset)
 
     def sample_subnet_by_type(self, type: str = 'random') -> List[Dict]:
         """Return two subnets based on ``type``.
@@ -630,7 +632,7 @@ class NB201Trainer(BaseTrainer):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
 
-        subnet1, subnet2 = self.sample_subnet_by_type(type='hamming')
+        subnet1, subnet2 = self.sample_subnet_by_type(type='adaptive')
 
         # sample the first subnet
         self.mutator.set_subnet(subnet1)

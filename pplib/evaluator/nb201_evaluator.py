@@ -28,12 +28,15 @@ class NB201Evaluator(Evaluator):
                  num_sample: int = None,
                  dataset: str = 'cifar10',
                  type: str = 'eval_acc1es'):
-        super().__init__(trainer)
+        super().__init__(trainer=trainer, dataset=dataset)
         self.trainer = trainer
         self.num_sample = num_sample
         self.type = type
         self.search_space = 'nasbench201'
         self.dataset = dataset
+
+        if dataset == 'imagenet16':
+            self.dataset = 'ImageNet16-120'
 
         assert type in ['train_losses', 'eval_losses',
                         'train_acc1es', 'eval_acc1es', 'cost_info'], \

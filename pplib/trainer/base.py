@@ -40,6 +40,7 @@ class BaseTrainer:
         log_name='base',
         searching: bool = True,
         print_freq: int = 100,
+        dataset: str = 'cifar10',
     ):
 
         self.model = model
@@ -53,6 +54,7 @@ class BaseTrainer:
         self.searching = searching
         self.log_name = log_name
         self.print_freq = print_freq
+        self.dataset = dataset
 
         # attributes
         self.train_loss_: List = []

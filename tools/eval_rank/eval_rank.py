@@ -148,14 +148,13 @@ def main():
 
     start = time.time()
 
-    bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
     num_samples = [20, 50, 100]
 
     for num_sample in num_samples:
         evaluator = MacroEvaluator(
             trainer=trainer,
             dataloader=None,
-            bench_path=bench_path,
+            dataset='cifar10'
             num_sample=num_sample,
         )
         kt, ps, sp = evaluator.compute_rank_based_on_flops()

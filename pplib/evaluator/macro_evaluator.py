@@ -17,11 +17,24 @@ class MacroEvaluator(Evaluator):
         type (str, optional): _description_. Defaults to 'test_acc'.
     """
 
-    def __init__(self, trainer, bench_path, num_sample=None, type='test_acc'):
+    def __init__(self,
+                 trainer,
+                 bench_path=None,
+                 num_sample=None,
+                 type='test_acc',
+                 dataset='cifar10'):
 
         super().__init__(trainer, bench_path)
+        assert dataset in {'cifar10', 'cifar100'}
+        if bench_path is None:
+            if dataset == 'cifar10':
+                self.bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
+            else:
+                self.bench_path = './data/benchmark/benchmark_cifar100_dataset.json'
+        else:
+            self.bench_path = bench_path
+
         self.trainer = trainer
-        self.bench_path = bench_path
         self.num_sample = num_sample
         self.type = type
         assert type in [

@@ -65,7 +65,7 @@ class MacroTrainer(BaseTrainer):
             self.mutator.prepare_from_supernet(self.model)
 
         # evaluate the rank consistency
-        bench_path = './data/benchmark/benchmark_cifar10_dataset.json'
+        bench_path =
         self.evaluator = self._build_evaluator(bench_path, num_sample=50)
 
         # pairwise rank loss
@@ -75,8 +75,8 @@ class MacroTrainer(BaseTrainer):
         self.distill_loss = CC()
         self.lambda_kd = 1000.0
 
-    def _build_evaluator(self, bench_path, num_sample=50):
-        return MacroEvaluator(self, bench_path, num_sample, 'test_acc')
+    def _build_evaluator(self, num_sample=50):
+        return MacroEvaluator(self, num_sample, 'test_acc')
 
     def sample_subnet_by_type(self, type: str = 'random') -> List[Dict]:
         """Return two subnets based on ``type``.
@@ -132,8 +132,8 @@ class MacroTrainer(BaseTrainer):
             max_iter = 10
             subnet2 = self.mutator.random_subnet
 
-            # 调参，调大或者调小 (1) 7.789 (2) 5 (3) 9
-            while adaptive_hamming_dist(subnet1, subnet2) < 9 and max_iter > 0:
+            # 调参，调大或者调小 (1) 7.789 (2) 5 (3) 8
+            while adaptive_hamming_dist(subnet1, subnet2) < 8 and max_iter > 0:
                 subnet2 = self.mutator.random_subnet
             if max_iter > 0:
                 return subnet1, subnet2

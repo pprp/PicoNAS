@@ -10,8 +10,14 @@ from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
 class NATSEvaluator(Evaluator):
 
-    def __init__(self, trainer, bench_path, num_sample=None):
+    def __init__(self,
+                 trainer,
+                 bench_path,
+                 num_sample=None,
+                 dataset='cifar10'):
         super().__init__(trainer, bench_path)
+        assert dataset == 'cifar10'
+
         self.trainer = trainer
         self.bench_path = bench_path
         self.num_sample = num_sample

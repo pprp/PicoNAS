@@ -96,6 +96,13 @@ start=`date +%s`
 # CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_hamming-type-imagenet16_exp2.9 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16
 
 
+# 第五章 实验2.10 nb201 + adaptive sample + CIFAR-100
+# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_adaptive-type-cifar100_exp2.10 --dataset cifar100 --crit ce --lr 0.1
+
+
+# 第五章 实验2.11 nb201 + adaptive sample + ImageNet16
+# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_adaptive-type-imagenet16_exp2.11 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16
+
 end=`date +%s`
 runtime=$((end-start))
 
