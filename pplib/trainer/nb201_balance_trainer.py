@@ -118,7 +118,10 @@ class NB201_Balance_Trainer(BaseTrainer):
         # process type from kwargs
         if 'type' in kwargs:
             self.type = kwargs['type']
-            assert self.type in {'zenscore', 'flops', 'params', 'nwot'}
+            assert self.type in {
+                'zenscore', 'flops', 'params', 'nwot', 'uniform', 'fair',
+                'sandwich'
+            }
         else:
             self.type = None
 
@@ -207,23 +210,20 @@ class NB201_Balance_Trainer(BaseTrainer):
             # remove gradient from previous passes
             self.optimizer.zero_grad()
 
-            # Fair Sampling Rules
-            # loss, outputs = self._forward_fairnas(batch_inputs)
-
-            # Uniform Sampling Rules
-            # loss, outputs = self._forward_uniform(batch_inputs)
-
-            # Balanced Sampling Rules
-            if self.type is None:
-                # default setting
+            if self.type in {'uniform', 'fair', 'sandwich'}:
+                if self.type == 'uniform':
+                    loss, outputs = self._forward_uniform(batch_inputs)
+                elif self.type == 'fair':
+                    loss, outputs = self._forward_fairnas(batch_inputs)
+                elif self.type == 'sandwich':
+                    loss, outputs = self._forward_sandwich(batch_inputs)
+            elif self.type is None:
+                # default operation
                 loss, outputs = self._forward_balanced(
-                    batch_inputs, policy='zenscore')
+                    batch_inputs, policy='flops')
             else:
                 loss, outputs = self._forward_balanced(
                     batch_inputs, policy=self.type)
-
-            # Sandwich Sampling Rule
-            # loss, outputs = self._forward_sandwich(batch_inputs)
 
             # clear grad
             for p in self.model.parameters():

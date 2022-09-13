@@ -68,7 +68,7 @@ class DiffMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
 
     def compute_arch_probs(self, arch_param: Any) -> Tensor:
         """compute chosen probs according to architecture params."""
-        return F.softmax(arch_param, -1)
+        return F.softmax(arch_param, dim=-1)
 
     @abstractmethod
     def forward_fixed(self, x: Any) -> Any:

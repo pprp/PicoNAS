@@ -45,6 +45,7 @@ class MacroTrainer(BaseTrainer):
         device: torch.device = torch.device('cuda'),
         log_name='macro',
         searching: bool = True,
+        dataset: str = 'cifar10',
         **kwargs,
     ):
         super().__init__(
@@ -56,6 +57,7 @@ class MacroTrainer(BaseTrainer):
             device=device,
             log_name=log_name,
             searching=searching,
+            dataset=dataset,
             **kwargs,
         )
 
@@ -67,7 +69,8 @@ class MacroTrainer(BaseTrainer):
             self.mutator.prepare_from_supernet(self.model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(num_sample=50)
+        self.evaluator = self._build_evaluator(
+            num_sample=50, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -76,8 +79,17 @@ class MacroTrainer(BaseTrainer):
         self.distill_loss = CC()
         self.lambda_kd = 1000.0
 
-    def _build_evaluator(self, num_sample=50):
-        return MacroEvaluator(self, num_sample, 'test_acc')
+        # type from kwargs
+        if 'type' in kwargs:
+            self.type = kwargs['type']
+            assert self.type in {'random', 'hamming', 'adaptive'}
+        else:
+            self.type = None
+        self.logger.info(f'Current type of macro trainer is: {self.type}.')
+
+    def _build_evaluator(self, num_sample=50, dataset='cifar10'):
+        return MacroEvaluator(
+            self, num_sample=num_sample, type='test_acc', dataset=dataset)
 
     def sample_subnet_by_type(self, type: str = 'random') -> List[Dict]:
         """Return two subnets based on ``type``.
@@ -113,7 +125,7 @@ class MacroTrainer(BaseTrainer):
                     dist += 2
             return dist
 
-        assert type in ['random', 'hamming', 'adaptive']
+        assert type in {'random', 'hamming', 'adaptive'}
         if type == 'random':
             return self.mutator.random_subnet, self.mutator.random_subnet
         elif type == 'hamming':
@@ -121,7 +133,9 @@ class MacroTrainer(BaseTrainer):
             subnet1 = self.mutator.random_subnet
             max_iter = 10
             subnet2 = self.mutator.random_subnet
-            while hamming_dist(subnet1, subnet2) < 9.3 and max_iter > 0:
+
+            # 调参，调大或者调小 (1) 9.3 (2) 7 (3) 10
+            while hamming_dist(subnet1, subnet2) <= 7 and max_iter > 0:
                 subnet2 = self.mutator.random_subnet
             if max_iter > 0:
                 return subnet1, subnet2
@@ -248,7 +262,10 @@ class MacroTrainer(BaseTrainer):
         labels = self._to_device(labels, self.device)
 
         # sample the first subnet
-        subnet1, subnet2 = self.sample_subnet_by_type(type='adaptive')
+        if self.type is None:
+            subnet1, subnet2 = self.sample_subnet_by_type(type='adaptive')
+        else:
+            subnet1, subnet2 = self.sample_subnet_by_type(type=self.type)
 
         self.mutator.set_subnet(subnet1)
         outputs = self.model(inputs)
@@ -513,9 +530,9 @@ class MacroTrainer(BaseTrainer):
                         global_step=step + self.current_epoch * len(loader),
                     )
 
-        self.logger.info(
-            f'Val loss: {loss.item()} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
-        )
+        # self.logger.info(
+        #     f'Val loss: {loss.item()} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
+        # )
         # val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
         return top1_vacc.avg
 

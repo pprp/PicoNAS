@@ -82,6 +82,14 @@ class NB201Trainer(BaseTrainer):
         #  => is_specific is False: normal mode
         self.is_specific = False
 
+        # type from kwargs can be random, hamming, adaptive
+        if 'type' in kwargs:
+            self.type = kwargs['type']
+            assert self.type in {'random', 'hamming', 'adaptive'}
+        else:
+            self.type = None
+        self.logger.info(f'Current type of nb201 trainer is: {self.type}.')
+
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample, dataset)
 
@@ -126,7 +134,7 @@ class NB201Trainer(BaseTrainer):
                     raise NotImplementedError(f'v1: {v1} v2: {v2}')
             return dist
 
-        assert type in ['random', 'hamming', 'adaptive']
+        assert type in {'random', 'hamming', 'adaptive'}
         if type == 'random':
             return self.mutator.random_subnet, self.mutator.random_subnet
         elif type == 'hamming':
@@ -635,7 +643,10 @@ class NB201Trainer(BaseTrainer):
         labels = self._to_device(labels, self.device)
 
         # random, hamming, adaptive
-        subnet1, subnet2 = self.sample_subnet_by_type(type='random')
+        if self.type is None:
+            subnet1, subnet2 = self.sample_subnet_by_type(type='random')
+        else:
+            subnet1, subnet2 = self.sample_subnet_by_type(type=self.type)
 
         # sample the first subnet
         self.mutator.set_subnet(subnet1)
