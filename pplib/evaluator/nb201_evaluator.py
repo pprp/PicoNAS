@@ -1,4 +1,5 @@
 import math
+from ast import Raise
 from typing import List, Union
 
 import torch
@@ -87,17 +88,27 @@ class NB201Evaluator(Evaluator):
 
     def query_result(self, genotype: str, cost_key: str = 'flops'):
         """query the indictor by genotype."""
+        dataset = self.trainer.dataset
+        if dataset == 'cifar10':
+            dataset = 'cifar10-valid'
+        elif dataset == 'cifar100':
+            dataset = 'cifar100'
+        elif dataset == 'imagenet16':
+            dataset = 'ImageNet16-120'
+        else:
+            raise NotImplementedError(f'Not Support dataset type:{dataset}')
+
         # TODO default datasets is cifar10, support other dataset in the future.
         if self.type in [
                 'train_losses', 'eval_losses', 'train_acc1es', 'eval_acc1es'
         ]:
-            return self.api[genotype]['cifar10-valid'][self.type][-1]
+            return self.api[genotype][dataset][self.type][-1]
         elif self.type == 'cost_info':
             # example:
             # cost_info: {'flops': 78.56193, 'params': 0.559386,
             #             'latency': 0.01493, 'train_time': 10.21598}
             assert cost_key is not None
-            return self.api[genotype]['cifar10-valid'][self.type][cost_key]
+            return self.api[genotype][dataset][self.type][cost_key]
         else:
             raise f'Not supported type: {self.type}.'
 

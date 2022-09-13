@@ -30,9 +30,12 @@ start=`date +%s`
 
 # 第四章 实验2.1_c100 基于flops采样
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_flops-policy-sampler-cifar100_exp2.1_c100 --dataset cifar100 --crit ce --lr 0.1 --type flops
+# CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_flops-policy-sampler-cifar100_exp2.1_c100 --dataset cifar100 --crit ce  --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_balanced_flops-policy-sampler-cifar100_exp2.1_c100/graduate_nb201_balanced_flops-policy-sampler-cifar100_exp2.1_c100_nb201_ckpt_0191.pth.tar'
 
 # 第四章 实验2.1_img16 基于flops采样
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_flops-policy-sampler-imagenet16_exp2.1_img16 --dataset imagenet16 --crit ce --lr 0.1 --type flops --data_dir ./data/ImageNet16
+# CUDA_VISIBLE_DEVICES=2 python tools/searcher/search_evo_nb201.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_flops-policy-sampler-imagenet16_exp2.1_img16 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16  --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_balanced_flops-policy-sampler-imagenet16_exp2.1_img16/graduate_nb201_balanced_flops-policy-sampler-imagenet16_exp2.1_img16_nb201_ckpt_0171.pth.tar'
+
 
 # 第四章 实验2.2 基于params采样
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_paramspolicysampler_exp2.2 --dataset cifar10 --crit ce --lr 0.025
