@@ -23,6 +23,7 @@ class SPOSTrainer(BaseTrainer):
         log_name: str = 'spos',
         searching: bool = True,
         print_freq: int = 100,
+        dataset: str = 'cifar10',
         **kwargs,
     ):
         super().__init__(
@@ -35,6 +36,7 @@ class SPOSTrainer(BaseTrainer):
             log_name=log_name,
             searching=searching,
             print_freq=print_freq,
+            dataset=dataset,
             **kwargs)
         if self.mutator is None:
             self.mutator = OneShotMutator()

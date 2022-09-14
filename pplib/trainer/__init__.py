@@ -6,6 +6,7 @@ from .nats_mae_trainer import NATSMAETrainer  # noqa: F401
 from .nats_trainer import NATSTrainer  # noqa: F401
 from .nb201_alter_trainer import NB201_Alter_Trainer  # noqa: F401
 from .nb201_balance_trainer import NB201_Balance_Trainer  # noqa: F401
+from .nb201_sam_trainer import NB201_SAM_Trainer  # noqa: F401
 from .nb201_trainer import NB201Trainer  # noqa: F401
 from .spos_trainer import SPOSTrainer  # noqa: F401
 from .zc_trainer import ZCTrainer  # noqa: F401

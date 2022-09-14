@@ -1,6 +1,6 @@
 import random
 import time
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import numpy as np
 import torch
@@ -8,6 +8,7 @@ from mmcv.cnn import get_model_complexity_info
 
 import pplib.utils.utils as utils
 from pplib.core.losses import PairwiseRankLoss
+from pplib.core.optims import ASAM, SAM
 from pplib.evaluator.nb201_evaluator import NB201Evaluator
 from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
@@ -18,7 +19,7 @@ from .registry import register_trainer
 
 
 @register_trainer
-class NB201Trainer(BaseTrainer):
+class NB201_SAM_Trainer(BaseTrainer):
     """Trainer for Macro Benchmark.
 
     Args:
@@ -38,7 +39,7 @@ class NB201Trainer(BaseTrainer):
         self,
         model: OneShotNASBench201Network,
         mutator: OneShotMutator,
-        optimizer=None,
+        optimizer: Union[ASAM, SAM] = None,
         criterion=None,
         scheduler=None,
         device: torch.device = torch.device('cuda'),
@@ -86,7 +87,7 @@ class NB201Trainer(BaseTrainer):
         if 'type' in kwargs:
             self.type = kwargs['type']
             assert self.type in {
-                'random', 'hamming', 'adaptive', 'uniform', 'fair', 'sandwich'
+                'random', 'hamming', 'adaptive', 'uniform', 'fair'
             }
         else:
             self.type = None
@@ -197,17 +198,27 @@ class NB201Trainer(BaseTrainer):
             labels = self._to_device(labels, self.device)
 
             # remove gradient from previous passes
-            self.optimizer.zero_grad()
+            # self.optimizer.zero_grad()
 
-            if self.type in {'uniform', 'fair', 'sandwich'}:
+            # Ascent Step
+            if self.type in {'uniform', 'fair'}:
                 if self.type == 'uniform':
                     loss, outputs = self._forward_uniform(batch_inputs)
                 elif self.type == 'fair':
                     loss, outputs = self._forward_fairnas(batch_inputs)
-                elif self.type == 'sandwich':
-                    loss, outputs = self._forward_sandwich(batch_inputs)
             else:
                 loss, outputs = self._forward_pairwise_loss(batch_inputs)
+            self.optimizer.ascent_step()
+
+            # Descent Step
+            if self.type in {'uniform', 'fair'}:
+                if self.type == 'uniform':
+                    loss, outputs = self._forward_uniform(batch_inputs)
+                elif self.type == 'fair':
+                    loss, outputs = self._forward_fairnas(batch_inputs)
+            else:
+                loss, outputs = self._forward_pairwise_loss(batch_inputs)
+            self.optimizer.descent_step()
 
             # clear grad
             for p in self.model.parameters():
@@ -215,7 +226,7 @@ class NB201Trainer(BaseTrainer):
                     p.grad = None
 
             # parameters update
-            self.optimizer.step()
+            # self.optimizer.step()
 
             # compute accuracy
             n = inputs.size(0)
@@ -546,7 +557,7 @@ class NB201Trainer(BaseTrainer):
         self.mutator.set_subnet(self.mutator.random_subnet)
         outputs = self.model(inputs)
         loss = self._compute_loss(outputs, labels)
-        loss.backward()
+        # loss.backward()
         return loss, outputs
 
     def _forward_fairnas(self, batch_inputs):
@@ -566,7 +577,7 @@ class NB201Trainer(BaseTrainer):
             loss_list.append(loss)
 
         sum_loss = sum(loss_list)
-        sum_loss.backward()
+        # sum_loss.backward()
         return sum_loss, outputs
 
     def fit_specific(self, train_loader, val_loader, epochs,
