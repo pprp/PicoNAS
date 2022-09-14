@@ -135,7 +135,7 @@ class MacroTrainer(BaseTrainer):
             subnet2 = self.mutator.random_subnet
 
             # 调参，调大或者调小 (1) 9.3 (2) 7 (3) 10
-            while hamming_dist(subnet1, subnet2) <= 7 and max_iter > 0:
+            while hamming_dist(subnet1, subnet2) <= 10 and max_iter > 0:
                 subnet2 = self.mutator.random_subnet
             if max_iter > 0:
                 return subnet1, subnet2
