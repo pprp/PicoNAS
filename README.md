@@ -1,21 +1,67 @@
-# A Library for One-Shot Neural Architecture Search
+# FluentNAS
 
-## TODO LIST
+FluentNAS is a modularized NAS Framework designed for One-Shot NAS.
 
-- [x] NASBench201
-- [ ] LandmarkReg
-- [x] BNNAS
-- [ ] Support Alias for DiffMutables
-- [x] AngleNAS
-  - [ ] AngleNAS for NASBench201
-- [x] SIMMIM
-- [ ] SupMIM
-- [x] SPOS
-- [ ] FairNAS
-- [x] MacroBenchmark
-- [x] SAM optimizer
-- [ ] KD
-- [ ] Save path
+
+
+## Overview
+
+This repository includes the benchmark for NAS-Bench-101, NAS-Bench-201, NATS-Bench, Macro-NAS-Bench.
+
+This repository support multiple NAS algorithms:
+
+- Differentiable Architecture Search
+- Single Path One Shot
+- FairNAS
+- AutoSlim
+- AngleNAS
+
+This repository support multiple dataset:
+
+- CIFAR-10
+- CIFAR-100
+- ImageNet16-120
+
+
+
+## Installation
+
+Requirements:
+
+- python>=3.7
+- pytorch>=1.9
+
+
+
+Intall from source code
+
+```
+git clone https://github.com/pprp/fluentnas.git
+cd fluentnas
+pip install -r requirements.txt
+pip install -e .
+```
+
+
+
+## Quick Start
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python tools/train.py \
+	--config configs/spos/spos_cifar10.py \
+	--model_name OneShotNASBench201Network \
+	--trainer_name NB201_Balance_Trainer \
+	--log_name graduate_nb201_spos_sandwich-sampling \
+	--dataset cifar10 --crit ce --lr 0.025
+```
+
+
+
+## Contributing
+
+We welcome contributions to the library along with any potential issues or suggestions.
+
+
 
 ## Thanks
 
@@ -23,51 +69,3 @@
 - SimMIM: https://github.com/microsoft/SimMIM
 - NASLib: https://github.com/automl/NASLib
 - MixPath: https://github.com/xiaomi-automl/MixPath
-
-## NASLib
-
-runner: 属于入口，兼容各种用法
-
-- api：(naslib/utils/get_dataset_api) 获取api，得到json的访问
-- predictor: 预测器，根据不同type的方法如zen，snip等进行计算，提供查询功能，得到对应分数
-    - pruners/measures: 各种评价指标
-- search_space: (Graph) networkx中构图功能添加
-    - graph 搜索空间定义
-    - primitives 基元，即候选操作。
-- evaluator: 评估器，主要功能有：
-    - 加载数据集 load-dataset
-    - 调用预测器predictor进行查询
-    - 评估test集合上的结果 single_evaluate
-    - 适配搜索空间：adapt_search_space
-
-ss_type:
-- nasbench101
-- nasbench201
-- nasbench301
-- transbench101
-- transbench101_micro
-- transbench101_macro
-
-dataset:
-- cifar10
-- cifar100
-
-
-## Tensorboard Writer
-
-- EPOCH_LOSS/train_epoch_loss
-- EPOCH_LOSS/valid_epoch_loss
-- STEP_LOSS/train_step_loss
-- STEP_LOSS/valid_step_loss
-- TRAIN_ACC/top1_train_acc
-- TRAIN_ACC/top5_train_acc
-- VAL_ACC/top1_val_acc
-- VAL_ACC/top5_val_acc
-- RANK/kendall_tau
-- RANK/pearson
-- RANK/spearman
-
-
-## Important Bugs
-
-- [x] After setting `model.eval()`, the validation accuracy of CIFAR10 in NASBench201 is always 10%. [Torch version=1.8]
