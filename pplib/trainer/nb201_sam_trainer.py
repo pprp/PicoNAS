@@ -201,32 +201,30 @@ class NB201_SAM_Trainer(BaseTrainer):
             # self.optimizer.zero_grad()
 
             # Ascent Step
-            if self.type in {'uniform', 'fair'}:
-                if self.type == 'uniform':
-                    loss, outputs = self._forward_uniform(batch_inputs)
-                elif self.type == 'fair':
-                    loss, outputs = self._forward_fairnas(batch_inputs)
-            else:
-                loss, outputs = self._forward_pairwise_loss(batch_inputs)
+
+            inputs, labels = batch_inputs
+            inputs = self._to_device(inputs, self.device)
+            labels = self._to_device(labels, self.device)
+
+            self.rand_subnet = self.mutator.random_subnet
+
+            self.mutator.set_subnet(self.rand_subnet)
+            outputs = self.model(inputs)
+            loss = self._compute_loss(outputs, labels)
+            loss.backward()
             self.optimizer.ascent_step()
 
             # Descent Step
-            if self.type in {'uniform', 'fair'}:
-                if self.type == 'uniform':
-                    loss, outputs = self._forward_uniform(batch_inputs)
-                elif self.type == 'fair':
-                    loss, outputs = self._forward_fairnas(batch_inputs)
-            else:
-                loss, outputs = self._forward_pairwise_loss(batch_inputs)
+            self.mutator.set_subnet(self.rand_subnet)
+            outputs = self.model(inputs)
+            loss = self._compute_loss(outputs, labels)
+            loss.backward()
             self.optimizer.descent_step()
 
             # clear grad
-            for p in self.model.parameters():
-                if p.grad is not None and p.grad.sum() == 0:
-                    p.grad = None
-
-            # parameters update
-            # self.optimizer.step()
+            # for p in self.model.parameters():
+            #     if p.grad is not None and p.grad.sum() == 0:
+            #         p.grad = None
 
             # compute accuracy
             n = inputs.size(0)

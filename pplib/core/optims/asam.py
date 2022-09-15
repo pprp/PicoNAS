@@ -45,6 +45,7 @@ class ASAM:
         for n, p in self.model.named_parameters():
             if p.grad is None:
                 continue
+            print(type(self.state[p]['eps']))
             p.sub_(self.state[p]['eps'])
         self.optimizer.step()
         self.optimizer.zero_grad()

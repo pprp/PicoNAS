@@ -41,7 +41,7 @@ def build_optimizer(model, args):
             filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr)
     elif args.optims == 'sam':
         opt = optim.SGD(
-            filter(lambda p: p.requires_grad, model.parameters()),
+            model.parameters(),
             lr=args.lr,
             momentum=args.momentum,
             weight_decay=args.weight_decay,
@@ -54,7 +54,7 @@ def build_optimizer(model, args):
         )
     elif args.optims == 'asam':
         opt = optim.SGD(
-            filter(lambda p: p.requires_grad, model.parameters()),
+            model.parameters(),
             lr=args.lr,
             momentum=args.momentum,
             weight_decay=args.weight_decay,
