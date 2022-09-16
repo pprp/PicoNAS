@@ -23,6 +23,8 @@ start=`date +%s`
 # 第四章 实验1.3 alter subnet
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Alter_Trainer --log_name graduate_nb201_spos_altersubnet_exp1.3 --dataset cifar10 --crit ce --lr 0.025
 
+#########################################################################################################################################################################
+
 # 第四章 实验2.1 基于flops采样
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_flopspolicysampler_exp2.1 --dataset cifar10 --crit ce --lr 0.025
 # 进化采样
@@ -62,7 +64,7 @@ start=`date +%s`
 
 # 第四章 实验2.3_img16 基于nwot采样
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_nwot-policy-sampler-imagenet16_exp2.3_img16 --dataset imagenet16 --crit ce --lr 0.1 --type nwot --data_dir ./data/ImageNet16
-# CUDA_VISIBLE_DEVICES=2 python tools/searcher/search_evo_nb201.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_graduate_nb201_balanced_nwot-policy-sampler-imagenet16_exp2.3_img16 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16  --model_path ''
+# CUDA_VISIBLE_DEVICES=2 python tools/searcher/search_evo_nb201.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_graduate_nb201_balanced_nwot-policy-sampler-imagenet16_exp2.3_img16 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16  --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_balanced_nwot-policy-sampler-imagenet16_exp2.3_img16/graduate_nb201_balanced_nwot-policy-sampler-imagenet16_exp2.3_img16_nb201_ckpt_0161.pth.tar'
 
 
 
@@ -78,6 +80,8 @@ start=`date +%s`
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_zenscore-policy-sampler-imagenet16_exp2.4_img16 --dataset imagenet16 --crit ce --lr 0.1 --type zenscore --data_dir ./data/ImageNet16
 # CUDA_VISIBLE_DEVICES=2 python tools/searcher/search_evo_nb201.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_graduate_nb201_balanced_zenscore-policy-sampler-imagenet16_exp2.4_img16 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16  --model_path ''
 
+
+#########################################################################################################################################################################
 
 # 第四章 实验3.0 uniform sampling cifar10
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_uniform-sampling_exp3.0 --dataset cifar10 --crit ce --lr 0.025
@@ -108,6 +112,13 @@ start=`date +%s`
 # CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_nb201_spos_sandwich-sampling-cifar100_exp3.2_c100 --dataset cifar100 --crit ce --lr 0.025 --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_spos_sandwich-sampling-cifar100_exp3.2_c100/graduate_nb201_spos_sandwich-sampling-cifar100_exp3.2_c100_nb201_ckpt_0191.pth.tar'
 
 
+# 第四章 实验3.3_c100 balanced sampling with nwot cifar100
+# TODO running
+# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_balanced-sampling-nwot-cifar100_exp3.3_c100_nwot --dataset cifar100 --crit ce --lr 0.025 --type nwot
+# 进化搜索
+# CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_nb201_spos_sandwich-sampling-cifar100_exp3.2_c100 --dataset cifar100 --crit ce --lr 0.025 --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_spos_balanced-sampling-nwot-cifar100_exp3.3_c100_nwot/graduate_nb201_spos_balanced-sampling-nwot-cifar100_exp3.3_c100_nwot_nb201_ckpt_0181.pth.tar'
+
+
 # 第四章 实验3.0_img16 uniform sampling imagenet16
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_uniform-sampling-imagenet16_exp3.0_img16 --dataset imagenet16 --crit ce --lr 0.025 --type uniform --data_dir ./data/ImageNet16
 # CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_nb201_spos_uniform-sampling-imagenet16_exp3.0_img16 --dataset imagenet16 --data_dir ./data/ImageNet16 --crit ce --lr 0.025 --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_spos_uniform-sampling-imagenet16_exp3.0_img16/graduate_nb201_spos_uniform-sampling-imagenet16_exp3.0_img16_nb201_ckpt_0191.pth.tar'
@@ -118,9 +129,15 @@ start=`date +%s`
 # CUDA_VISIBLE_DEVICES=1 python tools/searcher/search_evo_nb201.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_nb201_fairnas_fairsampling-imagenet16_exp3.1_img16 --dataset imagenet16 --data_dir ./data/ImageNet16 --crit ce --lr 0.025 --model_path ''
 
 # 第四章 实验3.2_img16 sandwich sampling imagenet16
-# CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_sandwich-sampling-imagenet16_exp3.2_img16 --dataset imagenet16 --crit ce --lr 0.025 --type sandwich --data_dir ./data/ImageNet16
+# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_sandwich-sampling-imagenet16-lr0.05_exp3.2_img16 --dataset imagenet16 --crit ce --lr 0.05 --type sandwich --data_dir ./data/ImageNet16
 # 进化搜索
-# CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_nb201_spos_sandwich-sampling-imagenet16_exp3.2_img16 --dataset imagenet16 --crit ce --data_dir ./data/ImageNet16 --lr 0.025 --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_fairnas_fairsampling-imagenet16_exp3.1_img16/graduate_nb201_fairnas_fairsampling-imagenet16_exp3.1_img16_nb201_ckpt_0181.pth.tar'
+# CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_nb201_spos_sandwich-sampling-imagenet16_exp3.2_img16 --dataset imagenet16 --crit ce --data_dir ./data/ImageNet16 --lr 0.05 --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_spos_sandwich-sampling-imagenet16-lr0.05_exp3.2_img16/graduate_nb201_spos_sandwich-sampling-imagenet16-lr0.05_exp3.2_img16_nb201_ckpt_0161.pth.tar'
+
+# 第四章 实验3.3_img16 balanced sampling with nwot imagenet16
+# TODO running
+# CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_balanced-sampling-nwot-imagenet16_exp3.3_img16_nwot --dataset imagenet16 --crit ce --lr 0.025 --type nwot --data_dir ./data/ImageNet16
+# 进化搜索
+# CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_nb201_spos_sandwich-sampling-imagenet16_exp3.3_img16 --dataset imagenet16 --crit ce --lr 0.025 --model_path ''
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -143,8 +160,22 @@ start=`date +%s`
 # 调参 设置dis更大
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptivetype-largerdis_exp2.2 --dataset cifar10 --crit ce --lr 0.025
 
+
 # 第五章 实验2.3 nb201 + adaptive hamming type
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_hammingtype_exp2.3 --dataset cifar10 --crit ce --lr 0.025
+
+# 第五章 实验2.3_nwot nb201 + adaptive hamming type
+# TODOrunning 调参调到最高0.90，现在是
+# CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_hamming-type_exp2.3_nwot --dataset cifar10 --crit ce --lr 0.025 --type adaptive
+# TODO 调参 nwot lr=0.05
+# CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_adaptive-hamming-type-lr0.05_exp2.3_nwot --dataset cifar10 --crit ce --lr 0.05 --type adaptive
+# TODO 调参 nwot lr=0.1
+# CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_adaptive-hamming-type-lr0.1_exp2.3_nwot --dataset cifar10 --crit ce --lr 0.1 --type adaptive
+# TODO 调参 flops lr=0.05
+# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_pairwise_adaptive-hamming-type-lr0.05_exp2.3_flops --dataset cifar10 --crit ce --lr 0.05 --type pairwise
+# TODO 调参 flops lr=0.1
+# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_pairwise_adaptive-hamming-type-lr0.1_exp2.3_flops --dataset cifar10 --crit ce --lr 0.1 --type pairwise
+
 
 # 第五章 实验2.4 nb201 + origin hamming type
 # CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_origin-hamming-type_exp2.4 --dataset cifar10 --crit ce --lr 0.025
@@ -158,6 +189,12 @@ start=`date +%s`
 
 # 第五章 实验2.7 Macro + random sample + CIFAR-100
 # CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptive-type-cifar100_exp2.7 --dataset cifar100 --crit ce --lr 0.025 --type random
+
+# 第五章 实验2.7_hamming Macro + hamming sample + CIFAR-100
+# CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_hamming-type-cifar100_exp2.7_hamming --dataset cifar100 --crit ce --lr 0.025 --type hamming
+
+# 第五章 实验2.7_adaptive Macro + adaptive hamming sample + CIFAR-100
+# CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptive-type-cifar100_exp2.7_adaptive --dataset cifar100 --crit ce --lr 0.025 --type adaptive
 
 
 # 第五章 实验2.8 nb201 + hamming sample + CIFAR-100

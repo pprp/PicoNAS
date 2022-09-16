@@ -2,6 +2,7 @@ import random
 import time
 from typing import Dict, List
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from mmcv.cnn import get_model_complexity_info
@@ -120,13 +121,83 @@ class NB201_Balance_Trainer(BaseTrainer):
             self.type = kwargs['type']
             assert self.type in {
                 'zenscore', 'flops', 'params', 'nwot', 'uniform', 'fair',
-                'sandwich'
+                'sandwich', 'pairwise'
             }
         else:
             self.type = None
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample=num_sample, dataset=dataset)
+
+    def sample_subnet_by_type(self, type: str = 'random') -> List[Dict]:
+        """Return two subnets based on ``type``.
+
+        Type:
+            - ``random``: random sample two subnet.
+            - ``hamming``: sample subnet with hamming distance.
+            - ``adaptive``: sample subnet with adaptive hamming distance.
+        """
+
+        def hamming_dist(dct1, dct2):
+            dist = 0
+            for (k1, v1), (k2, v2) in zip(dct1.items(), dct2.items()):
+                assert k1 == k2
+                dist += 1 if v1 != v2 else 0
+            return dist
+
+        def adaptive_hamming_dist(dct1, dct2):
+            """
+            Distance between conv is set to 0.5
+            Distance between conv and other is set to 2
+            Distance between other and other is set to 0.5
+            """
+            dist = 0
+            for (k1, v1), (k2, v2) in zip(dct1.items(), dct2.items()):
+                assert k1 == k2
+                if v1 == v2:
+                    continue
+                if 'conv' in v1 and 'conv' in v2:
+                    dist += 0.5
+                elif 'conv' in v1 and ('skip' in v2 or 'pool' in v2):
+                    dist += 2
+                elif 'conv' in v2 and ('skip' in v1 or 'pool' in v1):
+                    dist += 2
+                elif 'skip' in v1 and 'pool' in v2:
+                    dist += 0.5
+                elif 'skip' in v2 and 'pool' in v1:
+                    dist += 0.5
+                else:
+                    raise NotImplementedError(f'v1: {v1} v2: {v2}')
+            return dist
+
+        assert type in {'random', 'hamming', 'adaptive'}
+        if type == 'random':
+            return self.mutator.random_subnet, self.mutator.random_subnet
+        elif type == 'hamming':
+            # mean: 4.5 std 1.06
+            subnet1 = self.mutator.random_subnet
+            max_iter = 10
+            subnet2 = self.mutator.random_subnet
+            while hamming_dist(subnet1, subnet2) < 4.5 and max_iter > 0:
+                subnet2 = self.mutator.random_subnet
+            if max_iter > 0:
+                return subnet1, subnet2
+            else:
+                return subnet1, self.mutator.random_subnet
+        elif type == 'adaptive':
+            # mean: 6.7 std 2.23
+            subnet1 = self.mutator.random_subnet
+            max_iter = 10
+            subnet2 = self.mutator.random_subnet
+
+            # 调参，调大或者调小 (1) 6.7 (2) 5 (3) 11
+            while adaptive_hamming_dist(subnet1,
+                                        subnet2) < 6.7 and max_iter > 0:
+                subnet2 = self.mutator.random_subnet
+            if max_iter > 0:
+                return subnet1, subnet2
+            else:
+                return subnet1, self.mutator.random_subnet
 
     def sample_subnet_by_policy(self,
                                 policy: str = 'balanced',
@@ -210,13 +281,15 @@ class NB201_Balance_Trainer(BaseTrainer):
             # remove gradient from previous passes
             self.optimizer.zero_grad()
 
-            if self.type in {'uniform', 'fair', 'sandwich'}:
+            if self.type in {'uniform', 'fair', 'sandwich', 'pairwise'}:
                 if self.type == 'uniform':
                     loss, outputs = self._forward_uniform(batch_inputs)
                 elif self.type == 'fair':
                     loss, outputs = self._forward_fairnas(batch_inputs)
                 elif self.type == 'sandwich':
                     loss, outputs = self._forward_sandwich(batch_inputs)
+                elif self.type == 'pairwise':
+                    loss, outputs = self._forward_pairwise_loss(batch_inputs)
             elif self.type is None:
                 # default operation
                 loss, outputs = self._forward_balanced(
@@ -417,29 +490,29 @@ class NB201_Balance_Trainer(BaseTrainer):
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
 
-        # sample the first subnet
-        self.rand_subnet = self.mutator.random_subnet
-        self.mutator.set_subnet(self.rand_subnet)
+        subnet1, subnet2 = self.sample_subnet_by_type('adaptive')
+
+        self.mutator.set_subnet(subnet1)
         outputs = self.model(inputs)
         loss1 = self._compute_loss(outputs, labels)
         loss1.backward()
-        flops1 = self.get_subnet_flops(self.rand_subnet)
+        flops1 = self.get_subnet_flops(subnet1)
 
         # sample the second subnet
-        self.rand_subnet = self.mutator.random_subnet
-        self.mutator.set_subnet(self.rand_subnet)
+        self.mutator.set_subnet(subnet2)
         outputs = self.model(inputs)
         loss2 = self._compute_loss(outputs, labels)
         loss2.backward(retain_graph=True)
-        flops2 = self.get_subnet_flops(self.rand_subnet)
+        flops2 = self.get_subnet_flops(subnet2)
 
         # pairwise rank loss
         # lambda settings:
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1,
-                                                      loss2)
+        loss3 = (2 *
+                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
+                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
         loss3.backward()
 
         return loss2, outputs

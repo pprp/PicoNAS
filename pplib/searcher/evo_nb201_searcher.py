@@ -241,9 +241,11 @@ class EvolutionSearcher(object):
 
             self.epoch += 1
 
-            top3_subnet = self.keep_top_k[self.select_num][:3]
+            self.keep_top_k[self.select_num].sort(
+                key=lambda x: self.vis_dict[str(x)]['err'], reverse=False)
+            top3_subnet = self.keep_top_k[self.select_num][:5]
             tmp_recorder = []
-            for i in range(3):
+            for i in range(5):
                 genotype = self.trainer.evaluator.generate_genotype(
                     top3_subnet[i], self.trainer.mutator)
                 results = self.trainer.evaluator.query_result(

@@ -83,6 +83,24 @@ class TestNasBench201(TestCase):
         mutator = OneShotMutator(with_alias=True)
         mutator.prepare_from_supernet(model)
 
+        from pplib.evaluator import NB201Evaluator
+        from pplib.trainer import NB201Trainer
+
+        trainer = NB201Trainer(model=model, mutator=None)
+        evaluator = NB201Evaluator(trainer, 50)
+
+        def flops_dist(dct1, dct2):
+            flops1 = trainer.get_subnet_flops(dct1)
+            flops2 = trainer.get_subnet_flops(dct2)
+            return int(abs(flops1 - flops2))
+
+        def calc_eval_dist(dct1, dct2):
+            results1 = evaluator.query_result(
+                evaluator.generate_genotype(dct1, trainer.mutator))
+            results2 = evaluator.query_result(
+                evaluator.generate_genotype(dct2, trainer.mutator))
+            return int(abs(results1 - results2))
+
         # mean 4.5 std 1.06
         def dis3(dct1, dct2):
             dist = 0
@@ -118,16 +136,25 @@ class TestNasBench201(TestCase):
             return dist
 
         dst_list = []
+        true_list = []
         for i in range(1000):
             sg1 = mutator.random_subnet
             sg2 = mutator.random_subnet
-            dst = dis4(sg1, sg2)
-            dst_list.append(dst)
+            dst_list.append(flops_dist(sg1, sg2))
+            true_list.append(calc_eval_dist(sg1, sg2))
+
+        print('=' * 20)
+        from pplib.utils.rank_consistency import kendalltau, pearson, spearman
+        kt = kendalltau(dst_list, true_list)
+        ps = pearson(dst_list, true_list)
+        sp = spearman(dst_list, true_list)
+        print(kt, ps, sp)
+        print('=' * 20)
 
         import matplotlib.pyplot as plt
         fig, axes = plt.subplots()
         ax1 = sns.scatterplot(x=list(range(len(dst_list))), y=dst_list)
-        plt.savefig('./test_dis4.png')
+        plt.savefig('./test_dis_flops.png')
 
         print(
             f'mean: {np.mean(dst_list)} std: {np.std(dst_list)} max: {max(dst_list)} min: {min(dst_list)}'
