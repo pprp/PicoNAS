@@ -63,6 +63,7 @@ class TestNasBench201(TestCase):
 
         print('random subnet:', osmutator.random_subnet)
         print('search group:', osmutator.search_group.keys())
+        print('search group[0]:', osmutator.search_group[0])
         print('alias name:', osmutator.alias2group_id.keys())
 
     def test_diff_nb201(self):
@@ -159,6 +160,22 @@ class TestNasBench201(TestCase):
         print(
             f'mean: {np.mean(dst_list)} std: {np.std(dst_list)} max: {max(dst_list)} min: {min(dst_list)}'
         )
+
+    def test_delete_op(self):
+        model = OneShotNASBench201Network(16, 5)
+        osmutator = OneShotMutator(with_alias=True)
+        osmutator.prepare_from_supernet(model)
+
+        print(osmutator.search_group[0])
+        print('before delete rand subnet: ', osmutator.random_subnet)
+        for i, vs in osmutator.search_group.items():
+            print(i, len(vs), vs[0].choices)
+            # delete
+            for v in vs:
+                v.shrink_choice('skip_connect')
+            print(i, len(vs), vs[0].choices)
+
+        print('after delete rand subnet: ', osmutator.random_subnet)
 
 
 if __name__ == '__main__':

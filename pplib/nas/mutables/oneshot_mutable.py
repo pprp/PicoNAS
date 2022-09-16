@@ -231,6 +231,11 @@ class OneShotOP(OneShotMutable[str, str]):
                                                 choice=choice)  # noqa:E501
         setattr(self, 'forward', forward_with_default_args)
 
+    def shrink_choice(self, choice: CHOICE_TYPE) -> None:
+        """Shrink the search space"""
+        assert choice in self._candidate_ops.keys()
+        self._candidate_ops.pop(choice)
+
 
 class OneShotProbOP(OneShotOP):
     """Sampling candidate operation according to probability.
