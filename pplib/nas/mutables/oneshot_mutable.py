@@ -130,9 +130,10 @@ class OneShotOP(OneShotMutable[str, str]):
         self._candidate_ops = self._build_ops(candidate_ops)
 
     def __repr__(self):
-        res = f'{type(self)} | '
+        res = f'({self.__class__.__name__} | '
         for k, _ in self._candidate_ops.items():
-            res += str(k) + ' | '
+            res += f'{str(k)} | '
+        res += ')'
         return res
 
     @staticmethod
