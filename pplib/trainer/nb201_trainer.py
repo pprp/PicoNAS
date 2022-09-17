@@ -660,16 +660,16 @@ class NB201Trainer(BaseTrainer):
         outputs = self.model(inputs)
         loss1 = self._compute_loss(outputs, labels)
         loss1.backward()
-        # flops1 = self.get_subnet_flops(subnet1)
-        nwot1 = self.get_subnet_nwot(subnet1)
+        flops1 = self.get_subnet_flops(subnet1)
+        # nwot1 = self.get_subnet_nwot(subnet1)
 
         # sample the second subnet
         self.mutator.set_subnet(subnet2)
         outputs = self.model(inputs)
         loss2 = self._compute_loss(outputs, labels)
         loss2.backward(retain_graph=True)
-        # flops2 = self.get_subnet_flops(subnet2)
-        nwot2 = self.get_subnet_nwot(subnet2)
+        flops2 = self.get_subnet_flops(subnet2)
+        # nwot2 = self.get_subnet_nwot(subnet2)
 
         # pairwise rank loss
         # lambda settings:
@@ -678,7 +678,7 @@ class NB201Trainer(BaseTrainer):
 
         loss3 = (2 *
                  np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(nwot1, nwot2, loss1, loss2))
+                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
         loss3.backward()
 
         return loss2, outputs

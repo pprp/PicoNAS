@@ -61,17 +61,21 @@ class NB201Shrinker(object):
             drop_legal = False
             # at lease one operator should be reserved for each layer.
             for i in range(idx + 1, len(self.extend_operators)):
-                idx_, op_ = self.extend_operators[i]
+                idx_, choice_ = self.extend_operators[i]
                 if idx_ == id:
                     drop_legal = True
 
             if drop_legal:
                 print('no.{} drop_op={}'.format(num + 1, operator))
                 drop_ops.append(operator)
+                # remove from search space
+                groups = self.mutator.search_group[id]
+                for item in groups:
+                    item.shrink_choice(choice)
                 num += 1
             if num >= self.per_stage_drop_num:
                 break
-        return operations, drop_ops
+        return drop_ops
 
     def compute_score(self):
         """
@@ -178,10 +182,12 @@ class NB201Shrinker(object):
                 self.extend_operators.append(operator)
 
         self.compute_score()
+        drop_ops = self.drop_operator()
+        self.trainer.logger.info(f'drop ops: {drop_ops}')
 
 
 @register_trainer
-class NB201Trainer(BaseTrainer):
+class NB201ShrinkTrainer(BaseTrainer):
     """Trainer for Macro Benchmark.
 
     Args:
@@ -254,6 +260,8 @@ class NB201Trainer(BaseTrainer):
         else:
             self.type = None
         self.logger.info(f'Current type of nb201 trainer is: {self.type}.')
+
+        self.shrinker = NB201Shrinker(self)
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample, dataset)
@@ -371,6 +379,8 @@ class NB201Trainer(BaseTrainer):
                     loss, outputs = self._forward_sandwich(batch_inputs)
             else:
                 loss, outputs = self._forward_pairwise_loss(batch_inputs)
+
+            self.shrinker.shrink()
 
             # clear grad
             for p in self.model.parameters():

@@ -78,7 +78,7 @@ start=`date +%s`
 
 # 第四章 实验2.4_img16 基于zenscore采样
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_zenscore-policy-sampler-imagenet16_exp2.4_img16 --dataset imagenet16 --crit ce --lr 0.1 --type zenscore --data_dir ./data/ImageNet16
-# CUDA_VISIBLE_DEVICES=2 python tools/searcher/search_evo_nb201.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_graduate_nb201_balanced_zenscore-policy-sampler-imagenet16_exp2.4_img16 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16  --model_path ''
+# CUDA_VISIBLE_DEVICES=2 python tools/searcher/search_evo_nb201.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_graduate_nb201_balanced_zenscore-policy-sampler-imagenet16_exp2.4_img16 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16  --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_balanced_zenscore-policy-sampler-imagenet16_exp2.4_img16/graduate_nb201_balanced_zenscore-policy-sampler-imagenet16_exp2.4_img16_nb201_ckpt_0191.pth.tar'
 
 
 #########################################################################################################################################################################
@@ -137,7 +137,7 @@ start=`date +%s`
 # TODO running
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_balanced-sampling-nwot-imagenet16_exp3.3_img16_nwot --dataset imagenet16 --crit ce --lr 0.025 --type nwot --data_dir ./data/ImageNet16
 # 进化搜索
-# CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_nb201_spos_sandwich-sampling-imagenet16_exp3.3_img16 --dataset imagenet16 --crit ce --lr 0.025 --model_path ''
+# CUDA_VISIBLE_DEVICES=0 python tools/searcher/search_evo_nb201.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_nb201_spos_sandwich-sampling-imagenet16_exp3.3_img16 --dataset imagenet16 --crit ce --lr 0.025 --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_spos_balanced-sampling-nwot-imagenet16_exp3.3_img16_nwot/graduate_nb201_spos_balanced-sampling-nwot-imagenet16_exp3.3_img16_nwot_nb201_ckpt_0191.pth.tar' --data_dir ./data/ImageNet16
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -163,6 +163,8 @@ start=`date +%s`
 
 # 第五章 实验2.3 nb201 + adaptive hamming type
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_hammingtype_exp2.3 --dataset cifar10 --crit ce --lr 0.025
+# TODO Reproduce
+# CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201Trainer --log_name graduate_nb201_pairwise_hammingtype_exp2.3_reproduce --dataset cifar10 --crit ce --lr 0.025 --type adaptive
 
 # 第五章 实验2.3_nwot nb201 + adaptive hamming type
 # TODOrunning 调参调到最高0.90，现在是
