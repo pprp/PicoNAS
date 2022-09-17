@@ -129,6 +129,12 @@ class OneShotOP(OneShotMutable[str, str]):
         self._chosen: Optional[str] = None
         self._candidate_ops = self._build_ops(candidate_ops)
 
+    def __repr__(self):
+        res = f'{type(self)} | '
+        for k, _ in self._candidate_ops.items():
+            res += str(k) + ' | '
+        return res
+
     @staticmethod
     def _build_ops(candidate_ops: nn.ModuleDict) -> nn.ModuleDict:
         """Build candidate operations based on choice configures.

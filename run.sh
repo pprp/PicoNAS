@@ -75,6 +75,6 @@ OMP_NUM_THREADS=1
 # 第五章 实验2.2 macro benchmark + adaptive hamming type
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name MacroBenchmarkSuperNet --trainer_name MacroTrainer --log_name graduate_macro_pairwise_adaptivetype_exp2.2 --dataset cifar10 --crit ce --lr 0.025
 
-# shrink trainer 
+# shrink trainer
 
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name test_shrink_trainer --dataset cifar10 --crit ce --lr 0.025 --type random

@@ -37,8 +37,8 @@ class NB201Shrinker(object):
             'conv_3x3', 'skip_connect', 'conv_1x1', 'avg_pool_3x3'
         }
 
-        self.vis_dict_slice: Dict[tuple, Dict] = dict()
-        self.vis_dict = dict()
+        self.vis_dict_slice: Dict[tuple, dict] = dict()
+        self.vis_dict: Dict[str, dict] = dict()
         # all of possible operator in supernet
         self.extend_operators = []
 
@@ -70,7 +70,9 @@ class NB201Shrinker(object):
                 drop_ops.append(operator)
                 # remove from search space
                 groups = self.mutator.search_group[id]
+                # import pdb; pdb.set_trace()
                 for item in groups:
+                    # print(choice)
                     item.shrink_choice(choice)
                 num += 1
             if num >= self.per_stage_drop_num:
@@ -92,7 +94,7 @@ class NB201Shrinker(object):
                 num = self.sample_num - len(info['cand_pool'])
                 candidate_subnets = self.get_random_extend(num, operator)
                 for subnet in candidate_subnets:
-                    for id, choice in subnet:
+                    for id, choice in subnet.items():
                         extend_operator_ = (id, choice)
                         if extend_operator_ in self.vis_dict_slice:
                             info = self.vis_dict_slice[extend_operator_]
@@ -103,12 +105,12 @@ class NB201Shrinker(object):
 
         # step 2: compute metrics of all candidate subnets
         for subnet in candidates:
-            info = self.vis_dict[subnet]
+            info = self.vis_dict[str(subnet)]
             info['metric'] = self.trainer.get_subnet_flops(subnet)
 
         # step 3: calculate sum of angles for each operator
         for subnet in candidates:
-            info = self.vis_dict[subnet]
+            info = self.vis_dict[str(subnet)]
             for id, choice in subnet.items():
                 extend_operator_ = (id, choice)
                 if extend_operator_ in self.vis_dict_slice:
@@ -158,13 +160,13 @@ class NB201Shrinker(object):
         """make sure each subnet is sampled only once."""
         if subnet is None:
             return False
-        if subnet not in self.vis_dict:
-            self.vis_dict[subnet] = dict()
-        info = self.vis_dict[subnet]
+        if str(subnet) not in self.vis_dict:
+            self.vis_dict[str(subnet)] = dict()
+        info = self.vis_dict[str(subnet)]
         if 'visited' in info:
             return False
         info['visitied'] = True
-        self.vis_dict[subnet] = info
+        self.vis_dict[str(subnet)] = info
         return True
 
     def shrink(self):
@@ -654,8 +656,8 @@ class NB201ShrinkTrainer(BaseTrainer):
         # for cifar10,cifar100,imagenet16
         score = compute_nwot(
             net=m,
-            inputs=torch.randn(4, 3, 32, 32).to('cuda'),
-            targets=torch.randn(4).to('cuda'))
+            inputs=torch.randn(4, 3, 32, 32).to(self.device),
+            targets=torch.randn(4).to(self.device))
         del m
         del o
         return score
