@@ -240,8 +240,12 @@ class OneShotOP(OneShotMutable[str, str]):
 
     def shrink_choice(self, choice: CHOICE_TYPE) -> None:
         """Shrink the search space"""
-        assert choice in self._candidate_ops.keys()
-        self._candidate_ops.pop(choice)
+        if choice in self._candidate_ops.keys():
+            self._candidate_ops.pop(choice)
+        else:
+            print(
+                f'current choice: {choice} is not avaliable in {self._candidate_ops.keys()}'
+            )
 
 
 class OneShotProbOP(OneShotOP):

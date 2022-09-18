@@ -45,14 +45,14 @@ class NB201Shrinker(object):
     def drop_operator(self):
         """each operator is ranked according to its metric score."""
         self.extend_operators.sort(
-            key=lambda x: self.vis_dict_slice[x]['metric'], reverse=False)\
+            key=lambda x: self.vis_dict_slice[x]['metric'], reverse=False)
 
         # show before shrink
-        for idx, operator in enumerate(self.extend_operators):
-            info = self.vis_dict_slice[operator]
-            self.trainer.logger.info(
-                f"shrinking: top {idx+1} operator={operator}, metric={info['metric']}, count={info['count']}"
-            )
+        # for idx, operator in enumerate(self.extend_operators):
+        #     info = self.vis_dict_slice[operator]
+        #     self.trainer.logger.info(
+        #         f"shrinking: top {idx+1} operator={operator}, metric={info['metric']}, count={info['count']}"
+        #     )
 
         # drop operators whose ranking fall at the tail.
         num, drop_ops = 0, []

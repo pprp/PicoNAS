@@ -6,7 +6,6 @@ from collections import namedtuple
 import hyperbox.mutables.spaces as spaces
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from hyperbox.networks.base_nas_network import BaseNASNetwork
 from hyperbox.networks.darts.darts_ops import (DilConv, DropPath,
                                                FactorizedReduce, PoolBN,
