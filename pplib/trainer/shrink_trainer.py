@@ -43,11 +43,11 @@ class NB201Shrinker(object):
             key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
         # show before shrink
-        for idx, operator in enumerate(extend_operators):
-            info = vis_dict_slice[operator]
-            self.trainer.logger.info(
-                f"shrinking: top {idx+1} operator={operator}, metric={info['metric']}, count={info['count']}"
-            )
+        # for idx, operator in enumerate(extend_operators):
+        #     info = vis_dict_slice[operator]
+        #     self.trainer.logger.info(
+        #         f"shrinking: top {idx+1} operator={operator}, metric={info['metric']}, count={info['count']}"
+        #     )
 
         # drop operators whose ranking fall at the tail.
         num, drop_ops = 0, []
@@ -100,7 +100,7 @@ class NB201Shrinker(object):
         # step 2: compute metrics of all candidate subnets
         for subnet in candidates:
             info = vis_dict[str(subnet)]
-            info['metric'] = self.trainer.get_subnet_flops(subnet)
+            info['metric'] = self.trainer.get_subnet_nwot(subnet)
 
         # step 3: calculate sum of angles for each operator
         for subnet in candidates:
@@ -166,14 +166,13 @@ class NB201Shrinker(object):
     def shrink(self):
         # split every single operation in each layer.
         # travese all of search group.
-
         vis_dict_slice: Dict[tuple, dict] = dict()
         vis_dict: Dict[str, dict] = dict()
         extend_operators = []
         for id, ops in self.mutator.search_group.items():
             # each group has same type of candidate operations.
             for choice in ops[0].choices:
-                operator = tuple([id, choice])
+                operator = id, choice
                 vis_dict_slice[operator] = dict()
                 vis_dict_slice[operator]['count'] = 0
                 vis_dict_slice[operator]['metric'] = 0
@@ -357,6 +356,12 @@ class NB201ShrinkTrainer(BaseTrainer):
     def _train(self, loader):
         self.model.train()
 
+        def calc_search_space_size(search_group):
+            ss_size = 1
+            for _, v in search_group.items():
+                ss_size *= len(v[0]._candidate_ops)
+            return ss_size
+
         train_loss = 0.0
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
@@ -380,7 +385,14 @@ class NB201ShrinkTrainer(BaseTrainer):
             else:
                 loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
-            self.shrinker.shrink()
+            # for k, v in self.mutator.search_group.items():
+            #     print(f'k:{k} == > v:{v}')
+            # print(f"before shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
+            if calc_search_space_size(self.mutator.search_group) > 1296:
+                self.shrinker.shrink()
+            # print(f"after shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
+            # for k, v in self.mutator.search_group.items():
+            #     print(f'k:{k} == > v:{v}')
 
             # clear grad
             for p in self.model.parameters():
