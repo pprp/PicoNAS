@@ -39,6 +39,8 @@ class NB201Shrinker(object):
 
     def drop_operator(self, extend_operators, vis_dict_slice):
         """each operator is ranked according to its metric score."""
+
+        # sort by
         extend_operators.sort(
             key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
@@ -51,22 +53,30 @@ class NB201Shrinker(object):
 
         # drop operators whose ranking fall at the tail.
         num, drop_ops = 0, []
-        for idx, operator in enumerate(extend_operators):
+        for i, operator in enumerate(extend_operators):
+            # score of current operator is lowest and should be pruned.
             id, choice = operator
             drop_legal = False
+
             # at lease one operator should be reserved for each layer.
-            for i in range(idx + 1, len(extend_operators)):
-                idx_, choice_ = extend_operators[i]
+            for j in range(i + 1, len(extend_operators)):
+                # get current extended operations
+                idx_, choice_ = extend_operators[j]
                 if idx_ == id:
+                    # if find a better operator, we can remove lowest one.
                     drop_legal = True
 
             if drop_legal:
-                print('no.{} drop_op={}'.format(num + 1, operator))
+                print(f'no.{num + 1} drop_op={operator}')
+                print(f'no.{num + 1} expand_op={extend_operators[j]}')
                 drop_ops.append(operator)
                 # remove from search space
                 groups = self.mutator.search_group[id]
                 for item in groups:
+                    # shrink search space
                     item.shrink_choice(choice)
+                    # expand search space
+                    item.expand_choice(choice_)
                 num += 1
             if num >= self.per_stage_drop_num:
                 break
@@ -87,6 +97,7 @@ class NB201Shrinker(object):
                 num = self.sample_num - len(info['cand_pool'])
                 candidate_subnets = self.get_random_extend(
                     num, operator, vis_dict)
+
                 for subnet in candidate_subnets:
                     for id, choice in subnet.items():
                         extend_operator_ = (id, choice)
@@ -159,7 +170,7 @@ class NB201Shrinker(object):
         info = vis_dict[str(subnet)]
         if 'visited' in info:
             return False
-        info['visitied'] = True
+        info['visited'] = True
         vis_dict[str(subnet)] = info
         return True
 
@@ -168,6 +179,8 @@ class NB201Shrinker(object):
         # travese all of search group.
         vis_dict_slice: Dict[tuple, dict] = dict()
         vis_dict: Dict[str, dict] = dict()
+
+        # every single operation
         extend_operators = []
         for id, ops in self.mutator.search_group.items():
             # each group has same type of candidate operations.
@@ -261,6 +274,7 @@ class NB201ShrinkTrainer(BaseTrainer):
         self.logger.info(f'Current type of nb201 trainer is: {self.type}.')
 
         self.shrinker = NB201Shrinker(self)
+        self.shrink_expand_times = 6
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample, dataset)
@@ -388,8 +402,13 @@ class NB201ShrinkTrainer(BaseTrainer):
             # for k, v in self.mutator.search_group.items():
             #     print(f'k:{k} == > v:{v}')
             # print(f"before shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
-            if calc_search_space_size(self.mutator.search_group) > 1296:
+
+            if self.shrink_expand_times > 0:
                 self.shrinker.shrink()
+                self.shrink_expand_times -= 1
+
+            # if calc_search_space_size(self.mutator.search_group) > 1296:
+            # self.shrinker.shrink()
             # print(f"after shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
             # for k, v in self.mutator.search_group.items():
             #     print(f'k:{k} == > v:{v}')

@@ -5,6 +5,7 @@ from .mae import MAE_ViT, ViT_Classifier  # noqa: F401
 from .nasbench101 import NASBench101
 from .nasbench201 import DiffNASBench201Network  # noqa: F401
 from .nasbench201 import OneShotNASBench201Network  # noqa: F401
+from .nasbench301 import DiffNB301Network  # noqa: F401
 from .nasbench301 import OneShotNB301Network  # noqa: F401
 from .nats import MAESupernetNATS, SupernetNATS  # noqa: F401
 from .spos import SearchableMobileNet  # noqa: F401
@@ -15,5 +16,5 @@ __all__ = [
     'SearchableShuffleNetV2', 'DiffNASBench201Network',
     'OneShotNASBench201Network', 'SearchableMobileNet', 'SearchableMAE',
     'BNNAS', 'NASBench101', 'SupernetNATS', 'MAESupernetNATS', 'build_model',
-    'OneShotNB301Network'
+    'OneShotNB301Network', 'DiffNB301Network'
 ]

@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import copy
 import random
 from abc import abstractmethod
 from functools import partial
@@ -130,7 +131,7 @@ class OneShotOP(OneShotMutable[str, str]):
         self._candidate_ops = self._build_ops(candidate_ops)
 
     def __repr__(self):
-        res = f'({self.__class__.__name__} | '
+        res = f'({self.__class__.__name__} => | '
         for k, _ in self._candidate_ops.items():
             res += f'{str(k)} | '
         res += ')'
@@ -240,12 +241,23 @@ class OneShotOP(OneShotMutable[str, str]):
 
     def shrink_choice(self, choice: CHOICE_TYPE) -> None:
         """Shrink the search space"""
-        if choice in self._candidate_ops.keys():
-            self._candidate_ops.pop(choice)
-        else:
-            print(
-                f'current choice: {choice} is not avaliable in {self._candidate_ops.keys()}'
-            )
+        assert choice in self._candidate_ops.keys(),  \
+            f'current choice: {choice} is not avaliable ' \
+            f'in {self._candidate_ops.keys()}'
+        self._candidate_ops.pop(choice)
+
+    def expand_choice(self, choice: CHOICE_TYPE) -> None:
+        """Expand the search space"""
+        assert choice in self._candidate_ops.keys(),  \
+                f'current choice: {choice} is not avaliable ' \
+                f'in {self._candidate_ops.keys()}'
+
+        new_key = f'{choice}_'
+        while new_key in self._candidate_ops.keys():
+            new_key += '_'
+
+        update_dict = {new_key: copy.deepcopy(self._candidate_ops[choice])}
+        self._candidate_ops.update(update_dict)
 
 
 class OneShotProbOP(OneShotOP):
