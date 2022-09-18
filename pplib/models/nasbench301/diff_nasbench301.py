@@ -3,25 +3,13 @@
 
 from collections import namedtuple
 
-import hyperbox.mutables.spaces as spaces
 import torch
 import torch.nn as nn
-from hyperbox.networks.base_nas_network import BaseNASNetwork
-from hyperbox.networks.darts.darts_ops import (DilConv, DropPath,
-                                               FactorizedReduce, PoolBN,
-                                               SepConv, StdConv)
 
-# from hyperbox_app.nasbench301.utils import generate_results
-
-__all__ = ['Node', 'DartsCell', 'NB301Network']
+from .darts_ops import (DilConv, DropPath, FactorizedReduce, PoolBN, SepConv,
+                        StdConv)
 
 Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
-'''
-git clone https://github.com/automl/nasbench301.git
-cd nasbench301
-cat requirements.txt | xargs -n 1 -L 1 pip install
-pip install .
-'''
 
 
 class Node(nn.Module):
@@ -155,7 +143,7 @@ class DartsCell(nn.Module):
         return output
 
 
-class NB301Network(BaseNASNetwork):
+class OneShotNB301Network(nn.Module):
     """
     builtin Darts Search Mutable
     Compared to Darts example, DartsSearchSpace removes Auxiliary Head, which
@@ -188,7 +176,7 @@ class NB301Network(BaseNASNetwork):
                  n_nodes=4,
                  stem_multiplier=3,
                  mask=None):
-        super(NB301Network, self).__init__(mask)
+        super().__init__(mask)
         self.in_channels = in_channels
         self.channels = channels
         self.n_classes = n_classes

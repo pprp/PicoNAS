@@ -231,11 +231,11 @@ class NASBench201Cell(nn.Module):
 
     def __init__(
         self,
-        cell_id,
-        C_in,
-        C_out,
-        stride,
-        bn_affine=True,
+        cell_id: int,
+        C_in: int,
+        C_out: int,
+        stride: int,
+        bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
     ):
@@ -243,6 +243,9 @@ class NASBench201Cell(nn.Module):
 
         self.NUM_NODES = 4
         self.layers = nn.ModuleList()
+        self.in_dim = C_in
+        self.out_dim = C_out
+        self.cell_id = cell_id
 
         for i in range(self.NUM_NODES):
             node_ops = nn.ModuleList()
@@ -299,17 +302,8 @@ class NASBench201Cell(nn.Module):
                         candidate_ops=candidate_op,
                         alias=f'node{i}_edge{layer_idx}'))  # with alias
             self.layers.append(node_ops)
-        self.in_dim = C_in
-        self.out_dim = C_out
-        self.cell_id = cell_id
 
-    def forward(self, input):  # pylint: disable=W0622
-        """
-        Parameters
-        ---
-        input: torch.tensor
-            the output of the previous layer
-        """
+    def forward(self, input):
         nodes = [input]
         for i in range(1, self.NUM_NODES):
             node_feature = sum(self.layers[i][k](nodes[k]) for k in range(i))
@@ -387,12 +381,12 @@ class OneShotNASBench201Network(nn.Module):
 
     def __init__(
         self,
-        stem_out_channels=16,
-        num_modules_per_stack=5,
-        bn_affine=True,
-        bn_momentum=0.1,
-        bn_track_running_stats=True,
-        num_classes=10,
+        stem_out_channels: int = 16,
+        num_modules_per_stack: int = 5,
+        bn_affine: bool = True,
+        bn_momentum: float = 0.1,
+        bn_track_running_stats: bool = True,
+        num_classes: int = 10,
     ):
         super(OneShotNASBench201Network, self).__init__()
         self.channels = C = stem_out_channels
