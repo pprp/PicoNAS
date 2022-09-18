@@ -37,31 +37,26 @@ class NB201Shrinker(object):
             'conv_3x3', 'skip_connect', 'conv_1x1', 'avg_pool_3x3'
         }
 
-        self.vis_dict_slice: Dict[tuple, dict] = dict()
-        self.vis_dict: Dict[str, dict] = dict()
-        # all of possible operator in supernet
-        self.extend_operators = []
-
-    def drop_operator(self):
+    def drop_operator(self, extend_operators, vis_dict_slice):
         """each operator is ranked according to its metric score."""
-        self.extend_operators.sort(
-            key=lambda x: self.vis_dict_slice[x]['metric'], reverse=False)
+        extend_operators.sort(
+            key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
         # show before shrink
-        # for idx, operator in enumerate(self.extend_operators):
-        #     info = self.vis_dict_slice[operator]
-        #     self.trainer.logger.info(
-        #         f"shrinking: top {idx+1} operator={operator}, metric={info['metric']}, count={info['count']}"
-        #     )
+        for idx, operator in enumerate(extend_operators):
+            info = vis_dict_slice[operator]
+            self.trainer.logger.info(
+                f"shrinking: top {idx+1} operator={operator}, metric={info['metric']}, count={info['count']}"
+            )
 
         # drop operators whose ranking fall at the tail.
         num, drop_ops = 0, []
-        for idx, operator in enumerate(self.extend_operators):
+        for idx, operator in enumerate(extend_operators):
             id, choice = operator
             drop_legal = False
             # at lease one operator should be reserved for each layer.
-            for i in range(idx + 1, len(self.extend_operators)):
-                idx_, choice_ = self.extend_operators[i]
+            for i in range(idx + 1, len(extend_operators)):
+                idx_, choice_ = extend_operators[i]
                 if idx_ == id:
                     drop_legal = True
 
@@ -70,16 +65,14 @@ class NB201Shrinker(object):
                 drop_ops.append(operator)
                 # remove from search space
                 groups = self.mutator.search_group[id]
-                # import pdb; pdb.set_trace()
                 for item in groups:
-                    # print(choice)
                     item.shrink_choice(choice)
                 num += 1
             if num >= self.per_stage_drop_num:
                 break
         return drop_ops
 
-    def compute_score(self):
+    def compute_score(self, extend_operators, vis_dict_slice, vis_dict):
         """
         1. Random sample `num` of architectures extended by some operators.
         2. Compute metrics of all candidate architectures.
@@ -87,17 +80,18 @@ class NB201Shrinker(object):
         """
         candidates = []
         # step 1: randomly sample extended operators.
-        assert len(self.extend_operators) > 0
-        for operator in self.extend_operators:
-            info = self.vis_dict_slice[operator]
+        assert len(extend_operators) > 0
+        for operator in extend_operators:
+            info = vis_dict_slice[operator]
             if self.sample_num - len(info['cand_pool']) > 0:
                 num = self.sample_num - len(info['cand_pool'])
-                candidate_subnets = self.get_random_extend(num, operator)
+                candidate_subnets = self.get_random_extend(
+                    num, operator, vis_dict)
                 for subnet in candidate_subnets:
                     for id, choice in subnet.items():
                         extend_operator_ = (id, choice)
-                        if extend_operator_ in self.vis_dict_slice:
-                            info = self.vis_dict_slice[extend_operator_]
+                        if extend_operator_ in vis_dict_slice:
+                            info = vis_dict_slice[extend_operator_]
                             if subnet not in info['cand_pool']:
                                 info['cand_pool'].append(subnet)
                     if subnet not in candidates:
@@ -105,28 +99,28 @@ class NB201Shrinker(object):
 
         # step 2: compute metrics of all candidate subnets
         for subnet in candidates:
-            info = self.vis_dict[str(subnet)]
+            info = vis_dict[str(subnet)]
             info['metric'] = self.trainer.get_subnet_flops(subnet)
 
         # step 3: calculate sum of angles for each operator
         for subnet in candidates:
-            info = self.vis_dict[str(subnet)]
+            info = vis_dict[str(subnet)]
             for id, choice in subnet.items():
                 extend_operator_ = (id, choice)
-                if extend_operator_ in self.vis_dict_slice:
-                    slice_info = self.vis_dict_slice[extend_operator_]
+                if extend_operator_ in vis_dict_slice:
+                    slice_info = vis_dict_slice[extend_operator_]
                     if subnet in slice_info['cand_pool'] and slice_info[
                             'count'] < self.sample_num:
                         slice_info['metric'] += info['metric']
                         slice_info['count'] += 1
 
         # step 4: compute scores of all candidate operators
-        for operator in self.extend_operators:
-            if self.vis_dict_slice[operator]['count'] > 0:
-                self.vis_dict_slice[operator]['metric'] /= self.vis_dict_slice[
-                    operator]['count']
+        for operator in extend_operators:
+            if vis_dict_slice[operator]['count'] > 0:
+                vis_dict_slice[operator]['metric'] /= vis_dict_slice[operator][
+                    'count']
 
-    def get_random_extend(self, num: int, operator: Tuple[int, str]):
+    def get_random_extend(self, num: int, operator: Tuple[int, str], vis_dict):
 
         def get_extend_subnet(operator):
             """Here we do not consider for skip connection as anglenas."""
@@ -150,41 +144,45 @@ class NB201Shrinker(object):
         while i < num and max_iter > 0:
             max_iter -= 1
             subnet = get_extend_subnet(operator)
-            if not self.is_legal(subnet):
+            if not self.is_legal(subnet, vis_dict):
                 continue
             candidate_subnets.append(subnet)
             i += 1
         return candidate_subnets
 
-    def is_legal(self, subnet=None) -> bool:
+    def is_legal(self, subnet=None, vis_dict=None) -> bool:
         """make sure each subnet is sampled only once."""
         if subnet is None:
             return False
-        if str(subnet) not in self.vis_dict:
-            self.vis_dict[str(subnet)] = dict()
-        info = self.vis_dict[str(subnet)]
+        if str(subnet) not in vis_dict:
+            vis_dict[str(subnet)] = dict()
+        info = vis_dict[str(subnet)]
         if 'visited' in info:
             return False
         info['visitied'] = True
-        self.vis_dict[str(subnet)] = info
+        vis_dict[str(subnet)] = info
         return True
 
     def shrink(self):
         # split every single operation in each layer.
         # travese all of search group.
+
+        vis_dict_slice: Dict[tuple, dict] = dict()
+        vis_dict: Dict[str, dict] = dict()
+        extend_operators = []
         for id, ops in self.mutator.search_group.items():
             # each group has same type of candidate operations.
             for choice in ops[0].choices:
                 operator = tuple([id, choice])
-                self.vis_dict_slice[operator] = dict()
-                self.vis_dict_slice[operator]['count'] = 0
-                self.vis_dict_slice[operator]['metric'] = 0
+                vis_dict_slice[operator] = dict()
+                vis_dict_slice[operator]['count'] = 0
+                vis_dict_slice[operator]['metric'] = 0
                 # for example angle
-                self.vis_dict_slice[operator]['cand_pool'] = []
-                self.extend_operators.append(operator)
+                vis_dict_slice[operator]['cand_pool'] = []
+                extend_operators.append(operator)
 
-        self.compute_score()
-        drop_ops = self.drop_operator()
+        self.compute_score(extend_operators, vis_dict_slice, vis_dict)
+        drop_ops = self.drop_operator(extend_operators, vis_dict_slice)
         self.trainer.logger.info(f'drop ops: {drop_ops}')
 
 
