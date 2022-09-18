@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 
 from pplib.nas.mutables import DiffOP
+from ..registry import register_model
 from .darts_ops import (DilConv, DropPath, FactorizedReduce, PoolBN, SepConv,
                         StdConv)
 
@@ -113,7 +114,8 @@ class DartsCell(nn.Module):
         return output
 
 
-class DiffNB301Network(nn.Module):
+@register_model
+class DiffNASBench301Network(nn.Module):
     """
     builtin Darts Search Mutable
     Compared to Darts example, DartsSearchSpace removes Auxiliary Head, which
@@ -122,7 +124,7 @@ class DiffNB301Network(nn.Module):
     Args:
         in_channels (int, optional): _description_. Defaults to 3.
         channels (int, optional): _description_. Defaults to 16.
-        n_classes (int, optional): _description_. Defaults to 10.
+        num_classes (int, optional): _description_. Defaults to 10.
         n_layers (int, optional): _description_. Defaults to 8.
         factory_func (_type_, optional): _description_. Defaults to DartsCell.
         n_nodes (int, optional): _description_. Defaults to 4.
@@ -132,7 +134,7 @@ class DiffNB301Network(nn.Module):
     def __init__(self,
                  in_channels: int = 3,
                  channels: int = 16,
-                 n_classes: int = 10,
+                 num_classes: int = 10,
                  n_layers: int = 8,
                  factory_func=DartsCell,
                  n_nodes: int = 4,
@@ -140,7 +142,7 @@ class DiffNB301Network(nn.Module):
         super().__init__()
         self.in_channels = in_channels
         self.channels = channels
-        self.n_classes = n_classes
+        self.num_classes = num_classes
         self.n_layers = n_layers
 
         c_cur = stem_multiplier * self.channels
@@ -169,7 +171,7 @@ class DiffNB301Network(nn.Module):
             channels_pp, channels_p = channels_p, c_cur_out
 
         self.gap = nn.AdaptiveAvgPool2d(1)
-        self.linear = nn.Linear(channels_p, n_classes)
+        self.linear = nn.Linear(channels_p, num_classes)
 
     def forward(self, x):
         s0 = s1 = self.stem(x)

@@ -12,13 +12,13 @@ from pplib.utils.get_dataset_api import get_dataset_api
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
 
-class NB201Evaluator(Evaluator):
-    """Evaluate the NB201 Benchmark
+class NB301Evaluator(Evaluator):
+    """Evaluate the NB301 Benchmark
 
     Args:
-        trainer (NB201Trainer): _description_
+        trainer (NB301Trainer): _description_
         num_sample (int, optional): _description_. Defaults to None.
-        search_space (str, optional): _description_. Defaults to 'nasbench201'.
+        search_space (str, optional): _description_. Defaults to 'nasbench301'.
         dataset (str, optional): _description_. Defaults to 'cifar10'.
         type (str, optional): _description_. Defaults to 'eval_acc1es'.
     """
@@ -32,7 +32,7 @@ class NB201Evaluator(Evaluator):
         self.trainer = trainer
         self.num_sample = num_sample
         self.type = type
-        self.search_space = 'nasbench201'
+        self.search_space = 'nasbench301'
         self.dataset = dataset
 
         if dataset == 'imagenet16':
@@ -42,7 +42,7 @@ class NB201Evaluator(Evaluator):
                         'train_acc1es', 'eval_acc1es', 'cost_info'], \
             f'Not support type {type}.'
         """
-        The key of api is the genotype of nb201
+        The key of api is the genotype of nb301
             such as '|avg_pool_3x3~0|+
                      |nor_conv_1x1~0|skip_connect~1|+
                      |nor_conv_1x1~0|skip_connect~1|skip_connect~2|'
@@ -56,7 +56,7 @@ class NB201Evaluator(Evaluator):
     def load_benchmark(self):
         """load benchmark to get api controller."""
         api = get_dataset_api(self.search_space, self.dataset)
-        return api['nb201_data']
+        return api['nb301_model']
 
     def generate_genotype(self, subnet_dict: dict,
                           mutator: Union[OneShotMutator, DiffMutator]) -> str:
@@ -90,10 +90,6 @@ class NB201Evaluator(Evaluator):
         dataset = self.trainer.dataset
         if dataset == 'cifar10':
             dataset = 'cifar10-valid'
-        elif dataset == 'cifar100':
-            dataset = 'cifar100'
-        elif dataset == 'imagenet16':
-            dataset = 'ImageNet16-120'
         else:
             raise NotImplementedError(f'Not Support dataset type:{dataset}')
 
@@ -126,10 +122,10 @@ class NB201Evaluator(Evaluator):
 
             # process for search space shrink and expand
             random_subnet_dict = dict()
-            for k, v in random_subnet_dict_.items():
-                random_subnet_dict[k] = v.rstrip('_')
+            for k, v in random_subnet_dict_:
+                random_subnet_dict[k.rstrip('_')] = v
 
-            # get true indictor by query nb201 api
+            # get true indictor by query nb301 api
             genotype = self.generate_genotype(random_subnet_dict, mutator)
             results = self.query_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
@@ -159,7 +155,7 @@ class NB201Evaluator(Evaluator):
             # sample random subnet by mutator
             random_subnet_dict = self.trainer.mutator.random_subnet
 
-            # get true indictor by query nb201 api
+            # get true indictor by query nb301 api
             genotype = self.generate_genotype(random_subnet_dict,
                                               self.trainer.mutator)
             results = self.query_result(genotype)  # type is eval_acc1es
@@ -204,7 +200,7 @@ class NB201Evaluator(Evaluator):
             # sample random subnet by mutator
             random_subnet_dict = self.trainer.mutator.random_subnet
 
-            # get true indictor by query nb201 api
+            # get true indictor by query nb301 api
             genotype = self.generate_genotype(random_subnet_dict,
                                               self.trainer.mutator)
             results = self.query_result(genotype)  # type is eval_acc1es
@@ -266,7 +262,7 @@ class NB201Evaluator(Evaluator):
             # sample random subnet by mutator
             random_subnet_dict = self.trainer.mutator.random_subnet
 
-            # get true indictor by query nb201 api
+            # get true indictor by query nb301 api
             genotype = self.generate_genotype(random_subnet_dict,
                                               self.trainer.mutator)
             results = self.query_result(genotype)  # type is eval_acc1es

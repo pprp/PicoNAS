@@ -78,3 +78,6 @@ OMP_NUM_THREADS=1
 # shrink trainer
 
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name test_shrink_trainer --dataset cifar10 --crit ce --lr 0.025 --type random
+
+# test nb301 trainer
+python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench301Network --trainer_name NB301Trainer --log_name test_nb301_trainer --dataset cifar10 --crit ce --lr 0.025 --type random
