@@ -100,8 +100,11 @@ class DartsCell(nn.Module):
         self.mutable_ops = nn.ModuleList()
         for depth in range(2, self.n_nodes + 2):
             self.mutable_ops.append(
-                Node(f"{'reduce' if reduction else 'normal'}_n{depth}", depth,
-                     channels, 2 if reduction else 0))
+                Node(
+                    f"{'reduce' if reduction else 'normal'}_n{depth}",
+                    num_prev_nodes=depth,
+                    channels=channels,
+                    num_downsample_connect=2 if reduction else 0))
 
     def forward(self, pprev, prev):
         tensors = [self.preproc0(pprev), self.preproc1(prev)]

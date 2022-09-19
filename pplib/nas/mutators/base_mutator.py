@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import copy
 from abc import ABC, abstractmethod
 from typing import Dict, Generic, List, Optional, Type, TypeVar
 
@@ -216,7 +217,7 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
 
         search_group: Dict[int, List[MUTABLE_TYPE]] = dict()
 
-        self.alias2group_id_copy = self.alias2group_id.copy()
+        self.alias2group_id_copy = copy.deepcopy(self.alias2group_id)
         for gid, (alias_name, modules) in enumerate(alias2module.items()):
 
             for module in modules:
