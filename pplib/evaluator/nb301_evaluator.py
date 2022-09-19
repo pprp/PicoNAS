@@ -1,4 +1,5 @@
 import math
+from collections import namedtuple
 from typing import List, Union
 
 import torch
@@ -10,6 +11,8 @@ from pplib.nas.mutators import DiffMutator, OneShotMutator
 from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.get_dataset_api import get_dataset_api
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
+
+Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
 
 
 class NB301Evaluator(Evaluator):
@@ -52,6 +55,8 @@ class NB301Evaluator(Evaluator):
                          eval_acc1es, cost_info
         """
         self.api = self.load_benchmark()
+        self.performance_model = self.api[0]
+        self.runtime_model = self.api[1]
 
     def load_benchmark(self):
         """load benchmark to get api controller."""
@@ -122,8 +127,8 @@ class NB301Evaluator(Evaluator):
 
             # process for search space shrink and expand
             random_subnet_dict = dict()
-            for k, v in random_subnet_dict_:
-                random_subnet_dict[k.rstrip('_')] = v
+            for k, v in random_subnet_dict_.items():
+                random_subnet_dict[k] = v.rstrip('_')
 
             # get true indictor by query nb301 api
             genotype = self.generate_genotype(random_subnet_dict, mutator)

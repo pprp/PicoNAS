@@ -58,6 +58,10 @@ class NB201Shrinker(object):
             id, choice = operator
             drop_legal = False
 
+            # expand choice
+            expand_choice = None
+            expand_operator = None
+
             # at lease one operator should be reserved for each layer.
             for j in range(i + 1, len(extend_operators)):
                 # get current extended operations
@@ -65,10 +69,16 @@ class NB201Shrinker(object):
                 if idx_ == id:
                     # if find a better operator, we can remove lowest one.
                     drop_legal = True
+                    expand_choice = choice_
+                    expand_operator = extend_operators[j]
 
             if drop_legal:
-                print(f'no.{num + 1} drop_op={operator}')
-                print(f'no.{num + 1} expand_op={extend_operators[j]}')
+                print(
+                    f'no.{num + 1} drop_op={operator} metric={vis_dict_slice[operator]["metric"]}'
+                )
+                print(
+                    f'no.{num + 1} expand_op={expand_choice} metric={vis_dict_slice[expand_operator]["metric"]}'
+                )
                 drop_ops.append(operator)
                 # remove from search space
                 groups = self.mutator.search_group[id]
@@ -76,7 +86,7 @@ class NB201Shrinker(object):
                     # shrink search space
                     item.shrink_choice(choice)
                     # expand search space
-                    item.expand_choice(choice_)
+                    item.expand_choice(expand_choice)
                 num += 1
             if num >= self.per_stage_drop_num:
                 break

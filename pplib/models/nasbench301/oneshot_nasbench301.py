@@ -100,10 +100,8 @@ class DartsCell(nn.Module):
         self.mutable_ops = nn.ModuleList()
         for depth in range(2, self.n_nodes + 2):
             self.mutable_ops.append(
-                Node(
-                    '{}_n{}'.format('reduce' if reduction else 'normal',
-                                    depth), depth, channels,
-                    2 if reduction else 0))
+                Node(f"{'reduce' if reduction else 'normal'}_n{depth}", depth,
+                     channels, 2 if reduction else 0))
 
     def forward(self, pprev, prev):
         tensors = [self.preproc0(pprev), self.preproc1(prev)]
@@ -111,8 +109,7 @@ class DartsCell(nn.Module):
             cur_tensor = node(tensors)
             tensors.append(cur_tensor)
 
-        output = torch.cat(tensors[2:], dim=1)
-        return output
+        return torch.cat(tensors[2:], dim=1)
 
 
 @register_model

@@ -98,7 +98,7 @@ def get_nasbench301_api(dataset):
                                   )
 
     # Paths to v1.0 model files and data file.
-    download_path = os.path.join(get_project_root(), 'data')
+    download_path = os.path.join(get_project_root(), 'data', 'nb301_models')
     nb_models_path = os.path.join(download_path, 'nb_models_1.0')
     os.makedirs(download_path, exist_ok=True)
 
