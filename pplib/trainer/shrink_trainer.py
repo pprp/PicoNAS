@@ -1,6 +1,7 @@
 import random
 import time
 from typing import Dict, List, Tuple
+import copy 
 
 import numpy as np
 import torch
@@ -26,7 +27,7 @@ class NB201Shrinker(object):
 
     def __init__(self,
                  trainer: BaseTrainer,
-                 sample_num: int = 12,
+                 sample_num: int = 200,
                  per_stage_drop_num: int = 1):
         self.trainer = trainer
         self.mutator = trainer.mutator
@@ -84,7 +85,7 @@ class NB201Shrinker(object):
                 groups = self.mutator.search_group[id]
                 for item in groups:
                     # shrink search space
-                    item.shrink_choice(choice)
+                    # item.shrink_choice(choice)
                     # expand search space
                     item.expand_choice(expand_choice)
                 num += 1
@@ -121,7 +122,8 @@ class NB201Shrinker(object):
         # step 2: compute metrics of all candidate subnets
         for subnet in candidates:
             info = vis_dict[str(subnet)]
-            info['metric'] = self.trainer.get_subnet_nwot(subnet)
+            # info['metric'] = self.trainer.get_subnet_nwot(subnet)
+            info['metric'] = self.trainer.get_subnet_flops(subnet)
 
         # step 3: calculate sum of angles for each operator
         for subnet in candidates:
@@ -261,7 +263,10 @@ class NB201ShrinkTrainer(BaseTrainer):
         # evaluate the rank consistency
         self.evaluator = self._build_evaluator(
             num_sample=50, dataset=self.dataset)
-
+        
+        # random initialized supernet
+        self.random_model = copy.deepcopy(self.model)
+        
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
 
@@ -673,7 +678,7 @@ class NB201ShrinkTrainer(BaseTrainer):
         """Calculate current subnet flops based on config."""
         subnet_flops = 0
         for k, v in self.mutator.search_group.items():
-            current_choice = subnet_dict[k]  # '1' or '2' or 'I'
+            current_choice = subnet_dict[k]
             choice_flops = 0
             for _, module in v[0]._candidate_ops[current_choice].named_modules(
             ):
@@ -685,19 +690,16 @@ class NB201ShrinkTrainer(BaseTrainer):
         return subnet_flops
 
     def get_subnet_nwot(self, subnet_dict) -> float:
-        """Calculate zenscore based on subnet dict."""
-        import copy
-        m = copy.deepcopy(self.model)
+        """Calculate zenscore based on subnet dict."""        
         o = OneShotMutator(with_alias=True)
-        o.prepare_from_supernet(m)
+        o.prepare_from_supernet(self.random_model)
         o.set_subnet(subnet_dict)
 
         # for cifar10,cifar100,imagenet16
         score = compute_nwot(
-            net=m,
+            net=self.random_model,
             inputs=torch.randn(4, 3, 32, 32).to(self.device),
             targets=torch.randn(4).to(self.device))
-        del m
         del o
         return score
 
