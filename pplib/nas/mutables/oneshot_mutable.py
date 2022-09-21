@@ -131,9 +131,11 @@ class OneShotOP(OneShotMutable[str, str]):
         self._candidate_ops = self._build_ops(candidate_ops)
 
     def __repr__(self):
-        res = f'({self.__class__.__name__} => | '
-        for k, _ in self._candidate_ops.items():
-            res += f'{str(k)} | '
+        res = f'({self.__class__.__name__} => |'
+        for k, v in self._candidate_ops.items():
+            if isinstance(v, nn.ModuleList):
+                res += f'{str(k)}|' * (len(v) - 1)
+            res += f'{str(k)}|'
         res += ')'
         return res
 
@@ -183,7 +185,10 @@ class OneShotOP(OneShotMutable[str, str]):
         if choice is None:
             return self.forward_all(x)
         else:
-            return self._candidate_ops[choice](x)
+            if isinstance(self._candidate_ops[choice], nn.ModuleList):
+                return random.choice(self._candidate_ops[choice])(x)
+            else:
+                return self._candidate_ops[choice](x)
 
     def forward_all(self, x: Any) -> Tensor:
         """Forward all choices. Used to calculate FLOPs.
@@ -247,10 +252,10 @@ class OneShotOP(OneShotMutable[str, str]):
         self._candidate_ops.pop(choice)
 
     def expand_choice(self, choice: CHOICE_TYPE) -> None:
-        """Expand the search space"""
+        """Expand the search space in width"""
         assert choice in self._candidate_ops.keys(),  \
-                f'current choice: {choice} is not avaliable ' \
-                f'in {self._candidate_ops.keys()}'
+            f'current choice: {choice} is not avaliable ' \
+            f'in {self._candidate_ops.keys()}'
 
         new_key = f'{choice}_'
         while new_key in self._candidate_ops.keys():
@@ -258,6 +263,22 @@ class OneShotOP(OneShotMutable[str, str]):
 
         update_dict = {new_key: copy.deepcopy(self._candidate_ops[choice])}
         self._candidate_ops.update(update_dict)
+
+    def enlarge_choice(self, choice: CHOICE_TYPE) -> None:
+        """Expand the search space in depth."""
+        assert choice in self._candidate_ops.keys(),  \
+            f'current choice: {choice} is not avaliable ' \
+            f'in {self._candidate_ops.keys()}'
+
+        if isinstance(self._candidate_ops[choice], nn.ModuleList):
+            # TODO fix: add mean of checkpoint
+            self._candidate_ops[choice].append(
+                copy.deepcopy(self._candidate_ops[choice][-1]))
+        else:
+            self._candidate_ops[choice] = nn.ModuleList([
+                self._candidate_ops[choice],
+                copy.deepcopy(self._candidate_ops[choice])
+            ])
 
 
 class OneShotProbOP(OneShotOP):
