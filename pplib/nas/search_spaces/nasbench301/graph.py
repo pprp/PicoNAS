@@ -211,7 +211,7 @@ class NasBench301SearchSpace(Graph):
             channel_map_to,
             reduction_cell_indices,
             max_index=12,
-            affine=True,
+            affine=False,
         )
 
         self._set_cell_ops(reduction_cell_indices)
@@ -222,7 +222,7 @@ class NasBench301SearchSpace(Graph):
         channel_map_to,
         reduction_cell_indices,
         max_index,
-        affine=True,
+        affine=False,
     ):
         # pre-processing
         # In darts there is a hardcoded multiplier of 3 for the output of the stem

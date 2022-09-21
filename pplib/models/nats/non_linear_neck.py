@@ -36,7 +36,7 @@ class NonLinearNeck(BaseModule):
         num_layers=2,
         with_bias=False,
         with_last_bn=True,
-        with_last_bn_affine=True,
+        with_last_bn_affine=False,
         with_last_bias=False,
         with_avg_pool=True,
         vit_backbone=False,

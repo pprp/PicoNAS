@@ -54,7 +54,7 @@ class PoolBN(nn.Module):
                  kernel_size,
                  stride,
                  padding,
-                 affine=True):
+                 affine=False):
         super().__init__()
         if pool_type.lower() == 'max':
             self.pool = nn.MaxPool2d(kernel_size, stride, padding)
@@ -89,7 +89,7 @@ class StdConv(nn.Sequential):
         is using affine in BatchNorm
     """
 
-    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=True):
+    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=False):
         super().__init__()
         self.net = nn.Sequential
         for idx, ops in enumerate(
@@ -110,7 +110,7 @@ class FacConv(nn.Module):
                  kernel_length,
                  stride,
                  padding,
-                 affine=True):
+                 affine=False):
         super().__init__()
         self.net = nn.Sequential(
             nn.ReLU(),
@@ -152,7 +152,7 @@ class DilConv(nn.Module):
                  stride,
                  padding,
                  dilation,
-                 affine=True):
+                 affine=False):
         super().__init__()
         self.net = nn.Sequential(
             nn.ReLU(),
@@ -192,7 +192,7 @@ class SepConv(nn.Module):
         is using affine in BatchNorm
     """
 
-    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=True):
+    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=False):
         super().__init__()
         self.net = nn.Sequential(
             DilConv(
@@ -221,7 +221,7 @@ class FactorizedReduce(nn.Module):
     Reduce feature map size by factorized pointwise (stride=2).
     """
 
-    def __init__(self, C_in, C_out, affine=True):
+    def __init__(self, C_in, C_out, affine=False):
         super().__init__()
         self.relu = nn.ReLU()
         self.conv1 = nn.Conv2d(

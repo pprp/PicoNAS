@@ -38,7 +38,7 @@ class ReLUConvBN(nn.Module):
         stride,
         padding,
         dilation,
-        bn_affine=True,
+        bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
     ):
@@ -98,7 +98,7 @@ class Pooling(nn.Module):
         C_in,
         C_out,
         stride,
-        bn_affine=True,
+        bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
     ):
@@ -167,7 +167,7 @@ class FactorizedReduce(nn.Module):
         C_in,
         C_out,
         stride,
-        bn_affine=True,
+        bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
     ):
@@ -243,7 +243,7 @@ class NASBench201Cell(nn.Module):
         C_in,
         C_out,
         stride,
-        bn_affine=True,
+        bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
     ):
@@ -326,7 +326,7 @@ class ResNetBasicBlock(nn.Module):
         inplanes,
         planes,
         stride,
-        bn_affine=True,
+        bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
     ):
@@ -390,7 +390,7 @@ class DiffNASBench201Network(nn.Module):
     def __init__(self,
                  stem_out_channels=16,
                  num_modules_per_stack=5,
-                 bn_affine=True,
+                 bn_affine=False,
                  bn_momentum=0.1,
                  bn_track_running_stats=True,
                  num_classes=10):

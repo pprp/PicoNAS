@@ -13,7 +13,7 @@ class FactorizedReduce(AbstractPrimitive):
     If the resolution matches it resolves to identity
     """
 
-    def __init__(self, C_in, C_out, stride=1, affine=True, **kwargs):
+    def __init__(self, C_in, C_out, stride=1, affine=False, **kwargs):
         super().__init__(locals())
 
         if stride == 1 and C_in == C_out:

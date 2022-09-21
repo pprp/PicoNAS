@@ -325,7 +325,7 @@ class InferCell(nn.Module):
                  C_in,
                  C_out,
                  stride,
-                 affine=True,
+                 affine=False,
                  track_running_stats=True):
         super(InferCell, self).__init__()
 
@@ -397,7 +397,7 @@ class ResNetBasicblock(nn.Module):
                  inplanes,
                  planes,
                  stride,
-                 affine=True,
+                 affine=False,
                  track_running_stats=True):
         super(ResNetBasicblock, self).__init__()
         assert stride == 1 or stride == 2, 'invalid stride {:}'.format(stride)

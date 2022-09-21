@@ -35,7 +35,7 @@ class MacroNet(nn.Module):
                 bias=False,
             ),
             nn.BatchNorm2d(
-                self.base_channel // 2, affine=True, track_running_stats=True),
+                self.base_channel // 2, affine=False, track_running_stats=True),
             ReLUConvBN(self.base_channel // 2, self.base_channel, 3, 2, 1, 1,
                        True, True),
         )
@@ -94,7 +94,7 @@ class MacroNet(nn.Module):
                     planes,
                     num_blocks,
                     stride=1,
-                    affine=True,
+                    affine=False,
                     track_running_stats=True):
         layers = [
             cell(

@@ -19,7 +19,7 @@ class MicroCell(nn.Module):
                  C_in,
                  C_out,
                  stride,
-                 affine=True,
+                 affine=False,
                  track_running_stats=True):
         """
         initialize a cell
@@ -88,7 +88,7 @@ class ResNetBasicblock(nn.Module):
         inplanes,
         planes,
         stride=1,
-        affine=True,
+        affine=False,
         track_running_stats=True,
         activation='relu',
     ):

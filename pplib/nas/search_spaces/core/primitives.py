@@ -183,7 +183,7 @@ class SepConv(AbstractPrimitive):
                  kernel_size,
                  stride,
                  padding,
-                 affine=True,
+                 affine=False,
                  **kwargs):
         super().__init__(locals())
         self.kernel_size = kernel_size
@@ -242,7 +242,7 @@ class DilConv(AbstractPrimitive):
                  stride,
                  padding,
                  dilation,
-                 affine=True,
+                 affine=False,
                  **kwargs):
         super().__init__(locals())
         self.kernel_size = kernel_size
@@ -354,7 +354,7 @@ class MaxPool1x1(AbstractPrimitive):
                  stride,
                  C_in=None,
                  C_out=None,
-                 affine=True,
+                 affine=False,
                  **kwargs):
         super().__init__(locals())
         self.stride = stride
@@ -418,7 +418,7 @@ class AvgPool1x1(AbstractPrimitive):
                  stride,
                  C_in=None,
                  C_out=None,
-                 affine=True,
+                 affine=False,
                  **kwargs):
         super().__init__(locals())
         self.stride = stride
@@ -471,7 +471,7 @@ class ReLUConvBN(AbstractPrimitive):
         C_out,
         kernel_size,
         stride=1,
-        affine=True,
+        affine=False,
         bias=False,
         track_running_stats=True,
         **kwargs,
@@ -517,7 +517,7 @@ class ConvBnReLU(AbstractPrimitive):
                  C_out,
                  kernel_size,
                  stride=1,
-                 affine=True,
+                 affine=False,
                  **kwargs):
         super().__init__(locals())
         self.kernel_size = kernel_size
@@ -589,7 +589,7 @@ class Concat1x1(nn.Module):
     to retain the channel dimension.
     """
 
-    def __init__(self, num_in_edges, C_out, affine=True, **kwargs):
+    def __init__(self, num_in_edges, C_out, affine=False, **kwargs):
         super().__init__()
         self.conv = nn.Conv2d(
             num_in_edges * C_out,

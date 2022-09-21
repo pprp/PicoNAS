@@ -38,7 +38,7 @@ class ReLUConvBN(nn.Module):
         stride,
         padding,
         dilation,
-        bn_affine=True,
+        bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
     ):
@@ -98,7 +98,7 @@ class Pooling(nn.Module):
         C_in,
         C_out,
         stride,
-        bn_affine=True,
+        bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
     ):
@@ -165,7 +165,7 @@ class FactorizedReduce(nn.Module):
         C_in,
         C_out,
         stride,
-        bn_affine=True,
+        bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
     ):
@@ -318,7 +318,7 @@ class ResNetBasicBlock(nn.Module):
         inplanes,
         planes,
         stride,
-        bn_affine=True,
+        bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
     ):
@@ -383,7 +383,7 @@ class OneShotNASBench201Network(nn.Module):
         self,
         stem_out_channels: int = 16,
         num_modules_per_stack: int = 5,
-        bn_affine: bool = True,
+        bn_affine: bool = False,
         bn_momentum: float = 0.1,
         bn_track_running_stats: bool = True,
         num_classes: int = 10,

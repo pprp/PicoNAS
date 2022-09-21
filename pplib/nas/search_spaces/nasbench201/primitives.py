@@ -8,7 +8,7 @@ Code below from NASBench-201 and slightly adapted
 
 class ResNetBasicblock(AbstractPrimitive):
 
-    def __init__(self, C_in, C_out, stride, affine=True):
+    def __init__(self, C_in, C_out, stride, affine=False):
         super().__init__(locals())
         assert stride == 1 or stride == 2, 'invalid stride {:}'.format(stride)
         self.conv_a = ReLUConvBN(C_in, C_out, 3, stride)

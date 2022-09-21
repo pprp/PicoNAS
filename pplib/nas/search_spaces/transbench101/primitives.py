@@ -9,7 +9,7 @@ from ..core.primitives import AbstractPrimitive, ReLUConvBN
 
 class ResNetBasicblock(AbstractPrimitive):
 
-    def __init__(self, C_in, C_out, stride, affine=True):
+    def __init__(self, C_in, C_out, stride, affine=False):
         super().__init__(locals())
         assert stride in [1, 2], 'invalid stride {:}'.format(stride)
         self.conv_a = ReLUConvBN(C_in, C_out, 3, stride)

@@ -57,7 +57,7 @@ class MixOps(nn.Module):
                 self._max_C,
                 self._max_C,
                 1,
-                affine=True,
+                affine=False,
                 track_running_stats=True,
             )
 
