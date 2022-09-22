@@ -109,12 +109,24 @@ CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.
 # TODO only expand
 CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-200_sample-num_only-expand --dataset cifar10 --crit ce --lr 0.025 --type uniform
 
+# TODO expand every 20 epochs
+CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-200_sample-num_expand_every_20_epochs --dataset cifar10 --crit ce --lr 0.025 --type uniform
+
+# TODO expand every 5 epochs
+CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-200_sample-num_expand_every_5_epochs --dataset cifar10 --crit ce --lr 0.025 --type uniform
+
 
 # TODO expand more 12
 CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-200_sample-num_expand-more --dataset cifar10 --crit ce --lr 0.025 --type uniform
 
 # TODO enlarge the search space
 CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-200_sample-num_enlarge --dataset cifar10 --crit ce --lr 0.025 --type uniform
+
+# TODO enlarge the search space more times 12
+CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-200_sample-num_enlarge_more --dataset cifar10 --crit ce --lr 0.025 --type uniform
+
+
+
 
 # 第四章 实验3.1 fair sampling cifar10
 # CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_fairnas_fairsampling_exp3.1 --dataset cifar10 --crit ce --lr 0.025

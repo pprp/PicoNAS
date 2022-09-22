@@ -89,7 +89,13 @@ class StdConv(nn.Sequential):
         is using affine in BatchNorm
     """
 
-    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=False):
+    def __init__(self,
+                 C_in,
+                 C_out,
+                 kernel_size,
+                 stride,
+                 padding,
+                 affine=False):
         super().__init__()
         self.net = nn.Sequential
         for idx, ops in enumerate(
@@ -192,7 +198,13 @@ class SepConv(nn.Module):
         is using affine in BatchNorm
     """
 
-    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=False):
+    def __init__(self,
+                 C_in,
+                 C_out,
+                 kernel_size,
+                 stride,
+                 padding,
+                 affine=False):
         super().__init__()
         self.net = nn.Sequential(
             DilConv(
