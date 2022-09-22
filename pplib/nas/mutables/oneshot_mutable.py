@@ -3,7 +3,7 @@ import copy
 import random
 from abc import abstractmethod
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch.nn as nn
@@ -430,3 +430,128 @@ class OneShotPathOP(OneShotOP):
     def fix_chosen(self, chosen: Dict) -> None:
         self.is_fixed = True
         self._chosen = chosen
+
+
+class OneShotChoiceRoute(OneShotMutable):
+    """A type of ``MUTABLES`` for Neural Architecture Search, which can select
+    inputs from different edges in a non-differentiable way.
+    It is commonly used in DARTS.
+
+    Note: Designed for Darts search space and nasbench301
+
+    Args:
+        edges (nn.ModuleDict): the key of `edges` is the name of different
+            edges. The value of `edges` can be :class:`nn.Module` or
+            :class:`DiffMutable`.
+        init_cfg (dict, optional): initialization configuration dict for
+            ``BaseModule``. OpenMMLab has implement 6 initializers including
+            `Constant`, `Xavier`, `Normal`, `Uniform`, `Kaiming`,
+            and `Pretrained`.
+    """
+
+    def __init__(
+        self,
+        edges: nn.ModuleDict,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
+        super().__init__(init_cfg=init_cfg)
+        assert len(edges) >= 2, (
+            f'Number of edges must greater than or equal to 1, '
+            f'but got: {len(edges)}')
+
+        self._is_fixed = False
+        self._edges: nn.ModuleDict = edges
+
+    def forward_fixed(self, inputs: Union[List, Tuple]) -> Tensor:
+        """Forward when the mutable is in `fixed` mode.
+
+        Args:
+            inputs (Union[List[Any], Tuple[Any]]): inputs could be a list or
+                a tuple of Torch.tensor, containing input data for
+                forward computation.
+
+        Returns:
+            Tensor: the result of forward the fixed operation.
+        """
+        assert (self._chosen is not None
+                ), 'Please call fix_chosen before calling `forward_fixed`.'
+
+        outputs = list()
+        for choice, x in zip(self._unfixed_choices, inputs):
+            if choice in self._chosen:
+                outputs.append(self._edges[choice](x))
+        return sum(outputs)
+
+    def forward_choice(self,
+                       x: Union[List[Any], Tuple[Any]],
+                       choice: Optional[str] = None) -> Tensor:
+        """Forward when the mutable is in `unfixed` mode.
+
+        Args:
+            x (Any): x could be a Torch.tensor or a tuple of
+                Torch.tensor, containing input data for forward computation.
+            choice (str, optional): the chosen key in ``MUTABLE``.
+
+        Returns:
+            Tensor: the result of forward the ``choice`` operation.
+        """
+        if choice is None:
+            return self.forward_all(x)
+        else:
+            assert len(self._deges) == len(x)
+            sample_two_index = random.sample(list(range(len(x))), k=2)
+            # sample two path
+            outputs = list()
+            for idx in sample_two_index:
+                module = self._edges.values[idx]
+                input = x[idx]
+                outputs.append(module(input))
+
+            return sum(outputs)
+
+    def forward_all(self, x: Any) -> Tensor:
+        """Forward all choices.
+
+        Args:
+            x (Any): x could be a Torch.tensor or a tuple of
+                Torch.tensor, containing input data for forward computation.
+
+        Returns:
+            Tensor: the result of forward all of the ``choice`` operation.
+        """
+        assert len(x) == len(self._edges), (
+            f'Lenght of edges {len(self._edges)} should be same as '
+            f'the length of inputs {len(x)}.')
+
+        outputs = list()
+        for op, input in zip(self._edges.values(), x):
+            outputs.append(op(input))
+
+        return sum(outputs)
+
+    def fix_chosen(self, chosen: List[str]) -> None:
+        """Fix mutable with `choice`. This operation would convert to `fixed`
+        mode. The :attr:`is_fixed` will be set to True and only the selected
+        operations can be retained.
+
+        Args:
+            chosen (list(str)): the chosen key in ``MUTABLE``.
+        """
+        self._unfixed_choices = self.choices
+
+        if self.is_fixed:
+            raise AttributeError(
+                'The mode of current MUTABLE is `fixed`. '
+                'Please do not call `fix_chosen` function again.')
+
+        for c in self.choices:
+            if c not in chosen:
+                self._edges.pop(c)
+
+        self._chosen = chosen
+        self.is_fixed = True
+
+    @property
+    def choices(self) -> List[CHOSEN_TYPE]:
+        """list: all choices."""
+        return list(self._edges.keys())
