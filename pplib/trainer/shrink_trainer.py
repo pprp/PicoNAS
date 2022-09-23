@@ -41,96 +41,48 @@ class NB201Shrinker(object):
     def enlarge_operator(self, extend_operators, vis_dict_slice):
         """each operator is ranked according to its metric score.
         enlarge the search space by calling ``enlarge_choice`` of oneshotop
+
+        Note: enlarge the operator only once.
         """
 
-        # sort by
+        # sort by metric score
         extend_operators.sort(
             key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
-        # drop operators whose ranking fall at the tail.
-        num, enlarge_ops = 0, []
-        for i, operator in enumerate(extend_operators):
-            # score of current operator is lowest and should be pruned.
-            id, choice = operator
-            drop_legal = False
+        # expand the choice with noise
+        # choose from the best three candidate operation
+        chosen_operator = random.choice(extend_operators[-3:])
 
-            # expand choice
-            expand_choice = None
-            expand_operator = None
+        # expand the operator
+        id, choice = chosen_operator
+        groups = self.mutator.search_group[id]
+        for item in groups:
+            item.enlarge_choice(choice)
 
-            # at lease one operator should be reserved for each layer.
-            for j in range(i + 1, len(extend_operators)):
-                # get current extended operations
-                idx_, choice_ = extend_operators[j]
-                if idx_ == id:
-                    # if find a better operator, we can remove lowest one.
-                    drop_legal = True
-                    expand_choice = choice_
-                    expand_operator = extend_operators[j]
-
-            if drop_legal:
-                print(
-                    f'no.{num + 1} enlarge_op={expand_choice} metric={vis_dict_slice[expand_operator]["metric"]}'
-                )
-                enlarge_ops.append(expand_operator)
-                # remove from search space
-                groups = self.mutator.search_group[id]
-                for item in groups:
-                    # shrink search space
-                    # item.shrink_choice(choice)
-                    # expand search space
-                    item.enlarge_choice(expand_choice)
-                num += 1
-            if num >= self.per_stage_drop_num:
-                break
-
-        return enlarge_ops
+        return chosen_operator
 
     def expand_operator(self, extend_operators, vis_dict_slice):
         """each operator is ranked according to its metric score.
         expand the search space by calling ``expand_choice`` of oneshotop.
+
+        Note: expand only once.
         """
 
-        # sort by
+        # sort by metric score
         extend_operators.sort(
             key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
-        # drop operators whose ranking fall at the tail.
-        num, expand_ops = 0, []
-        for i, operator in enumerate(extend_operators):
-            # score of current operator is lowest and should be pruned.
-            id, choice = operator
-            drop_legal = False
+        # expand the choice with noise
+        # choose from the best three candidate operation
+        chosen_operator = random.choice(extend_operators[-3:])
 
-            # expand choice
-            expand_choice = None
-            expand_operator = None
+        # expand the operator
+        id, choice = chosen_operator
+        groups = self.mutator.search_group[id]
+        for item in groups:
+            item.expand_choice(choice)
 
-            # at lease one operator should be reserved for each layer.
-            for j in range(i + 1, len(extend_operators)):
-                # get current extended operations
-                idx_, choice_ = extend_operators[j]
-                if idx_ == id:
-                    # if find a better operator, we can remove lowest one.
-                    drop_legal = True
-                    expand_choice = choice_
-                    expand_operator = extend_operators[j]
-
-            if drop_legal:
-                print(
-                    f'no.{num + 1} drop_op={operator} metric={vis_dict_slice[operator]["metric"]}'
-                )
-
-                expand_ops.append(expand_operator)
-                # remove from search space
-                groups = self.mutator.search_group[id]
-                for item in groups:
-                    # expand search space here
-                    item.expand_choice(expand_choice)
-                num += 1
-            if num >= self.per_stage_drop_num:
-                break
-        return expand_ops
+        return chosen_operator
 
     def drop_operator(self, extend_operators, vis_dict_slice):
         """each operator is ranked according to its metric score."""
@@ -138,13 +90,6 @@ class NB201Shrinker(object):
         # sort by
         extend_operators.sort(
             key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
-
-        # show before shrink
-        # for idx, operator in enumerate(extend_operators):
-        #     info = vis_dict_slice[operator]
-        #     self.trainer.logger.info(
-        #         f"shrinking: top {idx+1} operator={operator}, metric={info['metric']}, count={info['count']}"
-        #     )
 
         # drop operators whose ranking fall at the tail.
         num, drop_ops = 0, []
@@ -155,7 +100,6 @@ class NB201Shrinker(object):
 
             # expand choice
             expand_choice = None
-            expand_operator = None
 
             # at lease one operator should be reserved for each layer.
             for j in range(i + 1, len(extend_operators)):
@@ -165,7 +109,6 @@ class NB201Shrinker(object):
                     # if find a better operator, we can remove lowest one.
                     drop_legal = True
                     expand_choice = choice_
-                    expand_operator = extend_operators[j]
 
             if drop_legal:
                 print(
@@ -556,7 +499,9 @@ class NB201ShrinkTrainer(BaseTrainer):
             #     print(f'k:{k} == > v:{v}')
             # print(f"before shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
 
-            if self.shrink_expand_times > 0 and self.current_epoch % 5 == 0:
+            if self.shrink_expand_times > 0:
+                self.shrinker.shrink()
+                self.shrinker.expand()
                 self.shrinker.expand()
                 self.shrink_expand_times -= 1
 
