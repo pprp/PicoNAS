@@ -370,7 +370,9 @@ class NB201ShrinkTrainer(BaseTrainer):
         self.logger.info(f'Current type of nb201 trainer is: {self.type}.')
 
         self.shrinker = NB201Shrinker(self)
-        self.shrink_expand_times = 6
+        self.expand_times = 6
+        self.shrink_times = 3 
+        
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample, dataset)
@@ -499,11 +501,13 @@ class NB201ShrinkTrainer(BaseTrainer):
             #     print(f'k:{k} == > v:{v}')
             # print(f"before shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
 
-            if self.shrink_expand_times > 0:
-                self.shrinker.shrink()
+            if self.expand_times > 0:
                 self.shrinker.expand()
-                self.shrinker.expand()
-                self.shrink_expand_times -= 1
+                self.expand_times -= 1
+            else:
+                if self.shrink_times > 0:
+                    self.shrinker.shrink() 
+                    self.shrink_times -= 1 
 
             # if calc_search_space_size(self.mutator.search_group) > 1296:
             # self.shrinker.shrink()
