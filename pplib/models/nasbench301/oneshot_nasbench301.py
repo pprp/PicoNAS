@@ -4,7 +4,7 @@
 import torch
 import torch.nn as nn
 
-from pplib.nas.mutables import OneShotOP
+from pplib.nas.mutables import OneShotChoiceRoute, OneShotOP
 from ..registry import register_model
 from .darts_ops import (DilConv, DropPath, FactorizedReduce, PoolBN, SepConv,
                         StdConv)
@@ -24,9 +24,10 @@ class Node(nn.Module):
                  num_downsample_connect: int):
 
         super().__init__()
-        self.ops = nn.ModuleList()
+        edges = nn.ModuleDict()
         for i in range(num_prev_nodes):
             stride = 2 if i < num_downsample_connect else 1
+            edge_id = f'{node_id}_p{i}'
             candidate_ops = nn.ModuleDict({
                 'max_pool_3x3':
                 PoolBN('max', channels, 3, stride, 1, affine=False),
@@ -44,20 +45,14 @@ class Node(nn.Module):
                 'dil_conv_5x5':
                 DilConv(channels, channels, 5, stride, 4, 2, affine=False)
             })
-
-            self.ops.append(
+            edges.add_module(
+                edge_id,
                 OneShotOP(
                     candidate_ops=candidate_ops, alias=f'{node_id}_p{i}'))
-        self.drop_path = DropPath()
+        self.route = OneShotChoiceRoute(edges=edges)
 
     def forward(self, prev_nodes):
-        assert len(self.ops) == len(prev_nodes)
-        out = []
-        for op, node in zip(self.ops, prev_nodes):
-            _out = op(node)
-            out.append(_out)
-        out = [self.drop_path(o) if o is not None else None for o in out]
-        return sum(out)
+        return self.route(prev_nodes)
 
 
 class DartsCell(nn.Module):
