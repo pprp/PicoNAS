@@ -452,9 +452,10 @@ class OneShotChoiceRoute(OneShotMutable):
     def __init__(
         self,
         edges: nn.ModuleDict,
+        alias: Optional[str] = None,
         init_cfg: Optional[Dict] = None,
     ) -> None:
-        super().__init__(init_cfg=init_cfg)
+        super().__init__(init_cfg=init_cfg, alias=alias)
         assert len(edges) >= 2, (
             f'Number of edges must greater than or equal to 1, '
             f'but got: {len(edges)}')
@@ -482,9 +483,14 @@ class OneShotChoiceRoute(OneShotMutable):
                 outputs.append(self._edges[choice](x))
         return sum(outputs)
 
+    @property
+    def random_choice(self) -> List[str]:
+        """Sampling two edges with randomness"""
+        return random.sample(self._edges.keys(), k=2)
+
     def forward_choice(self,
                        x: Union[List[Any], Tuple[Any]],
-                       choice: Optional[str] = None) -> Tensor:
+                       choice: List[str] = None) -> Tensor:
         """Forward when the mutable is in `unfixed` mode.
 
         Args:
@@ -499,13 +505,10 @@ class OneShotChoiceRoute(OneShotMutable):
             return self.forward_all(x)
         else:
             assert len(self._deges) == len(x)
-            sample_two_index = random.sample(list(range(len(x))), k=2)
             # sample two path
             outputs = list()
-            for idx in sample_two_index:
-                module = self._edges.values[idx]
-                input = x[idx]
-                outputs.append(module(input))
+            for ch, input in zip(choice, x):
+                outputs.append(self._edges[ch](input))
 
             return sum(outputs)
 

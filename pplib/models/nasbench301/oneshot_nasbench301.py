@@ -28,6 +28,7 @@ class Node(nn.Module):
         for i in range(num_prev_nodes):
             stride = 2 if i < num_downsample_connect else 1
             edge_id = f'{node_id}_p{i}'
+            # normal_n2_p0
             candidate_ops = nn.ModuleDict({
                 'max_pool_3x3':
                 PoolBN('max', channels, 3, stride, 1, affine=False),
@@ -49,7 +50,7 @@ class Node(nn.Module):
                 edge_id,
                 OneShotOP(
                     candidate_ops=candidate_ops, alias=f'{node_id}_p{i}'))
-        self.route = OneShotChoiceRoute(edges=edges)
+        self.route = OneShotChoiceRoute(edges=edges, alias=node_id)
 
     def forward(self, prev_nodes):
         return self.route(prev_nodes)

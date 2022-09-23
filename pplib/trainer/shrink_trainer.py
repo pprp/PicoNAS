@@ -500,13 +500,17 @@ class NB201ShrinkTrainer(BaseTrainer):
             #     print(f'k:{k} == > v:{v}')
             # print(f"before shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
 
-            if self.expand_times > 0:
-                self.shrinker.expand()
+            if self.expand_times > 0 and self.current_epoch % 5 == 0:
+                self.shrinker.enlarge()
                 self.expand_times -= 1
-            else:
-                if self.shrink_times > 0:
-                    self.shrinker.shrink()
-                    self.shrink_times -= 1
+
+            # if self.expand_times > 0:
+            #     self.shrinker.expand()
+            #     self.expand_times -= 1
+            # else:
+            #     if self.shrink_times > 0:
+            #         self.shrinker.shrink()
+            #         self.shrink_times -= 1
 
             # if calc_search_space_size(self.mutator.search_group) > 1296:
             # self.shrinker.shrink()

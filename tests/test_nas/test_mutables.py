@@ -34,6 +34,7 @@ class TestOneShot(TestCase):
         candidate_ops.add_module('candidate3', nn.Conv2d(32, 32, 7, 1, 3))
 
         oscr = OneShotChoiceRoute(edges=candidate_ops)
+
         osm = OneShotMutator()
         osm.prepare_from_supernet(oscr)
 

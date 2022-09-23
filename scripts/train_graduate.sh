@@ -141,6 +141,11 @@ CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.
 # TODO expand 6 times and shrink 3 times [after expand]
 CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-200_sample-num_expand6shrink3 --dataset cifar10 --crit ce --lr 0.025 --type uniform
 
+# TODO enlarge every 5 epoch [6 times]
+CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-200_sample-num_enlarge-every-5-epoch --dataset cifar10 --crit ce --lr 0.025 --type uniform
+
+
+
 # 第四章 实验3.1 fair sampling cifar10
 # CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_fairnas_fairsampling_exp3.1 --dataset cifar10 --crit ce --lr 0.025
 # 进化搜索
