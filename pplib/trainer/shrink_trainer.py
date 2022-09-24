@@ -6,7 +6,9 @@ from typing import Dict, List, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from mmcv.cnn import get_model_complexity_info
+from torch import Tensor
 
 import pplib.utils.utils as utils
 from pplib.core.losses import PairwiseRankLoss
@@ -316,7 +318,8 @@ class NB201ShrinkTrainer(BaseTrainer):
         if 'type' in kwargs:
             self.type = kwargs['type']
             assert self.type in {
-                'random', 'hamming', 'adaptive', 'uniform', 'fair', 'sandwich'
+                'random', 'hamming', 'adaptive', 'uniform', 'fair', 'sandwich',
+                'zenscore', 'flops', 'params', 'nwot'
             }
         else:
             self.type = None
@@ -399,6 +402,54 @@ class NB201ShrinkTrainer(BaseTrainer):
             else:
                 return subnet1, self.mutator.random_subnet
 
+    def sample_subnet_by_policy(self,
+                                policy: str = 'balanced',
+                                n_samples: int = 3) -> Dict:
+        assert policy in {'zenscore', 'flops', 'params', 'nwot'}
+        n_subnets = [self.mutator.random_subnet for _ in range(n_samples)]
+
+        def minmaxscaler(n_list: Tensor) -> Tensor:
+            min_n = torch.min(n_list)
+            max_n = torch.max(n_list)
+            return (n_list - min_n) / max_n - min_n
+
+        if policy == 'flops':
+            n_flops = torch.tensor(
+                [self.get_subnet_flops(i) for i in n_subnets])
+            res = minmaxscaler(n_flops)
+            res = F.softmax(res, dim=0)
+            # Find the max
+            max_idx = res.argmax()
+            # Get corresponding subnet
+            subnet = n_subnets[max_idx]
+
+        elif policy == 'params':
+            n_params = torch.tensor(
+                [self.get_subnet_params(i) for i in n_subnets])
+            res = minmaxscaler(n_params)
+            res = F.softmax(res, dim=0)
+            # Find the max
+            max_idx = res.argmax()
+            subnet = n_subnets[max_idx]
+
+        elif policy == 'zenscore':
+            n_zenscore = torch.tensor(
+                [self.get_subnet_zenscore(i) for i in n_subnets])
+            res = minmaxscaler(n_zenscore)
+            res = F.softmax(res, dim=0)
+            # Find the max
+            max_idx = res.argmax()
+            subnet = n_subnets[max_idx]
+        elif policy == 'nwot':
+            n_nwot = torch.tensor([self.get_subnet_nwot(i) for i in n_subnets])
+            res = minmaxscaler(n_nwot)
+            res = F.softmax(res, dim=0)
+            # Find the max
+            max_idx = res.argmax()
+            subnet = n_subnets[max_idx]
+
+        return subnet
+
     def _generate_fair_lists(self) -> List[Dict]:
         search_group = self.mutator.search_group
         fair_lists = []
@@ -446,6 +497,9 @@ class NB201ShrinkTrainer(BaseTrainer):
                     loss, outputs = self._forward_fairnas(batch_inputs)
                 elif self.type == 'sandwich':
                     loss, outputs = self._forward_sandwich(batch_inputs)
+            elif self.type in {'zenscore', 'flops', 'params', 'nwot'}:
+                loss, outputs = self._forward_balanced(
+                    batch_inputs, policy=self.type)
             else:
                 loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
@@ -806,6 +860,21 @@ class NB201ShrinkTrainer(BaseTrainer):
             top5_vacc.update(top5.item(), n)
 
         return 100 - top1_vacc.avg
+
+    def _forward_balanced(self, batch_inputs, policy='zenscore'):
+        """Balanced Sampling Rules.
+            Policy can be `zenscore`, `flops`, `params`, `nwot`
+        """
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
+        subnet = self.sample_subnet_by_policy(policy=policy)
+        self.mutator.set_subnet(subnet)
+        outputs = self.model(inputs)
+        loss = self._compute_loss(outputs, labels)
+        loss.backward()
+        return loss, outputs
 
     def _forward_uniform(self, batch_inputs):
         """Single Path One Shot."""
