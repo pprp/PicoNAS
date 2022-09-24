@@ -66,58 +66,62 @@ class NB301Evaluator(Evaluator):
     def generate_genotype(self, subnet_dict: dict,
                           mutator: Union[OneShotMutator, DiffMutator]) -> str:
         """subnet_dict represent the subnet dict of mutator."""
+
         # Please make sure that the mutator have been called the
         # `prepare_from_supernet` function.
-        alias2group_id = mutator.alias2group_id
-        mapping = {
-            'conv_3x3': 'nor_conv_3x3',
-            'skip_connect': 'skip_connect',
-            'conv_1x1': 'nor_conv_1x1',
-            'avg_pool_3x3': 'avg_pool_3x3',
-            'none': 'none',
-        }
+
+        def get_group_id_by_module(mutator, module):
+            for gid, module_list in mutator.search_group.items():
+                if module in module_list:
+                    return gid
+            return None
+
+        normal_list = []
+        reduce_list = []
+        for idx, choices in subnet_dict.items():
+            # print(idx, choice)
+            if isinstance(choices, list):
+                # choiceroute object
+                for choice in choices:
+                    if 'normal' in choice:
+                        # choice route object
+                        c_route = mutator.search_group[idx][0]
+                        # get current key by index
+                        idx_of_op = int(choice[-1])
+                        # current_key = normal_n3_p1
+                        current_key = list(c_route._edges.keys())[idx_of_op]
+                        # get oneshot op
+                        os_op = c_route._edges[current_key]
+                        # get group id
+                        gid = get_group_id_by_module(mutator, os_op)
+                        choice_str = subnet_dict[gid]
+                        assert isinstance(choice_str, str)
+                        normal_list.append((choice_str, idx_of_op))
+                    elif 'reduce' in choice:
+                        # choice route object
+                        c_route = mutator.search_group[idx][0]
+                        # get current key by index
+                        idx_of_op = int(choice[-1])
+                        current_key = list(c_route._edges.keys())[idx_of_op]
+                        # get oneshot op
+                        os_op = c_route._edges[current_key]
+                        # get group id
+                        gid = get_group_id_by_module(mutator, os_op)
+                        choice_str = subnet_dict[gid]
+                        assert isinstance(choice_str, str)
+                        reduce_list.append((choice_str, idx_of_op))
 
         genotype = Genotype(
-            normal=[],
+            normal=normal_list,
             normal_concat=[2, 3, 4, 5],
-            reduce=[],
-            reduce_concat=[2, 3, 4, 5],
-        )
-        # genotype = ''
-        # for i, (k, v) in enumerate(subnet_dict.items()):
-        #     # v = 'conv_3x3'
-        #     mapped_op_name = mapping[v]
-        #     alias_name = list(alias2group_id.keys())[k]
-        #     rank = alias_name.split('_')[1][-1]  # 0 or 1 or 2
-        #     genotype += '|'
-        #     genotype += f'{mapped_op_name}~{rank}'
-        #     genotype += '|'
-        #     if i in [0, 2]:
-        #         genotype += '+'
-        # genotype = genotype.replace('||', '|')
+            reduce=reduce_list,
+            reduce_concat=[2, 3, 4, 5])
         return genotype
 
-    def query_result(self, genotype: str, cost_key: str = 'flops'):
+    def query_result(self, genotype: Genotype):
         """query the indictor by genotype."""
-        dataset = self.trainer.dataset
-        if dataset == 'cifar10':
-            dataset = 'cifar10-valid'
-        else:
-            raise NotImplementedError(f'Not Support dataset type:{dataset}')
-
-        # TODO default datasets is cifar10, support other dataset in the future.
-        if self.type in [
-                'train_losses', 'eval_losses', 'train_acc1es', 'eval_acc1es'
-        ]:
-            return self.api[genotype][dataset][self.type][-1]
-        elif self.type == 'cost_info':
-            # example:
-            # cost_info: {'flops': 78.56193, 'params': 0.559386,
-            #             'latency': 0.01493, 'train_time': 10.21598}
-            assert cost_key is not None
-            return self.api[genotype][dataset][self.type][cost_key]
-        else:
-            raise f'Not supported type: {self.type}.'
+        return self.performance_model.predict(
+            config=genotype, representation='genotype', with_noise=False)
 
     def compute_rank_consistency(self, dataloader,
                                  mutator: OneShotMutator) -> List:

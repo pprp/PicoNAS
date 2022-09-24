@@ -42,28 +42,72 @@ class NB201Shrinker(object):
             'conv_3x3', 'skip_connect', 'conv_1x1', 'avg_pool_3x3'
         }
 
+    # def expand_operator(self, extend_operators, vis_dict_slice):
+    #     """each operator is ranked according to its metric score.
+    #     expand the search space by calling ``expand_choice`` of oneshotop.
+
+    #     Note: expand only once.
+    #     """
+
+    #     # sort by metric score
+    #     extend_operators.sort(
+    #         key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
+
+    #     # expand the choice with noise
+    #     # choose from the best three candidate operation
+    #     chosen_operator = random.choice(extend_operators[-3:])
+
+    #     # expand the operator
+    #     id, choice = chosen_operator
+    #     groups = self.mutator.search_group[id]
+    #     for item in groups:
+    #         item.expand_choice(choice)
+
+    #     return chosen_operator
+
     def expand_operator(self, extend_operators, vis_dict_slice):
-        """each operator is ranked according to its metric score.
-        expand the search space by calling ``expand_choice`` of oneshotop.
+        """each operator is ranked according to its metric score."""
 
-        Note: expand only once.
-        """
-
-        # sort by metric score
+        # sort by
         extend_operators.sort(
             key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
-        # expand the choice with noise
-        # choose from the best three candidate operation
-        chosen_operator = random.choice(extend_operators[-3:])
+        # drop operators whose ranking fall at the tail.
+        num, drop_ops = 0, []
+        for i, operator in enumerate(extend_operators):
+            # score of current operator is lowest and should be pruned.
+            id, choice = operator
+            drop_legal = False
 
-        # expand the operator
-        id, choice = chosen_operator
-        groups = self.mutator.search_group[id]
-        for item in groups:
-            item.expand_choice(choice)
+            # expand choice
+            expand_choice = None
+            expand_ops = []
 
-        return chosen_operator
+            # at lease one operator should be reserved for each layer.
+            for j in range(i + 1, len(extend_operators)):
+                # get current extended operations
+                idx_, choice_ = extend_operators[j]
+                if idx_ == id:
+                    # if find a better operator, we can remove lowest one.
+                    drop_legal = True
+                    expand_choice = choice_
+                    expand_ops.append(extend_operators[j])
+
+            if drop_legal:
+                print(
+                    f'no.{num + 1} expand_op={expand_ops} metric={vis_dict_slice[expand_ops[-1]]["metric"]}'
+                )
+
+                drop_ops.append(operator)
+                # remove from search space
+                groups = self.mutator.search_group[id]
+                for item in groups:
+                    # expand search space
+                    item.expand_choice(expand_choice)
+                num += 1
+            if num >= self.per_stage_drop_num:
+                break
+        return expand_ops
 
     def drop_operator(self, extend_operators, vis_dict_slice):
         """each operator is ranked according to its metric score."""
@@ -100,10 +144,7 @@ class NB201Shrinker(object):
                 # remove from search space
                 groups = self.mutator.search_group[id]
                 for item in groups:
-                    # shrink search space
-                    # item.shrink_choice(choice)
-                    # expand search space
-                    item.expand_choice(expand_choice)
+                    item.shrink_choice(choice)
                 num += 1
             if num >= self.per_stage_drop_num:
                 break
@@ -251,7 +292,7 @@ class NB201Shrinker(object):
 
 @register_trainer
 class NB201ShrinkTrainer(BaseTrainer):
-    """Trainer for Macro Benchmark.
+    """Trainer for modifying search space.
 
     Args:
         model (nn.Module): _description_
@@ -507,17 +548,17 @@ class NB201ShrinkTrainer(BaseTrainer):
             #     print(f'k:{k} == > v:{v}')
             # print(f"before shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
 
-            if self.expand_times > 0 and self.current_epoch % 5 == 0:
-                self.shrinker.expand()
-                self.expand_times -= 1
-
-            # if self.expand_times > 0:
+            # if self.expand_times > 0 and self.current_epoch % 5 == 0:
             #     self.shrinker.expand()
             #     self.expand_times -= 1
-            # else:
-            #     if self.shrink_times > 0:
-            #         self.shrinker.shrink()
-            #         self.shrink_times -= 1
+
+            if self.expand_times > 0:
+                self.shrinker.expand()
+                self.expand_times -= 1
+            else:
+                if self.shrink_times > 0:
+                    self.shrinker.shrink()
+                    self.shrink_times -= 1
 
             # if calc_search_space_size(self.mutator.search_group) > 1296:
             # self.shrinker.shrink()

@@ -6,16 +6,15 @@
 # LICENSE file in the root directory of this source tree.
 """NAS network (adopted from DARTS)."""
 
-import logging
-
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
+from pplib.utils.logging import get_logger
 from .genotypes import GENOTYPES
 from .ops import OPS, FactorizedReduce, Identity, ReLUConvBN
 
-logger = logging.get_logger(__name__)
+logger = get_logger(__name__)
 
 
 class ASPP(nn.Module):

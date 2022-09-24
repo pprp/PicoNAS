@@ -11,7 +11,6 @@ import math
 
 import torch
 import torch.nn as nn
-from pycls.core.config import cfg
 
 
 def init_weights(m):
@@ -21,7 +20,7 @@ def init_weights(m):
         fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
         m.weight.data.normal_(mean=0.0, std=math.sqrt(2.0 / fan_out))
     elif isinstance(m, nn.BatchNorm2d):
-        zero_init_gamma = cfg.BN.ZERO_INIT_FINAL_GAMMA
+        zero_init_gamma = False
         zero_init_gamma = hasattr(
             m, 'final_bn') and m.final_bn and zero_init_gamma
         m.weight.data.fill_(0.0 if zero_init_gamma else 1.0)
@@ -35,8 +34,7 @@ def init_weights(m):
 def compute_precise_bn_stats(model, loader):
     """Computes precise BN stats on training data."""
     # Compute the number of minibatches to use
-    num_iter = min(cfg.BN.NUM_SAMPLES_PRECISE // loader.batch_size,
-                   len(loader))
+    num_iter = min(1024 // loader.batch_size, len(loader))
     # Retrieve the BN layers
     bns = [m for m in model.modules() if isinstance(m, torch.nn.BatchNorm2d)]
     # Initialize stats storage
@@ -109,7 +107,7 @@ def complexity_maxpool2d(cx, k, stride, padding):
 
 def complexity(model):
     """Compute model complexity (model can be model instance or model class)."""
-    size = cfg.TRAIN.IM_SIZE
+    size = 224
     cx = {'h': size, 'w': size, 'flops': 0, 'params': 0, 'acts': 0}
     cx = model.complexity(cx)
     return {'flops': cx['flops'], 'params': cx['params'], 'acts': cx['acts']}
