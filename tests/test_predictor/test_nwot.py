@@ -60,6 +60,42 @@ class TestNWOT(TestCase):
             score = compute_nwot(net=m, inputs=inputs, targets=targets)
             print(f'The score of {i} th model is {score}')
 
+    def test_nwot_init(self):
+        inputs = torch.randn(4, 3, 32, 32)
+        targets = torch.randn(4)
+
+        m = OneShotNASBench201Network()
+        o = OneShotMutator(with_alias=True)
+        o.prepare_from_supernet(m)
+
+        rand_subnet = o.random_subnet
+        o.set_subnet(rand_subnet)
+
+        # without init
+        score = compute_nwot(net=m, inputs=inputs, targets=targets)
+        print(f'The score of model is {score}')
+
+        # after init
+        from pplib.predictor.pruners.measures.zen import \
+            network_weight_gaussian_init
+        m = network_weight_gaussian_init(m)
+        score = compute_nwot(net=m, inputs=inputs, targets=targets)
+        print(f'After init The score of model is {score}')
+
+        # after init
+        from pplib.predictor.pruners.measures.zen import \
+            network_weight_gaussian_init
+        m = network_weight_gaussian_init(m)
+        score = compute_nwot(net=m, inputs=inputs, targets=targets)
+        print(f'After init The score of model is {score}')
+
+        # after init
+        from pplib.predictor.pruners.measures.zen import \
+            network_weight_gaussian_init
+        m = network_weight_gaussian_init(m)
+        score = compute_nwot(net=m, inputs=inputs, targets=targets)
+        print(f'After init The score of model is {score}')
+
 
 if __name__ == '__main__':
     unittest.main()

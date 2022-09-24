@@ -177,22 +177,6 @@ class TestNasBench201(TestCase):
 
         print('after delete rand subnet: ', osmutator.random_subnet)
 
-    def test_enlarge_choice(self):
-        model = OneShotNASBench201Network(16, 5)
-        osmutator = OneShotMutator(with_alias=True)
-        osmutator.prepare_from_supernet(model)
-
-        print(osmutator.search_group)
-
-        for i, vs in osmutator.search_group.items():
-            print(i, len(vs), vs[0].choices)
-            # enlarge choice
-            for v in vs:
-                v.enlarge_choice('conv_1x1')
-            print(i, len(vs), vs[0].choices)
-
-        print(osmutator.search_group)
-
 
 if __name__ == '__main__':
     unittest.main()

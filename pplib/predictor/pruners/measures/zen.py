@@ -26,7 +26,6 @@ def network_weight_gaussian_init(net: nn.Module):
                     nn.init.zeros_(m.bias)
             else:
                 continue
-
     return net
 
 

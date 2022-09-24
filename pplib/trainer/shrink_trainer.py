@@ -5,6 +5,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
+import torch.nn as nn
 from mmcv.cnn import get_model_complexity_info
 
 import pplib.utils.utils as utils
@@ -14,6 +15,7 @@ from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
 from pplib.predictor.pruners.measures.nwot import compute_nwot
 from pplib.utils.utils import AvgrageMeter, accuracy
+from pplib.utils.weight_init import constant_init, normal_init
 from .base import BaseTrainer
 from .registry import register_trainer
 
@@ -37,29 +39,6 @@ class NB201Shrinker(object):
         self.candidate_key = {
             'conv_3x3', 'skip_connect', 'conv_1x1', 'avg_pool_3x3'
         }
-
-    def enlarge_operator(self, extend_operators, vis_dict_slice):
-        """each operator is ranked according to its metric score.
-        enlarge the search space by calling ``enlarge_choice`` of oneshotop
-
-        Note: enlarge the operator only once.
-        """
-
-        # sort by metric score
-        extend_operators.sort(
-            key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
-
-        # expand the choice with noise
-        # choose from the best three candidate operation
-        chosen_operator = random.choice(extend_operators[-3:])
-
-        # expand the operator
-        id, choice = chosen_operator
-        groups = self.mutator.search_group[id]
-        for item in groups:
-            item.enlarge_choice(choice)
-
-        return chosen_operator
 
     def expand_operator(self, extend_operators, vis_dict_slice):
         """each operator is ranked according to its metric score.
@@ -267,29 +246,6 @@ class NB201Shrinker(object):
         expand_ops = self.expand_operator(extend_operators, vis_dict_slice)
         self.trainer.logger.info(f'expand ops: {expand_ops}')
 
-    def enlarge(self):
-        # split every single operation in each layer.
-        # travese all of search group.
-        vis_dict_slice: Dict[tuple, dict] = dict()
-        vis_dict: Dict[str, dict] = dict()
-
-        # every single operation
-        extend_operators = []
-        for id, ops in self.mutator.search_group.items():
-            # each group has same type of candidate operations.
-            for choice in ops[0].choices:
-                operator = id, choice
-                vis_dict_slice[operator] = dict()
-                vis_dict_slice[operator]['count'] = 0
-                vis_dict_slice[operator]['metric'] = 0
-                # for example angle
-                vis_dict_slice[operator]['cand_pool'] = []
-                extend_operators.append(operator)
-
-        self.compute_score(extend_operators, vis_dict_slice, vis_dict)
-        enlarge_ops = self.enlarge_operator(extend_operators, vis_dict_slice)
-        self.trainer.logger.info(f'enlarge ops: {enlarge_ops}')
-
 
 @register_trainer
 class NB201ShrinkTrainer(BaseTrainer):
@@ -344,9 +300,6 @@ class NB201ShrinkTrainer(BaseTrainer):
         # evaluate the rank consistency
         self.evaluator = self._build_evaluator(
             num_sample=50, dataset=self.dataset)
-
-        # random initialized supernet
-        self.random_model = copy.deepcopy(self.model)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -501,7 +454,7 @@ class NB201ShrinkTrainer(BaseTrainer):
             # print(f"before shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
 
             if self.expand_times > 0 and self.current_epoch % 5 == 0:
-                self.shrinker.enlarge()
+                self.shrinker.expand()
                 self.expand_times -= 1
 
             # if self.expand_times > 0:
@@ -779,18 +732,29 @@ class NB201ShrinkTrainer(BaseTrainer):
             subnet_flops += choice_flops
         return subnet_flops
 
+    def init_weights(self, model):
+        for name, m in model.named_modules():
+            if isinstance(m, nn.Conv2d):
+                normal_init(m, mean=0, std=0.01)
+            elif isinstance(m, nn.BatchNorm2d):
+                constant_init(m, val=1, bias=0.0001)
+                nn.init.constant_(m.running_mean, 0)
+
     def get_subnet_nwot(self, subnet_dict) -> float:
         """Calculate zenscore based on subnet dict."""
         o = OneShotMutator(with_alias=True)
-        o.prepare_from_supernet(self.random_model)
+        copy_model = copy.deepcopy(self.model)
+        self.init_weights(copy_model)
+        o.prepare_from_supernet(copy_model)
         o.set_subnet(subnet_dict)
 
         # for cifar10,cifar100,imagenet16
         score = compute_nwot(
-            net=self.random_model,
+            net=copy_model,
             inputs=torch.randn(4, 3, 32, 32).to(self.device),
             targets=torch.randn(4).to(self.device))
         del o
+        del copy_model
         return score
 
     def get_subnet_error(self,
@@ -966,16 +930,16 @@ class NB201ShrinkTrainer(BaseTrainer):
         outputs = self.model(inputs)
         loss1 = self._compute_loss(outputs, labels)
         loss1.backward()
-        # flops1 = self.get_subnet_flops(subnet1)
-        nwot1 = self.get_subnet_nwot(subnet1)
+        flops1 = self.get_subnet_flops(subnet1)
+        # nwot1 = self.get_subnet_nwot(subnet1)
 
         # sample the second subnet
         self.mutator.set_subnet(subnet2)
         outputs = self.model(inputs)
         loss2 = self._compute_loss(outputs, labels)
         loss2.backward(retain_graph=True)
-        # flops2 = self.get_subnet_flops(subnet2)
-        nwot2 = self.get_subnet_nwot(subnet2)
+        flops2 = self.get_subnet_flops(subnet2)
+        # nwot2 = self.get_subnet_nwot(subnet2)
 
         # pairwise rank loss
         # lambda settings:
@@ -984,7 +948,7 @@ class NB201ShrinkTrainer(BaseTrainer):
 
         loss3 = (2 *
                  np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(nwot1, nwot2, loss1, loss2))
+                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
         loss3.backward()
 
         return loss2, outputs

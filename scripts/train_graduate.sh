@@ -144,6 +144,14 @@ CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.
 # TODO enlarge every 5 epoch [6 times]
 CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-200_sample-num_enlarge-every-5-epoch --dataset cifar10 --crit ce --lr 0.025 --type uniform
 
+# TODO expand operation with balanced (random) sample strategy.
+CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-expand-random-balanced --dataset cifar10 --crit ce --lr 0.025 --type random
+
+# TODO expand operation with balanced (adaptive) sample strategy.
+CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-expand-adaptive-balanced --dataset cifar10 --crit ce --lr 0.025 --type adaptive
+
+# TODO expand operation with balanced (hamming) sample strategy.
+CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name ssshrinkexpand_nb201_spos_uniform-sampling_exp3.0_flops-guide-metric-expand-hamming-balanced --dataset cifar10 --crit ce --lr 0.025 --type hamming
 
 
 # 第四章 实验3.1 fair sampling cifar10

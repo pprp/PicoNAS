@@ -185,10 +185,7 @@ class OneShotOP(OneShotMutable[str, str]):
         if choice is None:
             return self.forward_all(x)
         else:
-            if isinstance(self._candidate_ops[choice], nn.ModuleList):
-                return random.choice(self._candidate_ops[choice])(x)
-            else:
-                return self._candidate_ops[choice](x)
+            return self._candidate_ops[choice](x)
 
     def forward_all(self, x: Any) -> Tensor:
         """Forward all choices. Used to calculate FLOPs.
@@ -263,22 +260,6 @@ class OneShotOP(OneShotMutable[str, str]):
 
         update_dict = {new_key: copy.deepcopy(self._candidate_ops[choice])}
         self._candidate_ops.update(update_dict)
-
-    def enlarge_choice(self, choice: CHOICE_TYPE) -> None:
-        """Expand the search space in depth."""
-        assert choice in self._candidate_ops.keys(),  \
-            f'current choice: {choice} is not avaliable ' \
-            f'in {self._candidate_ops.keys()}'
-
-        if isinstance(self._candidate_ops[choice], nn.ModuleList):
-            # TODO fix: add mean of checkpoint
-            self._candidate_ops[choice].append(
-                copy.deepcopy(self._candidate_ops[choice][-1]))
-        else:
-            self._candidate_ops[choice] = nn.ModuleList([
-                self._candidate_ops[choice],
-                copy.deepcopy(self._candidate_ops[choice])
-            ])
 
 
 class OneShotProbOP(OneShotOP):
