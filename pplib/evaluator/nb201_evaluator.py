@@ -9,7 +9,8 @@ from pplib.nas.mutators import DiffMutator, OneShotMutator
 # from pplib.predictor.pruners.measures.synflow import compute_synflow_per_weight
 from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.get_dataset_api import get_dataset_api
-from pplib.utils.rank_consistency import kendalltau, pearson, spearman
+from pplib.utils.rank_consistency import (kendalltau, pearson, rank_difference,
+                                          spearman)
 
 
 class NB201Evaluator(Evaluator):
@@ -141,11 +142,13 @@ class NB201Evaluator(Evaluator):
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)
+        rd = rank_difference(true_indicator_list, generated_indicator_list)
 
         print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd}."
+        )
 
-        return kt, ps, sp
+        return kt, ps, sp, rd
 
     def compute_rank_by_flops(self) -> List:
         """compute rank consistency based on flops."""
@@ -175,11 +178,13 @@ class NB201Evaluator(Evaluator):
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)
+        rd = rank_difference(true_indicator_list, generated_indicator_list)
 
         print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd}."
+        )
 
-        return kt, ps, sp
+        return kt, ps, sp, rd
 
     def query_zerometric(self, subnet_cfg: dict) -> float:
         self.trainer.mutator.set_subnet(subnet_cfg)
@@ -246,11 +251,13 @@ class NB201Evaluator(Evaluator):
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)
+        rd = rank_difference(true_indicator_list, generated_indicator_list)
 
         print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd}."
+        )
 
-        return kt, ps, sp
+        return kt, ps, sp, rd
 
     def compute_rank_based_on_nwot(self) -> List:
         """compute rank consistency based on nwot."""
@@ -288,8 +295,10 @@ class NB201Evaluator(Evaluator):
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)
+        rd = rank_difference(true_indicator_list, generated_indicator_list)
 
         print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd}."
+        )
 
-        return kt, ps, sp
+        return kt, ps, sp, rd

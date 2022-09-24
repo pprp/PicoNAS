@@ -548,17 +548,21 @@ class NB201ShrinkTrainer(BaseTrainer):
             #     print(f'k:{k} == > v:{v}')
             # print(f"before shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
 
-            # if self.expand_times > 0 and self.current_epoch % 5 == 0:
-            #     self.shrinker.expand()
-            #     self.expand_times -= 1
-
-            if self.expand_times > 0:
+            if self.expand_times > 0 and self.current_epoch % 5 == 0:
                 self.shrinker.expand()
                 self.expand_times -= 1
-            else:
-                if self.shrink_times > 0:
-                    self.shrinker.shrink()
-                    self.shrink_times -= 1
+
+            # if self.expand_times > 0:
+            #     self.shrinker.expand()
+            #     self.expand_times -= 1
+            # else:
+            #     if self.shrink_times > 0:
+            #         self.shrinker.shrink()
+            #         self.shrink_times -= 1
+
+            # if self.shrink_times > 0:
+            #     self.shrinker.shrink()
+            #     self.shrink_times -= 1
 
             # if calc_search_space_size(self.mutator.search_group) > 1296:
             # self.shrinker.shrink()
@@ -727,7 +731,7 @@ class NB201ShrinkTrainer(BaseTrainer):
 
             if epoch % 5 == 0:
                 assert self.evaluator is not None
-                kt, ps, sp = self.evaluator.compute_rank_consistency(
+                kt, ps, sp, rd = self.evaluator.compute_rank_consistency(
                     val_loader, self.mutator)
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch)
@@ -735,6 +739,8 @@ class NB201ShrinkTrainer(BaseTrainer):
                     'RANK/pearson', ps, global_step=self.current_epoch)
                 self.writer.add_scalar(
                     'RANK/spearman', sp, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'RANK/rank_diff', rd, global_step=self.current_epoch)
 
             self.writer.add_scalar(
                 'EPOCH_LOSS/train_epoch_loss',
