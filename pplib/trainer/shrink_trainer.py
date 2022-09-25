@@ -37,33 +37,6 @@ class NB201Shrinker(object):
         self.mutator = trainer.mutator
         self.sample_num = sample_num
         self.per_stage_drop_num = per_stage_drop_num
-        # for single path one shot search
-        self.candidate_key = {
-            'conv_3x3', 'skip_connect', 'conv_1x1', 'avg_pool_3x3'
-        }
-
-    # def expand_operator(self, extend_operators, vis_dict_slice):
-    #     """each operator is ranked according to its metric score.
-    #     expand the search space by calling ``expand_choice`` of oneshotop.
-
-    #     Note: expand only once.
-    #     """
-
-    #     # sort by metric score
-    #     extend_operators.sort(
-    #         key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
-
-    #     # expand the choice with noise
-    #     # choose from the best three candidate operation
-    #     chosen_operator = random.choice(extend_operators[-3:])
-
-    #     # expand the operator
-    #     id, choice = chosen_operator
-    #     groups = self.mutator.search_group[id]
-    #     for item in groups:
-    #         item.expand_choice(choice)
-
-    #     return chosen_operator
 
     def expand_operator(self, extend_operators, vis_dict_slice):
         """each operator is ranked according to its metric score."""
@@ -73,14 +46,13 @@ class NB201Shrinker(object):
             key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
         # drop operators whose ranking fall at the tail.
-        num, drop_ops = 0, []
+        num = 0
         for i, operator in enumerate(extend_operators):
             # score of current operator is lowest and should be pruned.
             id, choice = operator
             drop_legal = False
 
             # expand choice
-            expand_choice = None
             expand_ops = []
 
             # at lease one operator should be reserved for each layer.
@@ -90,20 +62,18 @@ class NB201Shrinker(object):
                 if idx_ == id:
                     # if find a better operator, we can remove lowest one.
                     drop_legal = True
-                    expand_choice = choice_
                     expand_ops.append(extend_operators[j])
 
             if drop_legal:
-                print(
-                    f'no.{num + 1} expand_op={expand_ops} metric={vis_dict_slice[expand_ops[-1]]["metric"]}'
+                expand_op = random.choice(expand_ops)
+                self.trainer.logger.info(
+                    f'no.{num + 1} expand_op={expand_op} metric={vis_dict_slice[expand_op]["metric"]}'
                 )
 
-                drop_ops.append(operator)
-                # remove from search space
                 groups = self.mutator.search_group[id]
                 for item in groups:
                     # expand search space
-                    item.expand_choice(expand_choice)
+                    item.expand_choice(expand_op[1])
                 num += 1
             if num >= self.per_stage_drop_num:
                 break
@@ -123,9 +93,6 @@ class NB201Shrinker(object):
             id, choice = operator
             drop_legal = False
 
-            # expand choice
-            expand_choice = None
-
             # at lease one operator should be reserved for each layer.
             for j in range(i + 1, len(extend_operators)):
                 # get current extended operations
@@ -133,10 +100,9 @@ class NB201Shrinker(object):
                 if idx_ == id:
                     # if find a better operator, we can remove lowest one.
                     drop_legal = True
-                    expand_choice = choice_
 
             if drop_legal:
-                print(
+                self.trainer.logger.info(
                     f'no.{num + 1} drop_op={operator} metric={vis_dict_slice[operator]["metric"]}'
                 )
 
@@ -367,8 +333,12 @@ class NB201ShrinkTrainer(BaseTrainer):
         self.logger.info(f'Current type of nb201 trainer is: {self.type}.')
 
         self.shrinker = NB201Shrinker(self)
-        self.expand_times = 6
-        self.shrink_times = 3
+        self.expand_times = kwargs[
+            'expand_times'] if 'expand_times' in kwargs else 6
+        self.shrink_times = kwargs[
+            'shrink_times'] if 'shrink_times' in kwargs else 3
+        self.every_n_times = kwargs[
+            'every_n_times'] if 'every_n_times' in kwargs else 5
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample, dataset)
@@ -544,31 +514,13 @@ class NB201ShrinkTrainer(BaseTrainer):
             else:
                 loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
-            # for k, v in self.mutator.search_group.items():
-            #     print(f'k:{k} == > v:{v}')
-            # print(f"before shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
-
-            if self.expand_times > 0 and self.current_epoch % 5 == 0:
+            if self.expand_times > 0 and self.current_epoch % self.every_n_times == 0:
                 self.shrinker.expand()
                 self.expand_times -= 1
 
-            # if self.expand_times > 0:
-            #     self.shrinker.expand()
-            #     self.expand_times -= 1
-            # else:
-            #     if self.shrink_times > 0:
-            #         self.shrinker.shrink()
-            #         self.shrink_times -= 1
-
-            # if self.shrink_times > 0:
-            #     self.shrinker.shrink()
-            #     self.shrink_times -= 1
-
-            # if calc_search_space_size(self.mutator.search_group) > 1296:
-            # self.shrinker.shrink()
-            # print(f"after shrink ss size: {calc_search_space_size(self.mutator.search_group)}")
-            # for k, v in self.mutator.search_group.items():
-            #     print(f'k:{k} == > v:{v}')
+            if self.shrink_times > 0 and self.current_epoch % self.every_n_times == 0:
+                self.shrinker.shrink()
+                self.shrink_times -= 1
 
             # clear grad
             for p in self.model.parameters():

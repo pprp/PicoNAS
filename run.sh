@@ -80,4 +80,49 @@ OMP_NUM_THREADS=1
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer --log_name test_shrink_trainer --dataset cifar10 --crit ce --lr 0.025 --type random
 
 # test nb301 trainer
-python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench301Network --trainer_name NB301Trainer --log_name test_nb301_trainer --dataset cifar10 --crit ce --lr 0.025 --type random
+# python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench301Network --trainer_name NB301Trainer --log_name test_nb301_trainer --dataset cifar10 --crit ce --lr 0.025 --type random
+
+# TODO expand/shrink with balanced sample by flops [baseline]
+CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_baseline --expand_times 0 --shrink_times 0
+
+####################################only expand##########################################
+
+# TODO expand with balanced sample by flops [expand-2-times]
+CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_expand-2-times --expand_times 2 --shrink_times 0
+
+# TODO expand with balanced sample by flops [expand-4-times]
+CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_expand-4-times --expand_times 4 --shrink_times 0
+
+# TODO expand with balanced sample by flops [expand-8-times]
+CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_expand-8-times --expand_times 8 --shrink_times 0
+
+# TODO expand with balanced sample by flops [expand-16-times]
+CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_expand-16-times --expand_times 16 --shrink_times 0
+
+###################################only shrink############################################
+
+# TODO shrink with balanced sample by flops [shrink-2-times]
+CUDA_VISIBLE_DEVICES=1 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_shrink-2-times --expand_times 0 --shrink_times 2
+
+# TODO shrink with balanced sample by flops [shrink-4-times]
+CUDA_VISIBLE_DEVICES=1 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_shrink-4-times --expand_times 0 --shrink_times 4
+
+# TODO shrink with balanced sample by flops [shrink-8-times]
+CUDA_VISIBLE_DEVICES=2 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_shrink-8-times --expand_times 0 --shrink_times 8
+
+# TODO shrink with balanced sample by flops [shrink-16-times]
+CUDA_VISIBLE_DEVICES=2 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_shrink-16-times --expand_times 0 --shrink_times 16
+
+##################################shrink and expand########################################
+
+# TODO shrink and expand with balanced sample by flops [s4-e4]
+CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_sn-en --expand_times 4 --shrink_times 4
+
+# TODO shrink and expand with balanced sample by flops [s4-e8]
+CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_sn-en --expand_times 8 --shrink_times 4
+
+# TODO shrink and expand with balanced sample by flops [s8-e4]
+CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_sn-en --expand_times 4 --shrink_times 8
+
+# TODO shrink and expand with balanced sample by flops [s8-e8]
+CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_sn-en --expand_times 8 --shrink_times 8
