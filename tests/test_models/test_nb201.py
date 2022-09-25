@@ -19,22 +19,13 @@ class TestNasBench201(TestCase):
         random_subnet_dict = osmutator.random_subnet
         alias2group_id = osmutator.alias2group_id
 
-        mapping = {
-            'conv_3x3': 'nor_conv_3x3',
-            'skip_connect': 'skip_connect',
-            'conv_1x1': 'nor_conv_1x1',
-            'avg_pool_3x3': 'avg_pool_3x3',
-            'none': 'none',
-        }
-
         arch_string = ''
         for i, (k, v) in enumerate(random_subnet_dict.items()):
             # v = 'conv_3x3'
-            mapped_op_name = mapping[v]
             alias_name = list(alias2group_id.keys())[k]
             rank = alias_name.split('_')[1][-1]  # 0 or 1 or 2
             arch_string += '|'
-            arch_string += f'{mapped_op_name}~{rank}'
+            arch_string += f'{v}~{rank}'
             arch_string += '|'
             if i in [0, 2]:
                 arch_string += '+'

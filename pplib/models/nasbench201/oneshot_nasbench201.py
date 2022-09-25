@@ -262,7 +262,7 @@ class NASBench201Cell(nn.Module):
                         bn_momentum,
                         bn_track_running_stats,
                     ),
-                    'conv_3x3':
+                    'nor_conv_3x3':
                     ReLUConvBN(
                         C_in,
                         C_out,
@@ -274,7 +274,7 @@ class NASBench201Cell(nn.Module):
                         bn_momentum,
                         bn_track_running_stats,
                     ),
-                    'conv_1x1':
+                    'nor_conv_1x1':
                     ReLUConvBN(
                         C_in,
                         C_out,
