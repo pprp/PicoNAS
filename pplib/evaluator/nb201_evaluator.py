@@ -1,6 +1,7 @@
 import math
 from typing import List, Union
 
+import numpy as np
 import torch
 from torch import Tensor
 
@@ -117,6 +118,7 @@ class NB201Evaluator(Evaluator):
         """compute rank consistency of different types of indicators."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
+        flops_indicator_list: List[float] = []
 
         self.trainer.logger.info('Begin to compute rank consistency...')
         num_sample = 50 if self.num_sample is None else self.num_sample
@@ -139,16 +141,39 @@ class NB201Evaluator(Evaluator):
             results = self.trainer.metric_score(dataloader, random_subnet_dict)
             generated_indicator_list.append(results)
 
+            # get flops
+            flops_result = self.query_result(genotype, cost_key='flops')
+            flops_indicator_list.append(flops_result)
+
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)
-        rd = rank_difference(true_indicator_list, generated_indicator_list)
+
+        # compute rank diff in 5 section with different flops range.
+        sorted_idx_by_flops = np.array(flops_indicator_list).argsort()
+
+        # compute splited index by flops
+        splited_idx_by_flops = [
+            sorted_idx_by_flops[i * 5:(i + 1) * 5]
+            for i in range(int(len(sorted_idx_by_flops) / 5) + 1)
+            if (sorted_idx_by_flops[i * 5:(i + 1) * 5]).any()
+        ]
+
+        true_indicator_list = np.array(true_indicator_list)
+        generated_indicator_list = np.array(generated_indicator_list)
+
+        rd_list = []
+        for i in range(5):
+            current_idx = np.array(splited_idx_by_flops[i])
+            tmp_rd = rank_difference(true_indicator_list[current_idx],
+                                     generated_indicator_list[current_idx])
+            rd_list.append(tmp_rd)
 
         print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd}."
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd_list}."
         )
 
-        return kt, ps, sp, rd
+        return kt, ps, sp, rd_list
 
     def compute_rank_by_flops(self) -> List:
         """compute rank consistency based on flops."""

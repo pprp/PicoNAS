@@ -342,7 +342,7 @@ class NB201ShrinkTrainer(BaseTrainer):
 
         # evaluate the rank consistency
         self.evaluator = self._build_evaluator(
-            num_sample=50, dataset=self.dataset)
+            num_sample=100, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -739,8 +739,16 @@ class NB201ShrinkTrainer(BaseTrainer):
                     'RANK/pearson', ps, global_step=self.current_epoch)
                 self.writer.add_scalar(
                     'RANK/spearman', sp, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/rank_diff', rd, global_step=self.current_epoch)
+
+                if isinstance(rd, list):
+                    for i, r in enumerate(rd):
+                        self.writer.add_scalar(
+                            f'RANK/rank_diff_{(i+1)*20}%',
+                            r,
+                            global_step=self.current_epoch)
+                else:
+                    self.writer.add_scalar(
+                        'RANK/rank_diff', rd, global_step=self.current_epoch)
 
             self.writer.add_scalar(
                 'EPOCH_LOSS/train_epoch_loss',

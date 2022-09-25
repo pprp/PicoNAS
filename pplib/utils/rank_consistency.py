@@ -35,8 +35,11 @@ def spearman(true_vector, pred_vector):
 
 
 def rank_difference(true_vector, pred_vector):
-    # assert true_vector
-    assert len(true_vector) == len(pred_vector)
+    """Compute the underestimate degrade.
+    ranging from 0 to 1:
+        RD > 0.5: supernet underestimate the performance.
+        RD < 0.5: supernet overestimate the performance.
+    """
 
     def get_rank(vector):
         v = np.array(vector)
@@ -55,6 +58,12 @@ def rank_difference(true_vector, pred_vector):
 
     sum_rd = 0.
     for i in range(length):
-        sum_rd += rank1[i] - rank2[i]
+        sum_rd += 1 if rank1[i] - rank2[i] > 0 else 0
 
     return sum_rd / length
+
+
+if __name__ == '__main__':
+    a = np.array([np.random.randn() for _ in range(100)])
+    b = np.array([np.random.randn() for _ in range(100)])
+    print(rank_difference(a, b))
