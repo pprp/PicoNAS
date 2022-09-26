@@ -104,9 +104,15 @@ def get_args():
         type=str,
         default='flops',
         help='can be used in the ablation study')
-    parser.add_argument('--shrink_times', type=int, default=3, help='shrink times')
-    parser.add_argument('--expand_times', type=int, default=6, help='expand times')
-    parser.add_argument('--every_n_times', type=int, default=5, help='shrink or expand every n times')
+    parser.add_argument(
+        '--shrink_times', type=int, default=3, help='shrink times')
+    parser.add_argument(
+        '--expand_times', type=int, default=6, help='expand times')
+    parser.add_argument(
+        '--every_n_times',
+        type=int,
+        default=5,
+        help='shrink or expand every n times')
 
     return parser.parse_args()
 
@@ -175,7 +181,7 @@ def main():
         log_name=cfg.log_name,
         # kwargs
         type=cfg.type,
-        shrink_times=cfg.shrink_times, 
+        shrink_times=cfg.shrink_times,
         expand_times=cfg.expand_times,
         every_n_times=cfg.every_n_times,
     )

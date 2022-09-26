@@ -3,6 +3,7 @@ import math
 
 import numpy as np
 import scipy.stats
+from scipy.stats import stats
 
 
 def pearson(true_vector, pred_vector):
@@ -36,9 +37,12 @@ def spearman(true_vector, pred_vector):
 
 def rank_difference(true_vector, pred_vector):
     """Compute the underestimate degrade.
+    RD = ri - ni
+    ri: true rank
+    ni: estimated rank
     ranging from 0 to 1:
-        RD > 0.5: supernet underestimate the performance.
-        RD < 0.5: supernet overestimate the performance.
+        RD > 0: supernet underestimate the performance.
+        RD < 0: supernet overestimate the performance.
     """
 
     def get_rank(vector):
@@ -58,12 +62,66 @@ def rank_difference(true_vector, pred_vector):
 
     sum_rd = 0.
     for i in range(length):
-        sum_rd += 1 if rank1[i] - rank2[i] > 0 else 0
+        sum_rd += rank1[i] - rank2[i]
 
     return sum_rd / length
 
 
+# Calculate the BR@K, WR@K
+def minmax_n_at_k(predict_scores,
+                  true_scores,
+                  ks=[0.001, 0.005, 0.01, 0.05, 0.10, 0.20]):
+    true_scores = np.array(true_scores)
+    predict_scores = np.array(predict_scores)
+    num_archs = len(true_scores)
+    true_ranks = np.zeros(num_archs)
+    true_ranks[np.argsort(true_scores)] = np.arange(num_archs)[::-1]
+    predict_best_inds = np.argsort(predict_scores)[::-1]
+    minn_at_ks = []
+    for k in ks:
+        ranks = true_ranks[predict_best_inds[:int(k * len(true_scores))]]
+        if len(ranks) < 1:
+            continue
+        minn = int(np.min(ranks)) + 1
+        maxn = int(np.max(ranks)) + 1
+        minn_at_ks.append(
+            (k, minn, float(minn) / num_archs, maxn, float(maxn) / num_archs))
+    return minn_at_ks
+
+
+# Calculate the P@topK, P@bottomK, and Kendall-Tau in predicted topK/bottomK
+def p_at_tb_k(predict_scores,
+              true_scores,
+              ratios=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]):
+    predict_scores = np.array(predict_scores)
+    true_scores = np.array(true_scores)
+    predict_inds = np.argsort(predict_scores)[::-1]
+    num_archs = len(predict_scores)
+    true_ranks = np.zeros(num_archs)
+    true_ranks[np.argsort(true_scores)] = np.arange(num_archs)[::-1]
+    patks = []
+    for ratio in ratios:
+        k = int(num_archs * ratio)
+        if k < 1:
+            continue
+        top_inds = predict_inds[:k]
+        bottom_inds = predict_inds[num_archs - k:]
+        p_at_topk = len(np.where(true_ranks[top_inds] < k)[0]) / float(k)
+        p_at_bottomk = len(
+            np.where(true_ranks[bottom_inds] >= num_archs - k)[0]) / float(k)
+        kd_at_topk = stats.kendalltau(predict_scores[top_inds],
+                                      true_scores[top_inds]).correlation
+        kd_at_bottomk = stats.kendalltau(predict_scores[bottom_inds],
+                                         true_scores[bottom_inds]).correlation
+        # [ratio, k, P@topK, P@bottomK, KT in predicted topK, KT in predicted bottomK]
+        patks.append(
+            (ratio, k, p_at_topk, p_at_bottomk, kd_at_topk, kd_at_bottomk))
+    return patks
+
+
 if __name__ == '__main__':
-    a = np.array([np.random.randn() for _ in range(100)])
-    b = np.array([np.random.randn() for _ in range(100)])
+    a = np.array([np.random.randn() for _ in range(6)])
+    b = np.array([np.random.randn() for _ in range(6)])
     print(rank_difference(a, b))
+    print(p_at_tb_k(a, b))
+    print(minmax_n_at_k(a, b))
