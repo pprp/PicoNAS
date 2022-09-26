@@ -130,3 +130,7 @@ CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos
 
 ##################################### rank difference #########################################
 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type flops  --log_name sspace-shrink-expand_nb201_balanced-sampling_sn-en --expand_times 8 --shrink_times 8
+
+
+#################### ANYALSE with spos ##############################
+CUDA_VISIBLE_DEVICES=0 python tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.025 --type uniform  --log_name anaylse_nb201_spos_exp1.0 --expand_times 0 --shrink_times 0

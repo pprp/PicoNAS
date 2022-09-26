@@ -62,14 +62,14 @@ def rank_difference(true_vector, pred_vector):
 
     sum_rd = 0.
     for i in range(length):
-        sum_rd += rank1[i] - rank2[i]
+        sum_rd += rank1[i] - rank2[i] if rank1[i] > rank2[i] else 0
 
     return sum_rd / length
 
 
 # Calculate the BR@K, WR@K
-def minmax_n_at_k(predict_scores,
-                  true_scores,
+def minmax_n_at_k(true_scores,
+                  predict_scores,
                   ks=[0.001, 0.005, 0.01, 0.05, 0.10, 0.20]):
     true_scores = np.array(true_scores)
     predict_scores = np.array(predict_scores)
@@ -90,8 +90,8 @@ def minmax_n_at_k(predict_scores,
 
 
 # Calculate the P@topK, P@bottomK, and Kendall-Tau in predicted topK/bottomK
-def p_at_tb_k(predict_scores,
-              true_scores,
+def p_at_tb_k(true_scores,
+              predict_scores,
               ratios=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]):
     predict_scores = np.array(predict_scores)
     true_scores = np.array(true_scores)
@@ -122,7 +122,7 @@ def p_at_tb_k(predict_scores,
 if __name__ == '__main__':
     a = np.array([np.random.randn() for _ in range(100)])
     b = np.array([np.random.randn() for _ in range(100)])
-    
+
     print(rank_difference(a[:20], b[:20]), rank_difference(a[20:40], b[20:40]))
     print(p_at_tb_k(a, b))
     print(minmax_n_at_k(a, b))

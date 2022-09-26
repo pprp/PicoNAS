@@ -10,8 +10,8 @@ from pplib.nas.mutators import DiffMutator, OneShotMutator
 # from pplib.predictor.pruners.measures.synflow import compute_synflow_per_weight
 from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.get_dataset_api import get_dataset_api
-from pplib.utils.rank_consistency import (kendalltau, pearson, rank_difference,
-                                          spearman)
+from pplib.utils.rank_consistency import (kendalltau, minmax_n_at_k, p_at_tb_k,
+                                          pearson, rank_difference, spearman)
 
 
 class NB201Evaluator(Evaluator):
@@ -140,6 +140,9 @@ class NB201Evaluator(Evaluator):
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)
+        minn_at_ks = minmax_n_at_k(true_indicator_list,
+                                   generated_indicator_list)
+        patks = p_at_tb_k(true_indicator_list, generated_indicator_list)
 
         # compute rank diff in 5 section with different flops range.
         sorted_idx_by_flops = np.array(flops_indicator_list).argsort()
@@ -155,7 +158,7 @@ class NB201Evaluator(Evaluator):
         generated_indicator_list = np.array(generated_indicator_list)
 
         rd_list = []
-        for i in range(5):
+        for i in range(len(sorted_idx_by_flops) // 5):
             current_idx = np.array(splited_idx_by_flops[i])
             tmp_rd = rank_difference(true_indicator_list[current_idx],
                                      generated_indicator_list[current_idx])
@@ -165,7 +168,7 @@ class NB201Evaluator(Evaluator):
             f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd_list}."
         )
 
-        return kt, ps, sp, rd_list
+        return kt, ps, sp, rd_list, minn_at_ks, patks
 
     def compute_rank_by_flops(self) -> List:
         """compute rank consistency based on flops."""
