@@ -120,8 +120,9 @@ def p_at_tb_k(predict_scores,
 
 
 if __name__ == '__main__':
-    a = np.array([np.random.randn() for _ in range(6)])
-    b = np.array([np.random.randn() for _ in range(6)])
-    print(rank_difference(a, b))
+    a = np.array([np.random.randn() for _ in range(100)])
+    b = np.array([np.random.randn() for _ in range(100)])
+    
+    print(rank_difference(a[:20], b[:20]), rank_difference(a[20:40], b[20:40]))
     print(p_at_tb_k(a, b))
     print(minmax_n_at_k(a, b))

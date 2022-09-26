@@ -16,7 +16,7 @@ from fvcore.common.checkpoint import PeriodicCheckpointer
 from pplib.nas.search_spaces.core.graph import Graph
 from pplib.nas.search_spaces.core.query_metrics import Metric
 from pplib.utils import utils
-from pplib.utils.logging import log_every_n_seconds, log_first_n
+from pplib.utils.loggings import log_every_n_seconds, log_first_n
 
 # from .additional_primitives import DropPathWrapper
 

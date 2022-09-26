@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from pplib.trainer.nb201_trainer import NB201Trainer
-from pplib.utils.logging import get_logger
+from pplib.utils.loggings import get_logger
 
 torch.manual_seed(0)
 torch.cuda.manual_seed_all(0)

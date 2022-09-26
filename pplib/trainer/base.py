@@ -11,7 +11,7 @@ from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
 import pplib.utils.utils as utils
-from pplib.utils.logging import get_logger
+from pplib.utils.loggings import get_logger
 from pplib.utils.utils import AvgrageMeter, accuracy
 
 

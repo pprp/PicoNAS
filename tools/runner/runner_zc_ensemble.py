@@ -7,7 +7,7 @@ from pplib.core.optims import Bananas, Npenas
 from pplib.nas.search_spaces import get_search_space
 from pplib.trainer import ZCTrainer
 from pplib.utils import get_zc_benchmark_api, utils
-from pplib.utils.logging import get_logger
+from pplib.utils.loggings import get_logger
 
 config = utils.get_config_from_args()
 

@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-from pplib.utils.logging import get_logger
+from pplib.utils.loggings import get_logger
 from .genotypes import GENOTYPES
 from .ops import OPS, FactorizedReduce, Identity, ReLUConvBN
 

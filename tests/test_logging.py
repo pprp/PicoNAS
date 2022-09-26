@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pplib.utils.logging import get_logger, print_log
+from pplib.utils.loggings import get_logger, print_log
 
 if platform.system() == 'Windows':
     import regex as re

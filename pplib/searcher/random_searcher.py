@@ -1,7 +1,7 @@
 import torch
 
 from pplib.trainer import NB201Trainer
-from pplib.utils.logging import get_logger
+from pplib.utils.loggings import get_logger
 
 
 class RandomSearcher(object):

@@ -7,7 +7,7 @@ from pplib.datasets.data_simmim import build_loader_simmim
 from pplib.evaluator import NATSEvaluator
 from pplib.models.nats.nats_supernet import MAESupernetNATS
 from pplib.trainer.nats_trainer import MAENATSTrainer
-from pplib.utils.logging import get_logger
+from pplib.utils.loggings import get_logger
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('rank evaluation')
