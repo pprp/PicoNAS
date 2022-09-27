@@ -9,6 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import get_model_complexity_info
 from torch import Tensor
+from torch.optim import lr_scheduler
+
 
 import pplib.utils.utils as utils
 from pplib.core.losses import PairwiseRankLoss
@@ -754,7 +756,10 @@ class NB201ShrinkTrainer(BaseTrainer):
                 val_loss,
                 global_step=self.current_epoch)
 
-            self.scheduler.step()
+            if isinstance(self.scheduler, lr_scheduler.ReduceLROnPlateau):
+                self.scheduler.step(val_loss)
+            else:
+                self.scheduler.step()
 
         total_time = time.time() - total_start_time
 
