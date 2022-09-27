@@ -67,10 +67,8 @@ def rank_difference(true_vector, pred_vector):
     return sum_rd / length
 
 
-# Calculate the BR@K, WR@K
-def minmax_n_at_k(true_scores,
-                  predict_scores,
-                  ks=[0.001, 0.005, 0.01, 0.05, 0.10, 0.20]):
+# Calculate the BR@K, WR@K [0-1]
+def minmax_n_at_k(true_scores, predict_scores, ks=[0.01, 0.05, 0.10, 0.50]):
     true_scores = np.array(true_scores)
     predict_scores = np.array(predict_scores)
     num_archs = len(true_scores)
@@ -90,9 +88,8 @@ def minmax_n_at_k(true_scores,
 
 
 # Calculate the P@topK, P@bottomK, and Kendall-Tau in predicted topK/bottomK
-def p_at_tb_k(true_scores,
-              predict_scores,
-              ratios=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]):
+# [0-1]
+def p_at_tb_k(true_scores, predict_scores, ratios=[0.01, 0.05, 0.1, 0.5]):
     predict_scores = np.array(predict_scores)
     true_scores = np.array(true_scores)
     predict_inds = np.argsort(predict_scores)[::-1]

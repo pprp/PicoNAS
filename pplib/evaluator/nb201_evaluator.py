@@ -148,17 +148,19 @@ class NB201Evaluator(Evaluator):
         sorted_idx_by_flops = np.array(flops_indicator_list).argsort()
 
         # compute splited index by flops
+        range_length = len(sorted_idx_by_flops) // 5
         splited_idx_by_flops = [
-            sorted_idx_by_flops[i * 5:(i + 1) * 5]
-            for i in range(int(len(sorted_idx_by_flops) / 5) + 1)
-            if (sorted_idx_by_flops[i * 5:(i + 1) * 5]).any()
+            sorted_idx_by_flops[i * range_length:(i + 1) * range_length]
+            for i in range(int(len(sorted_idx_by_flops) / range_length) + 1)
+            if (sorted_idx_by_flops[i * range_length:(i + 1) *
+                                    range_length]).any()
         ]
 
         true_indicator_list = np.array(true_indicator_list)
         generated_indicator_list = np.array(generated_indicator_list)
 
         rd_list = []
-        for i in range(len(sorted_idx_by_flops) // 5):
+        for i in range(len(splited_idx_by_flops)):
             current_idx = np.array(splited_idx_by_flops[i])
             tmp_rd = rank_difference(true_indicator_list[current_idx],
                                      generated_indicator_list[current_idx])
