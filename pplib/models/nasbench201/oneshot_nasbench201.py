@@ -438,6 +438,7 @@ class OneShotNASBench201Network(nn.Module):
         self.lastact = nn.Sequential(
             nn.BatchNorm2d(C_prev, momentum=self.bn_momentum),
             nn.ReLU(inplace=True))
+        self.dropout = nn.Dropout(0.1)
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(C_prev, self.num_labels)
 
@@ -449,6 +450,7 @@ class OneShotNASBench201Network(nn.Module):
         out = self.lastact(feature)
         out = self.global_pooling(out)
         out = out.view(out.size(0), -1)
+        out = self.dropout(out)
         logits = self.classifier(out)
         return logits
 

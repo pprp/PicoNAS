@@ -32,7 +32,7 @@ def get_args():
         help='path to the dataset')
 
     parser.add_argument(
-        '--seed', type=int, default=42, help='seed of experiments')
+        '--seed', type=int, default=20, help='seed of experiments')
 
     parser.add_argument(
         '--model_name',

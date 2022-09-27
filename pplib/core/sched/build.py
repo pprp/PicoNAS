@@ -49,6 +49,13 @@ def build_scheduler(args, optimizer):
             step_size_up=15,
             step_size_down=args.epochs - 15,
         )
+    elif args.sched == 'plateau':
+        scheduler = lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode='min',
+            patience=30,
+            factor=0.5,
+        )
     else:
         raise 'Not Implemented.'
 

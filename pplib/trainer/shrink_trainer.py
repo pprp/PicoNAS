@@ -522,6 +522,8 @@ class NB201ShrinkTrainer(BaseTrainer):
                 self.shrinker.shrink()
                 self.shrink_times -= 1
 
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5.0)
+
             # clear grad
             for p in self.model.parameters():
                 if p.grad is not None and p.grad.sum() == 0:
@@ -681,7 +683,9 @@ class NB201ShrinkTrainer(BaseTrainer):
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
-            if epoch % 5 == 0:
+            if (self.current_epoch < 100
+                    and epoch % 10 == 0) or (self.current_epoch >= 100
+                                             and epoch % 100 == 0):
                 assert self.evaluator is not None
                 # BWR@K, P@tbk
                 kt, ps, sp, rd, minn_at_ks, patks = self.evaluator.compute_rank_consistency(
@@ -706,18 +710,18 @@ class NB201ShrinkTrainer(BaseTrainer):
                         global_step=self.current_epoch)
 
                 for k, minn, brk, maxn, wrk in minn_at_ks:
-                    self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{k}_minn',
-                        minn,
-                        global_step=self.current_epoch)
+                    # self.writer.add_scalar(
+                    #     f'ANALYSE/oneshot_{k}_minn',
+                    #     minn,
+                    #     global_step=self.current_epoch)
                     self.writer.add_scalar(
                         f'ANALYSE/oneshot_{k}_BR@K',
                         brk,
                         global_step=self.current_epoch)
-                    self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{k}_maxn',
-                        maxn,
-                        global_step=self.current_epoch)
+                    # self.writer.add_scalar(
+                    #     f'ANALYSE/oneshot_{k}_maxn',
+                    #     maxn,
+                    #     global_step=self.current_epoch)
                     self.writer.add_scalar(
                         f'ANALYSE/oneshot_{k}_WR@K',
                         wrk,
