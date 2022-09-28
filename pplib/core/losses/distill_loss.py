@@ -133,8 +133,7 @@ class DIST(nn.Module):
         inter_loss = inter_class_relation(y_s, y_t)
         intra_loss = intra_class_relation(y_s, y_t)
         if isinstance(beta, Tensor) and isinstance(gamma, Tensor):
-            kd_loss = self.beta.item() * inter_loss + self.gamma.item(
-            ) * intra_loss
+            kd_loss = beta * inter_loss + gamma * intra_loss
         else:
-            kd_loss = self.beta * inter_loss + self.gamma * intra_loss
+            kd_loss = beta * inter_loss + gamma * intra_loss
         return kd_loss

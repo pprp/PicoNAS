@@ -9,9 +9,9 @@ import torchvision.transforms as transforms
 
 import pplib.utils.utils as utils
 from pplib.core import build_optimizer, build_scheduler
-from pplib.core.losses import DIST
+from pplib.core.losses import build_criterion
 from pplib.datasets.transforms.cutout import Cutout
-from pplib.models import build_model
+from pplib.models import resnet20, resnet56
 from pplib.trainer import Distill_Trainer
 from pplib.utils import set_random_seed
 from pplib.utils.config import Config
@@ -181,16 +181,21 @@ def main():
         pin_memory=True,
         num_workers=2)
 
-    model = build_model(cfg.model_name)
+    model_s = resnet20()
+    model_t = resnet56()
 
-    criterion = DIST()
-    optimizer = build_optimizer(model, cfg)
+    # TODO load teacher model
+
+    criterion = build_criterion(cfg.crit)
+    optimizer = build_optimizer(model_s, cfg)
     scheduler = build_scheduler(cfg, optimizer)
 
-    model = model.to(device)
+    model_s = model_s.to(device)
+    model_t = model_t.to(device)
 
     trainer = Distill_Trainer(
-        model=model,
+        model=model_s,
+        teacher=model_t,
         mutator=None,
         optimizer=optimizer,
         criterion=criterion,

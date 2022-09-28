@@ -15,7 +15,7 @@ from pplib.utils.loggings import get_logger
 from pplib.utils.utils import AvgrageMeter, accuracy
 
 
-class BaseTrainer:
+class BaseTrainer(nn.Module):
     """Trainer
 
     Args:
@@ -41,7 +41,7 @@ class BaseTrainer:
                  print_freq: int = 100,
                  dataset: str = 'cifar10',
                  **kwargs):
-
+        super().__init__()
         self.model = model
         self.mutator = mutator
         self.criterion = nn.CrossEntropyLoss(
@@ -168,7 +168,7 @@ class BaseTrainer:
         inputs, labels = batch_inputs
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
-        return self.model(inputs)
+        return self.model(inputs), labels
 
     def _loss(self, batch_inputs) -> Tuple:
         """Forward and compute loss. Low Level API"""
