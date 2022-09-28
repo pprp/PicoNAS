@@ -3,7 +3,6 @@
 import os
 import time
 
-import init_paths  # noqa: F401
 import torch
 from args import get_args
 

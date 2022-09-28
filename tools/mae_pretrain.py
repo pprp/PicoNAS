@@ -3,7 +3,6 @@ import math
 import os
 import random
 
-import init_paths  # noqa: F401
 import numpy as np
 import torch
 import torchvision

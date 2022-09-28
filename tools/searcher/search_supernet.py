@@ -1,7 +1,6 @@
 import argparse
 import time
 
-import init_paths  # noqa: F401
 import torch
 import torch.nn as nn
 from thop import profile

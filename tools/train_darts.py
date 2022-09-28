@@ -2,7 +2,6 @@ import argparse
 import os
 import time
 
-import init_paths  # noqa: F401
 import numpy as np
 import torch
 import torchvision.datasets as dset

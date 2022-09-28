@@ -2,13 +2,17 @@ import argparse
 import os
 import time
 
+import numpy as np
 import torch
+import torchvision.datasets as dset
+import torchvision.transforms as transforms
 
 import pplib.utils.utils as utils
-from pplib.core import build_criterion, build_optimizer, build_scheduler
-from pplib.datasets.build import build_dataloader
+from pplib.core import build_optimizer, build_scheduler
+from pplib.core.losses import DIST
+from pplib.datasets.transforms.cutout import Cutout
 from pplib.models import build_model
-from pplib.trainer import build_trainer
+from pplib.trainer import Distill_Trainer
 from pplib.utils import set_random_seed
 from pplib.utils.config import Config
 
@@ -36,17 +40,17 @@ def get_args():
     parser.add_argument(
         '--model_name',
         type=str,
-        default='OneShotNASBench201Network',
+        default='DiffNASBench201Network',
         help='name of model')
     parser.add_argument(
         '--trainer_name',
         type=str,
-        default='NB201Trainer',
+        default='Darts_Trainer',
         help='name of trainer')
     parser.add_argument(
         '--log_name',
         type=str,
-        default='NB201Trainer',
+        default='test_darts_Darts_Trainer-epoch50',
         help='name of this experiments',
     )
 
@@ -58,8 +62,6 @@ def get_args():
         '--optims', type=str, default='sgd', help='decide the optimizer')
     parser.add_argument(
         '--sched', type=str, default='cosine', help='decide the scheduler')
-    parser.add_argument(
-        '--p_lambda', type=float, default=1, help='decide the scheduler')
 
     parser.add_argument(
         '--classes', type=int, default=10, help='dataset classes')
@@ -67,8 +69,8 @@ def get_args():
     parser.add_argument(
         '--num_choices', type=int, default=4, help='number choices per layer')
     parser.add_argument(
-        '--batch_size', type=int, default=256, help='batch size')
-    parser.add_argument('--epochs', type=int, default=200, help='batch size')
+        '--batch_size', type=int, default=64, help='batch size')
+    parser.add_argument('--epochs', type=int, default=100, help='batch size')
     parser.add_argument(
         '--lr', type=float, default=0.025, help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
@@ -86,7 +88,7 @@ def get_args():
         help='validate and save frequency')
     # ******************************* dataset *******************************#
     parser.add_argument(
-        '--dataset', type=str, default='cifar10', help='path to the dataset')
+        '--dataset', type=str, default='simmim', help='path to the dataset')
     parser.add_argument('--cutout', action='store_true', help='use cutout')
     parser.add_argument(
         '--cutout_length', type=int, default=16, help='cutout length')
@@ -96,15 +98,34 @@ def get_args():
         default=False,
         help='use auto augmentation')
     parser.add_argument(
-        '--resize', action='store_true', default=False, help='use resize')
-    # ******************************* extra options *******************************#
-    parser.add_argument(
-        '--type',
-        type=str,
-        default='flops',
-        help='can be used in the ablation study')
+        '--train_portion',
+        type=float,
+        default=0.5,
+        help='portion of training data')
 
+    parser.add_argument(
+        '--resize', action='store_true', default=False, help='use resize')
     return parser.parse_args()
+
+
+def data_transforms_cifar10(args):
+    CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
+    CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
+
+    train_transform = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
+    ])
+    if args.cutout:
+        train_transform.transforms.append(Cutout(length=args.cutout_length))
+
+    valid_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
+    ])
+    return train_transform, valid_transform
 
 
 def main():
@@ -135,32 +156,40 @@ def main():
     else:
         device = torch.device('cpu')
 
-    train_dataloader = build_dataloader(
-        type='train', dataset=cfg.dataset, config=cfg)
+    train_transform, valid_transform = data_transforms_cifar10(args)
+    train_data = dset.CIFAR10(
+        root=args.data_dir,
+        train=True,
+        download=True,
+        transform=train_transform)
 
-    val_dataloader = build_dataloader(
-        type='val', dataset=cfg.dataset, config=cfg)
+    num_train = len(train_data)
+    indices = list(range(num_train))
+    split = int(np.floor(args.train_portion * num_train))
 
-    if cfg.dataset == 'cifar10':
-        num_classes = 10
-    elif cfg.dataset == 'cifar100':
-        num_classes = 100
-    elif cfg.dataset == 'imagenet16':
-        num_classes = 120
-    else:
-        raise NotImplementedError(
-            f'Not Support Type of datasets: {cfg.dataset}.')
+    train_loader = torch.utils.data.DataLoader(
+        train_data,
+        batch_size=args.batch_size,
+        sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
+        pin_memory=True,
+        num_workers=2)
 
-    model = build_model(cfg.model_name, num_classes=num_classes)
+    val_loader = torch.utils.data.DataLoader(
+        train_data,
+        batch_size=args.batch_size,
+        sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:]),
+        pin_memory=True,
+        num_workers=2)
 
-    criterion = build_criterion(cfg.crit).to(device)
+    model = build_model(cfg.model_name)
+
+    criterion = DIST()
     optimizer = build_optimizer(model, cfg)
     scheduler = build_scheduler(cfg, optimizer)
 
     model = model.to(device)
 
-    trainer = build_trainer(
-        cfg.trainer_name,
+    trainer = Distill_Trainer(
         model=model,
         mutator=None,
         optimizer=optimizer,
@@ -169,13 +198,11 @@ def main():
         searching=True,
         device=device,
         log_name=cfg.log_name,
-        # kwargs
-        type=cfg.type,
     )
 
     start = time.time()
 
-    trainer.fit(train_dataloader, val_dataloader, cfg.epochs)
+    trainer.fit(train_loader, val_loader, cfg.epochs)
 
     utils.time_record(start)
 

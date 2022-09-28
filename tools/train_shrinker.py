@@ -2,7 +2,6 @@ import argparse
 import os
 import time
 
-import init_paths  # noqa: F401
 import torch
 
 import pplib.utils.utils as utils

@@ -1,8 +1,10 @@
 import math
+from typing import Union
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import Tensor
 
 
 class CC(nn.Module):
@@ -94,3 +96,45 @@ class KLDivergence(nn.Module):
         loss = (self.tau**2) * F.kl_div(
             logsoftmax_preds_S, softmax_pred_T, reduction=self.reduction)
         return self.loss_weight * loss
+
+
+def cosine_similarity(a, b, eps=1e-8):
+    return (a * b).sum(1) / (a.norm(dim=1) * b.norm(dim=1) + eps)
+
+
+def pearson_correlation(a, b, eps=1e-8):
+    return cosine_similarity(a - a.mean(1).unsqueeze(1),
+                             b - b.mean(1).unsqueeze(1), eps)
+
+
+def inter_class_relation(y_s, y_t):
+    return 1 - pearson_correlation(y_s, y_t).mean()
+
+
+def intra_class_relation(y_s, y_t):
+    return inter_class_relation(y_s.transpose(0, 1), y_t.transpose(0, 1))
+
+
+class DIST(nn.Module):
+    """https://github.com/hunto/image_classification_sota
+    /blob/d4f15a0494/lib/models/losses/dist_kd.py
+    """
+
+    def __init__(self):
+        super(DIST, self).__init__()
+
+    def forward(self,
+                z_s,
+                z_t,
+                beta: Union[float, Tensor] = 1.0,
+                gamma: Union[float, Tensor] = 1.0):
+        y_s = z_s.softmax(dim=1)
+        y_t = z_t.softmax(dim=1)
+        inter_loss = inter_class_relation(y_s, y_t)
+        intra_loss = intra_class_relation(y_s, y_t)
+        if isinstance(beta, Tensor) and isinstance(gamma, Tensor):
+            kd_loss = self.beta.item() * inter_loss + self.gamma.item(
+            ) * intra_loss
+        else:
+            kd_loss = self.beta * inter_loss + self.gamma * intra_loss
+        return kd_loss
