@@ -11,6 +11,7 @@ from .nats import MAESupernetNATS, SupernetNATS  # noqa: F401
 from .nds import AnyNet, NetworkCIFAR, NetworkImageNet  # noqa: F401
 from .spos import SearchableMobileNet  # noqa: F401
 from .spos import SearchableMAE, SearchableShuffleNetV2  # noqa: F401
+from .unsearchable import resnet20, resnet56  # noqa: F401
 
 __all__ = [
     'MAE_ViT', 'ViT_Classifier', 'MacroBenchmarkSuperNet',
@@ -18,5 +19,5 @@ __all__ = [
     'OneShotNASBench201Network', 'SearchableMobileNet', 'SearchableMAE',
     'BNNAS', 'NASBench101', 'SupernetNATS', 'MAESupernetNATS', 'build_model',
     'OneShotNASBench301Network', 'DiffNASBench301Network', 'AnyNet',
-    'NetworkCIFAR', 'NetworkImageNet'
+    'NetworkCIFAR', 'NetworkImageNet', 'resnet20', 'resnet56'
 ]

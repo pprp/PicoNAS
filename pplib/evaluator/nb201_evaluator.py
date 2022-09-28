@@ -206,7 +206,7 @@ class NB201Evaluator(Evaluator):
             self.trainer.model,
             inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
             targets=None,
-            repeat=5)
+            repeat=1)
         return zenscore
 
     def compute_rank_by_zenscore(self) -> List:
@@ -234,9 +234,9 @@ class NB201Evaluator(Evaluator):
             self.trainer.mutator.set_subnet(random_subnet_dict)
             score = compute_zen_score(
                 self.trainer.model,
-                inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
+                inputs=torch.randn(32, 3, 32, 32).to(self.trainer.device),
                 targets=None,
-                repeat=5)
+                repeat=10)
 
             # get flops
             flops_result = self.query_result(genotype, cost_key='flops')
