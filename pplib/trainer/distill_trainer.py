@@ -282,8 +282,6 @@ class Distill_Trainer(BaseTrainer):
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
-            self.logger.info(f'==> export subnet: {self.search_subnet()}')
-
             self.writer.add_scalar(
                 'EPOCH_LOSS/train_epoch_loss',
                 tr_loss,

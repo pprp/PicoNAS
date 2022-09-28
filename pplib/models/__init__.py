@@ -1,5 +1,6 @@
 from .bnnas import BNNAS  # noqa: F401
 from .build import build_model  # noqa: F401
+from .cnn import resnet20, resnet56  # noqa: F401
 from .macro import MacroBenchmarkSuperNet  # noqa: F401
 from .mae import MAE_ViT, ViT_Classifier  # noqa: F401
 from .nasbench101 import NASBench101
@@ -11,7 +12,6 @@ from .nats import MAESupernetNATS, SupernetNATS  # noqa: F401
 from .nds import AnyNet, NetworkCIFAR, NetworkImageNet  # noqa: F401
 from .spos import SearchableMobileNet  # noqa: F401
 from .spos import SearchableMAE, SearchableShuffleNetV2  # noqa: F401
-from .unsearchable import resnet20, resnet56  # noqa: F401
 
 __all__ = [
     'MAE_ViT', 'ViT_Classifier', 'MacroBenchmarkSuperNet',
