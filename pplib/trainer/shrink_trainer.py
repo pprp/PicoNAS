@@ -11,7 +11,6 @@ from mmcv.cnn import get_model_complexity_info
 from torch import Tensor
 from torch.optim import lr_scheduler
 
-
 import pplib.utils.utils as utils
 from pplib.core.losses import PairwiseRankLoss
 from pplib.evaluator.nb201_evaluator import NB201Evaluator

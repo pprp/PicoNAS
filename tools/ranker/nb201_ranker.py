@@ -140,10 +140,30 @@ def main():
 
     start = time.time()
 
-    evaluator = NB201Evaluator(trainer)
+    evaluator = NB201Evaluator(trainer, num_sample=1000)
 
     # evaluator.compute_rank_consistency_by_zerometric()
-    evaluator.compute_rank_consistency_by_flops()
+    # kt, pt, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_nwot()
+    # kt, pt, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_flops()
+    kt, pt, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_zenscore(
+    )
+    print('==' * 20)
+    print('=>>> overall rank consistency')
+    print(f'Kendall tau: {kt} Pearson coeff: {pt} Spearman: {sp}')
+    print('=>>> overall rank difference')
+    for i, rd in enumerate(rd_list):
+        print(f'RD_{20*i}%: {rd}')
+    print('=>>> BR@K and WR@K')
+    for k, minn, brk, maxn, wrk in minn_at_ks:
+        print(f'{k}_BR@K: {brk} {k}_WR@K: {wrk}')
+    print('=>>> KD@topK and KD@bottomK')
+    for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
+        print(f'{ratio}_KD@topk: {kd_at_topk} {ratio}_KD@bottomK: {kd_at_bk}')
+
+    print('=>>> P@topK and P@bottomK')
+    for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
+        print(f'{ratio}_P@topk: {p_at_topk} {ratio}_P@bottomK: {p_at_bk}')
+    print('==' * 20)
 
     utils.time_record(start)
 

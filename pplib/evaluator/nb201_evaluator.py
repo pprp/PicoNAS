@@ -197,16 +197,8 @@ class NB201Evaluator(Evaluator):
             generated_indicator_list.append(results)
             self.type = tmp_type
 
-        kt = kendalltau(true_indicator_list, generated_indicator_list)
-        ps = pearson(true_indicator_list, generated_indicator_list)
-        sp = spearman(true_indicator_list, generated_indicator_list)
-        rd = rank_difference(true_indicator_list, generated_indicator_list)
-
-        print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd}."
-        )
-
-        return kt, ps, sp, rd
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 true_indicator_list)
 
     def query_zerometric(self, subnet_cfg: dict) -> float:
         self.trainer.mutator.set_subnet(subnet_cfg)
@@ -217,10 +209,11 @@ class NB201Evaluator(Evaluator):
             repeat=5)
         return zenscore
 
-    def compute_rank_by_zerometric(self) -> List:
-        """compute rank consistency based on flops."""
+    def compute_rank_by_zenscore(self) -> List:
+        """compute rank consistency based on zenscore."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
+        flops_indicator_list: List[float] = []
 
         self.trainer.logger.info('Begin to compute rank consistency...')
         num_sample = 50 if self.num_sample is None else self.num_sample
@@ -244,6 +237,10 @@ class NB201Evaluator(Evaluator):
                 inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
                 targets=None,
                 repeat=5)
+
+            # get flops
+            flops_result = self.query_result(genotype, cost_key='flops')
+            flops_indicator_list.append(flops_result)
 
             # ***************************************************** #
             # score_list = compute_synflow_per_weight(
@@ -270,21 +267,14 @@ class NB201Evaluator(Evaluator):
                 else:
                     generated_indicator_list.append(score)
 
-        kt = kendalltau(true_indicator_list, generated_indicator_list)
-        ps = pearson(true_indicator_list, generated_indicator_list)
-        sp = spearman(true_indicator_list, generated_indicator_list)
-        rd = rank_difference(true_indicator_list, generated_indicator_list)
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 flops_indicator_list)
 
-        print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd}."
-        )
-
-        return kt, ps, sp, rd
-
-    def compute_rank_based_on_nwot(self) -> List:
+    def compute_rank_by_nwot(self) -> List:
         """compute rank consistency based on nwot."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
+        flops_indicator_list = []
 
         self.trainer.logger.info('Begin to compute rank consistency...')
         num_sample = 50 if self.num_sample is None else self.num_sample
@@ -304,6 +294,10 @@ class NB201Evaluator(Evaluator):
             # get score based on zenscore
             score = self.trainer.get_subnet_nwot(random_subnet_dict)
 
+            # get flops
+            flops_result = self.query_result(genotype, cost_key='flops')
+            flops_indicator_list.append(flops_result)
+
             print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
             if math.isnan(score) or math.isinf(score):
                 generated_indicator_list.append(0)
@@ -314,13 +308,49 @@ class NB201Evaluator(Evaluator):
                 else:
                     generated_indicator_list.append(score)
 
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 flops_indicator_list)
+
+    def calc_results(self,
+                     true_indicator_list,
+                     generated_indicator_list,
+                     flops_indicator_list=None):
+
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)
-        rd = rank_difference(true_indicator_list, generated_indicator_list)
+        minn_at_ks = minmax_n_at_k(true_indicator_list,
+                                   generated_indicator_list)
+        patks = p_at_tb_k(true_indicator_list, generated_indicator_list)
+
+        if flops_indicator_list is not None:
+            # calculate rank difference by range.
+
+            # compute rank diff in 5 section with different flops range.
+            sorted_idx_by_flops = np.array(flops_indicator_list).argsort()
+
+            # compute splited index by flops
+            range_length = len(sorted_idx_by_flops) // 5
+            splited_idx_by_flops = [
+                sorted_idx_by_flops[i * range_length:(i + 1) * range_length]
+                for i in range(
+                    int(len(sorted_idx_by_flops) / range_length) + 1)
+                if (sorted_idx_by_flops[i * range_length:(i + 1) *
+                                        range_length]).any()
+            ]
+
+            true_indicator_list = np.array(true_indicator_list)
+            generated_indicator_list = np.array(generated_indicator_list)
+
+            rd_list = []
+            for splited_idx_by_flop in splited_idx_by_flops:
+                current_idx = np.array(splited_idx_by_flop)
+                tmp_rd = rank_difference(true_indicator_list[current_idx],
+                                         generated_indicator_list[current_idx])
+                rd_list.append(tmp_rd)
 
         print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd}."
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd_list}."
         )
 
-        return kt, ps, sp, rd
+        return kt, ps, sp, rd_list, minn_at_ks, patks
