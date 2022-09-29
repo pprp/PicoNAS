@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from pplib.models.registry import register_model
 from pplib.nas.mutables import DiffOP
 
 
@@ -43,11 +44,17 @@ class StripPool(nn.Module):
     def forward(self, x):
         _, _, h, w = x.size()
         x = self.conv1x1(x)
-
-        # print(f"strip: 40 {x.shape} h:{h} w:{w}")
         x1 = F.interpolate(self.conv1(self.pool1(x)), (h, w))
         x2 = F.interpolate(self.conv2(self.pool2(x)), (h, w))
         x = self.conv3(torch.cat([x1, x2], dim=1))
+        return x
+
+
+class Identity(nn.Module):
+    def __init__(self):
+        super(Identity, self).__init__()
+
+    def forward(self, x):
         return x
 
 
@@ -57,14 +64,15 @@ class MetaReceptiveField(nn.Module):
     def __init__(self, in_channels=128):
         super().__init__()
         candidate_ops = nn.ModuleDict({
+            'skip_connect': Identity(),
             'strip_pool':
             StripPool(in_channels),
             'max_pool_3x3':
             nn.MaxPool2d(3, stride=1, padding=1),
             'max_pool_5x5':
-            nn.MaxPool2d(5, stride=2, padding=1),
+            nn.MaxPool2d(5, stride=1, padding=2),
             'max_pool_7x7':
-            nn.MaxPool2d(7, stride=3, padding=1),
+            nn.MaxPool2d(7, stride=1, padding=3),
         })
         self.meta_rf = DiffOP(candidate_ops)
 
@@ -209,7 +217,8 @@ class InvertedResidual(nn.Module):
             return y
 
 
-class MobileNetv2_Meta_RF(nn.Module):
+@register_model
+class MobileNetv2MetaReceptionField(nn.Module):
 
     def __init__(self, num_classes=1000, width_mult=1.):
         super().__init__()
@@ -273,3 +282,10 @@ class MobileNetv2_Meta_RF(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
+
+
+if __name__ == '__main__':
+    m = MetaReceptiveField(in_channels=6)
+    i = torch.randn(3, 6, 32, 32)
+    o = m(i)
+    print(o.shape)

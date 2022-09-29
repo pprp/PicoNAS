@@ -1,3 +1,3 @@
 #!/bin/bash
 
-CUDA_VISIBLE_DEVICES=0 python ../tools/train_shrinker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201ShrinkTrainer  --dataset cifar10 --crit ce --lr 0.05 --type random  --log_name anaylse_nb201_pairwise-random_exp1.3_align --expand_times 0 --shrink_times 0 --batch_size 512 --epochs 1000 --sched plateau
+CUDA_VISIBLE_DEVICES=2 python ./train_imagenet.py --config ../../configs/spos/spos_cifar10.py --model_name MobileNetv2MetaReceptionField --trainer_name MetaTrainer  --dataset cifar10 --crit ce --lr 0.05  --log_name meta_train_mbv2_rf --batch_size 64 --epochs 100 --sched cosine  --data_dir ../../data/cifar
