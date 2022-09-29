@@ -88,8 +88,32 @@ class MetaTrainer(BaseTrainer):
         # unroll
         self.unroll = False
 
-    # def _build_evaluator(self, num_sample=50, dataset='cifar10'):
-    #     return NB201Evaluator(self, num_sample, dataset=dataset)
+    def train_step(self, trn_x, trn_y, val_x, val_y):
+        # get image and labels
+        trn_x = self._to_device(trn_x, self.device)
+        trn_y = self._to_device(trn_y, self.device)
+        val_x = self._to_device(val_x, self.device)
+        val_y = self._to_device(val_y, self.device)
+
+        # phase 1: arch parameter update
+        self.arch_optimizer.zero_grad()
+        if self.unroll:
+            self._unrolled_backward(trn_x, trn_y, val_x, val_y)
+        else:
+            output = self.model(val_x)
+            loss = self.criterion(output, val_y)
+            loss.backward()
+        self.arch_optimizer.step()
+
+        # phase 2: supernet parameter update
+        self.optimizer.zero_grad()
+        outputs = self.model(trn_x)
+        loss = self.criterion(outputs, trn_y)
+        loss.backward()
+        nn.utils.clip_grad_norm_(self.model.parameters(), 5.)
+        self.optimizer.step()
+
+        return loss
 
     def _train(self, train_loader, valid_loader):
         self.model.train()

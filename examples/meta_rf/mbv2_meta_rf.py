@@ -10,6 +10,45 @@ from pplib.models.registry import register_model
 from pplib.nas.mutables import DiffOP
 
 
+class CoordAtt(nn.Module):
+
+    def __init__(self, inp, oup, reduction=32):
+        super(CoordAtt, self).__init__()
+        self.pool_h = nn.AdaptiveAvgPool2d((None, 1))
+        self.pool_w = nn.AdaptiveAvgPool2d((1, None))
+
+        mip = max(8, inp // reduction)
+
+        self.conv1 = nn.Conv2d(inp, mip, kernel_size=1, stride=1, padding=0)
+        self.bn1 = nn.BatchNorm2d(mip)
+        self.act = h_swish()
+
+        self.conv_h = nn.Conv2d(mip, oup, kernel_size=1, stride=1, padding=0)
+        self.conv_w = nn.Conv2d(mip, oup, kernel_size=1, stride=1, padding=0)
+
+    def forward(self, x):
+        identity = x
+
+        n, c, h, w = x.size()
+        x_h = self.pool_h(x)
+        x_w = self.pool_w(x).permute(0, 1, 3, 2)
+
+        y = torch.cat([x_h, x_w], dim=2)
+        y = self.conv1(y)
+        y = self.bn1(y)
+        y = self.act(y)
+
+        x_h, x_w = torch.split(y, [h, w], dim=2)
+        x_w = x_w.permute(0, 1, 3, 2)
+
+        a_h = self.conv_h(x_h).sigmoid()
+        a_w = self.conv_w(x_w).sigmoid()
+
+        out = identity * a_w * a_h
+
+        return out
+
+
 class StripPool(nn.Module):
 
     def __init__(self, in_channels):
@@ -51,6 +90,7 @@ class StripPool(nn.Module):
 
 
 class Identity(nn.Module):
+
     def __init__(self):
         super(Identity, self).__init__()
 
@@ -64,7 +104,10 @@ class MetaReceptiveField(nn.Module):
     def __init__(self, in_channels=128):
         super().__init__()
         candidate_ops = nn.ModuleDict({
-            'skip_connect': Identity(),
+            'skip_connect':
+            Identity(),
+            'coord_att':
+            CoordAtt(in_channels, in_channels),
             'strip_pool':
             StripPool(in_channels),
             'max_pool_3x3':
@@ -219,6 +262,12 @@ class InvertedResidual(nn.Module):
 
 @register_model
 class MobileNetv2MetaReceptionField(nn.Module):
+    """MobileNetV2 + Meta RF
+
+    Args:
+        num_classes (int, optional): _description_. Defaults to 1000.
+        width_mult (_type_, optional): _description_. Defaults to 1..
+    """
 
     def __init__(self, num_classes=1000, width_mult=1.):
         super().__init__()
