@@ -117,7 +117,8 @@ class NB201Shrinker(object):
                 break
         return drop_ops
 
-    def compute_score(self, extend_operators, vis_dict_slice, vis_dict):
+    def compute_score(self, extend_operators, vis_dict_slice, vis_dict,
+                      train_loader, val_loader):
         """
         1. Random sample `num` of architectures extended by some operators.
         2. Compute metrics of all candidate architectures.
@@ -147,7 +148,9 @@ class NB201Shrinker(object):
         for subnet in candidates:
             info = vis_dict[str(subnet)]
             # info['metric'] = self.trainer.get_subnet_nwot(subnet)
-            info['metric'] = self.trainer.get_subnet_flops(subnet)
+            # info['metric'] = self.trainer.get_subnet_flops(subnet)
+            info['metric'] = self.trainer.get_subnet_acc(
+                subnet, train_loader, val_loader)
 
         # step 3: calculate sum of angles for each operator
         for subnet in candidates:
@@ -210,7 +213,7 @@ class NB201Shrinker(object):
         vis_dict[str(subnet)] = info
         return True
 
-    def shrink(self):
+    def shrink(self, train_loader, val_loader):
         # split every single operation in each layer.
         # travese all of search group.
         vis_dict_slice: Dict[tuple, dict] = dict()
@@ -229,11 +232,12 @@ class NB201Shrinker(object):
                 vis_dict_slice[operator]['cand_pool'] = []
                 extend_operators.append(operator)
 
-        self.compute_score(extend_operators, vis_dict_slice, vis_dict)
+        self.compute_score(extend_operators, vis_dict_slice, vis_dict,
+                           train_loader, val_loader)
         drop_ops = self.drop_operator(extend_operators, vis_dict_slice)
         self.trainer.logger.info(f'drop ops: {drop_ops}')
 
-    def expand(self):
+    def expand(self, train_loader, val_loader):
         # split every single operation in each layer.
         # travese all of search group.
         vis_dict_slice: Dict[tuple, dict] = dict()
@@ -252,7 +256,8 @@ class NB201Shrinker(object):
                 vis_dict_slice[operator]['cand_pool'] = []
                 extend_operators.append(operator)
 
-        self.compute_score(extend_operators, vis_dict_slice, vis_dict)
+        self.compute_score(extend_operators, vis_dict_slice, vis_dict,
+                           train_loader, val_loader)
         expand_ops = self.expand_operator(extend_operators, vis_dict_slice)
         self.trainer.logger.info(f'expand ops: {expand_ops}')
 
@@ -356,8 +361,8 @@ class NB201ShrinkTrainer(BaseTrainer):
             'expand_times'] if 'expand_times' in kwargs else 6
         self.shrink_times = kwargs[
             'shrink_times'] if 'shrink_times' in kwargs else 3
-        self.every_n_times = kwargs[
-            'every_n_times'] if 'every_n_times' in kwargs else 5
+        self.every_n_epochs = kwargs[
+            'every_n_epochs'] if 'every_n_epochs' in kwargs else 5
 
         self.kl_loss = KLDivergence(loss_weight=1)
 
@@ -500,7 +505,7 @@ class NB201ShrinkTrainer(BaseTrainer):
             fair_lists.append(current_dict)
         return fair_lists
 
-    def _train(self, loader):
+    def _train(self, train_loader, val_loader):
         self.model.train()
 
         def calc_search_space_size(search_group):
@@ -513,7 +518,7 @@ class NB201ShrinkTrainer(BaseTrainer):
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
 
-        for step, batch_inputs in enumerate(loader):
+        for step, batch_inputs in enumerate(train_loader):
             # get image and labels
             inputs, labels = batch_inputs
             inputs = self._to_device(inputs, self.device)
@@ -534,14 +539,6 @@ class NB201ShrinkTrainer(BaseTrainer):
                     batch_inputs, policy=self.type)
             else:
                 loss, outputs = self._forward_pairwise_loss(batch_inputs)
-
-            if self.expand_times > 0 and self.current_epoch % self.every_n_times == 0:
-                self.shrinker.expand()
-                self.expand_times -= 1
-
-            if self.shrink_times > 0 and self.current_epoch % self.every_n_times == 0:
-                self.shrinker.shrink()
-                self.shrink_times -= 1
 
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5.0)
 
@@ -570,17 +567,17 @@ class NB201ShrinkTrainer(BaseTrainer):
                 self.writer.add_scalar(
                     'STEP_LOSS/train_step_loss',
                     loss.item(),
-                    global_step=step + self.current_epoch * len(loader),
+                    global_step=step + self.current_epoch * len(train_loader),
                 )
                 self.writer.add_scalar(
                     'TRAIN_ACC/top1_train_acc',
                     top1_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader),
+                    global_step=step + self.current_epoch * len(train_loader),
                 )
                 self.writer.add_scalar(
                     'TRAIN_ACC/top5_train_acc',
                     top5_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader),
+                    global_step=step + self.current_epoch * len(train_loader),
                 )
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
@@ -681,7 +678,8 @@ class NB201ShrinkTrainer(BaseTrainer):
             epoch_start_time = time.time()
 
             # train
-            tr_loss, top1_tacc, top5_tacc = self._train(train_loader)
+            tr_loss, top1_tacc, top5_tacc = self._train(
+                train_loader, val_loader)
 
             # validate
             val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
@@ -703,6 +701,18 @@ class NB201ShrinkTrainer(BaseTrainer):
             self.logger.info(
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
+
+            if (self.expand_times > 0
+                    and (self.current_epoch + 1) % self.every_n_epochs == 0
+                    and self.current_epoch > 100):
+                self.shrinker.expand(train_loader, val_loader)
+                self.expand_times -= 1
+
+            if (self.shrink_times > 0
+                    and (self.current_epoch + 1) % self.every_n_epochs == 0
+                    and self.current_epoch > 100):
+                self.shrinker.shrink(train_loader, val_loader)
+                self.shrink_times -= 1
 
             if (self.current_epoch < 100
                     and epoch % 10 == 0) or (self.current_epoch >= 100
@@ -811,27 +821,6 @@ class NB201ShrinkTrainer(BaseTrainer):
                 # accumulate loss
                 val_loss += loss.item()
 
-                # print every 50 iter
-                if step % 50 == 0:
-                    self.writer.add_scalar(
-                        'STEP_LOSS/valid_step_loss',
-                        loss.item(),
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-                    self.writer.add_scalar(
-                        'VAL_ACC/top1_val_acc',
-                        top1_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-                    self.writer.add_scalar(
-                        'VAL_ACC/top5_val_acc',
-                        top5_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-            # self.logger.info(
-            #     f'Val loss: {loss.item()}'
-            #     f'Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}')
-
         return top1_vacc.avg
 
     def _init_flops(self):
@@ -934,6 +923,56 @@ class NB201ShrinkTrainer(BaseTrainer):
             top5_vacc.update(top5.item(), n)
 
         return 100 - top1_vacc.avg
+
+    def get_subnet_acc(self,
+                       subnet_dict: Dict,
+                       train_loader=None,
+                       val_loader=None) -> float:
+        """Calculate the subnet of validation error.
+        Including:
+        1. BN calibration
+        2. Start test
+        """
+        # Process dataloader
+        assert train_loader is not None
+        assert val_loader is not None
+
+        # Info about dataloader
+        train_iter = iter(train_loader)
+        val_iter = iter(val_loader)
+        max_train_iters = 200
+        max_test_iters = 40
+
+        self.mutator.set_subnet(subnet_dict)
+
+        # Clear bn statics
+        for m in self.model.modules():
+            if isinstance(m, torch.nn.BatchNorm2d):
+                m.running_mean = torch.zeros_like(m.running_mean)
+                m.running_var = torch.ones_like(m.running_var)
+
+        # BN Calibration
+        self.model.train()
+        for _ in range(max_train_iters):
+            data, target = next(train_iter)
+            data, target = data.to(self.device), target.to(self.device)
+            output = self.model(data)
+            del data, target, output
+
+        # Start test
+        top1_vacc = AvgrageMeter()
+        top5_vacc = AvgrageMeter()
+
+        for _ in range(max_test_iters):
+            data, target = next(val_iter)
+            data, target = data.to(self.device), target.to(self.device)
+            output = self.model(data)
+            n = target.size(0)
+            top1, top5 = accuracy(output, target, topk=(1, 5))
+            top1_vacc.update(top1.item(), n)
+            top5_vacc.update(top5.item(), n)
+
+        return top1_vacc.avg
 
     def _forward_balanced(self, batch_inputs, policy='zenscore'):
         """Balanced Sampling Rules.

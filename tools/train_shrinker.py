@@ -108,7 +108,7 @@ def get_args():
     parser.add_argument(
         '--expand_times', type=int, default=6, help='expand times')
     parser.add_argument(
-        '--every_n_times',
+        '--every_n_epochs',
         type=int,
         default=5,
         help='shrink or expand every n times')
@@ -182,7 +182,7 @@ def main():
         type=cfg.type,
         shrink_times=cfg.shrink_times,
         expand_times=cfg.expand_times,
-        every_n_times=cfg.every_n_times,
+        every_n_times=cfg.every_n_epochs,
     )
 
     start = time.time()
