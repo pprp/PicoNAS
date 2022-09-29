@@ -149,7 +149,7 @@ class EvolutionSearcher(object):
 
         def mutate_subnet(subnet: Dict):
             convert_to = [
-                'conv_3x3', 'skip_connect', 'conv_1x1', 'avg_pool_3x3'
+                'nor_conv_3x3', 'skip_connect', 'conv_1x1', 'avg_pool_3x3'
             ]
             for key, value in subnet.items():
                 if np.random.random_sample() < mutate_prob:

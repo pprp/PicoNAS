@@ -37,7 +37,7 @@ OPS = {
         nn.ReLU(inplace=False),
         nn.Conv2d(C, C, 1, stride=stride, padding=0, bias=False),
         nn.BatchNorm2d(C, affine=affine)),
-    'conv_3x3':
+    'nor_conv_3x3':
     lambda C, stride, affine: nn.Sequential(
         nn.ReLU(inplace=False),
         nn.Conv2d(C, C, 3, stride=stride, padding=1, bias=False),

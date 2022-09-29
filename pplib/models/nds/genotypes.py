@@ -21,7 +21,7 @@ NASNET_OPS = [
     'max_pool_5x5',
     'max_pool_7x7',
     'conv_1x1',
-    'conv_3x3',
+    'nor_conv_3x3',
     'sep_conv_3x3',
     'sep_conv_5x5',
     'sep_conv_7x7',
@@ -52,7 +52,7 @@ AMOEBA_OPS = [
 NAO_OPS = [
     'skip_connect',
     'conv_1x1',
-    'conv_3x3',
+    'nor_conv_3x3',
     'conv_3x1_1x3',
     'conv_7x1_1x7',
     'max_pool_2x2',

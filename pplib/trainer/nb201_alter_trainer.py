@@ -87,17 +87,17 @@ class NB201_Alter_Trainer(BaseTrainer):
         self.rand_subnet = None
 
         self.max_subnet = {
-            0: 'conv_3x3',
-            1: 'conv_3x3',
-            2: 'conv_3x3',
-            3: 'conv_3x3',
-            4: 'conv_3x3',
-            5: 'conv_3x3'
+            0: 'nor_conv_3x3',
+            1: 'nor_conv_3x3',
+            2: 'nor_conv_3x3',
+            3: 'nor_conv_3x3',
+            4: 'nor_conv_3x3',
+            5: 'nor_conv_3x3'
         }
 
         self.min_subnet = {
-            0: 'conv_3x3',
-            1: 'conv_3x3',
+            0: 'nor_conv_3x3',
+            1: 'nor_conv_3x3',
             2: 'skip_connect',
             3: 'skip_connect',
             4: 'skip_connect',

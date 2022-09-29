@@ -12,7 +12,7 @@ from torch import Tensor
 from torch.optim import lr_scheduler
 
 import pplib.utils.utils as utils
-from pplib.core.losses import PairwiseRankLoss
+from pplib.core.losses import KLDivergence, PairwiseRankLoss
 from pplib.evaluator.nb201_evaluator import NB201Evaluator
 from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
@@ -322,6 +322,24 @@ class NB201ShrinkTrainer(BaseTrainer):
         #  => is_specific is False: normal mode
         self.is_specific = False
 
+        self.max_subnet = {
+            0: 'nor_conv_3x3',
+            1: 'nor_conv_3x3',
+            2: 'nor_conv_3x3',
+            3: 'nor_conv_3x3',
+            4: 'nor_conv_3x3',
+            5: 'nor_conv_3x3'
+        }
+
+        self.min_subnet = {
+            0: 'nor_conv_3x3',
+            1: 'nor_conv_3x3',
+            2: 'skip_connect',
+            3: 'skip_connect',
+            4: 'skip_connect',
+            5: 'skip_connect'
+        }
+
         # type from kwargs can be random, hamming, adaptive
         if 'type' in kwargs:
             self.type = kwargs['type']
@@ -340,6 +358,8 @@ class NB201ShrinkTrainer(BaseTrainer):
             'shrink_times'] if 'shrink_times' in kwargs else 3
         self.every_n_times = kwargs[
             'every_n_times'] if 'every_n_times' in kwargs else 5
+
+        self.kl_loss = KLDivergence(loss_weight=1)
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample, dataset)
@@ -1171,3 +1191,29 @@ class NB201ShrinkTrainer(BaseTrainer):
         sum_loss.backward()
 
         return sum_loss, outputs
+
+    def _forward_sandwich(self, batch_inputs):
+        inputs, labels = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
+        # execuate full-network
+        self.mutator.set_subnet(self.max_subnet)
+        teacher_output = self.model(inputs)
+        loss = self._compute_loss(teacher_output, labels)
+        loss.backward()
+
+        # execuate min-network
+        self.mutator.set_subnet(self.min_subnet)
+        student_output = self.model(inputs)
+        loss = self.kl_loss(student_output, teacher_output.detach())
+        loss.backward()
+
+        # random sample two subnet
+        for _ in range(2):
+            self.mutator.set_subnet(self.mutator.random_subnet)
+            student_output = self.model(inputs)
+            loss = self.kl_loss(student_output, teacher_output.detach())
+            loss.backward()
+
+        return loss, student_output

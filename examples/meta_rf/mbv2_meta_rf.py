@@ -27,8 +27,7 @@ class StripPool(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv2d(
                 inter_channels, inter_channels, (1, 3), 1, (0, 1), bias=False),
-            nn.BatchNorm2d(inter_channels),
-        )
+            nn.BatchNorm2d(inter_channels))
 
         self.conv2 = nn.Sequential(
             nn.Conv2d(

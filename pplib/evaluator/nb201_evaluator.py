@@ -68,7 +68,7 @@ class NB201Evaluator(Evaluator):
         alias2group_id = mutator.alias2group_id
         genotype = ''
         for i, (k, v) in enumerate(subnet_dict.items()):
-            # v = 'conv_3x3'
+            # v = 'nor_conv_3x3'
             alias_name = list(alias2group_id.keys())[k]
             rank = alias_name.split('_')[1][-1]  # 0 or 1 or 2
             genotype += '|'
