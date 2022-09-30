@@ -156,7 +156,7 @@ group.add_argument(
 group.add_argument(
     '--num-classes',
     type=int,
-    default=None,
+    default=1000,
     metavar='N',
     help='number of label classes (Model default if None)')
 group.add_argument(
@@ -659,7 +659,7 @@ group.add_argument(
 group.add_argument(
     '--log-interval',
     type=int,
-    default=50,
+    default=5,
     metavar='N',
     help='how many batches to wait before logging training status')
 group.add_argument(
@@ -832,12 +832,13 @@ def main():
 
     # TODO build model
     model = build_model(args.model, num_classes=args.num_classes)
+
     # model = create_model(
     #     args.model,
     #     pretrained=args.pretrained,
     #     num_classes=args.num_classes,
     #     drop_rate=args.drop,
-    #     drop_connect_rate=args.drop_connect,  # DEPRECATED, use drop_path
+    #     drop_connect_rate=args.drop_connect,
     #     drop_path_rate=args.drop_path,
     #     drop_block_rate=args.drop_block,
     #     global_pool=args.gp,
@@ -1261,6 +1262,13 @@ def train_one_epoch(epoch,
 
         # TODO currently not support amp
         loss = trainer.train_step(input, target, val_x, val_y)
+
+        for k, v in trainer.mutator.arch_params.items():
+            _logger.info(
+                f'current arch_param: key: {k}: value: {nn.functional.softmax(v, dim=-1).cpu()}'
+            )
+
+        _logger.info(f'==> export subnet: {trainer.search_subnet()}')
 
         # with amp_autocast():
         #     output = model(input)
