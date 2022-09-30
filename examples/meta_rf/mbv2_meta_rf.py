@@ -123,6 +123,45 @@ class MetaReceptiveField(nn.Module):
         return self.meta_rf(x)
 
 
+class SplitBlock(nn.Module):
+
+    def __init__(self, ratio=0.5):
+        super(SplitBlock, self).__init__()
+        self.ratio = ratio
+
+    def forward(self, x):
+        c = int(x.size(1) * self.ratio)
+        return x[:, :c, :, :], x[:, c:, :, :]
+
+
+class MetaReceptiveField_v2(nn.Module):
+    """Adjust Receptive Field by Meta Learning with split block."""
+
+    def __init__(self, in_channels=128):
+        super().__init__()
+        candidate_ops = nn.ModuleDict({
+            'skip_connect':
+            Identity(),
+            'coord_att':
+            CoordAtt(in_channels, in_channels),
+            'strip_pool':
+            StripPool(in_channels),
+            'max_pool_3x3':
+            nn.MaxPool2d(3, stride=1, padding=1),
+            'max_pool_5x5':
+            nn.MaxPool2d(5, stride=1, padding=2),
+            'max_pool_7x7':
+            nn.MaxPool2d(7, stride=1, padding=3),
+        })
+        self.meta_rf = DiffOP(candidate_ops)
+        self.split = SplitBlock()
+
+    def forward(self, x):
+        x1, x2 = self.split(x)
+        out = self.meta_rf(x2)
+        return torch.cat([x1, out], 1)
+
+
 class ConvBNReLU(nn.Sequential):
 
     def __init__(self,
