@@ -66,7 +66,7 @@ class MetaTrainer(BaseTrainer):
             self.mutator.arch_params.to(self.device)
 
         # init flops
-        self._init_flops()
+        # self._init_flops()
 
         # evaluate the rank consistency
         # self.evaluator = self._build_evaluator(num_sample=50, dataset=self.dataset)

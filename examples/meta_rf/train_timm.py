@@ -67,7 +67,13 @@ except ImportError as e:
     has_functorch = False
 
 torch.backends.cudnn.benchmark = True
-_logger = logging.getLogger('train')
+# logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+#                     level=logging.DEBUG)
+# _logger = logging.getLogger('train')
+from pplib.utils.loggings import get_logger
+if not os.path.exists('./log/'):
+    os.makedirs('./log/')
+_logger = get_logger('timm_mobilenetv2_meta_rf', log_file='./log/timm_mobilenetv2_meta_rf.log')
 
 # The first arg parser parses out only the --config argument, this argument is used to
 # load a yaml file containing key-values that override the defaults for the main parser below
@@ -1269,33 +1275,6 @@ def train_one_epoch(epoch,
             )
 
         _logger.info(f'==> export subnet: {trainer.search_subnet()}')
-
-        # with amp_autocast():
-        #     output = model(input)
-        #     loss = loss_fn(output, target)
-
-        # if not args.distributed:
-        #     losses_m.update(loss.item(), input.size(0))
-
-        # optimizer.zero_grad()
-        # if loss_scaler is not None:
-        #     loss_scaler(
-        #         loss,
-        #         optimizer,
-        #         clip_grad=args.clip_grad,
-        #         clip_mode=args.clip_mode,
-        #         parameters=model_parameters(
-        #             model, exclude_head='agc' in args.clip_mode),
-        #         create_graph=second_order)
-        # else:
-        #     loss.backward(create_graph=second_order)
-        #     if args.clip_grad is not None:
-        #         utils.dispatch_clip_grad(
-        #             model_parameters(
-        #                 model, exclude_head='agc' in args.clip_mode),
-        #             value=args.clip_grad,
-        #             mode=args.clip_mode)
-        #     optimizer.step()
 
         if model_ema is not None:
             model_ema.update(model)
