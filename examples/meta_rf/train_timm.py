@@ -1250,15 +1250,23 @@ def train_one_epoch(epoch,
     data_time_m = utils.AverageMeter()
     losses_m = utils.AverageMeter()
 
+    iter_val = iter(loader_val)
+
     model.train()
     end = time.time()
     last_idx = len(loader_train) - 1
     num_updates = epoch * len(loader_train)
-    for batch_idx, ((input, target),
-                    (val_x,
-                     val_y)) in enumerate(zip(loader_train, loader_train)):
+    for batch_idx, (input, target) in enumerate(loader_train):
         last_batch = batch_idx == last_idx
         data_time_m.update(time.time() - end)
+
+        try:
+            val_x, val_y = next(iter_val)
+        except:
+            del iter_val
+            iter_val = iter(loader_val)
+            val_x, val_y = next(iter_val)
+
         if not args.prefetcher:
             input, target = input.cuda(), target.cuda()
             if mixup_fn is not None:

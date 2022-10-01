@@ -264,14 +264,16 @@ class DynaDiffOP(DiffOP):
         init_cfg: Optional[Dict] = None,
     ) -> None:
         super().__init__(
-            module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
+            candidate_ops=candidate_ops,
+            module_kwargs=module_kwargs,
+            alias=alias,
+            init_cfg=init_cfg)
+
         assert len(candidate_ops) >= 1, (
             f'Number of candidate op must greater than or equal to 1, '
             f'but got: {len(candidate_ops)}')
 
-        self._is_fixed = False
-        self._dyna_thresh = dyna_thresh
-        self._candidate_ops = self._build_ops(candidate_ops)
+        self.dyna_thresh = dyna_thresh
 
     def forward_arch_param(self,
                            x: Any,
@@ -298,7 +300,8 @@ class DynaDiffOP(DiffOP):
                 # if not fixed, judge whether to fix.
                 sorted_param = torch.topk(probs, 2)
                 index = (
-                    sorted_param[0][0] - sorted_param[0][1] >= self.fix_thresh)
+                    sorted_param[0][0] - sorted_param[0][1] >=
+                    self.dyna_thresh)
                 if index:
                     self.fix_chosen(self.choices[index])
             else:
