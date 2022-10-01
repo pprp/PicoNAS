@@ -25,4 +25,4 @@
 # lr=0.1
 # sched=cosine
 # epochs=150
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8 python -m torch.distributed.launch --nproc_per_node=8 ./train_timm.py /home/inspur/data/imagenet/  --model MobileNetv2MetaReceptionField --trainer MetaTrainer -b 64 --opt nesterov --momentum 0.9 --lr 0.1 --epochs 150 --sched cosine
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8 python -m torch.distributed.launch --nproc_per_node=8 ./train_timm.py /home/inspur/data/subImageNet/  --model MobileNetv2MetaReceptionField --trainer MetaTrainer -b 64 --opt nesterov --momentum 0.9 --lr 0.1 --epochs 150 --sched cosine

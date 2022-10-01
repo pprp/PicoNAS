@@ -159,7 +159,7 @@ class DiffOP(DiffMutable[str, str]):
         Returns:
             Tensor: the result of forward the fixed operation.
         """
-        return sum(self._candidates[choice](x) for choice in self._chosen)
+        return sum(self._candidate_ops[choice](x) for choice in self._chosen)
 
     def forward_arch_param(self,
                            x: Any,
@@ -206,7 +206,7 @@ class DiffOP(DiffMutable[str, str]):
             outputs.append(op(x))
         return sum(outputs)
 
-    def fix_chosen(self, chosen: str) -> None:
+    def fix_chosen(self, chosen: Union[List[str], str]) -> None:
         """Fix mutable with `choice`. This operation would convert `unfixed`
         mode to `fixed` mode. The :attr:`is_fixed` will be set to True and only
         the selected operations can be retained.
@@ -306,7 +306,7 @@ class DynaDiffOP(DiffOP):
                     self.fix_chosen(self.choices[index])
             else:
                 # if fixed, query the fix operation.
-                index = self.choices.index(self._chosen)
+                index = self.choices.index(self._chosen[0])
                 probs.data.zero_()
                 probs.data[index].fill_(1.0)
 

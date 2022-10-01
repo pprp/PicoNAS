@@ -394,9 +394,6 @@ class OneShotPathOP(OneShotOP):
         return F.relu(out)
 
     def forward_choice(self, x: Any, choice: Optional[Dict] = None) -> Tensor:
-        import ipdb
-
-        ipdb.set_trace()
         path_ids = choice['path']  # eg.[0, 2, 3]
         op_ids = choice['op']  # eg.[1, 1, 2]
 
@@ -485,12 +482,11 @@ class OneShotChoiceRoute(OneShotMutable):
         if choice is None:
             return self.forward_all(x)
         else:
-            assert len(self._deges) == len(x)
+            assert len(self._edges) == len(x)
             # sample two path
             outputs = list()
             for ch, input in zip(choice, x):
                 outputs.append(self._edges[ch](input))
-
             return sum(outputs)
 
     def forward_all(self, x: Any) -> Tensor:
