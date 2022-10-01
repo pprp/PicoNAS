@@ -71,9 +71,11 @@ torch.backends.cudnn.benchmark = True
 #                     level=logging.DEBUG)
 # _logger = logging.getLogger('train')
 from pplib.utils.loggings import get_logger
+
 if not os.path.exists('./log/'):
     os.makedirs('./log/')
-_logger = get_logger('timm_mobilenetv2_meta_rf', log_file='./log/timm_mobilenetv2_meta_rf.log')
+_logger = get_logger(
+    'timm_mobilenetv2_meta_rf', log_file='./log/timm_mobilenetv2_meta_rf.log')
 
 # The first arg parser parses out only the --config argument, this argument is used to
 # load a yaml file containing key-values that override the defaults for the main parser below
@@ -1250,13 +1252,12 @@ def train_one_epoch(epoch,
     losses_m = utils.AverageMeter()
 
     model.train()
-
     end = time.time()
     last_idx = len(loader_train) - 1
     num_updates = epoch * len(loader_train)
     for batch_idx, ((input, target),
                     (val_x,
-                     val_y)) in enumerate(zip(loader_train, loader_val)):
+                     val_y)) in enumerate(zip(loader_train, loader_train)):
         last_batch = batch_idx == last_idx
         data_time_m.update(time.time() - end)
         if not args.prefetcher:
@@ -1268,13 +1269,6 @@ def train_one_epoch(epoch,
 
         # TODO currently not support amp
         loss = trainer.train_step(input, target, val_x, val_y)
-
-        for k, v in trainer.mutator.arch_params.items():
-            _logger.info(
-                f'current arch_param: key: {k}: value: {nn.functional.softmax(v, dim=-1).cpu()}'
-            )
-
-        _logger.info(f'==> export subnet: {trainer.search_subnet()}')
 
         if model_ema is not None:
             model_ema.update(model)
@@ -1329,6 +1323,14 @@ def train_one_epoch(epoch,
 
         end = time.time()
         # end for
+
+    if args.local_rank == 0:
+        for k, v in trainer.mutator.arch_params.items():
+            _logger.info(
+                f'current arch_param: key: {k}: value: {nn.functional.softmax(v, dim=-1).cpu()}'
+            )
+
+        _logger.info(f'==> export subnet: {trainer.search_subnet()}')
 
     if hasattr(optimizer, 'sync_lookahead'):
         optimizer.sync_lookahead()
