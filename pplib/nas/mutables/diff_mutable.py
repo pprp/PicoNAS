@@ -238,6 +238,84 @@ class DiffOP(DiffMutable[str, str]):
         return self.choices[torch.argmax(arch_param).item()]
 
 
+class DynaDiffOP(DiffOP):
+    """A type of ``MUTABLES`` for differentiable architecture search, such as
+    DARTS. Dynamically fix some of mutable during searching.
+
+    Args:
+        candidate_ops (nn.ModuleDict): the configs for the candidate
+            operations.
+        module_kwargs (dict[str, dict], optional): Module initialization named
+            arguments. Defaults to None.
+        alias (str, optional): alias of the `MUTABLE`.
+        dyna_thresh (int, optional): dynamically fix mutable during searching.
+        init_cfg (dict, optional): initialization configuration dict for
+            ``BaseModule``. OpenMMLab has implement 5 initializer including
+            `Constant`, `Xavier`, `Normal`, `Uniform`, `Kaiming`,
+            and `Pretrained`.
+    """
+
+    def __init__(
+        self,
+        candidate_ops: nn.ModuleDict,
+        module_kwargs: Optional[Dict[str, Dict]] = None,
+        alias: Optional[str] = None,
+        dyna_thresh: int = 0.3,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
+        super().__init__(
+            module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
+        assert len(candidate_ops) >= 1, (
+            f'Number of candidate op must greater than or equal to 1, '
+            f'but got: {len(candidate_ops)}')
+
+        self._is_fixed = False
+        self._dyna_thresh = dyna_thresh
+        self._candidate_ops = self._build_ops(candidate_ops)
+
+    def forward_arch_param(self,
+                           x: Any,
+                           arch_param: Optional[nn.Parameter] = None
+                           ) -> Tensor:
+        """Forward with architecture parameters.
+
+        Args:
+            x (Any): x could be a Torch.tensor or a tuple of
+                Torch.tensor, containing input data for forward computation.
+            arch_param (str, optional): architecture parameters for
+                `DiffMutable`
+
+        Returns:
+            Tensor: the result of forward with ``arch_param``.
+        """
+        if arch_param is None:
+            return self.forward_all(x)
+        else:
+            # compute the probs of choice
+            probs = self.compute_arch_probs(arch_param=arch_param)
+
+            if not self.is_fixed:
+                # if not fixed, judge whether to fix.
+                sorted_param = torch.topk(probs, 2)
+                index = (
+                    sorted_param[0][0] - sorted_param[0][1] >= self.fix_thresh)
+                if index:
+                    self.fix_chosen(self.choices[index])
+            else:
+                # if fixed, query the fix operation.
+                index = self.choices.index(self._chosen)
+                probs.data.zero_()
+                probs.data[index].fill_(1.0)
+
+            # forward based on probs
+            outputs = list()
+            for prob, module in zip(probs, self._candidate_ops.values()):
+                if prob > 0.0:
+                    outputs.append(prob * module(x))
+
+            return sum(outputs)
+
+
 class DiffChoiceRoute(DiffMutable[str, List[str]]):
     """A type of ``MUTABLES`` for Neural Architecture Search, which can select
     inputs from different edges in a differentiable or non-differentiable way.

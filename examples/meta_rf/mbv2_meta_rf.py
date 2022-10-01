@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from pplib.models.registry import register_model
-from pplib.nas.mutables import DiffOP
+from pplib.nas.mutables import DynaDiffOP
 
 
 class CoordAtt(nn.Module):
@@ -117,7 +117,7 @@ class MetaReceptiveField(nn.Module):
             'max_pool_7x7':
             nn.MaxPool2d(7, stride=1, padding=3),
         })
-        self.meta_rf = DiffOP(candidate_ops)
+        self.meta_rf = DynaDiffOP(candidate_ops)
 
     def forward(self, x):
         return self.meta_rf(x)
@@ -153,7 +153,7 @@ class MetaReceptiveField_v2(nn.Module):
             'max_pool_7x7':
             nn.MaxPool2d(7, stride=1, padding=3),
         })
-        self.meta_rf = DiffOP(candidate_ops)
+        self.meta_rf = DynaDiffOP(candidate_ops)
         self.split = SplitBlock()
 
     def forward(self, x):

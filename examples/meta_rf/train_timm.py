@@ -11,7 +11,6 @@ NVIDIA CUDA specific speedups adopted from NVIDIA Apex examples
 Hacked together by / Copyright 2020 Ross Wightman (https://github.com/rwightman)
 """
 import argparse
-import logging
 import os
 import time
 from collections import OrderedDict
@@ -667,7 +666,7 @@ group.add_argument(
 group.add_argument(
     '--log-interval',
     type=int,
-    default=5,
+    default=500,
     metavar='N',
     help='how many batches to wait before logging training status')
 group.add_argument(
