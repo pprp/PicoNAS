@@ -938,7 +938,8 @@ class NB201ShrinkTrainer(BaseTrainer):
         assert val_loader is not None
 
         # Info about dataloader
-        max_train_iters = 100
+        max_train_iters = 200
+        iter_train = iter(train_loader)
 
         self.mutator.set_subnet(subnet_dict)
 
@@ -950,9 +951,14 @@ class NB201ShrinkTrainer(BaseTrainer):
 
         # BN Calibration
         self.model.train()
-        for i, (data, target) in train_loader:
-            if i > max_train_iters:
-                break
+        while max_train_iters > 0:
+            max_train_iters -= 1
+            try:
+                data, target = next(iter_train)
+            except:
+                del iter_train
+                iter_train = iter(train_loader)
+                data, target = next(iter_train)
             data, target = data.to(self.device), target.to(self.device)
             output = self.model(data)
             del data, target, output

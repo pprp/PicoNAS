@@ -134,12 +134,12 @@ class NB301Evaluator(Evaluator):
 
         for _ in range(num_sample):
             # sample random subnet by mutator
-            random_subnet_dict_ = mutator.random_subnet
+            random_subnet_dict = mutator.random_subnet
 
             # process for search space shrink and expand
-            random_subnet_dict = dict()
-            for k, v in random_subnet_dict_.items():
-                random_subnet_dict[k] = v.rstrip('_')
+            # random_subnet_dict = dict()
+            # for k, v in random_subnet_dict_.items():
+            #     random_subnet_dict[k] = v.rstrip('_')
 
             # get true indictor by query nb301 api
             genotype = self.generate_genotype(random_subnet_dict, mutator)
