@@ -467,12 +467,12 @@ class OneShotChoiceRoute(OneShotMutable):
         return random.sample(self._edges.keys(), k=2)
 
     def forward_choice(self,
-                       x: Union[List[Any], Tuple[Any]],
+                       inputs: Union[List[Any], Tuple[Any]],
                        choice: List[str] = None) -> Tensor:
         """Forward when the mutable is in `unfixed` mode.
 
         Args:
-            x (Any): x could be a Torch.tensor or a tuple of
+            inputs (Any): inputs could be a Torch.tensor or a tuple of
                 Torch.tensor, containing input data for forward computation.
             choice (str, optional): the chosen key in ``MUTABLE``.
 
@@ -480,9 +480,19 @@ class OneShotChoiceRoute(OneShotMutable):
             Tensor: the result of forward the ``choice`` operation.
         """
         if choice is None:
-            return self.forward_all(x)
+            return self.forward_all(inputs)
         else:
-            assert len(self._edges) == len(x)
+            # process inputs by corresponding index
+            choice_list = list(self._edges.keys())
+            x = []
+            for c in choice:
+                idx = choice_list.index(c)
+                x.append(inputs[idx])
+
+            assert len(choice) == len(x), \
+                f'Get length of choice is {len(choice)}, but get ' \
+                f'length of input is {len(x)}'
+
             # sample two path
             outputs = list()
             for ch, input in zip(choice, x):

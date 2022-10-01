@@ -107,7 +107,6 @@ class DartsCell(nn.Module):
         for node in self.mutable_ops:
             cur_tensor = node(tensors)
             tensors.append(cur_tensor)
-
         return torch.cat(tensors[2:], dim=1)
 
 
