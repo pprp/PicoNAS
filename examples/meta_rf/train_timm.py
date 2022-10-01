@@ -23,6 +23,7 @@ import torch
 import torch.nn as nn
 import torchvision.utils
 import yaml
+from mmcv.cnn import get_model_complexity_info
 from timm import utils
 from timm.data import (AugMixDataset, FastCollateMixup, Mixup, create_dataset,
                        create_loader, resolve_data_config)
@@ -666,7 +667,7 @@ group.add_argument(
 group.add_argument(
     '--log-interval',
     type=int,
-    default=500,
+    default=100,
     metavar='N',
     help='how many batches to wait before logging training status')
 group.add_argument(
@@ -840,20 +841,6 @@ def main():
     # TODO build model
     model = build_model(args.model, num_classes=args.num_classes)
 
-    # model = create_model(
-    #     args.model,
-    #     pretrained=args.pretrained,
-    #     num_classes=args.num_classes,
-    #     drop_rate=args.drop,
-    #     drop_connect_rate=args.drop_connect,
-    #     drop_path_rate=args.drop_path,
-    #     drop_block_rate=args.drop_block,
-    #     global_pool=args.gp,
-    #     bn_momentum=args.bn_momentum,
-    #     bn_eps=args.bn_eps,
-    #     scriptable=args.torchscript,
-    #     checkpoint_path=args.initial_checkpoint)
-
     if args.num_classes is None:
         assert hasattr(
             model, 'num_classes'
@@ -865,9 +852,11 @@ def main():
         model.set_grad_checkpointing(enable=True)
 
     if args.local_rank == 0:
-        _logger.info(
-            f'Model {safe_model_name(args.model)} created, param count:{sum([m.numel() for m in model.parameters()])}'
-        )
+        flops_count, params_count = get_model_complexity_info(
+            model, input_shape=(3, 224, 224), print_per_layer_stat=False)
+        _logger.info(f'Model {safe_model_name(args.model)} created, '
+                     f'=> param count:{params_count}'
+                     f'=> flops count:{flops_count}')
 
     data_config = resolve_data_config(
         vars(args), model=model, verbose=args.local_rank == 0)

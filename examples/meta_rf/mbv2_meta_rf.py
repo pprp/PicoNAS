@@ -4,7 +4,6 @@ import math
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from pplib.models.registry import register_model
 from pplib.nas.mutables import DynaDiffOP
@@ -49,46 +48,6 @@ class CoordAtt(nn.Module):
         return out
 
 
-class StripPool(nn.Module):
-
-    def __init__(self, in_channels):
-        super().__init__()
-        self.pool1 = nn.AdaptiveAvgPool2d((1, None))
-        self.pool2 = nn.AdaptiveAvgPool2d((None, 1))
-
-        inter_channels = int(in_channels / 2)
-
-        self.conv1x1 = nn.Sequential(
-            nn.Conv2d(in_channels, inter_channels, 1, bias=False),
-            nn.BatchNorm2d(inter_channels),
-            nn.ReLU(True),
-        )
-
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(
-                inter_channels, inter_channels, (1, 3), 1, (0, 1), bias=False),
-            nn.BatchNorm2d(inter_channels))
-
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(
-                inter_channels, inter_channels, (3, 1), 1, (1, 0), bias=False),
-            nn.BatchNorm2d(inter_channels),
-        )
-
-        self.conv3 = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels, 1, bias=False),
-            nn.BatchNorm2d(in_channels),
-        )
-
-    def forward(self, x):
-        _, _, h, w = x.size()
-        x = self.conv1x1(x)
-        x1 = F.interpolate(self.conv1(self.pool1(x)), (h, w))
-        x2 = F.interpolate(self.conv2(self.pool2(x)), (h, w))
-        x = self.conv3(torch.cat([x1, x2], dim=1))
-        return x
-
-
 class Identity(nn.Module):
 
     def __init__(self):
@@ -98,7 +57,7 @@ class Identity(nn.Module):
         return x
 
 
-class MetaReceptiveField(nn.Module):
+class MetaReceptiveField_v1(nn.Module):
     """Adjust Receptive Field by Meta Learning."""
 
     def __init__(self, in_channels=128):
@@ -108,8 +67,6 @@ class MetaReceptiveField(nn.Module):
             Identity(),
             'coord_att':
             CoordAtt(in_channels, in_channels),
-            'strip_pool':
-            StripPool(in_channels),
             'max_pool_3x3':
             nn.MaxPool2d(3, stride=1, padding=1),
             'max_pool_5x5':
@@ -137,15 +94,15 @@ class SplitBlock(nn.Module):
 class MetaReceptiveField_v2(nn.Module):
     """Adjust Receptive Field by Meta Learning with split block."""
 
-    def __init__(self, in_channels=128):
+    def __init__(self, in_channels=128, ratio: float = 0.5):
         super().__init__()
+        in_channels = int(in_channels * ratio)
+
         candidate_ops = nn.ModuleDict({
             'skip_connect':
             Identity(),
             'coord_att':
             CoordAtt(in_channels, in_channels),
-            'strip_pool':
-            StripPool(in_channels),
             'max_pool_3x3':
             nn.MaxPool2d(3, stride=1, padding=1),
             'max_pool_5x5':
@@ -154,12 +111,15 @@ class MetaReceptiveField_v2(nn.Module):
             nn.MaxPool2d(7, stride=1, padding=3),
         })
         self.meta_rf = DynaDiffOP(candidate_ops)
-        self.split = SplitBlock()
+        self.split = SplitBlock(ratio)
 
     def forward(self, x):
         x1, x2 = self.split(x)
         out = self.meta_rf(x2)
         return torch.cat([x1, out], 1)
+
+
+MetaReceptiveField = MetaReceptiveField_v2
 
 
 class ConvBNReLU(nn.Sequential):
@@ -373,7 +333,7 @@ class MobileNetv2MetaReceptionField(nn.Module):
 
 
 if __name__ == '__main__':
-    m = MetaReceptiveField(in_channels=6)
+    m = MetaReceptiveField_v2(in_channels=6)
     i = torch.randn(3, 6, 32, 32)
     o = m(i)
     print(o.shape)
