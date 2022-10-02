@@ -4,11 +4,12 @@ from typing import List, Union
 import numpy as np
 import torch
 from torch import Tensor
+import torch.nn as nn
 
 from pplib.evaluator.base import Evaluator
 from pplib.nas.mutators import DiffMutator, OneShotMutator
-# from pplib.predictor.pruners.measures.synflow import compute_synflow_per_weight
 from pplib.predictor.pruners.measures.zen import compute_zen_score
+from pplib.predictor.pruners.measures.fisher import compute_fisher_per_weight
 from pplib.utils.get_dataset_api import get_dataset_api
 from pplib.utils.rank_consistency import (kendalltau, minmax_n_at_k, p_at_tb_k,
                                           pearson, rank_difference, spearman)
@@ -137,40 +138,8 @@ class NB201Evaluator(Evaluator):
             flops_result = self.query_result(genotype, cost_key='flops')
             flops_indicator_list.append(flops_result)
 
-        kt = kendalltau(true_indicator_list, generated_indicator_list)
-        ps = pearson(true_indicator_list, generated_indicator_list)
-        sp = spearman(true_indicator_list, generated_indicator_list)
-        minn_at_ks = minmax_n_at_k(true_indicator_list,
-                                   generated_indicator_list)
-        patks = p_at_tb_k(true_indicator_list, generated_indicator_list)
-
-        # compute rank diff in 5 section with different flops range.
-        sorted_idx_by_flops = np.array(flops_indicator_list).argsort()
-
-        # compute splited index by flops
-        range_length = len(sorted_idx_by_flops) // 5
-        splited_idx_by_flops = [
-            sorted_idx_by_flops[i * range_length:(i + 1) * range_length]
-            for i in range(int(len(sorted_idx_by_flops) / range_length) + 1)
-            if (sorted_idx_by_flops[i * range_length:(i + 1) *
-                                    range_length]).any()
-        ]
-
-        true_indicator_list = np.array(true_indicator_list)
-        generated_indicator_list = np.array(generated_indicator_list)
-
-        rd_list = []
-        for i in range(len(splited_idx_by_flops)):
-            current_idx = np.array(splited_idx_by_flops[i])
-            tmp_rd = rank_difference(true_indicator_list[current_idx],
-                                     generated_indicator_list[current_idx])
-            rd_list.append(tmp_rd)
-
-        print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd_list}."
-        )
-
-        return kt, ps, sp, rd_list, minn_at_ks, patks
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 flops_indicator_list)
 
     def compute_rank_by_flops(self) -> List:
         """compute rank consistency based on flops."""
@@ -199,15 +168,6 @@ class NB201Evaluator(Evaluator):
 
         return self.calc_results(true_indicator_list, generated_indicator_list,
                                  true_indicator_list)
-
-    def query_zerometric(self, subnet_cfg: dict) -> float:
-        self.trainer.mutator.set_subnet(subnet_cfg)
-        zenscore = compute_zen_score(
-            self.trainer.model,
-            inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
-            targets=None,
-            repeat=1)
-        return zenscore
 
     def compute_rank_by_zenscore(self) -> List:
         """compute rank consistency based on zenscore."""
@@ -241,21 +201,6 @@ class NB201Evaluator(Evaluator):
             # get flops
             flops_result = self.query_result(genotype, cost_key='flops')
             flops_indicator_list.append(flops_result)
-
-            # ***************************************************** #
-            # score_list = compute_synflow_per_weight(
-            #     self.trainer.model,
-            #     inputs=torch.randn(4, 3, 32, 32).to(self.trainer.device),
-            #     targets=None,
-            #     mode='other',
-            # )
-            # result_list = []
-
-            # for score in score_list:
-            #     result_list.append(score.sum())
-            # score = sum(result_list)
-
-            # ****************************************************** #
 
             print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
             if math.isnan(score) or math.isinf(score):
@@ -298,7 +243,7 @@ class NB201Evaluator(Evaluator):
             flops_result = self.query_result(genotype, cost_key='flops')
             flops_indicator_list.append(flops_result)
 
-            print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
+            # print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
             if math.isnan(score) or math.isinf(score):
                 generated_indicator_list.append(0)
             else:
@@ -354,3 +299,90 @@ class NB201Evaluator(Evaluator):
         )
 
         return kt, ps, sp, rd_list, minn_at_ks, patks
+
+    def compute_rank_by_params(self) -> List:
+        """compute rank consistency based on params."""
+        true_indicator_list: List[float] = []
+        generated_indicator_list: List[float] = []
+
+        self.trainer.logger.info('Begin to compute rank consistency...')
+        num_sample = 50 if self.num_sample is None else self.num_sample
+
+        for _ in range(num_sample):
+            # sample random subnet by mutator
+            random_subnet_dict = self.trainer.mutator.random_subnet
+
+            # get true indictor by query nb201 api
+            genotype = self.generate_genotype(random_subnet_dict,
+                                              self.trainer.mutator)
+            results = self.query_result(genotype)  # type is eval_acc1es
+            true_indicator_list.append(results)
+
+            # get score based on params
+            tmp_type = self.type
+            self.type = 'cost_info'
+            results = self.query_result(genotype, cost_key='params')
+            generated_indicator_list.append(results)
+            self.type = tmp_type
+
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 true_indicator_list)
+
+    def compute_rank_by_fisher(self, loader) -> List:
+        """compute rank consistency based on fisher."""
+        true_indicator_list: List[float] = []
+        generated_indicator_list: List[float] = []
+        flops_indicator_list: List[float] = []
+        iter_loader = iter(loader)
+
+        self.trainer.logger.info('Begin to compute rank consistency...')
+        num_sample = 50 if self.num_sample is None else self.num_sample
+
+        self.trainer.mutator.prepare_from_supernet(self.trainer.model)
+
+        for _ in range(num_sample):
+            # sample random subnet by mutator
+            random_subnet_dict = self.trainer.mutator.random_subnet
+
+            # get true indictor by query nb201 api
+            genotype = self.generate_genotype(random_subnet_dict,
+                                              self.trainer.mutator)
+            results = self.query_result(genotype)  # type is eval_acc1es
+            true_indicator_list.append(results)
+
+            # get score based on fisher
+            self.trainer.mutator.set_subnet(random_subnet_dict)
+            try:
+                input, target = next(iter_loader)
+            except:
+                del iter_loader 
+                iter_loader = iter(loader)
+                input, target = next(iter_loader)
+
+            input = input.to(self.trainer.device)
+            target = target.to(self.trainer.device)
+
+            score = compute_fisher_per_weight(
+                self.trainer.model,
+                inputs=input,
+                targets=target,
+                loss_fn=nn.CrossEntropyLoss(),
+                mode='channel'
+            )
+
+            # get flops
+            flops_result = self.query_result(genotype, cost_key='flops')
+            flops_indicator_list.append(flops_result)
+
+            # print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
+            if math.isnan(score) or math.isinf(score):
+                generated_indicator_list.append(0)
+            else:
+                if isinstance(score, Tensor):
+                    generated_indicator_list.append(
+                        score.cpu().detach().numpy())
+                else:
+                    generated_indicator_list.append(score)
+
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 flops_indicator_list)

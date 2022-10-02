@@ -155,7 +155,7 @@ def main():
             dataset='cifar10',
             num_sample=num_sample,
         )
-        kt, ps, sp = evaluator.compute_rank_based_on_flops()
+        kt, ps, sp = evaluator.compute_rank_by_flops()
 
     utils.time_record(start)
 

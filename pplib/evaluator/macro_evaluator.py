@@ -88,7 +88,7 @@ class MacroEvaluator(Evaluator):
 
         return kt, ps, sp
 
-    def compute_rank_based_on_flops(self):
+    def compute_rank_by_flops(self):
         """compute rank consistency of flops"""
         true_indicator_list: List[float] = []
         supernet_indicator_list: List[float] = []
@@ -113,7 +113,7 @@ class MacroEvaluator(Evaluator):
             f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
         return kt, ps, sp
 
-    def compute_rank_based_on_nwot(self):
+    def compute_rank_by_nwot(self):
         """compute rank consistency of nwot"""
         true_indicator_list: List[float] = []
         supernet_indicator_list: List[float] = []
