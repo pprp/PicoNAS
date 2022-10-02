@@ -3,13 +3,13 @@ from typing import List, Union
 
 import numpy as np
 import torch
-from torch import Tensor
 import torch.nn as nn
+from torch import Tensor
 
 from pplib.evaluator.base import Evaluator
 from pplib.nas.mutators import DiffMutator, OneShotMutator
-from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.predictor.pruners.measures.fisher import compute_fisher_per_weight
+from pplib.predictor.pruners.measures.zen import compute_zen_score
 from pplib.utils.get_dataset_api import get_dataset_api
 from pplib.utils.rank_consistency import (kendalltau, minmax_n_at_k, p_at_tb_k,
                                           pearson, rank_difference, spearman)
@@ -355,7 +355,7 @@ class NB201Evaluator(Evaluator):
             try:
                 input, target = next(iter_loader)
             except:
-                del iter_loader 
+                del iter_loader
                 iter_loader = iter(loader)
                 input, target = next(iter_loader)
 
@@ -367,8 +367,7 @@ class NB201Evaluator(Evaluator):
                 inputs=input,
                 targets=target,
                 loss_fn=nn.CrossEntropyLoss(),
-                mode='channel'
-            )
+                mode='channel')
 
             # get flops
             flops_result = self.query_result(genotype, cost_key='flops')

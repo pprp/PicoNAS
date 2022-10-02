@@ -152,7 +152,8 @@ class NB301Evaluator(Evaluator):
             flops_result = self.query_result(genotype, cost_key='flops')
             flops_indicator_list.append(flops_result)
 
-        return self.calc_results(true_indicator_list, generated_indicator_list, flops_indicator_list)
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 flops_indicator_list)
 
     def compute_rank_by_flops(self) -> List:
         """compute rank consistency based on flops."""
@@ -179,7 +180,8 @@ class NB301Evaluator(Evaluator):
             generated_indicator_list.append(results)
             self.type = tmp_type
 
-        return self.calc_results(true_indicator_list, generated_indicator_list, generated_indicator_list)
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 generated_indicator_list)
 
     def query_zenscore(self, subnet_cfg: dict) -> float:
         self.trainer.mutator.set_subnet(subnet_cfg)
@@ -232,7 +234,8 @@ class NB301Evaluator(Evaluator):
             flops_result = self.query_result(genotype, cost_key='flops')
             flops_indicator_list.append(flops_result)
 
-        return self.calc_results(true_indicator_list, generated_indicator_list, flops_indicator_list)
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 flops_indicator_list)
 
     def compute_rank_by_nwot(self) -> List:
         """compute rank consistency based on nwot."""
@@ -272,7 +275,8 @@ class NB301Evaluator(Evaluator):
             flops_result = self.query_result(genotype, cost_key='flops')
             flops_indicator_list.append(flops_result)
 
-        return self.calc_results(true_indicator_list, generated_indicator_list, flops_indicator_list)
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 flops_indicator_list)
 
     def calc_results(self,
                      true_indicator_list,
@@ -318,7 +322,6 @@ class NB301Evaluator(Evaluator):
 
         return kt, ps, sp, rd_list, minn_at_ks, patks
 
-
     def compute_rank_by_params(self) -> List:
         """compute rank consistency based on params."""
         true_indicator_list: List[float] = []
@@ -341,4 +344,5 @@ class NB301Evaluator(Evaluator):
             results = self.query_result(genotype, cost_key='flops')
             generated_indicator_list.append(results)
 
-        return self.calc_results(true_indicator_list, generated_indicator_list, generated_indicator_list)
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 generated_indicator_list)

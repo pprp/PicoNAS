@@ -101,7 +101,10 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
         choices = dict()
         for group_id, mutables in self.search_group.items():
             arch_param = self.arch_params[str(group_id)]
-            choice = mutables[0].sample_choice(arch_param)
+            if mutables[0].is_fixed:
+                choice = mutables[0]._chosen[0]
+            else:
+                choice = mutables[0].sample_choice(arch_param)
             choices[group_id] = choice
         return choices
 
