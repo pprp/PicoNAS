@@ -74,7 +74,7 @@ class MetaReceptiveField_v1(nn.Module):
             'max_pool_7x7':
             nn.MaxPool2d(7, stride=1, padding=3),
         })
-        self.meta_rf = DynaDiffOP(candidate_ops)
+        self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.3)
 
     def forward(self, x):
         return self.meta_rf(x)

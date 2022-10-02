@@ -267,7 +267,7 @@ class DynaDiffOP(DiffOP):
         candidate_ops: nn.ModuleDict,
         module_kwargs: Optional[Dict[str, Dict]] = None,
         alias: Optional[str] = None,
-        dyna_thresh: int = 0.000000001,
+        dyna_thresh: int = 0.3,
         init_cfg: Optional[Dict] = None,
     ) -> None:
         super().__init__(
