@@ -7,6 +7,7 @@ import logging
 import math
 
 import torch
+import torch.nn.functional as F
 
 from pplib.predictor.predictor import Predictor
 from pplib.predictor.pruners import predictive
@@ -30,7 +31,7 @@ class ZeroCost(Predictor):
             'cuda:0' if torch.cuda.is_available() else 'cpu')
 
     def query(self, graph, dataloader=None, info=None):
-        loss_fn = graph.get_loss_fn()
+        loss_fn = F.cross_entropy
 
         n_classes = graph.num_classes
         score = predictive.find_measures(

@@ -302,10 +302,7 @@ def load_config(path):
 def load_default_config():
     config_paths = 'configs/predictor_config.yaml'
 
-    config_path_full = os.path.join(*([get_project_root()] +
-                                      config_paths.split('/')))
-
-    return load_config(config_path_full)
+    return load_config(config_paths)
 
 
 def pairwise(iterable):

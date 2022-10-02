@@ -391,7 +391,7 @@ class OneShotNASBench201Network(nn.Module):
         super(OneShotNASBench201Network, self).__init__()
         self.channels = C = stem_out_channels
         self.num_modules = N = num_modules_per_stack
-        self.num_labels = num_classes
+        self.num_classes = num_classes
 
         self.bn_momentum = bn_momentum
         self.bn_affine = bn_affine
@@ -440,7 +440,7 @@ class OneShotNASBench201Network(nn.Module):
             nn.ReLU(inplace=True))
         self.dropout = nn.Dropout(0.1)
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
-        self.classifier = nn.Linear(C_prev, self.num_labels)
+        self.classifier = nn.Linear(C_prev, self.num_classes)
 
     def forward(self, inputs):
         feature = self.stem(inputs)

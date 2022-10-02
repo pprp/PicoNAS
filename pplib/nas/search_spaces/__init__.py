@@ -43,7 +43,7 @@ def get_search_space(name, dataset):
     try:
         n_classes = dataset_n_classes[dataset.lower()]
     except KeyError:
-        n_classes = -1
+        n_classes = 10
 
     if name in ['transbench101_micro', 'transbench101_macro']:
         create_graph = dataset.lower() in ['svhn', 'ninapro', 'scifar100']
