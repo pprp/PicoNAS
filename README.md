@@ -69,3 +69,4 @@ We welcome contributions to the library along with any potential issues or sugge
 - SimMIM: https://github.com/microsoft/SimMIM
 - NASLib: https://github.com/automl/NASLib
 - MixPath: https://github.com/xiaomi-automl/MixPath
+- Zerocostnas: https://github.com/SamsungLabs/zero-cost-nas

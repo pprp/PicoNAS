@@ -117,8 +117,7 @@ group.add_argument(
     '--dataset-download',
     action='store_true',
     default=False,
-    help=
-    'Allow download of dataset for torch/ and tfds/ datasets that support it.')
+    help='Allow download of dataset for torch/ and tfds/ datasets that support it.')
 group.add_argument(
     '--class-map',
     default='',
@@ -187,8 +186,7 @@ group.add_argument(
     nargs=3,
     type=int,
     metavar='N N N',
-    help=
-    'Input all image dimensions (d h w, e.g. --input-size 3 224 224), uses model default if empty'
+    help='Input all image dimensions (d h w, e.g. --input-size 3 224 224), uses model default if empty'
 )
 group.add_argument(
     '--crop-pct',
@@ -245,8 +243,7 @@ scripting_group.add_argument(
     '--aot-autograd',
     default=False,
     action='store_true',
-    help=
-    "Enable AOT Autograd support. (It's recommended to use this option with `--fuser nvfuser` together)"
+    help="Enable AOT Autograd support. (It's recommended to use this option with `--fuser nvfuser` together)"
 )
 group.add_argument(
     '--fuser',
@@ -387,8 +384,7 @@ group.add_argument(
     type=float,
     default=0.,
     metavar='N',
-    help=
-    'epoch repeat multiplier (number of times to repeat dataset epoch per train epoch).'
+    help='epoch repeat multiplier (number of times to repeat dataset epoch per train epoch).'
 )
 group.add_argument(
     '--start-epoch',
@@ -482,8 +478,7 @@ group.add_argument(
     '--aug-repeats',
     type=float,
     default=0,
-    help=
-    'Number of augmentation repetitions (distributed training only) (default: 0)'
+    help='Number of augmentation repetitions (distributed training only) (default: 0)'
 )
 group.add_argument(
     '--aug-splits',
@@ -505,8 +500,7 @@ group.add_argument(
     '--bce-target-thresh',
     type=float,
     default=None,
-    help=
-    'Threshold for binarizing softened BCE targets (default: None, disabled)')
+    help='Threshold for binarizing softened BCE targets (default: None, disabled)')
 group.add_argument(
     '--reprob',
     type=float,
@@ -540,8 +534,7 @@ group.add_argument(
     type=float,
     nargs='+',
     default=None,
-    help=
-    'cutmix min/max ratio, overrides alpha and enables cutmix if set (default: None)'
+    help='cutmix min/max ratio, overrides alpha and enables cutmix if set (default: None)'
 )
 group.add_argument(
     '--mixup-prob',
@@ -624,8 +617,7 @@ group.add_argument(
     '--dist-bn',
     type=str,
     default='reduce',
-    help=
-    'Distribute BatchNorm stats between nodes after each epoch ("broadcast", "reduce", or "")'
+    help='Distribute BatchNorm stats between nodes after each epoch ("broadcast", "reduce", or "")'
 )
 group.add_argument(
     '--split-bn',
@@ -644,8 +636,7 @@ group.add_argument(
     '--model-ema-force-cpu',
     action='store_true',
     default=False,
-    help=
-    'Force ema to be tracked on CPU, rank=0 node only. Disables EMA validation.'
+    help='Force ema to be tracked on CPU, rank=0 node only. Disables EMA validation.'
 )
 group.add_argument(
     '--model-ema-decay',
@@ -720,8 +711,7 @@ group.add_argument(
     '--pin-mem',
     action='store_true',
     default=False,
-    help=
-    'Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.'
+    help='Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.'
 )
 group.add_argument(
     '--no-prefetcher',
@@ -751,16 +741,14 @@ group.add_argument(
     type=int,
     default=0,
     metavar='N',
-    help=
-    'Test/inference time augmentation (oversampling) factor. 0=None (default: 0)'
+    help='Test/inference time augmentation (oversampling) factor. 0=None (default: 0)'
 )
 group.add_argument('--local_rank', default=0, type=int)
 group.add_argument(
     '--use-multi-epochs-loader',
     action='store_true',
     default=False,
-    help=
-    'use the multi-epochs-loader to save time at the beginning of every epoch')
+    help='use the multi-epochs-loader to save time at the beginning of every epoch')
 group.add_argument(
     '--log-wandb',
     action='store_true',
@@ -873,19 +861,6 @@ def main():
     if args.split_bn:
         assert num_aug_splits > 1 or args.resplit
         model = convert_splitbn_model(model, max(num_aug_splits, 2))
-
-    # TODO build trainer
-    trainer = build_trainer(
-        args.trainer,
-        model=model,
-        mutator=None,
-        optimizer=optimizer,
-        criterion=train_loss_fn,
-        scheduler=lr_scheduler,
-        searching=True,
-        device=torch.device(args.device),
-        log_name='train_mbv2_meta_with_timm',
-    )
 
     # move model to GPU, enable channels last layout if set
     model.cuda()
@@ -1137,6 +1112,18 @@ def main():
         with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
             f.write(args_text)
 
+    trainer = build_trainer(
+        args.trainer,
+        model=model,
+        mutator=None,
+        optimizer=optimizer,
+        criterion=train_loss_fn,
+        scheduler=lr_scheduler,
+        searching=True,
+        device=torch.device(args.device),
+        log_name='train_mbv2_meta_with_timm',
+    )
+
     try:
         for epoch in range(start_epoch, num_epochs):
             if args.distributed and hasattr(loader_train.sampler, 'set_epoch'):
@@ -1335,7 +1322,7 @@ def train_one_epoch(epoch,
         _logger.info(f'==> export subnet: {trainer.search_subnet()}')
         res_str = 'Fixed: '
         for k, m in trainer.mutator.search_group.items():
-            res_str += f'=k:{k} fixed:{m[0].is_fixed}='
+            res_str += f'| k:{k} fixed:{m[0].is_fixed} chosen: {m[0].chosen if m[0].is_fixed else None} | '
         _logger.info(res_str)
 
     if hasattr(optimizer, 'sync_lookahead'):
