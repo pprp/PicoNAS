@@ -23,6 +23,7 @@ class ToyModel(nn.Module):
         self.c2 = nn.Conv2d(current_c, 32, kernel_size=1, stride=2, padding=0)
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.linear = nn.Linear(32, 10)
+        self.num_classes = 10
 
     def forward(self, x):
         x = self.c2(self.c1(x))
@@ -40,6 +41,7 @@ class TestPredictive(TestCase):
 
     def setUp(self) -> None:
         self.model = OneShotNASBench201Network()
+        # self.model = ToyModel()
         self.mutator = OneShotMutator(with_alias=True)
         self.mutator.prepare_from_supernet(self.model)
         self.dataloader = build_dataloader('cifar10', 'train')

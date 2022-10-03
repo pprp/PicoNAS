@@ -110,7 +110,7 @@ class MetaReceptiveField_v2(nn.Module):
             'max_pool_7x7':
             nn.MaxPool2d(7, stride=1, padding=3),
         })
-        self.meta_rf = DynaDiffOP(candidate_ops)
+        self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.3)
         self.split = SplitBlock(ratio)
 
     def forward(self, x):
