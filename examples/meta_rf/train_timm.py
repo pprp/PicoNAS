@@ -20,7 +20,9 @@ from datetime import datetime
 import mbv2_meta_rf  # noqa: F401
 import meta_trainer  # noqa: F401
 import torch
+import torch.distributed as dist
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision.utils
 import yaml
 from mmcv.cnn import get_model_complexity_info
@@ -38,6 +40,7 @@ from torch.nn.parallel import DistributedDataParallel as NativeDDP
 
 from pplib.models import build_model
 from pplib.trainer import build_trainer
+from pplib.utils.loggings import get_logger
 
 try:
     from apex import amp
@@ -70,7 +73,6 @@ torch.backends.cudnn.benchmark = True
 # logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
 #                     level=logging.DEBUG)
 # _logger = logging.getLogger('train')
-from pplib.utils.loggings import get_logger
 
 if not os.path.exists('./log/'):
     os.makedirs('./log/')
@@ -872,6 +874,19 @@ def main():
         assert num_aug_splits > 1 or args.resplit
         model = convert_splitbn_model(model, max(num_aug_splits, 2))
 
+    # TODO build trainer
+    trainer = build_trainer(
+        args.trainer,
+        model=model,
+        mutator=None,
+        optimizer=optimizer,
+        criterion=train_loss_fn,
+        scheduler=lr_scheduler,
+        searching=True,
+        device=torch.device(args.device),
+        log_name='train_mbv2_meta_with_timm',
+    )
+
     # move model to GPU, enable channels last layout if set
     model.cuda()
     if args.channels_last:
@@ -1122,19 +1137,6 @@ def main():
         with open(os.path.join(output_dir, 'args.yaml'), 'w') as f:
             f.write(args_text)
 
-    # TODO build trainer
-    trainer = build_trainer(
-        args.trainer,
-        model=model,
-        mutator=None,
-        optimizer=optimizer,
-        criterion=train_loss_fn,
-        scheduler=lr_scheduler,
-        searching=True,
-        device=torch.device(args.device),
-        log_name='train_mbv2_meta_with_timm',
-    )
-
     try:
         for epoch in range(start_epoch, num_epochs):
             if args.distributed and hasattr(loader_train.sampler, 'set_epoch'):
@@ -1263,6 +1265,10 @@ def train_one_epoch(epoch,
         if args.channels_last:
             input = input.contiguous(memory_format=torch.channels_last)
 
+        # add broad cast
+        for k, v in trainer.mutator.arch_params.items():
+            dist.broadcast(v, src=0)
+
         # TODO currently not support amp
         loss = trainer.train_step(input, target, val_x, val_y)
 
@@ -1323,10 +1329,14 @@ def train_one_epoch(epoch,
     if args.local_rank == 0:
         for k, v in trainer.mutator.arch_params.items():
             _logger.info(
-                f'current arch_param: key: {k}: value: {nn.functional.softmax(v, dim=-1).cpu()}'
+                f'arch_param: Key: {k} Value: {list(v.detach().cpu().numpy())} After softmax: {list(F.softmax(v, dim=-1).detach().cpu().numpy())}'
             )
 
         _logger.info(f'==> export subnet: {trainer.search_subnet()}')
+        res_str = 'Fixed: '
+        for k, m in trainer.mutator.search_group.items():
+            res_str += f'=k:{k} fixed:{m[0].is_fixed}='
+        _logger.info(res_str)
 
     if hasattr(optimizer, 'sync_lookahead'):
         optimizer.sync_lookahead()
