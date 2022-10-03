@@ -6,8 +6,7 @@ import torch
 
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
-from pplib.datasets import build_dataloader
-from pplib.evaluator import MacroEvaluator, NB201Evaluator  # noqa: F401
+from pplib.evaluator import NB201Evaluator  # noqa: F401
 from pplib.models import build_model
 from pplib.trainer import build_trainer
 from pplib.utils.config import Config
@@ -93,83 +92,18 @@ def get_args():
     return parser.parse_args()
 
 
-def calculate_nwot(num_samples: list, trainer) -> None:
+def calculate_zerocost(num_samples: list, trainer, measure_name=None) -> None:
     results = []
+    if measure_name is None:
+        measure_name = ['flops']
+
     for num_sample in num_samples:
         evaluator = NB201Evaluator(trainer=trainer, num_sample=num_sample)
-        kt, ps, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_nwot(
-        )
+        kt, ps, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_predictive(
+            measure_name=measure_name)
         results.append([kt, ps, sp])
 
-    print('=' * 30, 'nwot', '=' * 30)
-    print("= Num of Samples == Kendall's Tau ==  Pearson   == Spearman =")
-    for num, result in zip(num_samples, results):
-        print(
-            f'=  {num:<6}  \t ==   {result[0]:.4f} \t  ==  {result[1]:.4f} \t ==  {result[2]:.4f} ='
-        )
-    print('=' * 60)
-
-
-def calculate_zenscore(num_samples: list, trainer) -> None:
-    results = []
-    for num_sample in num_samples:
-        evaluator = NB201Evaluator(trainer=trainer, num_sample=num_sample)
-        kt, ps, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_zenscore(
-        )
-        results.append([kt, ps, sp])
-
-    print('=' * 30, 'zenscore', '=' * 30)
-    print("= Num of Samples == Kendall's Tau ==  Pearson   == Spearman =")
-    for num, result in zip(num_samples, results):
-        print(
-            f'=  {num:<6}  \t ==   {result[0]:.4f} \t  ==  {result[1]:.4f} \t ==  {result[2]:.4f} ='
-        )
-    print('=' * 60)
-
-
-def calculate_fisher(num_samples: list, trainer, loader) -> None:
-    results = []
-    for num_sample in num_samples:
-        evaluator = NB201Evaluator(trainer=trainer, num_sample=num_sample)
-        kt, ps, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_fisher(
-            loader)
-        results.append([kt, ps, sp])
-
-    print('=' * 30, 'fisher', '=' * 30)
-    print("= Num of Samples == Kendall's Tau ==  Pearson   == Spearman =")
-    for num, result in zip(num_samples, results):
-        print(
-            f'=  {num:<6}  \t ==   {result[0]:.4f} \t  ==  {result[1]:.4f} \t ==  {result[2]:.4f} ='
-        )
-    print('=' * 60)
-
-
-def calculate_flops(num_samples: list, trainer) -> None:
-    results = []
-    for num_sample in num_samples:
-        evaluator = NB201Evaluator(trainer=trainer, num_sample=num_sample)
-        kt, ps, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_flops(
-        )
-        results.append([kt, ps, sp])
-
-    print('=' * 30, 'flops', '=' * 30)
-    print("= Num of Samples == Kendall's Tau ==  Pearson   == Spearman =")
-    for num, result in zip(num_samples, results):
-        print(
-            f'=  {num:<6}  \t ==   {result[0]:.4f} \t  ==  {result[1]:.4f} \t ==  {result[2]:.4f} ='
-        )
-    print('=' * 60)
-
-
-def calculate_params(num_samples: list, trainer) -> None:
-    results = []
-    for num_sample in num_samples:
-        evaluator = NB201Evaluator(trainer=trainer, num_sample=num_sample)
-        kt, ps, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_params(
-        )
-        results.append([kt, ps, sp])
-
-    print('=' * 30, 'params', '=' * 30)
+    print('=' * 30, measure_name[0], '=' * 30)
     print("= Num of Samples == Kendall's Tau ==  Pearson   == Spearman =")
     for num, result in zip(num_samples, results):
         print(
@@ -203,12 +137,6 @@ def main():
     else:
         device = torch.device('cpu')
 
-    train_dataloader = build_dataloader(
-        type='train', dataset=cfg.dataset, config=cfg)
-
-    # val_dataloader = build_dataloader(
-    #     type='val', dataset=cfg.dataset, config=cfg)
-
     model = build_model(cfg.model_name)
 
     criterion = build_criterion(cfg.crit).to(device)
@@ -231,13 +159,12 @@ def main():
 
     start = time.time()
 
-    num_samples = [20, 50, 100]
-
-    # calculate_nwot(num_samples, trainer)
-    # calculate_zenscore(num_samples, trainer)
-    # calculate_flops(num_samples, trainer)
-    # calculate_params(num_samples, trainer)
-    calculate_fisher(num_samples, trainer, train_dataloader)
+    num_samples = [5, 10]
+    """
+    'epe_nas' , 'fisher', 'grad_norm', 'grasp' , 'jacov'
+    'l2_norm' , 'nwot' , 'plain' , 'snip' , 'synflow'
+    """
+    calculate_zerocost(num_samples, trainer, measure_name=['epe_nas'])
 
     utils.time_record(start)
 
