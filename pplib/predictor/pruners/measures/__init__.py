@@ -66,5 +66,4 @@ def load_all():
     from . import zen  # noqa: F401
 
 
-# TODO: should we do that by default?
 load_all()

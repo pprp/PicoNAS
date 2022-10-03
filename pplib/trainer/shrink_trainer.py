@@ -888,10 +888,8 @@ class NB201ShrinkTrainer(BaseTrainer):
         assert val_loader is not None
 
         # Info about dataloader
-        train_iter = iter(train_loader)
-        val_iter = iter(val_loader)
+        iter_train = iter(train_loader)
         max_train_iters = 200
-        max_test_iters = 40
 
         self.mutator.set_subnet(subnet_dict)
 
@@ -904,7 +902,13 @@ class NB201ShrinkTrainer(BaseTrainer):
         # BN Calibration
         self.model.train()
         for _ in range(max_train_iters):
-            data, target = next(train_iter)
+            try:
+                data, target = next(iter_train)
+            except:
+                del iter_train
+                iter_train = iter(train_loader)
+                data, target = next(iter_train)
+
             data, target = data.to(self.device), target.to(self.device)
             output = self.model(data)
             del data, target, output
@@ -913,8 +917,7 @@ class NB201ShrinkTrainer(BaseTrainer):
         top1_vacc = AvgrageMeter()
         top5_vacc = AvgrageMeter()
 
-        for _ in range(max_test_iters):
-            data, target = next(val_iter)
+        for data, target in range(val_loader):
             data, target = data.to(self.device), target.to(self.device)
             output = self.model(data)
             n = target.size(0)

@@ -1,15 +1,11 @@
-import math
 from typing import List, Union
 
 import numpy as np
-import torch
-import torch.nn as nn
-from torch import Tensor
+import torch.nn.functional as F
 
 from pplib.evaluator.base import Evaluator
 from pplib.nas.mutators import DiffMutator, OneShotMutator
-from pplib.predictor.pruners.measures.fisher import compute_fisher_per_weight
-from pplib.predictor.pruners.measures.zen import compute_zen_score
+from pplib.predictor.pruners.predictive import find_measures
 from pplib.utils.get_dataset_api import get_dataset_api
 from pplib.utils.rank_consistency import (kendalltau, minmax_n_at_k, p_at_tb_k,
                                           pearson, rank_difference, spearman)
@@ -38,7 +34,12 @@ class NB201Evaluator(Evaluator):
         self.search_space = 'nasbench201'
         self.dataset = dataset
 
-        if dataset == 'imagenet16':
+        if dataset == 'cifar10':
+            self.num_classes = 10
+        elif dataset == 'cifar100':
+            self.num_classes = 100
+        elif dataset == 'imagenet16':
+            self.num_classes = 120
             self.dataset = 'ImageNet16-120'
 
         assert type in ['train_losses', 'eval_losses',
@@ -141,10 +142,17 @@ class NB201Evaluator(Evaluator):
         return self.calc_results(true_indicator_list, generated_indicator_list,
                                  flops_indicator_list)
 
-    def compute_rank_by_flops(self) -> List:
-        """compute rank consistency based on flops."""
+    def compute_rank_by_predictive(self,
+                                   dataloader=None,
+                                   measure_name: List = ['flops']) -> List:
+        """compute rank consistency by zero cost metric."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
+        flops_indicator_list: List[float] = []
+
+        if dataloader is None:
+            from pplib.datasets import build_dataloader
+            dataloader = build_dataloader('cifar10', 'train')
 
         self.trainer.logger.info('Begin to compute rank consistency...')
         num_sample = 50 if self.num_sample is None else self.num_sample
@@ -158,100 +166,29 @@ class NB201Evaluator(Evaluator):
                                               self.trainer.mutator)
             results = self.query_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
+
+            assert isinstance(measure_name, list) and len(measure_name) == 1, \
+                f'The measure name should be a list but got {type(measure_name)}' \
+                f' and the lenght should be 1 but got {len(measure_name)}'
+
+            dataload_info = ['random', 3, self.num_classes]
+
+            # get predict indicator by predictive.
+            score = find_measures(
+                self.trainer.model,
+                dataloader,
+                dataload_info=dataload_info,
+                measure_names=measure_name,
+                loss_fn=F.cross_entropy,
+                device=self.trainer.device)
+            generated_indicator_list.append(score)
 
             # get score based on flops
             tmp_type = self.type
             self.type = 'cost_info'
             results = self.query_result(genotype, cost_key='flops')
-            generated_indicator_list.append(results)
+            flops_indicator_list.append(results)
             self.type = tmp_type
-
-        return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 true_indicator_list)
-
-    def compute_rank_by_zenscore(self) -> List:
-        """compute rank consistency based on zenscore."""
-        true_indicator_list: List[float] = []
-        generated_indicator_list: List[float] = []
-        flops_indicator_list: List[float] = []
-
-        self.trainer.logger.info('Begin to compute rank consistency...')
-        num_sample = 50 if self.num_sample is None else self.num_sample
-
-        self.trainer.mutator.prepare_from_supernet(self.trainer.model)
-
-        for _ in range(num_sample):
-            # sample random subnet by mutator
-            random_subnet_dict = self.trainer.mutator.random_subnet
-
-            # get true indictor by query nb201 api
-            genotype = self.generate_genotype(random_subnet_dict,
-                                              self.trainer.mutator)
-            results = self.query_result(genotype)  # type is eval_acc1es
-            true_indicator_list.append(results)
-
-            # get score based on zenscore
-            self.trainer.mutator.set_subnet(random_subnet_dict)
-            score = compute_zen_score(
-                self.trainer.model,
-                inputs=torch.randn(32, 3, 32, 32).to(self.trainer.device),
-                targets=None,
-                repeat=10)
-
-            # get flops
-            flops_result = self.query_result(genotype, cost_key='flops')
-            flops_indicator_list.append(flops_result)
-
-            print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
-            if math.isnan(score) or math.isinf(score):
-                generated_indicator_list.append(0)
-            else:
-                if isinstance(score, Tensor):
-                    generated_indicator_list.append(
-                        score.cpu().detach().numpy())
-                else:
-                    generated_indicator_list.append(score)
-
-        return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 flops_indicator_list)
-
-    def compute_rank_by_nwot(self) -> List:
-        """compute rank consistency based on nwot."""
-        true_indicator_list: List[float] = []
-        generated_indicator_list: List[float] = []
-        flops_indicator_list = []
-
-        self.trainer.logger.info('Begin to compute rank consistency...')
-        num_sample = 50 if self.num_sample is None else self.num_sample
-
-        self.trainer.mutator.prepare_from_supernet(self.trainer.model)
-
-        for _ in range(num_sample):
-            # sample random subnet by mutator
-            random_subnet_dict = self.trainer.mutator.random_subnet
-
-            # get true indictor by query nb201 api
-            genotype = self.generate_genotype(random_subnet_dict,
-                                              self.trainer.mutator)
-            results = self.query_result(genotype)  # type is eval_acc1es
-            true_indicator_list.append(results)
-
-            # get score based on zenscore
-            score = self.trainer.get_subnet_nwot(random_subnet_dict)
-
-            # get flops
-            flops_result = self.query_result(genotype, cost_key='flops')
-            flops_indicator_list.append(flops_result)
-
-            # print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
-            if math.isnan(score) or math.isinf(score):
-                generated_indicator_list.append(0)
-            else:
-                if isinstance(score, Tensor):
-                    generated_indicator_list.append(
-                        score.cpu().detach().numpy())
-                else:
-                    generated_indicator_list.append(score)
 
         return self.calc_results(true_indicator_list, generated_indicator_list,
                                  flops_indicator_list)
@@ -299,89 +236,3 @@ class NB201Evaluator(Evaluator):
         )
 
         return kt, ps, sp, rd_list, minn_at_ks, patks
-
-    def compute_rank_by_params(self) -> List:
-        """compute rank consistency based on params."""
-        true_indicator_list: List[float] = []
-        generated_indicator_list: List[float] = []
-
-        self.trainer.logger.info('Begin to compute rank consistency...')
-        num_sample = 50 if self.num_sample is None else self.num_sample
-
-        for _ in range(num_sample):
-            # sample random subnet by mutator
-            random_subnet_dict = self.trainer.mutator.random_subnet
-
-            # get true indictor by query nb201 api
-            genotype = self.generate_genotype(random_subnet_dict,
-                                              self.trainer.mutator)
-            results = self.query_result(genotype)  # type is eval_acc1es
-            true_indicator_list.append(results)
-
-            # get score based on params
-            tmp_type = self.type
-            self.type = 'cost_info'
-            results = self.query_result(genotype, cost_key='params')
-            generated_indicator_list.append(results)
-            self.type = tmp_type
-
-        return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 true_indicator_list)
-
-    def compute_rank_by_fisher(self, loader) -> List:
-        """compute rank consistency based on fisher."""
-        true_indicator_list: List[float] = []
-        generated_indicator_list: List[float] = []
-        flops_indicator_list: List[float] = []
-        iter_loader = iter(loader)
-
-        self.trainer.logger.info('Begin to compute rank consistency...')
-        num_sample = 50 if self.num_sample is None else self.num_sample
-
-        self.trainer.mutator.prepare_from_supernet(self.trainer.model)
-
-        for _ in range(num_sample):
-            # sample random subnet by mutator
-            random_subnet_dict = self.trainer.mutator.random_subnet
-
-            # get true indictor by query nb201 api
-            genotype = self.generate_genotype(random_subnet_dict,
-                                              self.trainer.mutator)
-            results = self.query_result(genotype)  # type is eval_acc1es
-            true_indicator_list.append(results)
-
-            # get score based on fisher
-            self.trainer.mutator.set_subnet(random_subnet_dict)
-            try:
-                input, target = next(iter_loader)
-            except:
-                del iter_loader
-                iter_loader = iter(loader)
-                input, target = next(iter_loader)
-
-            input = input.to(self.trainer.device)
-            target = target.to(self.trainer.device)
-
-            score = compute_fisher_per_weight(
-                self.trainer.model,
-                inputs=input,
-                targets=target,
-                loss_fn=nn.CrossEntropyLoss(),
-                mode='channel')
-
-            # get flops
-            flops_result = self.query_result(genotype, cost_key='flops')
-            flops_indicator_list.append(flops_result)
-
-            # print(f'score: {score:.2f} geno: {genotype} type: {type(score)}')
-            if math.isnan(score) or math.isinf(score):
-                generated_indicator_list.append(0)
-            else:
-                if isinstance(score, Tensor):
-                    generated_indicator_list.append(
-                        score.cpu().detach().numpy())
-                else:
-                    generated_indicator_list.append(score)
-
-        return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 flops_indicator_list)

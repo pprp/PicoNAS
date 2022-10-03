@@ -125,7 +125,7 @@ def build_dataloader(dataset='cifar10', type='train', config=None):
         nw = getattr(config, 'nw', 4)
         fast = getattr(config, 'fast', False)
     else:
-        batch_size = 64
+        batch_size = 4
         nw = 4
         fast = False
 

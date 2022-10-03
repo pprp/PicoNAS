@@ -4,13 +4,13 @@ from unittest import TestCase
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from pplib.datasets import build_dataloader
 from pplib.models.nasbench201.oneshot_nasbench201 import \
     OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
-from pplib.predictor.pruners.predictive import find_measures_arrays
-from pplib.predictor.zerocost import ZeroCost
+from pplib.predictor.pruners.predictive import find_measures
 
 
 class ToyModel(nn.Module):
@@ -46,51 +46,24 @@ class TestPredictive(TestCase):
         self.mutator.prepare_from_supernet(self.model)
         self.dataloader = build_dataloader('cifar10', 'train')
 
-    # def test_nwot(self):
-    #
-    #     # dataload, num_imgs_or_batches, num_classes
-    #     dataload_info = ['random', 1, 10]
-    #     device = torch.device('cuda')
-    #     measure_values = find_measures_arrays(net_orig=self.model,
-    #                                           trainloader=dataloader,
-    #                                           dataload_info=dataload_info,
-    #                                           measure_names=None,
-    #                                           device=device)
+    def test_nwot(self):
+        """
+        'epe_nas' , 'fisher', 'grad_norm', 'grasp' , 'jacov'
+        'l2_norm' , 'nwot' , 'plain' , 'snip' , 'synflow'
+        """
+        # dataload, num_imgs_or_batches, num_classes
+        dataload_info = ['random', 1, 10]
+        device = torch.device('cuda')
 
-    #     for k, v in measure_values.items():
-    #         print(f"k: {k} => {v}")
+        measure_values = find_measures(
+            net_orig=self.model,
+            dataloader=self.dataloader,
+            dataload_info=dataload_info,
+            measure_names=['grasp'],
+            loss_fn=F.cross_entropy,
+            device=device)
 
-    def test_zero_cost(self):
-        print('==> jacov')
-        for _ in range(3):
-            predictor = ZeroCost(method_type='jacov')
-            score = predictor.query(self.model, self.dataloader)
-            print(score)
-        print('==> snip')
-        for _ in range(3):
-            predictor = ZeroCost(method_type='snip')
-            score = predictor.query(self.model, self.dataloader)
-            print(score)
-        print('==> synflow')
-        for _ in range(3):
-            predictor = ZeroCost(method_type='synflow')
-            score = predictor.query(self.model, self.dataloader)
-            print(score)
-        print('==> grad_norm')
-        for _ in range(3):
-            predictor = ZeroCost(method_type='grad_norm')
-            score = predictor.query(self.model, self.dataloader)
-            print(score)
-        print('==> fisher')
-        for _ in range(3):
-            predictor = ZeroCost(method_type='fisher')
-            score = predictor.query(self.model, self.dataloader)
-            print(score)
-        print('==> grasp')
-        for _ in range(3):
-            predictor = ZeroCost(method_type='grasp')
-            score = predictor.query(self.model, self.dataloader)
-            print(score)
+        print(measure_values)
 
 
 if __name__ == '__main__':
