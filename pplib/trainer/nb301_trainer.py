@@ -10,6 +10,7 @@ import pplib.utils.utils as utils
 from pplib.core.losses import PairwiseRankLoss
 from pplib.evaluator.nb301_evaluator import NB301Evaluator
 from pplib.models.nasbench301 import OneShotNASBench301Network
+from pplib.nas.mutables import OneShotOP
 from pplib.nas.mutators import OneShotMutator
 from pplib.predictor.pruners.measures.nwot import compute_nwot
 from pplib.utils.utils import AvgrageMeter, accuracy
@@ -370,7 +371,8 @@ class NB301Trainer(BaseTrainer):
 
             if epoch % 5 == 0:
                 assert self.evaluator is not None
-                kt, ps, sp = self.evaluator.compute_rank_consistency(
+                # BWR@K, P@tbk
+                kt, ps, sp, rd, minn_at_ks, patks = self.evaluator.compute_rank_consistency(
                     val_loader, self.mutator)
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch)
@@ -378,6 +380,54 @@ class NB301Trainer(BaseTrainer):
                     'RANK/pearson', ps, global_step=self.current_epoch)
                 self.writer.add_scalar(
                     'RANK/spearman', sp, global_step=self.current_epoch)
+
+                if isinstance(rd, list):
+                    for i, r in enumerate(rd):
+                        self.writer.add_scalar(
+                            f'ANALYSE/rank_diff_{(i+1)*20}%',
+                            r,
+                            global_step=self.current_epoch)
+                else:
+                    self.writer.add_scalar(
+                        'ANALYSE/rank_diff',
+                        rd,
+                        global_step=self.current_epoch)
+
+                for k, minn, brk, maxn, wrk in minn_at_ks:
+                    # self.writer.add_scalar(
+                    #     f'ANALYSE/oneshot_{k}_minn',
+                    #     minn,
+                    #     global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{k}_BR@K',
+                        brk,
+                        global_step=self.current_epoch)
+                    # self.writer.add_scalar(
+                    #     f'ANALYSE/oneshot_{k}_maxn',
+                    #     maxn,
+                    #     global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{k}_WR@K',
+                        wrk,
+                        global_step=self.current_epoch)
+
+                for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_P@topK',
+                        p_at_topk,
+                        global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_P@bottomK',
+                        p_at_bk,
+                        global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_KD@topK',
+                        kd_at_topk,
+                        global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_KD@bottomK',
+                        kd_at_bk,
+                        global_step=self.current_epoch)
 
             self.writer.add_scalar(
                 'EPOCH_LOSS/train_epoch_loss',
@@ -461,11 +511,12 @@ class NB301Trainer(BaseTrainer):
         for k, v in self.mutator.search_group.items():
             current_choice = subnet_dict[k]  # '1' or '2' or 'I'
             choice_flops = 0
-            for _, module in v[0]._candidate_ops[current_choice].named_modules(
-            ):
-                flops = getattr(module, '__flops__', 0)
-                if flops > 0:
-                    choice_flops += flops
+            if isinstance(v[0], OneShotOP):
+                for _, module in v[0]._candidate_ops[
+                        current_choice].named_modules():
+                    flops = getattr(module, '__flops__', 0)
+                    if flops > 0:
+                        choice_flops += flops
             # print(f'k: {k} choice: {current_choice} flops: {choice_flops}')
             subnet_flops += choice_flops
         return subnet_flops
@@ -623,14 +674,63 @@ class NB301Trainer(BaseTrainer):
 
             if epoch % 5 == 0:
                 assert self.evaluator is not None
-                kt, ps, sp = self.evaluator.compute_rank_consistency(
-                    self.mutator)
+                # BWR@K, P@tbk
+                kt, ps, sp, rd, minn_at_ks, patks = self.evaluator.compute_rank_consistency(
+                    val_loader, self.mutator)
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch)
                 self.writer.add_scalar(
                     'RANK/pearson', ps, global_step=self.current_epoch)
                 self.writer.add_scalar(
                     'RANK/spearman', sp, global_step=self.current_epoch)
+
+                if isinstance(rd, list):
+                    for i, r in enumerate(rd):
+                        self.writer.add_scalar(
+                            f'ANALYSE/rank_diff_{(i+1)*20}%',
+                            r,
+                            global_step=self.current_epoch)
+                else:
+                    self.writer.add_scalar(
+                        'ANALYSE/rank_diff',
+                        rd,
+                        global_step=self.current_epoch)
+
+                for k, minn, brk, maxn, wrk in minn_at_ks:
+                    # self.writer.add_scalar(
+                    #     f'ANALYSE/oneshot_{k}_minn',
+                    #     minn,
+                    #     global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{k}_BR@K',
+                        brk,
+                        global_step=self.current_epoch)
+                    # self.writer.add_scalar(
+                    #     f'ANALYSE/oneshot_{k}_maxn',
+                    #     maxn,
+                    #     global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{k}_WR@K',
+                        wrk,
+                        global_step=self.current_epoch)
+
+                for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_P@topK',
+                        p_at_topk,
+                        global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_P@bottomK',
+                        p_at_bk,
+                        global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_KD@topK',
+                        kd_at_topk,
+                        global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_KD@bottomK',
+                        kd_at_bk,
+                        global_step=self.current_epoch)
 
             self.writer.add_scalar(
                 'EPOCH_LOSS/train_epoch_loss',

@@ -162,14 +162,12 @@ class NB201Evaluator(Evaluator):
             random_subnet_dict = self.trainer.mutator.random_subnet
             self.trainer.mutator.set_subnet(random_subnet_dict)
 
-            # t1 = time.time()
             # get true indictor by query nb201 api
             genotype = self.generate_genotype(random_subnet_dict,
                                               self.trainer.mutator)
             results = self.query_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
-            # t2 = time.time()
-            # print("query ground truth time: ", t2-t1)
+
 
             assert isinstance(measure_name, list) and len(measure_name) == 1, \
                 f'The measure name should be a list but got {type(measure_name)}' \
@@ -186,8 +184,6 @@ class NB201Evaluator(Evaluator):
                 loss_fn=F.cross_entropy,
                 device=self.trainer.device)
             generated_indicator_list.append(score)
-            # t3 = time.time()
-            # print("zero cost time: ", t3-t2)
 
             # get score based on flops
             tmp_type = self.type
@@ -195,8 +191,6 @@ class NB201Evaluator(Evaluator):
             results = self.query_result(genotype, cost_key='flops')
             flops_indicator_list.append(results)
             self.type = tmp_type
-            # t4 = time.time()
-            # print('flops calculation time: ', t4-t3)
 
         return self.calc_results(true_indicator_list, generated_indicator_list,
                                  flops_indicator_list)

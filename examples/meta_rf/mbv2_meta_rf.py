@@ -407,9 +407,9 @@ if __name__ == '__main__':
     # params: 100%
 
     m = MobileNetv2MetaReceptionField(1000)
-    f, p = get_model_complexity_info(m, input_shape=(3, 224, 224), as_strings=True)
+    f, p = get_model_complexity_info(
+        m, input_shape=(3, 224, 224), as_strings=True)
     # v1 flops: 0.34 GFlops params: 3.95M
     # v2 flops: 0.33 GFlops params: 3.63M
     # v3 flops: 0.33 GFlops params: 3.51M
-    print(f"flops: {f} params: {p}")
-
+    print(f'flops: {f} params: {p}')
