@@ -42,7 +42,7 @@ def get_args():
     parser.add_argument(
         '--log_name',
         type=str,
-        default='NB201Trainer',
+        default='zero_cost_ranker',
         help='name of this experiments',
     )
 
@@ -103,13 +103,14 @@ def calculate_zerocost(num_samples: list, trainer, measure_name=None) -> None:
             measure_name=measure_name)
         results.append([kt, ps, sp])
 
-    print('=' * 30, measure_name[0], '=' * 30)
-    print("= Num of Samples == Kendall's Tau ==  Pearson   == Spearman =")
+    trainer.logger.info(f'current measure name is: {measure_name[0]}')
+    trainer.logger.info(
+        "= Num of Samples == Kendall's Tau ==  Pearson   == Spearman =")
     for num, result in zip(num_samples, results):
-        print(
+        trainer.logger.info(
             f'=  {num:<6}  \t ==   {result[0]:.4f} \t  ==  {result[1]:.4f} \t ==  {result[2]:.4f} ='
         )
-    print('=' * 60)
+    trainer.logger.info('=' * 60)
 
 
 def main():
