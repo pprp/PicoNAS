@@ -4,9 +4,32 @@ import math
 
 import torch
 import torch.nn as nn
+from torch.nn.parameter import Parameter
 
 from pplib.models.registry import register_model
 from pplib.nas.mutables import DynaDiffOP
+
+
+class SpatialSeperablePooling(nn.Module):
+    """Spatial Seperable Pooling operation."""
+
+    def __init__(self):
+        super().__init__()
+        self.pool_h = nn.AdaptiveAvgPool2d((None, 1))
+        self.pool_w = nn.AdaptiveAvgPool2d((1, None))
+        self.register_parameter('param', Parameter(torch.randn(1)))
+
+    def forward(self, x):
+        b, c, h, w = x.shape
+        x_h = self.pool_h(x)
+        x_w = self.pool_w(x)
+
+        # repeat
+        x_h = x_h.repeat(1, 1, 1, h)
+        x_w = x_w.repeat(1, 1, w, 1)
+
+        # add
+        return x_h + x_w
 
 
 class CoordAtt(nn.Module):
@@ -26,26 +49,25 @@ class CoordAtt(nn.Module):
         self.conv_w = nn.Conv2d(mip, oup, kernel_size=1, stride=1, padding=0)
 
     def forward(self, x):
-        identity = x
-
+        identity = x  # 8, 24, 224, 224
+        # import pdb; pdb.set_trace()
         n, c, h, w = x.size()
-        x_h = self.pool_h(x)
-        x_w = self.pool_w(x).permute(0, 1, 3, 2)
+        x_h = self.pool_h(x)  # 8, 24, 224, 1
+        x_w = self.pool_w(x).permute(0, 1, 3, 2)  # 8, 24, 224, 1
 
-        y = torch.cat([x_h, x_w], dim=2)
-        y = self.conv1(y)
-        y = self.bn1(y)
-        y = self.act(y)
+        y = torch.cat([x_h, x_w], dim=2)  # 8, 24, 224, 1
+        y = self.conv1(y)  # 8, 24, 448, 1
+        y = self.bn1(y)  # 8, 24, 448, 1
+        y = self.act(y)  # 8, 24, 448, 1
 
-        x_h, x_w = torch.split(y, [h, w], dim=2)
-        x_w = x_w.permute(0, 1, 3, 2)
+        x_h, x_w = torch.split(
+            y, [h, w], dim=2)  # 8, 24, 224, 1; 8, 24, 224, 1
+        x_w = x_w.permute(0, 1, 3, 2)  # 8, 24, 1, 224
 
-        a_h = self.conv_h(x_h).sigmoid()
-        a_w = self.conv_w(x_w).sigmoid()
+        a_h = self.conv_h(x_h).sigmoid()  # 8, 24, 1, 224
+        a_w = self.conv_w(x_w).sigmoid()  # 8, 24, 224, 1
 
-        out = identity * a_w * a_h
-
-        return out
+        return identity * a_w * a_h
 
 
 class Identity(nn.Module):
@@ -119,7 +141,39 @@ class MetaReceptiveField_v2(nn.Module):
         return torch.cat([x1, out], 1)
 
 
-MetaReceptiveField = MetaReceptiveField_v2
+class MetaReceptiveField_v3(nn.Module):
+    """Adjust Receptive Field by Meta Learning with split block."""
+
+    def __init__(self, in_channels=128, ratio: float = 0.5):
+        super().__init__()
+        in_channels = int(in_channels * ratio)
+
+        candidate_ops = nn.ModuleDict({
+            'skip_connect':
+            Identity(),
+            'spatial_sep_pool':
+            SpatialSeperablePooling(),
+            'max_pool_3x3':
+            nn.MaxPool2d(3, stride=1, padding=1),
+            'max_pool_5x5':
+            nn.MaxPool2d(5, stride=1, padding=2),
+            'max_pool_7x7':
+            nn.MaxPool2d(7, stride=1, padding=3),
+        })
+        self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.3)
+        self.split = SplitBlock(ratio)
+        self.bn = nn.BatchNorm2d(in_channels)
+        self.act = h_swish()
+
+    def forward(self, x):
+        x1, x2 = self.split(x)
+        out = self.meta_rf(x2)
+        out = self.bn(out)
+        out = self.act(out)
+        return torch.cat([x1, out], 1)
+
+
+MetaReceptiveField = MetaReceptiveField_v3
 
 
 class ConvBNReLU(nn.Sequential):
@@ -333,7 +387,29 @@ class MobileNetv2MetaReceptionField(nn.Module):
 
 
 if __name__ == '__main__':
-    m = MetaReceptiveField_v2(in_channels=6)
-    i = torch.randn(3, 6, 32, 32)
-    o = m(i)
-    print(o.shape)
+    from mmcv.cnn import get_model_complexity_info
+    inputs = torch.randn(8, 24, 224, 224)
+
+    # m1 = CoordAtt(inp=96, oup=96, reduction=32)
+    # m2 = SpatialSeperablePooling(96)
+
+    # f1, p1 = get_model_complexity_info(
+    #     m1, input_shape=(96, 28, 28), as_strings=False)
+    # f2, p2 = get_model_complexity_info(
+    #     m2, input_shape=(96, 28, 28), as_strings=False)
+
+    # print(f'Model1 flops is {f1}; params is {p1}')
+    # print(f'Model2 flops is {f2}; params is {p2}')
+
+    # Model1 flops is 243712.0 ; params is 2520 (2.52k)
+    # Model2 flops is 150528.0 ; params is 1
+    # flops: 38%
+    # params: 100%
+
+    m = MobileNetv2MetaReceptionField(1000)
+    f, p = get_model_complexity_info(m, input_shape=(3, 224, 224), as_strings=True)
+    # v1 flops: 0.34 GFlops params: 3.95M
+    # v2 flops: 0.33 GFlops params: 3.63M
+    # v3 flops: 0.33 GFlops params: 3.51M
+    print(f"flops: {f} params: {p}")
+

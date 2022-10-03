@@ -517,7 +517,12 @@ class NB301Trainer(BaseTrainer):
         # BN Calibration
         self.model.train()
         for _ in range(max_train_iters):
-            data, target = next(train_iter)
+            try:
+                data, target = next(train_iter)
+            except:
+                del train_iter
+                train_iter = iter(train_loader)
+                data, target = next(train_iter)
             data, target = data.to(self.device), target.to(self.device)
             output = self.model(data)
             del data, target, output

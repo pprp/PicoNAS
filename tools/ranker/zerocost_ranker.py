@@ -159,12 +159,23 @@ def main():
 
     start = time.time()
 
-    num_samples = [5, 10]
+    num_samples = [10, 50, 100]
     """
     'epe_nas' , 'fisher', 'grad_norm', 'grasp' , 'jacov'
     'l2_norm' , 'nwot' , 'plain' , 'snip' , 'synflow'
     """
     calculate_zerocost(num_samples, trainer, measure_name=['epe_nas'])
+    calculate_zerocost(num_samples, trainer, measure_name=['fisher'])
+    calculate_zerocost(num_samples, trainer, measure_name=['grad_norm'])
+    calculate_zerocost(num_samples, trainer, measure_name=['grasp'])
+    calculate_zerocost(num_samples, trainer, measure_name=['jacov'])
+    calculate_zerocost(num_samples, trainer, measure_name=['l2_norm'])
+    calculate_zerocost(num_samples, trainer, measure_name=['nwot'])
+    calculate_zerocost(num_samples, trainer, measure_name=['plain'])
+    calculate_zerocost(num_samples, trainer, measure_name=['snip'])
+    calculate_zerocost(num_samples, trainer, measure_name=['synflow'])
+    calculate_zerocost(num_samples, trainer, measure_name=['flops'])
+    calculate_zerocost(num_samples, trainer, measure_name=['params'])
 
     utils.time_record(start)
 

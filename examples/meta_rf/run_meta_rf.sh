@@ -10,6 +10,10 @@
 
 # CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 ./train_timm.py /home/inspur/data/imagenet/  --model MobileNetv2MetaReceptionField --trainer MetaTrainer -b 128 --sched cosine --epochs 100 --decay-epochs 2.4 --decay-rate .973 --opt rmsproptf --opt-eps .001 -j 7 --warmup-lr 1e-6 --weight-decay 1e-5 --drop 0.2 --drop-path 0.  --model-ema-decay 0.9999 --lr 0.1
 
+# baseline: params: 3.5M  flops: 300M
+# coordatt: params: 3.95M flops: 310M + 12% param
+# se      : params: 3.89M flops: 300M +
+
 # MobileNetv2MetaReceptionField v1:
 # params: 17.52M flops: 1.27 GFlops
 
