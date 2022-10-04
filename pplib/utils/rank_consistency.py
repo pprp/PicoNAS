@@ -1,5 +1,6 @@
 import copy
 import math
+from multiprocessing.sharedctypes import Value
 
 import numpy as np
 import scipy.stats
@@ -18,8 +19,12 @@ def pearson(true_vector, pred_vector):
     p_sum = sum([true_vector[i] * pred_vector[i] for i in range(n)])
     # 分子num，分母den
     num = p_sum - (sum1 * sum2 / n)
-    den = math.sqrt(
-        (sum1_pow - pow(sum1, 2) / n) * (sum2_pow - pow(sum2, 2) / n))
+    try:
+        den = math.sqrt((sum1_pow - pow(sum1, 2) / n) *
+                        (sum2_pow - pow(sum2, 2) / n) + 1e-8)
+    except ValueError:
+        return 0
+
     if den == 0:
         return 0.0
     return num / den

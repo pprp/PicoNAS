@@ -17,6 +17,7 @@ class SpatialSeperablePooling(nn.Module):
         super().__init__()
         self.pool_h = nn.AdaptiveAvgPool2d((None, 1))
         self.pool_w = nn.AdaptiveAvgPool2d((1, None))
+        # avoid divide zero
         self.register_parameter('param', Parameter(torch.randn(1)))
 
     def forward(self, x):
@@ -159,6 +160,44 @@ class MetaReceptiveField_v3(nn.Module):
             nn.MaxPool2d(5, stride=1, padding=2),
             'max_pool_7x7':
             nn.MaxPool2d(7, stride=1, padding=3),
+        })
+        self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.3)
+        self.split = SplitBlock(ratio)
+        self.bn = nn.BatchNorm2d(in_channels)
+        self.act = h_swish()
+
+    def forward(self, x):
+        x1, x2 = self.split(x)
+        out = self.meta_rf(x2)
+        out = self.bn(out)
+        out = self.act(out)
+        return torch.cat([x1, out], 1)
+
+
+class MetaReceptiveField_v4(nn.Module):
+    """Adjust Receptive Field by Meta Learning with split block."""
+
+    def __init__(self, in_channels=128, ratio: float = 0.5):
+        super().__init__()
+        in_channels = int(in_channels * ratio)
+
+        candidate_ops = nn.ModuleDict({
+            'skip_connect':
+            Identity(),
+            'spatial_sep_pool':
+            SpatialSeperablePooling(),
+            'max_pool_3x3':
+            nn.MaxPool2d(3, stride=1, padding=1),
+            'max_pool_5x5':
+            nn.MaxPool2d(5, stride=1, padding=2),
+            'max_pool_7x7':
+            nn.AvgPool2d(7, stride=1, padding=3),
+            'avg_pool_3x3':
+            nn.AvgPool2d(3, stride=1, padding=1),
+            'avg_pool_5x5':
+            nn.AvgPool2d(5, stride=1, padding=2),
+            'avg_pool_7x7':
+            nn.AvgPool2d(7, stride=1, padding=3),
         })
         self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.3)
         self.split = SplitBlock(ratio)

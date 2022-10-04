@@ -160,7 +160,7 @@ def main():
 
     start = time.time()
 
-    num_samples = [10, 50, 100]
+    num_samples = [200]
     """
     'epe_nas' , 'fisher', 'grad_norm', 'grasp' , 'jacov'
     'l2_norm' , 'nwot' , 'plain' , 'snip' , 'synflow'
