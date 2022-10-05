@@ -212,7 +212,7 @@ class MetaReceptiveField_v4(nn.Module):
         return torch.cat([x1, out], 1)
 
 
-MetaReceptiveField = MetaReceptiveField_v3
+MetaReceptiveField = MetaReceptiveField_v4
 
 
 class ConvBNReLU(nn.Sequential):

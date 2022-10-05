@@ -359,7 +359,7 @@ class MetaTrainer(BaseTrainer):
                     tag=f'{self.log_name}_nb201',
                 )
 
-            if epoch >= 0:
+            if epoch >= int(epochs * 2 / 3):
                 # process non-domination set
                 self.logger.info('process non-domination set.')
                 arch_params = self.mutator.arch_params
