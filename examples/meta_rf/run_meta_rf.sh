@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# CUDA_VISIBLE_DEVICES=1 python ./train_imagenet.py --config ../../configs/spos/spos_cifar10.py --model_name MobileNetv2MetaReceptionField --trainer_name MetaTrainer  --dataset cifar10 --crit ce --lr 0.05  --log_name meta_train_mbv2_rf_rerun --batch_size 64 --epochs 100 --sched cosine  --data_dir ../../data/cifar
+# CUDA_VISIBLE_DEVICES=1 python ./train_cifar.py --config ../../configs/spos/spos_cifar10.py --model_name MobileNetv2MetaReceptionField --trainer_name MetaTrainer  --dataset cifar10 --crit ce --lr 0.05  --log_name meta_train_mbv2_rf_rerun --batch_size 64 --epochs 100 --sched cosine  --data_dir ../../data/cifar
 
 
 
@@ -29,7 +29,7 @@
 # lr=0.1
 # sched=cosine
 # epochs=150
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8 python -m torch.distributed.launch --nproc_per_node=8 ./train_timm.py /home/inspur/data/imagenet/  --model MobileNetv2MetaReceptionField --trainer MetaTrainer -b 64 --opt nesterov --momentum 0.9 --lr 0.1 --epochs 140 --sched cosine
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8 python -m torch.distributed.launch --nproc_per_node=8 ./train_timm.py /home/inspur/data/imagenet/  --model MobileNetv2MetaReceptionField --trainer MetaTrainer -b 64 --opt nesterov --momentum 0.9 --lr 0.1 --epochs 140 --sched cosine --weight-decay 2e-5
 
 # 如果不ok，可以用mobilenetv2进行蒸馏监督
 # 遇到问题，所有架构都收敛到coord attention

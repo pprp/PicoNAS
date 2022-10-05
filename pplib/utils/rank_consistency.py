@@ -1,6 +1,5 @@
 import copy
 import math
-from multiprocessing.sharedctypes import Value
 
 import numpy as np
 import scipy.stats

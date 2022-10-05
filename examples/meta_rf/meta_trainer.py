@@ -4,6 +4,7 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from mmcv.cnn import get_model_complexity_info
 
 import pplib.utils.utils as utils
@@ -179,10 +180,10 @@ class MetaTrainer(BaseTrainer):
                 )
 
         # FOR DEBUG
-        for k, v in self.mutator.arch_params.items():
-            self.logger.info(
-                f'current arch_param: key: {k}: value: {nn.functional.softmax(v, dim=-1).cpu()}'
-            )
+        # for k, v in self.mutator.arch_params.items():
+        #     self.logger.info(
+        #         f'current arch_param: key: {k}: value: {nn.functional.softmax(v, dim=-1).cpu()}'
+        #     )
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
@@ -357,6 +358,27 @@ class MetaTrainer(BaseTrainer):
                     epoch + 1,
                     tag=f'{self.log_name}_nb201',
                 )
+
+            if epoch >= 0:
+                # process non-domination set
+                self.logger.info('process non-domination set.')
+                arch_params = self.mutator.arch_params
+                for group_id, modules in self.mutator.search_group.items():
+                    if not modules[0].is_fixed:
+                        for module in modules:
+                            module.fix_non_domination_set(
+                                arch_params[str(group_id)])
+
+            for k, v in self.mutator.arch_params.items():
+                self.logger.info(
+                    f'arch_param: Key: {k} Value: {list(v.detach().cpu().numpy())} After softmax: {list(F.softmax(v, dim=-1).detach().cpu().numpy())}'
+                )
+
+            self.logger.info(f'==> export subnet: {self.search_subnet()}')
+            res_str = 'Fixed: '
+            for k, m in self.mutator.search_group.items():
+                res_str += f'| k:{k} fixed:{m[0].is_fixed} chosen: {m[0]._chosen if m[0].is_fixed else None} | '
+            self.logger.info(res_str)
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)

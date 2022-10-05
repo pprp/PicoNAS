@@ -161,7 +161,6 @@ class DiffOP(DiffMutable[str, str]):
         """
         assert self._chosen is not None
         assert isinstance(self._chosen, list)
-
         return sum(self._candidate_ops[choice](x) for choice in self._chosen)
 
     def forward_arch_param(self,
@@ -224,7 +223,7 @@ class DiffOP(DiffMutable[str, str]):
                 'Please do not call `fix_chosen` function again.')
 
         for c in self.choices:
-            if c != chosen:
+            if c not in chosen:
                 self._candidate_ops.pop(c)
 
         if not isinstance(chosen, list):
@@ -327,6 +326,16 @@ class DynaDiffOP(DiffOP):
                     outputs.append(prob * module(x))
 
             return sum(outputs)
+
+    def fix_non_domination_set(self, arch_param) -> None:
+        """non domination set means there are no obvious preference
+        for one operation, so two or more operation would be retained."""
+        probs = self.compute_arch_probs(arch_param=arch_param)
+        sorted_param = torch.topk(probs, 2)
+        chosen_list = [
+            self.choices[sorted_param[1][0]], self.choices[sorted_param[1][1]]
+        ]
+        self.fix_chosen(chosen_list)
 
 
 class DiffChoiceRoute(DiffMutable[str, List[str]]):

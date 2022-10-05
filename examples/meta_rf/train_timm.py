@@ -1272,6 +1272,16 @@ def train_one_epoch(epoch,
         # TODO currently not support amp
         loss = trainer.train_step(input, target, val_x, val_y)
 
+        if epoch > 50:
+            # process non-domination set
+            mutator = trainer.mutator
+            arch_params = mutator.arch_params
+            for group_id, modules in mutator.search_group.items():
+                if not modules[0].is_fixed:
+                    for module in modules:
+                        module.fix_non_domination_set(
+                            arch_params[str(group_id)])
+
         if model_ema is not None:
             model_ema.update(model)
 
