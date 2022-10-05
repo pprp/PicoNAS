@@ -4,6 +4,7 @@ from typing import Dict, List, Union
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from mmcv.cnn import get_model_complexity_info
 
 import pplib.utils.utils as utils
@@ -12,7 +13,7 @@ from pplib.core.optims import ASAM, SAM
 from pplib.evaluator.nb201_evaluator import NB201Evaluator
 from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
-from pplib.predictor.pruners.measures.nwot import compute_nwot
+from pplib.predictor.pruners.predictive import find_measures
 from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 from .registry import register_trainer
@@ -479,7 +480,10 @@ class NB201_SAM_Trainer(BaseTrainer):
             subnet_flops += choice_flops
         return subnet_flops
 
-    def get_subnet_nwot(self, subnet_dict) -> float:
+    def get_subnet_predictive(self,
+                              subnet_dict,
+                              dataloader,
+                              measure_name='nwot') -> float:
         """Calculate zenscore based on subnet dict."""
         import copy
         m = copy.deepcopy(self.model)
@@ -487,11 +491,17 @@ class NB201_SAM_Trainer(BaseTrainer):
         o.prepare_from_supernet(m)
         o.set_subnet(subnet_dict)
 
-        # for cifar10,cifar100,imagenet16
-        score = compute_nwot(
-            net=m,
-            inputs=torch.randn(4, 3, 32, 32).to('cuda'),
-            targets=torch.randn(4).to('cuda'))
+        dataload_info = ['random', 3, self.num_classes]
+
+        # get predict indicator by predictive.
+        score = find_measures(
+            self.trainer.model,
+            dataloader,
+            dataload_info=dataload_info,
+            measure_names=measure_name,
+            loss_fn=F.cross_entropy,
+            device=self.trainer.device)
+
         del m
         del o
         return score

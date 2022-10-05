@@ -168,7 +168,6 @@ class NB201Evaluator(Evaluator):
             results = self.query_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
 
-
             assert isinstance(measure_name, list) and len(measure_name) == 1, \
                 f'The measure name should be a list but got {type(measure_name)}' \
                 f' and the lenght should be 1 but got {len(measure_name)}'

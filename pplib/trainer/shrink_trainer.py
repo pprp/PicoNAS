@@ -16,7 +16,7 @@ from pplib.core.losses import KLDivergence, PairwiseRankLoss
 from pplib.evaluator.nb201_evaluator import NB201Evaluator
 from pplib.models.nasbench201 import OneShotNASBench201Network
 from pplib.nas.mutators import OneShotMutator
-from pplib.predictor.pruners.measures.nwot import compute_nwot
+from pplib.predictor.pruners.predictive import find_measures
 from pplib.utils.utils import AvgrageMeter, accuracy
 from pplib.utils.weight_init import constant_init, normal_init
 from .base import BaseTrainer
@@ -857,7 +857,10 @@ class NB201ShrinkTrainer(BaseTrainer):
                 constant_init(m, val=1, bias=0.0001)
                 nn.init.constant_(m.running_mean, 0)
 
-    def get_subnet_nwot(self, subnet_dict) -> float:
+    def get_subnet_predictive(self,
+                              subnet_dict,
+                              dataloader,
+                              measure_name='nwot') -> float:
         """Calculate zenscore based on subnet dict."""
         o = OneShotMutator(with_alias=True)
         copy_model = copy.deepcopy(self.model)
@@ -865,11 +868,16 @@ class NB201ShrinkTrainer(BaseTrainer):
         o.prepare_from_supernet(copy_model)
         o.set_subnet(subnet_dict)
 
-        # for cifar10,cifar100,imagenet16
-        score = compute_nwot(
-            net=copy_model,
-            inputs=torch.randn(4, 3, 32, 32).to(self.device),
-            targets=torch.randn(4).to(self.device))
+        dataload_info = ['random', 3, self.num_classes]
+
+        score = find_measures(
+            copy_model,
+            dataloader,
+            dataload_info=dataload_info,
+            measure_names=measure_name,
+            loss_fn=F.cross_entropy,
+            device=self.trainer.device)
+
         del o
         del copy_model
         return score

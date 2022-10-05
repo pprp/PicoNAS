@@ -5,14 +5,14 @@ from typing import Dict, List
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from mmcv.cnn import get_model_complexity_info
 
 import pplib.utils.utils as utils
 from pplib.core.losses import CC, PairwiseRankLoss
 from pplib.evaluator import MacroEvaluator
 from pplib.nas.mutators import OneShotMutator
-from pplib.predictor.pruners.measures.nwot import compute_nwot
-from pplib.predictor.pruners.measures.zen import compute_zen_score
+from pplib.predictor.pruners.predictive import find_measures
 from pplib.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 from .registry import register_trainer
@@ -561,7 +561,10 @@ class MacroTrainer(BaseTrainer):
             subnet_flops += choice_flops
         return subnet_flops
 
-    def get_subnet_zenscore(self, subnet_dict) -> float:
+    def get_subnet_predictive(self,
+                              subnet_dict,
+                              dataloader,
+                              measure_name='zen') -> float:
         """Calculate zenscore based on subnet dict."""
         import copy
         m = copy.deepcopy(self.model)
@@ -569,9 +572,17 @@ class MacroTrainer(BaseTrainer):
         o.prepare_from_supernet(m)
         o.set_subnet(subnet_dict)
 
+        dataload_info = ['random', 3, self.nQum_classes]
+
         # for cifar10,cifar100,imagenet16
-        score = compute_zen_score(
-            net=m, inputs=torch.randn(4, 3, 32, 32), targets=None, repeat=5)
+        score = find_measures(
+            m,
+            dataloader,
+            dataload_info=dataload_info,
+            measure_names=measure_name,
+            loss_fn=F.cross_entropy,
+            device=self.trainer.device)
+
         del m
         del o
         return score
@@ -589,20 +600,3 @@ class MacroTrainer(BaseTrainer):
                     choice_params += params
             subnet_params += choice_params
         return subnet_params
-
-    def get_subnet_nwot(self, subnet_dict) -> float:
-        """Calculate zenscore based on subnet dict."""
-        import copy
-        m = copy.deepcopy(self.model)
-        o = OneShotMutator()
-        o.prepare_from_supernet(m)
-        o.set_subnet(subnet_dict)
-
-        # for cifar10,cifar100,imagenet16
-        score = compute_nwot(
-            net=m,
-            inputs=torch.randn(4, 3, 32, 32).to('cuda'),
-            targets=torch.randn(4).to('cuda'))
-        del m
-        del o
-        return score
