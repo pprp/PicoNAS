@@ -228,7 +228,7 @@ class NB301Evaluator(Evaluator):
 
             # get flops
             flops_result = self.trainer.get_subnet_flops(random_subnet_dict)
-            generated_indicator_list.append(flops_result)
+            flops_indicator_list.append(flops_result)
 
         return self.calc_results(true_indicator_list, generated_indicator_list,
                                  flops_indicator_list)

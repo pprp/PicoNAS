@@ -83,7 +83,7 @@ class NB301Trainer(BaseTrainer):
         #  => is_specific is True: cooperate with SH
         #  => is_specific is False: normal mode
         self.is_specific = False
-        
+
         # type from kwargs can be random, hamming, adaptive
         if 'type' in kwargs:
             self.type = kwargs['type']
@@ -889,5 +889,3 @@ class NB301Trainer(BaseTrainer):
         sum_loss.backward()
 
         return sum_loss, outputs
-
-

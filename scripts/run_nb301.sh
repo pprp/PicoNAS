@@ -16,4 +16,3 @@ CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.
 
 
 # CUDA_VISIBLE_DEVICES=2 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench301Network --trainer_name NB301Trainer --log_name nb301_spos_fair_x1 --dataset cifar10 --crit ce --lr 0.025 --type fair
-

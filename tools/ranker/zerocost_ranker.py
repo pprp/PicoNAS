@@ -6,7 +6,7 @@ import torch
 
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
-from pplib.evaluator import NB201Evaluator  # noqa: F401
+from pplib.evaluator import NB301Evaluator  # noqa: F401
 from pplib.models import build_model
 from pplib.trainer import build_trainer
 from pplib.utils.config import Config
@@ -98,7 +98,7 @@ def calculate_zerocost(num_samples: list, trainer, measure_name=None) -> None:
         measure_name = ['flops']
 
     for num_sample in num_samples:
-        evaluator = NB201Evaluator(trainer=trainer, num_sample=num_sample)
+        evaluator = NB301Evaluator(trainer=trainer, num_sample=num_sample)
         kt, ps, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_predictive(
             measure_name=measure_name)
         results.append([kt, ps, sp])
