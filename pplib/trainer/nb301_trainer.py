@@ -83,12 +83,12 @@ class NB301Trainer(BaseTrainer):
         #  => is_specific is True: cooperate with SH
         #  => is_specific is False: normal mode
         self.is_specific = False
-
+        
         # type from kwargs can be random, hamming, adaptive
         if 'type' in kwargs:
             self.type = kwargs['type']
             assert self.type in {
-                'random', 'hamming', 'adaptive', 'uniform', 'fair', 'sandwich'
+                'random', 'hamming', 'adaptive', 'uniform', 'fair'
             }
         else:
             self.type = None
@@ -201,13 +201,11 @@ class NB301Trainer(BaseTrainer):
             # remove gradient from previous passes
             self.optimizer.zero_grad()
 
-            if self.type in {'uniform', 'fair', 'sandwich'}:
+            if self.type in {'uniform', 'fair'}:
                 if self.type == 'uniform':
                     loss, outputs = self._forward_uniform(batch_inputs)
                 elif self.type == 'fair':
                     loss, outputs = self._forward_fairnas(batch_inputs)
-                elif self.type == 'sandwich':
-                    loss, outputs = self._forward_sandwich(batch_inputs)
             else:
                 loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
@@ -891,3 +889,5 @@ class NB301Trainer(BaseTrainer):
         sum_loss.backward()
 
         return sum_loss, outputs
+
+

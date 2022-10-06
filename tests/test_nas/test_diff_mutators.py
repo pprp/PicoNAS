@@ -16,7 +16,7 @@ class TestDiffMutator(TestCase):
         self.mutator.prepare_from_supernet(self.model)
 
     def test_forward(self):
-        out = self.model(self.input)
+        out = self.model(self.inputs)
         print(out.shape)
 
 
