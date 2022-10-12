@@ -94,7 +94,7 @@ class NB201Trainer(BaseTrainer):
 
         self.min_subnet = {
             0: 'nor_conv_3x3',
-            1: 'nor_conv_3x3',
+            1: 'skip_connect',
             2: 'skip_connect',
             3: 'skip_connect',
             4: 'skip_connect',
@@ -389,9 +389,10 @@ class NB201Trainer(BaseTrainer):
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
-            if epoch % 5 == 0:
+            if (epoch + 1) % 10 == 0:
                 assert self.evaluator is not None
-                kt, ps, sp = self.evaluator.compute_rank_consistency(
+                # BWR@K, P@tbk
+                kt, ps, sp, rd, minn_at_ks, patks = self.evaluator.compute_rank_consistency(
                     val_loader, self.mutator)
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch)
@@ -399,6 +400,46 @@ class NB201Trainer(BaseTrainer):
                     'RANK/pearson', ps, global_step=self.current_epoch)
                 self.writer.add_scalar(
                     'RANK/spearman', sp, global_step=self.current_epoch)
+
+                if isinstance(rd, list):
+                    for i, r in enumerate(rd):
+                        self.writer.add_scalar(
+                            f'ANALYSE/rank_diff_{(i+1)*20}%',
+                            r,
+                            global_step=self.current_epoch)
+                else:
+                    self.writer.add_scalar(
+                        'ANALYSE/rank_diff',
+                        rd,
+                        global_step=self.current_epoch)
+
+                for k, minn, brk, maxn, wrk in minn_at_ks:
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{k}_BR@K',
+                        brk,
+                        global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{k}_WR@K',
+                        wrk,
+                        global_step=self.current_epoch)
+
+                for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_P@topK',
+                        p_at_topk,
+                        global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_P@bottomK',
+                        p_at_bk,
+                        global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_KD@topK',
+                        kd_at_topk,
+                        global_step=self.current_epoch)
+                    self.writer.add_scalar(
+                        f'ANALYSE/oneshot_{ratio}_KD@bottomK',
+                        kd_at_bk,
+                        global_step=self.current_epoch)
 
             self.writer.add_scalar(
                 'EPOCH_LOSS/train_epoch_loss',

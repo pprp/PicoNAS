@@ -6,6 +6,7 @@ import torch
 
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
+from pplib.datasets.build import build_dataloader
 from pplib.evaluator import NB201Evaluator
 from pplib.models import build_model
 from pplib.trainer import build_trainer
@@ -78,7 +79,7 @@ def get_args():
         help='validate and save frequency')
     # ******************************* dataset *******************************#
     parser.add_argument(
-        '--dataset', type=str, default='simmim', help='path to the dataset')
+        '--dataset', type=str, default='cifar10', help='path to the dataset')
     parser.add_argument('--cutout', action='store_true', help='use cutout')
     parser.add_argument(
         '--cutout_length', type=int, default=16, help='cutout length')
@@ -89,8 +90,9 @@ def get_args():
         help='use auto augmentation')
     parser.add_argument(
         '--resize', action='store_true', default=False, help='use resize')
-    args = parser.parse_args()
-    return args
+    parser.add_argument(
+        '--ckpt_path', type=str, default='', help='checkpoint path')
+    return parser.parse_args()
 
 
 def main():
@@ -118,11 +120,49 @@ def main():
     else:
         device = torch.device('cpu')
 
-    model = build_model(cfg.model_name)
+    # train_dataloader = build_dataloader(
+    #     type='train', dataset=cfg.dataset, config=cfg)
+
+    val_dataloader = build_dataloader(
+        type='val', dataset=cfg.dataset, config=cfg)
+
+    if cfg.dataset == 'cifar10':
+        num_classes = 10
+    elif cfg.dataset == 'cifar100':
+        num_classes = 100
+    elif cfg.dataset == 'imagenet16':
+        num_classes = 120
+    else:
+        raise NotImplementedError(
+            f'Not Support Type of datasets: {cfg.dataset}.')
+
+    model = build_model(cfg.model_name, num_classes=num_classes)
 
     criterion = build_criterion(cfg.crit).to(device)
     optimizer = build_optimizer(model, cfg)
     scheduler = build_scheduler(cfg, optimizer)
+
+    # load checkpoint
+    assert cfg.ckpt_path is not None
+
+    for k, v in model.state_dict().items():
+        print(k)
+
+    print('===' * 30)
+
+    state_dict = torch.load(cfg.ckpt_path)['state_dict']
+    treated_sd = dict()
+    for k, v in state_dict.items():
+        if 'conv_3x3' in k:
+            new_k = k.replace('conv_3x3', 'nor_conv_3x3')
+        elif 'conv_1x1' in k:
+            new_k = k.replace('conv_1x1', 'nor_conv_1x1')
+        else:
+            new_k = k
+        print(new_k)
+        treated_sd[new_k] = v
+
+    model.load_state_dict(treated_sd)
 
     model = model.to(device)
 
@@ -142,11 +182,10 @@ def main():
 
     evaluator = NB201Evaluator(trainer, num_sample=1000)
 
-    # evaluator.compute_rank_consistency_by_zerometric()
-    # kt, pt, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_nwot()
-    # kt, pt, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_flops()
-    kt, pt, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_zenscore(
-    )
+    kt, pt, sp, rd_list, minn_at_ks, patks = \
+        evaluator.compute_rank_consistency(dataloader=val_dataloader,
+                                           mutator=trainer.mutator)
+
     print('==' * 20)
     print('=>>> overall rank consistency')
     print(f'Kendall tau: {kt} Pearson coeff: {pt} Spearman: {sp}')
