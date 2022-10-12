@@ -49,17 +49,20 @@ class TestPredictive(TestCase):
     def test_nwot(self):
         """
         'epe_nas' , 'fisher', 'grad_norm', 'grasp' , 'jacov'
-        'l2_norm' , 'nwot' , 'plain' , 'snip' , 'synflow'
+        'l2_norm' , 'nwot' , 'plain' , 'snip' , 'synflow', 'zen'
         """
         # dataload, num_imgs_or_batches, num_classes
         dataload_info = ['random', 1, 10]
         device = torch.device('cuda')
 
+        rand_subnet = self.mutator.random_subnet
+        self.mutator.set_subnet(rand_subnet)
+
         measure_values = find_measures(
             net_orig=self.model,
             dataloader=self.dataloader,
             dataload_info=dataload_info,
-            measure_names=['grasp'],
+            measure_names=['zen'],
             loss_fn=F.cross_entropy,
             device=device)
 

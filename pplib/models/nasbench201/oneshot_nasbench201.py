@@ -312,6 +312,18 @@ class NASBench201Cell(nn.Module):
 
 
 class ResNetBasicBlock(nn.Module):
+    """Basic block of resnet
+
+    Args:
+        inplanes (_type_): _description_
+        planes (_type_): _description_
+        stride (_type_): _description_
+        bn_affine (bool, optional): _description_. Defaults to False.
+        bn_momentum (float, optional): _description_. Defaults to 0.1.
+        bn_track_running_stats (bool, optional): _description_. Defaults to True.
+        with_residual (bool, optional): When used by ZenNAS, set to False.
+            Defaults to True.
+    """
 
     def __init__(
         self,
@@ -321,7 +333,9 @@ class ResNetBasicBlock(nn.Module):
         bn_affine=False,
         bn_momentum=0.1,
         bn_track_running_stats=True,
+        with_residual=True,
     ):
+
         super(ResNetBasicBlock, self).__init__()
         assert stride in [1, 2], 'invalid stride {:}'.format(stride)
         self.conv_a = ReLUConvBN(
@@ -349,23 +363,16 @@ class ResNetBasicBlock(nn.Module):
                     bias=False),
             )
         elif inplanes != planes:
-            self.downsample = ReLUConvBN(
-                inplanes,
-                planes,
-                1,
-                1,
-                0,
-                1,
-                bn_affine,
-                bn_momentum,
-                bn_track_running_stats,
-            )
+            self.downsample = ReLUConvBN(inplanes, planes, 1, 1, 0, 1,
+                                         bn_affine, bn_momentum,
+                                         bn_track_running_stats)
         else:
             self.downsample = None
         self.in_dim = inplanes
         self.out_dim = planes
         self.stride = stride
         self.num_conv = 2
+        self.with_residual = with_residual
 
     def forward(self, inputs):
         basicblock = self.conv_a(inputs)
@@ -373,7 +380,8 @@ class ResNetBasicBlock(nn.Module):
 
         if self.downsample is not None:
             inputs = self.downsample(inputs)
-        return inputs + basicblock
+
+        return inputs + basicblock if self.with_residual else basicblock
 
 
 @register_model
@@ -387,11 +395,13 @@ class OneShotNASBench201Network(nn.Module):
         bn_momentum: float = 0.1,
         bn_track_running_stats: bool = True,
         num_classes: int = 10,
+        with_residual: bool = True,
     ):
         super(OneShotNASBench201Network, self).__init__()
         self.channels = C = stem_out_channels
         self.num_modules = N = num_modules_per_stack
         self.num_classes = num_classes
+        self.with_residual = with_residual
 
         self.bn_momentum = bn_momentum
         self.bn_affine = bn_affine
@@ -414,14 +424,10 @@ class OneShotNASBench201Network(nn.Module):
                 reduction) in enumerate(zip(layer_channels, layer_reductions)):
 
             if reduction:
-                cell = ResNetBasicBlock(
-                    C_prev,
-                    C_curr,
-                    2,
-                    self.bn_affine,
-                    self.bn_momentum,
-                    self.bn_track_running_stats,
-                )
+                cell = ResNetBasicBlock(C_prev, C_curr, 2, self.bn_affine,
+                                        self.bn_momentum,
+                                        self.bn_track_running_stats,
+                                        self.with_residual)
             else:
                 cell = NASBench201Cell(
                     i,

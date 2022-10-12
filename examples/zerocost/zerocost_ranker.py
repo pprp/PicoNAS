@@ -6,7 +6,7 @@ import torch
 
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
-from pplib.evaluator import NB301Evaluator  # noqa: F401
+from pplib.evaluator import NB201Evaluator  # noqa: F401
 from pplib.models import build_model
 from pplib.trainer import build_trainer
 from pplib.utils.config import Config
@@ -98,7 +98,7 @@ def calculate_zerocost(num_samples: list, trainer, measure_name=None) -> None:
         measure_name = ['flops']
 
     for num_sample in num_samples:
-        evaluator = NB301Evaluator(trainer=trainer, num_sample=num_sample)
+        evaluator = NB201Evaluator(trainer=trainer, num_sample=num_sample)
         kt, ps, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_predictive(
             measure_name=measure_name)
         results.append([kt, ps, sp])
@@ -138,7 +138,9 @@ def main():
     else:
         device = torch.device('cpu')
 
-    model = build_model(cfg.model_name)
+    model = build_model(cfg.model_name, with_residual=True)
+    # zenscore: False
+    # other: True
 
     criterion = build_criterion(cfg.crit).to(device)
     optimizer = build_optimizer(model, cfg)
@@ -160,10 +162,10 @@ def main():
 
     start = time.time()
 
-    num_samples = [200]
+    num_samples = [1000]
     """
     'epe_nas' , 'fisher', 'grad_norm', 'grasp' , 'jacov'
-    'l2_norm' , 'nwot' , 'plain' , 'snip' , 'synflow'
+    'l2_norm' , 'nwot' , 'plain' , 'snip' , 'synflow', 'zen'
     """
     calculate_zerocost(num_samples, trainer, measure_name=['epe_nas'])
     calculate_zerocost(num_samples, trainer, measure_name=['fisher'])
@@ -177,6 +179,9 @@ def main():
     calculate_zerocost(num_samples, trainer, measure_name=['synflow'])
     calculate_zerocost(num_samples, trainer, measure_name=['flops'])
     calculate_zerocost(num_samples, trainer, measure_name=['params'])
+
+    # Note: set `with_residual` to False when testing zenscore
+    # calculate_zerocost(num_samples, trainer, measure_name=['zen'])
 
     utils.time_record(start)
 
