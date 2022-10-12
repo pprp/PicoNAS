@@ -70,7 +70,7 @@ class NB201Trainer(BaseTrainer):
 
         # evaluate the rank consistency
         self.evaluator = self._build_evaluator(
-            num_sample=50, dataset=self.dataset)
+            num_sample=1000, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
