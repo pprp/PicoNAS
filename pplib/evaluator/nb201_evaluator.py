@@ -82,6 +82,16 @@ class NB201Evaluator(Evaluator):
         genotype = genotype.replace('||', '|')
         return genotype
 
+    def generate_subnet(self, genotype: str):
+        """|avg_pool_3x3~0|+|nor_conv_1x1~0|skip_connect~1|+|nor_conv_1x1~0|skip_connect~1|skip_connect~2|"""
+        assert genotype is not None
+        genotype = genotype.replace('|+|', '|')
+        geno_list = genotype.split('|')[1:-1]
+        subnet_dict = dict()
+        for i, geno in enumerate(geno_list):
+            subnet_dict[i] = geno.split('~')[0]
+        return subnet_dict
+
     def query_result(self, genotype: str, cost_key: str = 'flops'):
         """query the indictor by genotype."""
         dataset = self.trainer.dataset
@@ -134,6 +144,35 @@ class NB201Evaluator(Evaluator):
 
             # get score based on supernet
             results = self.trainer.metric_score(dataloader, random_subnet_dict)
+            generated_indicator_list.append(results)
+
+            # get flops
+            flops_result = self.query_result(genotype, cost_key='flops')
+            flops_indicator_list.append(flops_result)
+
+        return self.calc_results(true_indicator_list, generated_indicator_list,
+                                 flops_indicator_list)
+
+    def compute_overall_rank_consistency(self, dataloader) -> List:
+        """compute rank consistency of all search space."""
+        true_indicator_list: List[float] = []
+        generated_indicator_list: List[float] = []
+        flops_indicator_list: List[float] = []
+
+        self.trainer.logger.info('Begin to compute rank consistency...')
+
+        for genotype in list(self.api.keys()):
+            if 'none' in genotype:
+                continue
+
+            subnet_dict = self.generate_subnet(genotype)
+
+            # get true indictor by query nb201 api
+            results = self.query_result(genotype)  # type is eval_acc1es
+            true_indicator_list.append(results)
+
+            # get score based on supernet
+            results = self.trainer.metric_score(dataloader, subnet_dict)
             generated_indicator_list.append(results)
 
             # get flops

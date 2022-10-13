@@ -10,7 +10,7 @@ class TestNasBench(TestCase):
 
         api = get_dataset_api(search_space='nasbench201', dataset='cifar10')
 
-        print(api['nb201_data'].keys())
+        print(list(api['nb201_data'].keys())[0])
 
 
 if __name__ == '__main__':

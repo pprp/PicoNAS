@@ -101,10 +101,10 @@ class NB201_Balance_Trainer(BaseTrainer):
         self.mid_subnet = {
             0: 'nor_conv_3x3',
             1: 'nor_conv_3x3',
-            2: 'conv_1x1',
-            3: 'conv_1x1',
-            4: 'conv_1x1',
-            5: 'conv_1x1'
+            2: 'nor_conv_1x1',
+            3: 'nor_conv_1x1',
+            4: 'nor_conv_1x1',
+            5: 'nor_conv_1x1'
         }
         self.min_subnet = {
             0: 'nor_conv_3x3',
