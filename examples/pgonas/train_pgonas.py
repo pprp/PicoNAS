@@ -2,6 +2,7 @@ import argparse
 import os
 import time
 
+import pgonas_trainer  # noqa: F401
 import torch
 from nb201_datasets import get_datasets, get_nas_search_loaders
 
@@ -136,11 +137,14 @@ def main():
         device = torch.device('cpu')
 
     train_data, valid_data, xshape, num_classes = get_datasets(
-        name='cifar100', root='../../data/cifar', cutout=-1)
-    search_loader, _, valid_loader = get_nas_search_loaders(
+        name=cfg.dataset, root=cfg.data_dir, cutout=-1)
+    # search = [train_s, valid_s]
+    # train = [train]
+    # test = [valid]
+    search_loader, train_loader, test_loader = get_nas_search_loaders(
         train_data,
         valid_data,
-        dataset='cifar100',
+        dataset=cfg.dataset,
         config_root='./config/',
         batch_size=(512, 512),
         workers=2)
@@ -163,13 +167,12 @@ def main():
         searching=True,
         device=device,
         log_name=cfg.log_name,
-        # kwargs
         type=cfg.type,
     )
 
     start = time.time()
 
-    trainer.fit(search_loader, valid_loader, cfg.epochs)
+    trainer.fit(search_loader, search_loader, cfg.epochs)
 
     utils.time_record(start)
 
