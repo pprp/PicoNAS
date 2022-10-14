@@ -3,10 +3,10 @@ import os
 import time
 
 import torch
+from nb201_datasets import get_datasets, get_nas_search_loaders
 
 import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
-from pplib.datasets.build import build_dataloader
 from pplib.models import build_model
 from pplib.trainer import build_trainer
 from pplib.utils import set_random_seed
@@ -135,21 +135,15 @@ def main():
     else:
         device = torch.device('cpu')
 
-    train_dataloader = build_dataloader(
-        type='train', dataset=cfg.dataset, config=cfg)
-
-    val_dataloader = build_dataloader(
-        type='val', dataset=cfg.dataset, config=cfg)
-
-    if cfg.dataset == 'cifar10':
-        num_classes = 10
-    elif cfg.dataset == 'cifar100':
-        num_classes = 100
-    elif cfg.dataset == 'imagenet16':
-        num_classes = 120
-    else:
-        raise NotImplementedError(
-            f'Not Support Type of datasets: {cfg.dataset}.')
+    train_data, valid_data, xshape, num_classes = get_datasets(
+        name='cifar100', root='../../data/cifar', cutout=-1)
+    search_loader, _, valid_loader = get_nas_search_loaders(
+        train_data,
+        valid_data,
+        dataset='cifar100',
+        config_root='./config/',
+        batch_size=(512, 512),
+        workers=2)
 
     model = build_model(cfg.model_name, num_classes=num_classes)
 
@@ -175,7 +169,7 @@ def main():
 
     start = time.time()
 
-    trainer.fit(train_dataloader, val_dataloader, cfg.epochs)
+    trainer.fit(search_loader, valid_loader, cfg.epochs)
 
     utils.time_record(start)
 
