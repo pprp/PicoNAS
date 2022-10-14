@@ -8,12 +8,6 @@ import torch
 from pplib.trainer.nb201_trainer import NB201Trainer
 from pplib.utils.loggings import get_logger
 
-torch.manual_seed(0)
-torch.cuda.manual_seed_all(0)
-np.random.seed(0)
-random.seed(0)
-torch.backends.cudnn.deterministic = True
-
 sys.setrecursionlimit(10000)
 
 
@@ -37,10 +31,10 @@ class EvolutionSearcher(object):
             self,
             max_epochs: int = 20,
             select_num: int = 10,
-            population_num: int = 50,
+            population_num: int = 100,
             mutate_prob: float = 0.1,
-            crossover_num: int = 25,
-            mutation_num: int = 25,
+            crossover_num: int = 50,
+            mutation_num: int = 50,
             flops_limit: float = 330 * 1e6,
             trainer: NB201Trainer = None,
             model_path: str = None,  # noqa: E501
@@ -109,8 +103,9 @@ class EvolutionSearcher(object):
         t = self.keep_top_k[k]
         t += candidates
         # remove duplicates
-        tmp_list = list(set([str(i) for i in t]))
-        t = [eval(i) for i in tmp_list]
+        # tmp_list = list(set([str(i) for i in t]))
+        # t = [eval(i) for i in tmp_list]
+
         # sort the list
         t.sort(key=key, reverse=reverse)
         self.keep_top_k[k] = t[:k]
@@ -226,7 +221,7 @@ class EvolutionSearcher(object):
                 f'epoch = {self.epoch} : top {len(self.keep_top_k[50])} result'
             )
             for i, subnet in enumerate(self.keep_top_k[50]):
-                if i < 5:
+                if i < 10:
                     self.logger.info(
                         f'No.{i+1} {subnet} Top-1 err = {self.vis_dict[str(subnet)]["err"]}'
                     )

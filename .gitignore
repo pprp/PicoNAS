@@ -18,3 +18,4 @@ logdirs/*
 lib/*
 *.yaml
 *.log
+log*

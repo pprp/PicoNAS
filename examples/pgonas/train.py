@@ -8,7 +8,6 @@ import pplib.utils.utils as utils
 from pplib.core import build_criterion, build_optimizer, build_scheduler
 from pplib.datasets.build import build_dataloader
 from pplib.models import build_model
-from pplib.searcher import EvolutionSearcher
 from pplib.trainer import build_trainer
 from pplib.utils import set_random_seed
 from pplib.utils.config import Config
@@ -25,9 +24,6 @@ def get_args():
     )
     parser.add_argument(
         '--work_dir', type=str, default='./work_dir', help='experiment name')
-    parser.add_argument(
-        '--model_path', type=str, default='', help='model path')
-
     parser.add_argument(
         '--data_dir',
         type=str,
@@ -62,6 +58,8 @@ def get_args():
         '--optims', type=str, default='sgd', help='decide the optimizer')
     parser.add_argument(
         '--sched', type=str, default='cosine', help='decide the scheduler')
+    parser.add_argument(
+        '--p_lambda', type=float, default=1, help='decide the scheduler')
 
     parser.add_argument(
         '--classes', type=int, default=10, help='dataset classes')
@@ -69,7 +67,7 @@ def get_args():
     parser.add_argument(
         '--num_choices', type=int, default=4, help='number choices per layer')
     parser.add_argument(
-        '--batch_size', type=int, default=128, help='batch size')
+        '--batch_size', type=int, default=256, help='batch size')
     parser.add_argument('--epochs', type=int, default=200, help='batch size')
     parser.add_argument(
         '--lr', type=float, default=0.025, help='initial learning rate')
@@ -99,6 +97,13 @@ def get_args():
         help='use auto augmentation')
     parser.add_argument(
         '--resize', action='store_true', default=False, help='use resize')
+    # ******************************* extra options *******************************#
+    parser.add_argument(
+        '--type',
+        type=str,
+        default='flops',
+        help='can be used in the ablation study')
+
     return parser.parse_args()
 
 
@@ -164,25 +169,13 @@ def main():
         searching=True,
         device=device,
         log_name=cfg.log_name,
-        dataset=cfg.dataset,
+        # kwargs
+        type=cfg.type,
     )
 
     start = time.time()
-    print('Begin to search....')
 
-    # set model path
-    searcher = EvolutionSearcher(
-        max_epochs=20,
-        select_num=10,
-        population_num=50,
-        crossover_num=25,
-        mutation_num=25,
-        trainer=trainer,
-        train_loader=train_dataloader,
-        val_loader=val_dataloader,
-        model_path=cfg.model_path)
-
-    searcher.search()
+    trainer.fit(train_dataloader, val_dataloader, cfg.epochs)
 
     utils.time_record(start)
 
