@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import seaborn as sns
 import torch
 import torch.nn.functional as F
@@ -13,7 +12,7 @@ from pplib.predictor.pruners.predictive import find_measures
 from pplib.trainer import NB201Trainer
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
-model = OneShotNASBench201Network(with_residual=False)
+model = OneShotNASBench201Network()
 mutator = OneShotMutator(with_alias=True)
 mutator.prepare_from_supernet(model)
 dataloader = build_dataloader('cifar10', 'train')
@@ -44,7 +43,7 @@ def calc_zerocost_dist(dct1, dct2):
         net_orig=model,
         dataloader=dataloader,
         dataload_info=dataload_info,
-        measure_names=['zen'],
+        measure_names=['nwot'],
         loss_fn=F.cross_entropy,
         device=device)
 
@@ -53,7 +52,7 @@ def calc_zerocost_dist(dct1, dct2):
         net_orig=model,
         dataloader=dataloader,
         dataload_info=dataload_info,
-        measure_names=['zen'],
+        measure_names=['nwot'],
         loss_fn=F.cross_entropy,
         device=device)
     return zc1 - zc2
@@ -111,10 +110,11 @@ def plot_rk(list1, list2, name1: str, name2: str):
     ax.set_xlabel(name1)
     ax.set_ylabel(name2)
     plt.savefig(f'./correlation_{name1}_vs_{name2}.png')
+    plt.clf()
+    plt.cla()
 
 
 def main():
-
     hm_dst_list = []
     ad_dst_list = []
     gt_list = []
@@ -131,15 +131,62 @@ def main():
         gt_list.append(calc_gt_list(sg1, sg2))
         zc_list.append(calc_zerocost_dist(sg1, sg2))
 
-    calculate_rk(gt_list, hamming_dist, 'groudtruth', 'hamming')
-    calculate_rk(gt_list, adaptive_dist, 'groudtruth', 'adaptive')
+    calculate_rk(gt_list, hm_dst_list, 'groudtruth', 'hamming')
+    calculate_rk(gt_list, ad_dst_list, 'groudtruth', 'adaptive')
     calculate_rk(gt_list, flops_list, 'groudtruth', 'flops')
     calculate_rk(gt_list, zc_list, 'groudtruth', 'zenscore')
 
-    plot_rk(gt_list, hamming_dist, 'groudtruth', 'hamming')
-    plot_rk(gt_list, adaptive_dist, 'groudtruth', 'adaptive')
+    plot_rk(gt_list, hm_dst_list, 'groudtruth', 'hamming')
+    plot_rk(gt_list, ad_dst_list, 'groudtruth', 'adaptive')
     plot_rk(gt_list, flops_list, 'groudtruth', 'flops')
     plot_rk(gt_list, zc_list, 'groudtruth', 'zenscore')
 
 
-main()
+def sample_with_adaptive_distance():
+    gt_list = []
+    zc_list = []
+    flops_list = []
+
+    for _ in tqdm(range(100)):
+        sg1 = mutator.random_subnet
+        sg2 = mutator.random_subnet
+
+        if adaptive_dist(sg1, sg2) < 6.7:
+            continue
+
+        flops_list.append(flops_dist(sg1, sg2))
+        gt_list.append(calc_gt_list(sg1, sg2))
+        zc_list.append(calc_zerocost_dist(sg1, sg2))
+
+    calculate_rk(gt_list, flops_list, 'groudtruth', 'flops-adaptive-distance')
+    calculate_rk(gt_list, zc_list, 'groudtruth', 'zenscore-adaptive-distance')
+    plot_rk(gt_list, flops_list, 'groudtruth', 'flops-adaptive-distance')
+    plot_rk(gt_list, zc_list, 'groudtruth', 'zenscore-adaptive-distance')
+
+
+def sample_with_hamming_distance():
+    gt_list = []
+    zc_list = []
+    flops_list = []
+
+    for _ in tqdm(range(100)):
+        sg1 = mutator.random_subnet
+        sg2 = mutator.random_subnet
+
+        if hamming_dist(sg1, sg2) < 4.5:
+            continue
+
+        flops_list.append(flops_dist(sg1, sg2))
+        gt_list.append(calc_gt_list(sg1, sg2))
+        zc_list.append(calc_zerocost_dist(sg1, sg2))
+
+    calculate_rk(gt_list, flops_list, 'groudtruth', 'flops-hamming_dist')
+    calculate_rk(gt_list, zc_list, 'groudtruth', 'zenscore-hamming_dist')
+    plot_rk(gt_list, flops_list, 'groudtruth', 'flops-hamming_dist')
+    plot_rk(gt_list, zc_list, 'groudtruth', 'zenscore-hamming_dist')
+
+
+if __name__ == '__main__':
+    main()
+    sample_with_hamming_distance()
+    sample_with_adaptive_distance()
