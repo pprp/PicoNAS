@@ -130,7 +130,7 @@ def main():
         num_classes = 10
     elif cfg.dataset == 'cifar100':
         num_classes = 100
-    elif cfg.dataset == 'imagenet16':
+    elif cfg.dataset == 'ImageNet16-120':
         num_classes = 120
     else:
         raise NotImplementedError(

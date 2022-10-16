@@ -41,9 +41,8 @@ class NB301Evaluator(Evaluator):
             self.num_classes = 10
         elif dataset == 'cifar100':
             self.num_classes = 100
-        elif dataset == 'imagenet16':
+        elif dataset == 'ImageNet16-120':
             self.num_classes = 120
-            self.dataset = 'ImageNet16-120'
 
         assert type in ['train_losses', 'eval_losses',
                         'train_acc1es', 'eval_acc1es', 'cost_info'], \

@@ -24,7 +24,7 @@ def collate_fn(batch):
 
 
 def build_dataset(type='train', dataset='cifar10', config=None, fast=False):
-    assert dataset in ['cifar10', 'cifar100', 'simmim', 'imagenet16']
+    assert dataset in ['cifar10', 'cifar100', 'simmim', 'ImageNet16-120']
     assert type in ['train', 'val']
 
     dataset_type = None
@@ -80,19 +80,20 @@ def build_dataset(type='train', dataset='cifar10', config=None, fast=False):
                 download=True,
                 transform=build_transforms('simmim', 'val', config=config),
             )
-    elif dataset == 'imagenet16':
+    elif dataset == 'ImageNet16-120':
         if type == 'train':
             dataset_type = ImageNet16(
                 root=data_dir,
                 train=True,
                 transform=build_transforms(
-                    'imagenet16', 'train', config=config),
+                    'ImageNet16-120', 'train', config=config),
                 use_num_of_class_only=120)
         elif type == 'val':
             dataset_type = ImageNet16(
                 root=data_dir,
                 train=False,
-                transform=build_transforms('imagenet16', 'val', config=config),
+                transform=build_transforms(
+                    'ImageNet16-120', 'val', config=config),
                 use_num_of_class_only=120)
     else:
         raise f'Type Error: {dataset} Not Supported'
@@ -118,7 +119,7 @@ def process_fast(dataset_type):
 
 def build_dataloader(dataset='cifar10', type='train', config=None):
     assert type in ['train', 'val']
-    assert dataset in ['cifar10', 'cifar100', 'simmim', 'imagenet16']
+    assert dataset in ['cifar10', 'cifar100', 'simmim', 'ImageNet16-120']
 
     if config:
         batch_size = getattr(config, 'batch_size', 64)
@@ -182,10 +183,11 @@ def build_dataloader(dataset='cifar10', type='train', config=None):
                 pin_memory=True,
                 collate_fn=collate_fn,
             )
-    elif dataset == 'imagenet16':
+    elif dataset == 'ImageNet16-120':
         if type == 'train':
             dataloader_type = DataLoader(
-                build_dataset('train', 'imagenet16', config=config, fast=fast),
+                build_dataset(
+                    'train', 'ImageNet16-120', config=config, fast=fast),
                 batch_size=batch_size,
                 shuffle=True,
                 num_workers=nw,
@@ -193,7 +195,8 @@ def build_dataloader(dataset='cifar10', type='train', config=None):
             )
         elif type == 'val':
             dataloader_type = DataLoader(
-                build_dataset('val', 'imagenet16', config=config, fast=fast),
+                build_dataset(
+                    'val', 'ImageNet16-120', config=config, fast=fast),
                 batch_size=batch_size,
                 shuffle=False,
                 num_workers=nw,

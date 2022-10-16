@@ -8,7 +8,7 @@ from .simmim_transform import SimMIMTransform
 
 def build_transforms(dataset='cifar10', type='train', config=None):
     assert type in ['train', 'val']
-    assert dataset in ['cifar10', 'cifar100', 'simmim', 'imagenet16']
+    assert dataset in ['cifar10', 'cifar100', 'simmim', 'ImageNet16-120']
     transform_type = None
 
     if type == 'train':
@@ -47,7 +47,7 @@ def build_transforms(dataset='cifar10', type='train', config=None):
             ]
         elif dataset == 'simmim':
             post_transform = [SimMIMTransform()]
-        elif dataset == 'imagenet16':
+        elif dataset == 'ImageNet16-120':
             # clear base
             base_transform = []
             post_transform = [
@@ -79,7 +79,7 @@ def build_transforms(dataset='cifar10', type='train', config=None):
             ])
         elif dataset == 'simmim':
             transform_type = SimMIMTransform()
-        elif dataset == 'imagenet16':
+        elif dataset == 'ImageNet16-120':
             transform_type = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize([0.4811, 0.4575, 0.4078],

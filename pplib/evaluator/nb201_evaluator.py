@@ -39,7 +39,7 @@ class NB201Evaluator(Evaluator):
             self.num_classes = 10
         elif dataset == 'cifar100':
             self.num_classes = 100
-        elif dataset == 'imagenet16':
+        elif dataset == 'ImageNet16-120':
             self.num_classes = 120
             self.dataset = 'ImageNet16-120'
 
@@ -99,7 +99,7 @@ class NB201Evaluator(Evaluator):
             dataset = 'cifar10-valid'
         elif dataset == 'cifar100':
             dataset = 'cifar100'
-        elif dataset == 'imagenet16':
+        elif dataset == 'ImageNet16-120':
             dataset = 'ImageNet16-120'
         else:
             raise NotImplementedError(f'Not Support dataset type:{dataset}')
