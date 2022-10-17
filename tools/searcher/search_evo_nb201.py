@@ -180,7 +180,9 @@ def main():
         trainer=trainer,
         train_loader=train_dataloader,
         val_loader=val_dataloader,
-        model_path=cfg.model_path)
+        model_path=cfg.model_path,
+        log_name=cfg.log_name,
+        logger=trainer.logger)
 
     searcher.search()
 

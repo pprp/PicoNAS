@@ -1,3 +1,4 @@
+import os
 import random
 import sys
 from typing import Dict, List
@@ -39,7 +40,9 @@ class EvolutionSearcher(object):
             trainer: NB201Trainer = None,
             model_path: str = None,  # noqa: E501
             train_loader=None,
-            val_loader=None):
+            val_loader=None,
+            log_name='evolution-searcher',
+            logger=None):
 
         self.max_epochs = max_epochs
         self.select_num = select_num
@@ -51,12 +54,22 @@ class EvolutionSearcher(object):
         self.trainer = trainer
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.log_name = log_name
 
         self.model = self.trainer.model
-        self.logger = get_logger(name='evoluation_searcher')
+        log_path = os.path.join('./work_dir', self.__class__.__name__)
+        log_file_name = f'{log_name}-{self.__class__.__name__}.log'
+        if not os.path.exists(log_path):
+            os.makedirs(log_path)
 
-        if model_path is None:
-            model_path = './checkpoints/test_nb201_spos/test_nb201_spos_macro_ckpt_0191.pth.tar'
+        if logger is None:
+            self.logger = get_logger(
+                self.log_name, log_file=os.path.join(log_path, log_file_name))
+        else:
+            self.logger = logger
+
+        assert model_path is not None
+
         self.logger.info(f'Loading model weights from {model_path}')
 
         state_dict = torch.load(model_path)['state_dict']
