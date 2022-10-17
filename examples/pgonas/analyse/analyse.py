@@ -16,8 +16,12 @@ model = OneShotNASBench201Network()
 mutator = OneShotMutator(with_alias=True)
 mutator.prepare_from_supernet(model)
 dataloader = build_dataloader('cifar10', 'train')
-trainer = NB201Trainer(model=model, mutator=None)
+trainer = NB201Trainer(model=model, mutator=None, device=torch.device('cpu'))
 evaluator = NB201Evaluator(trainer, 50)
+
+zen_model = OneShotNASBench201Network(with_residual=False)
+zen_mutator = OneShotMutator(with_alias=True)
+zen_mutator.prepare_from_supernet(model)
 
 
 def flops_dist(dct1, dct2):
@@ -31,28 +35,38 @@ def calc_gt_list(dct1, dct2):
         evaluator.generate_genotype(dct1, trainer.mutator))
     results2 = evaluator.query_result(
         evaluator.generate_genotype(dct2, trainer.mutator))
-    return int(abs(results1 - results2))
+    return results1 - results2
 
 
-def calc_zerocost_dist(dct1, dct2):
+def calc_zerocost_dist(dct1, dct2, zc_proxy='zen'):
+    # print("Current zerocost proxy is:", zc_proxy)
     dataload_info = ['random', 1, 10]
-    device = torch.device('cuda')
+    device = torch.device('cpu')
 
-    mutator.set_subnet(dct1)
+    current_model = None
+    current_mutator = None
+    if zc_proxy == 'zen':
+        current_model = zen_model
+        current_mutator = zen_mutator
+    else:
+        current_model = model
+        current_mutator = mutator
+
+    current_mutator.set_subnet(dct1)
     zc1 = find_measures(
-        net_orig=model,
+        net_orig=current_model,
         dataloader=dataloader,
         dataload_info=dataload_info,
-        measure_names=['nwot'],
+        measure_names=[zc_proxy],
         loss_fn=F.cross_entropy,
         device=device)
 
-    mutator.set_subnet(dct2)
+    current_mutator.set_subnet(dct2)
     zc2 = find_measures(
-        net_orig=model,
+        net_orig=current_model,
         dataloader=dataloader,
         dataload_info=dataload_info,
-        measure_names=['nwot'],
+        measure_names=[zc_proxy],
         loss_fn=F.cross_entropy,
         device=device)
     return zc1 - zc2
@@ -104,6 +118,16 @@ def calculate_rk(list1, list2, name1: str, name2: str):
     return res
 
 
+def calculate_concordant(list1, list2, name1: str, name2: str):
+    total_number = len(list1)
+    num_concordant = 0
+    for i in range(len(list1)):
+        if list1[i] * list2[i] > 0:
+            num_concordant += 1
+    res = num_concordant / total_number
+    print(f'Concordant of {name1} and {name2} is: {res}')
+
+
 def plot_rk(list1, list2, name1: str, name2: str):
     ax = sns.scatterplot(x=list1, y=list2)
     ax.set_title(f'{name1} vs {name2}')
@@ -134,12 +158,52 @@ def main():
     calculate_rk(gt_list, hm_dst_list, 'groudtruth', 'hamming')
     calculate_rk(gt_list, ad_dst_list, 'groudtruth', 'adaptive')
     calculate_rk(gt_list, flops_list, 'groudtruth', 'flops')
-    calculate_rk(gt_list, zc_list, 'groudtruth', 'zenscore')
+    calculate_rk(gt_list, zc_list, 'groudtruth', 'zerocost')
 
     plot_rk(gt_list, hm_dst_list, 'groudtruth', 'hamming')
     plot_rk(gt_list, ad_dst_list, 'groudtruth', 'adaptive')
     plot_rk(gt_list, flops_list, 'groudtruth', 'flops')
-    plot_rk(gt_list, zc_list, 'groudtruth', 'zenscore')
+    plot_rk(gt_list, zc_list, 'groudtruth', 'zerocost')
+
+
+def measure_concordant(dist_type: str = None):
+    print(f'Current distance type is : {dist_type}')
+    hm_dst_list = []
+    ad_dst_list = []
+    gt_list = []
+    zc_dict = {
+        'params': [],
+        'fisher': [],
+        'nwot': [],
+        'synflow': [],
+        'snip': [],
+        'zen': [],
+    }
+    flops_list = []
+
+    for _ in tqdm(range(100)):
+        sg1 = mutator.random_subnet
+        sg2 = mutator.random_subnet
+
+        if dist_type == 'hamming':
+            if hamming_dist(sg1, sg2) < 4.5:
+                continue
+        elif dist_type == 'adaptive':
+            if adaptive_dist(sg1, sg2) < 6.7:
+                continue
+
+        flops_list.append(flops_dist(sg1, sg2))
+        ad_dst_list.append(adaptive_dist(sg1, sg2))
+        hm_dst_list.append(adaptive_dist(sg1, sg2))
+        gt_list.append(calc_gt_list(sg1, sg2))
+        for k in list(zc_dict.keys()):
+            zc_dict[k].append(calc_zerocost_dist(sg1, sg2, k))
+
+    calculate_concordant(gt_list, hm_dst_list, 'groudtruth', 'hamming')
+    calculate_concordant(gt_list, ad_dst_list, 'groudtruth', 'adaptive')
+    calculate_concordant(gt_list, flops_list, 'groudtruth', 'flops')
+    for k in list(zc_dict.keys()):
+        calculate_concordant(gt_list, zc_dict[k], 'groudtruth', k)
 
 
 def sample_with_adaptive_distance():
@@ -159,9 +223,9 @@ def sample_with_adaptive_distance():
         zc_list.append(calc_zerocost_dist(sg1, sg2))
 
     calculate_rk(gt_list, flops_list, 'groudtruth', 'flops-adaptive-distance')
-    calculate_rk(gt_list, zc_list, 'groudtruth', 'zenscore-adaptive-distance')
+    calculate_rk(gt_list, zc_list, 'groudtruth', 'zerocost-adaptive-distance')
     plot_rk(gt_list, flops_list, 'groudtruth', 'flops-adaptive-distance')
-    plot_rk(gt_list, zc_list, 'groudtruth', 'zenscore-adaptive-distance')
+    plot_rk(gt_list, zc_list, 'groudtruth', 'zerocost-adaptive-distance')
 
 
 def sample_with_hamming_distance():
@@ -181,12 +245,12 @@ def sample_with_hamming_distance():
         zc_list.append(calc_zerocost_dist(sg1, sg2))
 
     calculate_rk(gt_list, flops_list, 'groudtruth', 'flops-hamming_dist')
-    calculate_rk(gt_list, zc_list, 'groudtruth', 'zenscore-hamming_dist')
+    calculate_rk(gt_list, zc_list, 'groudtruth', 'zerocost-hamming_dist')
     plot_rk(gt_list, flops_list, 'groudtruth', 'flops-hamming_dist')
-    plot_rk(gt_list, zc_list, 'groudtruth', 'zenscore-hamming_dist')
+    plot_rk(gt_list, zc_list, 'groudtruth', 'zerocost-hamming_dist')
 
 
 if __name__ == '__main__':
-    main()
-    sample_with_hamming_distance()
-    sample_with_adaptive_distance()
+    measure_concordant(dist_type='adaptive')
+    measure_concordant(dist_type='hamming')
+    measure_concordant(dist_type=None)
