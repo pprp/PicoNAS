@@ -99,16 +99,17 @@ def calculate_zerocost(num_samples: list, trainer, measure_name=None) -> None:
 
     for num_sample in num_samples:
         evaluator = NB201Evaluator(trainer=trainer, num_sample=num_sample)
-        kt, ps, sp, rd_list, minn_at_ks, patks = evaluator.compute_rank_by_predictive(
+        kt, ps, sp, rd_list, minn_at_ks, patks, cpr = evaluator.compute_rank_by_predictive(
             measure_name=measure_name)
-        results.append([kt, ps, sp])
+        results.append([kt, ps, sp, cpr])
 
     trainer.logger.info(f'current measure name is: {measure_name[0]}')
     trainer.logger.info(
-        "= Num of Samples == Kendall's Tau ==  Pearson   == Spearman =")
+        "= Num of Samples == Kendall's Tau ==  Pearson   == Spearman == CPR  == "
+    )
     for num, result in zip(num_samples, results):
         trainer.logger.info(
-            f'=  {num:<6}  \t ==   {result[0]:.4f} \t  ==  {result[1]:.4f} \t ==  {result[2]:.4f} ='
+            f'=  {num:<6}  \t ==   {result[0]:.4f} \t  ==  {result[1]:.4f} \t ==  {result[2]:.4f} \t == {result[3]:.4f} ='
         )
     trainer.logger.info('=' * 60)
 
@@ -164,21 +165,14 @@ def main():
 
     num_samples = [1000]
     """
-    'epe_nas' , 'fisher', 'grad_norm', 'grasp' , 'jacov'
-    'l2_norm' , 'nwot' , 'plain' , 'snip' , 'synflow', 'zen'
+
     """
-    calculate_zerocost(num_samples, trainer, measure_name=['epe_nas'])
-    calculate_zerocost(num_samples, trainer, measure_name=['fisher'])
-    calculate_zerocost(num_samples, trainer, measure_name=['grad_norm'])
-    calculate_zerocost(num_samples, trainer, measure_name=['grasp'])
-    calculate_zerocost(num_samples, trainer, measure_name=['jacov'])
-    calculate_zerocost(num_samples, trainer, measure_name=['l2_norm'])
-    calculate_zerocost(num_samples, trainer, measure_name=['nwot'])
-    calculate_zerocost(num_samples, trainer, measure_name=['plain'])
-    calculate_zerocost(num_samples, trainer, measure_name=['snip'])
-    calculate_zerocost(num_samples, trainer, measure_name=['synflow'])
-    calculate_zerocost(num_samples, trainer, measure_name=['flops'])
-    calculate_zerocost(num_samples, trainer, measure_name=['params'])
+
+    for key in [
+            'epe_nas', 'fisher', 'grad_norm', 'grasp', 'jacov'
+            'l2_norm', 'nwot', 'plain', 'snip', 'synflow', 'flops', 'params'
+    ]:
+        calculate_zerocost(num_samples, trainer, measure_name=[key])
 
     # Note: set `with_residual` to False when testing zenscore
     # calculate_zerocost(num_samples, trainer, measure_name=['zen'])

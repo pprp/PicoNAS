@@ -8,8 +8,9 @@ from pplib.evaluator.base import Evaluator
 from pplib.nas.mutators import DiffMutator, OneShotMutator
 from pplib.predictor.pruners.predictive import find_measures
 from pplib.utils.get_dataset_api import get_dataset_api
-from pplib.utils.rank_consistency import (kendalltau, minmax_n_at_k, p_at_tb_k,
-                                          pearson, rank_difference, spearman)
+from pplib.utils.rank_consistency import (concordant_pair_ratio, kendalltau,
+                                          minmax_n_at_k, p_at_tb_k, pearson,
+                                          rank_difference, spearman)
 
 
 class NB201Evaluator(Evaluator):
@@ -189,6 +190,9 @@ class NB201Evaluator(Evaluator):
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
         flops_indicator_list: List[float] = []
+        # for cpr
+        subtract_true_list: List[float] = []
+        subtract_indicator_list: List[float] = []
 
         if dataloader is None:
             from pplib.datasets import build_dataloader
@@ -230,13 +234,33 @@ class NB201Evaluator(Evaluator):
             flops_indicator_list.append(results)
             self.type = tmp_type
 
+            # add another pair for cpr
+            random_subnet_dict2 = self.trainer.mutator.random_subnet
+            self.trainer.mutator.set_subnet(random_subnet_dict2)
+            genotype = self.generate_genotype(random_subnet_dict,
+                                              self.trainer.mutator)
+            results2 = self.query_result(genotype)  # type is eval_acc1es
+            subtract_true_list.append(results - results2)
+
+            score2 = find_measures(
+                self.trainer.model,
+                dataloader,
+                dataload_info=dataload_info,
+                measure_names=measure_name,
+                loss_fn=F.cross_entropy,
+                device=self.trainer.device)
+            subtract_indicator_list.append(score - score2)
+
         return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 flops_indicator_list)
+                                 flops_indicator_list, subtract_true_list,
+                                 subtract_indicator_list)
 
     def calc_results(self,
                      true_indicator_list,
                      generated_indicator_list,
-                     flops_indicator_list=None):
+                     flops_indicator_list=None,
+                     subtract_true_list=None,
+                     subtract_indicator_list=None):
 
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
@@ -244,6 +268,11 @@ class NB201Evaluator(Evaluator):
         minn_at_ks = minmax_n_at_k(true_indicator_list,
                                    generated_indicator_list)
         patks = p_at_tb_k(true_indicator_list, generated_indicator_list)
+
+        cpr = -1
+        if subtract_indicator_list is not None:
+            cpr = concordant_pair_ratio(true_indicator_list,
+                                        generated_indicator_list)
 
         if flops_indicator_list is not None:
             # calculate rank difference by range.
@@ -275,4 +304,4 @@ class NB201Evaluator(Evaluator):
             f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd_list}."
         )
 
-        return kt, ps, sp, rd_list, minn_at_ks, patks
+        return kt, ps, sp, rd_list, minn_at_ks, patks, cpr

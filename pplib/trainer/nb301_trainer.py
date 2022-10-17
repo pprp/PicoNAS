@@ -371,7 +371,7 @@ class NB301Trainer(BaseTrainer):
             if epoch % 5 == 0:
                 assert self.evaluator is not None
                 # BWR@K, P@tbk
-                kt, ps, sp, rd, minn_at_ks, patks = self.evaluator.compute_rank_consistency(
+                kt, ps, sp, rd, minn_at_ks, patks, cpr = self.evaluator.compute_rank_consistency(
                     val_loader, self.mutator)
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch)
@@ -379,6 +379,8 @@ class NB301Trainer(BaseTrainer):
                     'RANK/pearson', ps, global_step=self.current_epoch)
                 self.writer.add_scalar(
                     'RANK/spearman', sp, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'RANK/cpr', cpr, global_step=self.current_epoch)
 
                 if isinstance(rd, list):
                     for i, r in enumerate(rd):
@@ -681,7 +683,7 @@ class NB301Trainer(BaseTrainer):
             if epoch % 5 == 0:
                 assert self.evaluator is not None
                 # BWR@K, P@tbk
-                kt, ps, sp, rd, minn_at_ks, patks = self.evaluator.compute_rank_consistency(
+                kt, ps, sp, rd, minn_at_ks, patks, cpr = self.evaluator.compute_rank_consistency(
                     val_loader, self.mutator)
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch)
@@ -689,6 +691,8 @@ class NB301Trainer(BaseTrainer):
                     'RANK/pearson', ps, global_step=self.current_epoch)
                 self.writer.add_scalar(
                     'RANK/spearman', sp, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'RANK/cpr', cpr, global_step=self.current_epoch)
 
                 if isinstance(rd, list):
                     for i, r in enumerate(rd):

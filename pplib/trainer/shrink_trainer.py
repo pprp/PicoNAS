@@ -719,7 +719,7 @@ class NB201ShrinkTrainer(BaseTrainer):
                                              and epoch % 100 == 0):
                 assert self.evaluator is not None
                 # BWR@K, P@tbk
-                kt, ps, sp, rd, minn_at_ks, patks = self.evaluator.compute_rank_consistency(
+                kt, ps, sp, rd, minn_at_ks, patks, cpr = self.evaluator.compute_rank_consistency(
                     val_loader, self.mutator)
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch)
@@ -727,6 +727,8 @@ class NB201ShrinkTrainer(BaseTrainer):
                     'RANK/pearson', ps, global_step=self.current_epoch)
                 self.writer.add_scalar(
                     'RANK/spearman', sp, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'RANK/cpr', cpr, global_step=self.current_epoch)
 
                 if isinstance(rd, list):
                     for i, r in enumerate(rd):
@@ -1034,81 +1036,6 @@ class NB201ShrinkTrainer(BaseTrainer):
         sum_loss = sum(loss_list)
         sum_loss.backward()
         return sum_loss, outputs
-
-    def fit_specific(self, train_loader, val_loader, epochs,
-                     subnet_cfg: dict) -> None:
-        """Fits. High Level API
-        Fit the model using the given loaders for the given number
-        of epochs.
-        """
-        # change the flag
-        self.is_specific = True
-        self.mutator.set_subnet(subnet_cfg)
-
-        # track total training time
-        total_start_time = time.time()
-
-        # record max epoch
-        self.max_epochs = epochs
-
-        # ---- train process ----
-        for epoch in range(epochs):
-            self.current_epoch = epoch
-            # track epoch time
-            epoch_start_time = time.time()
-
-            # train
-            tr_loss, top1_tacc, top5_tacc = self._train(train_loader)
-
-            # validate
-            val_loss, top1_vacc, top5_vacc = self._validate_specific(
-                val_loader)
-
-            # save ckpt
-            if epoch % 10 == 0:
-                utils.save_checkpoint(
-                    {'state_dict': self.model.state_dict()},
-                    self.log_name,
-                    epoch + 1,
-                    tag=f'{self.log_name}_nb201',
-                )
-
-            self.train_loss_.append(tr_loss)
-            self.val_loss_.append(val_loss)
-
-            epoch_time = time.time() - epoch_start_time
-
-            self.logger.info(
-                f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
-            )
-
-            if epoch % 5 == 0:
-                assert self.evaluator is not None
-                kt, ps, sp = self.evaluator.compute_rank_consistency(
-                    self.mutator)
-                self.writer.add_scalar(
-                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/pearson', ps, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/spearman', sp, global_step=self.current_epoch)
-
-            self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
-            self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
-
-            self.scheduler.step()
-
-        total_time = time.time() - total_start_time
-
-        # final message
-        self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
 
     def _forward_pairwise_loss(self, batch_inputs):
         inputs, labels = batch_inputs

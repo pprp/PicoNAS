@@ -6,6 +6,17 @@ import scipy.stats
 from scipy.stats import stats
 
 
+def concordant_pair_ratio(list1, list2):
+    """Proposed `cpr`"""
+    total_number = len(list1)
+    num_concordant = 0
+    for i in range(len(list1)):
+        if list1[i] * list2[i] > 0:
+            num_concordant += 1
+    res = num_concordant / (total_number + 1e-9)
+    return res
+
+
 def pearson(true_vector, pred_vector):
     n = len(true_vector)
     # simple sums

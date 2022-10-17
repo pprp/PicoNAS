@@ -124,7 +124,7 @@ def calculate_concordant(list1, list2, name1: str, name2: str):
     for i in range(len(list1)):
         if list1[i] * list2[i] > 0:
             num_concordant += 1
-    res = num_concordant / total_number
+    res = num_concordant / (total_number + 1e-9)
     print(f'Concordant of {name1} and {name2} is: {res}')
 
 
@@ -166,8 +166,10 @@ def main():
     plot_rk(gt_list, zc_list, 'groudtruth', 'zerocost')
 
 
-def measure_concordant(dist_type: str = None):
-    print(f'Current distance type is : {dist_type}')
+def measure_concordant(dist_type: str = None, threshold=None, num_samples=200):
+    print(
+        f'Current distance type is: {dist_type}, current threshold is: {threshold}'
+    )
     hm_dst_list = []
     ad_dst_list = []
     gt_list = []
@@ -181,15 +183,15 @@ def measure_concordant(dist_type: str = None):
     }
     flops_list = []
 
-    for _ in tqdm(range(100)):
+    for _ in tqdm(range(num_samples)):
         sg1 = mutator.random_subnet
         sg2 = mutator.random_subnet
 
         if dist_type == 'hamming':
-            if hamming_dist(sg1, sg2) < 4.5:
+            if hamming_dist(sg1, sg2) < threshold:
                 continue
         elif dist_type == 'adaptive':
-            if adaptive_dist(sg1, sg2) < 6.7:
+            if adaptive_dist(sg1, sg2) < threshold:
                 continue
 
         flops_list.append(flops_dist(sg1, sg2))
@@ -251,6 +253,10 @@ def sample_with_hamming_distance():
 
 
 if __name__ == '__main__':
-    measure_concordant(dist_type='adaptive')
-    measure_concordant(dist_type='hamming')
+    for t in [1, 3, 5, 7, 9, 11]:
+        measure_concordant(dist_type='adaptive', threshold=t)
+
+    for t in [1, 3, 5, 7, 9, 11]:
+        measure_concordant(dist_type='hamming', threshold=t)
+
     measure_concordant(dist_type=None)
