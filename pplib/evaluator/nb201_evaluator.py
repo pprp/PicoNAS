@@ -125,6 +125,9 @@ class NB201Evaluator(Evaluator):
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
         flops_indicator_list: List[float] = []
+        # for cpr
+        subtract_true_list: List[float] = []
+        subtract_indicator_list: List[float] = []
 
         self.trainer.logger.info('Begin to compute rank consistency...')
         num_sample = 50 if self.num_sample is None else self.num_sample
@@ -144,15 +147,27 @@ class NB201Evaluator(Evaluator):
             true_indicator_list.append(results)
 
             # get score based on supernet
-            results = self.trainer.metric_score(dataloader, random_subnet_dict)
-            generated_indicator_list.append(results)
+            score = self.trainer.metric_score(dataloader, random_subnet_dict)
+            generated_indicator_list.append(score)
 
             # get flops
             flops_result = self.query_result(genotype, cost_key='flops')
             flops_indicator_list.append(flops_result)
 
+            # sample another subnet pair for cpr
+            random_subnet_dict2 = self.trainer.mutator.random_subnet
+            self.trainer.mutator.set_subnet(random_subnet_dict2)
+            genotype = self.generate_genotype(random_subnet_dict,
+                                              self.trainer.mutator)
+            results2 = self.query_result(genotype)  # type is eval_acc1es
+            subtract_true_list.append(results - results2)
+
+            score2 = self.trainer.metric_score(dataloader, random_subnet_dict)
+            subtract_indicator_list.append(score - score2)
+
         return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 flops_indicator_list)
+                                 flops_indicator_list, subtract_true_list,
+                                 subtract_indicator_list)
 
     def compute_overall_rank_consistency(self, dataloader) -> List:
         """compute rank consistency of all search space."""
@@ -301,7 +316,7 @@ class NB201Evaluator(Evaluator):
                 rd_list.append(tmp_rd)
 
         print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd_list}."
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd_list}, cpr: {cpr}."
         )
 
         return kt, ps, sp, rd_list, minn_at_ks, patks, cpr

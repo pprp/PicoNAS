@@ -164,9 +164,6 @@ def main():
     start = time.time()
 
     num_samples = [1000]
-    """
-
-    """
 
     for key in [
             'epe_nas', 'fisher', 'grad_norm', 'grasp', 'jacov'

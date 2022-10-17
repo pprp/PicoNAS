@@ -389,7 +389,7 @@ class NB201Trainer(BaseTrainer):
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
-            if (epoch + 1) % 10 == 0:
+            if epoch % 10 == 0:
                 assert self.evaluator is not None
                 # BWR@K, P@tbk
                 kt, ps, sp, rd, minn_at_ks, patks, cpr = self.evaluator.compute_rank_consistency(
