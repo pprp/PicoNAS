@@ -15,7 +15,8 @@ from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 model = OneShotNASBench201Network()
 mutator = OneShotMutator(with_alias=True)
 mutator.prepare_from_supernet(model)
-dataloader = build_dataloader('cifar10', 'train', data_dir='../../../data/cifar')
+dataloader = build_dataloader(
+    'cifar10', 'train', data_dir='../../../data/cifar')
 trainer = NB201Trainer(model=model, mutator=None, device=torch.device('cpu'))
 evaluator = NB201Evaluator(trainer, 50)
 
