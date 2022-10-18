@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Dict, Generic, List, Optional, TypeVar
 
 from mmengine.model import BaseModule
 
@@ -71,10 +71,6 @@ class BaseMutable(BaseModule, ABC, Generic[CHOICE_TYPE, CHOSEN_TYPE]):
     @abstractmethod
     def choices(self) -> List[CHOICE_TYPE]:
         """list: all choices.  All subclasses must implement this method."""
-
-    @abstractmethod
-    def forward(self, x: Any) -> Any:
-        """Forward computation."""
 
     @abstractmethod
     def fix_chosen(self, chosen: CHOSEN_TYPE) -> None:

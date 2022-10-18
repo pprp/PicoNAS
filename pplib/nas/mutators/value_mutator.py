@@ -1,7 +1,5 @@
 from typing import Dict, List, Optional, Type
 
-from torch.nn import Module
-
 from pplib.nas.mutables import MutableValue
 from .base_mutator import ArchitectureMutator
 
@@ -34,16 +32,6 @@ class ValueMutator(ArchitectureMutator[MutableValue]):
         """
         return MutableValue
 
-    def prepare_from_supernet(self, supernet: Module) -> None:
-        """Do some necessary preparations with supernet.
-        Note:
-            For mutable based mutator, we need to build search group first.
-        Args:
-            supernet (:obj:`torch.nn.Module`): The supernet to be searched
-                in your algorithm.
-        """
-        self._build_search_groups(supernet)
-
     @property
     def search_groups(self) -> Dict[int, List[MutableValue]]:
         """Search group of supernet.
@@ -59,7 +47,3 @@ class ValueMutator(ArchitectureMutator[MutableValue]):
             raise RuntimeError(
                 'Call `prepare_from_supernet` before access search group!')
         return self._search_groups
-
-    def _build_search_groups(self, supernet: Module) -> None:
-        self._search_groups = self.group_by_name_and_alias(
-            supernet, self._custom_group)
