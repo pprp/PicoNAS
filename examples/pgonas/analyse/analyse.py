@@ -15,7 +15,7 @@ from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 model = OneShotNASBench201Network()
 mutator = OneShotMutator(with_alias=True)
 mutator.prepare_from_supernet(model)
-dataloader = build_dataloader('cifar10', 'train')
+dataloader = build_dataloader('cifar10', 'train', data_dir='../../../data/cifar')
 trainer = NB201Trainer(model=model, mutator=None, device=torch.device('cpu'))
 evaluator = NB201Evaluator(trainer, 50)
 
@@ -259,4 +259,4 @@ if __name__ == '__main__':
     for t in [1, 3, 5, 7, 9, 11]:
         measure_concordant(dist_type='hamming', threshold=t)
 
-    measure_concordant(dist_type=None)
+    measure_concordant(dist_type=None, num_samples=200)

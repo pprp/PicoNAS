@@ -1,28 +1,28 @@
 #!/bin/bash
 
 # SPOS
-CUDA_VISIBLE_DEVICES=1 python ../../tools/train.py \
-    --config ../../configs/spos/spos_cifar10.py \
-    --model_name OneShotNASBench201Network \
-    --trainer_name NB201Trainer \
-    --log_name evaluate_cpr_spos \
-    --data_dir ../../data/cifar --dataset cifar10 \
-    --crit ce --lr 0.025 --type uniform
+# CUDA_VISIBLE_DEVICES=1 python ../../tools/train.py \
+#     --config ../../configs/spos/spos_cifar10.py \
+#     --model_name OneShotNASBench201Network \
+#     --trainer_name NB201Trainer \
+#     --log_name evaluate_cpr_spos \
+#     --data_dir ../../data/cifar --dataset cifar10 \
+#     --crit ce --lr 0.025 --type uniform
 
 
-# FairNAS
-CUDA_VISIBLE_DEVICES=1 python ../../tools/train.py \
-    --config ../../configs/spos/spos_cifar10.py \
-    --model_name OneShotNASBench201Network \
-    --trainer_name NB201Trainer \
-    --log_name evaluate_cpr_fairnas \
-    --data_dir ../../data/cifar --dataset cifar10 \
-    --crit ce --lr 0.025 --type fair
+# # FairNAS
+# CUDA_VISIBLE_DEVICES=1 python ../../tools/train.py \
+#     --config ../../configs/spos/spos_cifar10.py \
+#     --model_name OneShotNASBench201Network \
+#     --trainer_name NB201Trainer \
+#     --log_name evaluate_cpr_fairnas \
+#     --data_dir ../../data/cifar --dataset cifar10 \
+#     --crit ce --lr 0.025 --type fair
 
 
 # PGONAS
 CUDA_VISIBLE_DEVICES=1 python ../../tools/train.py \
-    --config ../../../../configs/spos/spos_cifar10.py \
+    --config ../../configs/spos/spos_cifar10.py \
     --model_name OneShotNASBench201Network \
     --trainer_name NB201Trainer \
     --crit ce --lr 0.025 \

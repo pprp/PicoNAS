@@ -61,7 +61,7 @@ class NB201Trainer(BaseTrainer):
             **kwargs)
 
         # init flops
-        # self._init_flops()
+        self._init_flops()
 
         if self.mutator is None:
             # Note: use alias to build search group
@@ -515,7 +515,7 @@ class NB201Trainer(BaseTrainer):
         #       would have the __flops__ attribute.
         # Note 2: this function should be called before
         #       mutator.prepare_from_supernet()
-        flops, params = get_model_complexity_info(self.model, self.input_shape)
+        flops, params = get_model_complexity_info(self.model, self.input_shape, print_per_layer_stat=False)
         self.model.train()
         return flops, params
 

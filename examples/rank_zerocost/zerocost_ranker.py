@@ -166,7 +166,7 @@ def main():
     num_samples = [1000]
 
     for key in [
-            'epe_nas', 'fisher', 'grad_norm', 'grasp', 'jacov'
+            'epe_nas', 'fisher', 'grad_norm', 'grasp', 'jacov',
             'l2_norm', 'nwot', 'plain', 'snip', 'synflow', 'flops', 'params'
     ]:
         calculate_zerocost(num_samples, trainer, measure_name=[key])
