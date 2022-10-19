@@ -16,16 +16,26 @@ class EvolutionSearcher(object):
     """_summary_
 
     Args:
-        max_epochs (int, optional): _description_. Defaults to 20.
-        select_num (int, optional): _description_. Defaults to 10.
-        population_num (int, optional): _description_. Defaults to 50.
-        mutate_prob (float, optional): _description_. Defaults to 0.1.
-        crossover_num (int, optional): _description_. Defaults to 25.
-        mutation_num (int, optional): _description_. Defaults to 25.
-        flops_limit (float, optional): _description_. Defaults to 300.
-        trainer (NB201Trainer, optional): _description_. Defaults to None.
-        train_loader (_type_, optional): _description_. Defaults to None.
-        val_loader (_type_, optional): _description_. Defaults to None.
+        max_epochs (int, optional): _description_.
+            Defaults to 20.
+        select_num (int, optional): _description_.
+            Defaults to 10.
+        population_num (int, optional): _description_.
+            Defaults to 50.
+        mutate_prob (float, optional): _description_.
+            Defaults to 0.1.
+        crossover_num (int, optional): _description_.
+            Defaults to 25.
+        mutation_num (int, optional): _description_.
+            Defaults to 25.
+        flops_limit (float, optional): _description_.
+            Defaults to 300.
+        trainer (NB201Trainer, optional): _description_.
+            Defaults to None.
+        train_loader (_type_, optional): _description_.
+            Defaults to None.
+        val_loader (_type_, optional): _description_.
+            Defaults to None.
     """
 
     def __init__(

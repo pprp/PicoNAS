@@ -109,7 +109,9 @@ class NB201Evaluator(Evaluator):
         if self.type in [
                 'train_losses', 'eval_losses', 'train_acc1es', 'eval_acc1es'
         ]:
-            return self.api[genotype][dataset][self.type][-1]
+            # return self.api[genotype][dataset][self.type][-1]
+            acc_list = self.api[genotype][dataset][self.type][-10:]
+            return max(acc_list)
         elif self.type == 'cost_info':
             # example:
             # cost_info: {'flops': 78.56193, 'params': 0.559386,

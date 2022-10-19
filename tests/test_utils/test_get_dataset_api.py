@@ -10,7 +10,12 @@ class TestNasBench(TestCase):
 
         api = get_dataset_api(search_space='nasbench201', dataset='cifar10')
 
-        print(list(api['nb201_data'].keys())[0])
+        tk = list(api['nb201_data'].keys())[1]
+
+        dct = api['nb201_data'][tk]['cifar10-valid']
+
+        for k, v in dct.items():
+            print(k, v[-5:] if isinstance(v, list) else v)
 
 
 if __name__ == '__main__':
