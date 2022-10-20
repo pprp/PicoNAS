@@ -29,7 +29,7 @@ class TestDataset(TestCase):
         for i, (img, label) in enumerate(dataloader):
             if i > 2:
                 break
-            # print(img.shape, label.shape)
+            print(img.shape, label.shape)
 
     def convert2pltimg(self, img):
         img = img.numpy()
