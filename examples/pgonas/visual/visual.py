@@ -49,8 +49,8 @@ zc_proxies = [-0.26, 0.5292, 0.5664, 0.5116, 0.5883, 0.4880, 0.5513, 0.3405]
 zc_label = [
     'random', 'flops', 'params', 'snip', 'synflow', 'zennas', 'nwot', 'grasp'
 ]
-zc_marker = ['.', ',', 'o', 'v', '^', '<', '>', 'o']
-zc_color = ['g', 'b', 'r', 'y', 'k', 'm', 'g', 'b']
+zc_marker = ['.', ',', 'o', 'v', '*', '<', '>', '^']
+zc_color = ['g', 'b', 'k', 'y', 'r', 'orange', 'g', 'grey']
 
 y_spos = smooth_list(y_spos)
 y_ours = smooth_list(y_ours)
@@ -60,8 +60,8 @@ if choice is not None:
     y_spos = y_spos[:choice]
     y_ours = y_ours[:choice]
 
-plt.figure(figsize=(12, 8), dpi=100)
-plt.grid(True, linestyle='--', alpha=0.8)
+plt.figure(figsize=(12, 9), dpi=100)
+plt.grid(True, linestyle='--', alpha=0.5)
 
 plt.plot(
     x,
@@ -69,8 +69,8 @@ plt.plot(
     color='g',
     mfc='white',
     linewidth=2,
-    marker='^',
-    linestyle=':',
+    marker='o',
+    linestyle='dashed',
     label='spos')
 plt.plot(
     x,
@@ -79,7 +79,6 @@ plt.plot(
     mfc='white',
     linewidth=2,
     marker='o',
-    linestyle='-',
     label='rd-nas')
 
 # zc
@@ -98,7 +97,7 @@ plt.xticks(fontproperties='Times New Roman', size=20)
 plt.xlim(-1000, 25000)
 plt.ylim(-0.3, 0.8)
 
-plt.legend()
+plt.legend(fontsize='large')
 plt.xlabel('Time (sec)', fontdict={'family': 'Times New Roman', 'size': 18})
 plt.ylabel('Kendall tau', fontdict={'family': 'Times New Roman', 'size': 18})
 plt.show()
