@@ -186,12 +186,12 @@ class MetaReceptiveField_v4(nn.Module):
             Identity(),
             'spatial_sep_pool':
             SpatialSeperablePooling(),
-            # 'max_pool_3x3':
-            # nn.MaxPool2d(3, stride=1, padding=1),
-            # 'max_pool_5x5':
-            # nn.MaxPool2d(5, stride=1, padding=2),
-            # 'max_pool_7x7':
-            # nn.MaxPool2d(7, stride=1, padding=3),
+            'max_pool_3x3':
+            nn.MaxPool2d(3, stride=1, padding=1),
+            'max_pool_5x5':
+            nn.MaxPool2d(5, stride=1, padding=2),
+            'max_pool_7x7':
+            nn.MaxPool2d(7, stride=1, padding=3),
             'avg_pool_3x3':
             nn.AvgPool2d(3, stride=1, padding=1),
             'avg_pool_5x5':
