@@ -101,7 +101,6 @@ for i, zc in enumerate(zc_proxies):
         marker=zc_marker[i],
         label=zc_label[i])
 
-
 plt.title(
     'Rank Consistency of NAS-Bench-201 CIFAR10',
     fontproperties='Times New Roman',
@@ -109,9 +108,8 @@ plt.title(
 plt.xlim(-1000, 22500)
 plt.ylim(-0.35, 0.8)
 # plt.ylim(0, 0.8)
-plt.yticks(np.linspace(0,0.8,5), fontproperties='Times New Roman', size=27)
+plt.yticks(np.linspace(0, 0.8, 5), fontproperties='Times New Roman', size=27)
 plt.xticks(x, x_time_label, fontproperties='Times New Roman', size=27)
-
 
 plt.annotate(
     'Ours',

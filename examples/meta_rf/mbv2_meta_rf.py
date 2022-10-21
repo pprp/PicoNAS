@@ -4,7 +4,6 @@ import math
 
 import torch
 import torch.nn as nn
-from torch.nn.parameter import Parameter
 
 from pplib.models.registry import register_model
 from pplib.nas.mutables import DynaDiffOP
@@ -46,8 +45,8 @@ class SpatialSeperablePooling(nn.Module):
 
         mid_channels = max(8, in_channels // reduction)
 
-        self.conv1 = nn.Conv2d(in_channels, mid_channels,
-                               kernel_size=1, stride=1, padding=0)
+        self.conv1 = nn.Conv2d(
+            in_channels, mid_channels, kernel_size=1, stride=1, padding=0)
         self.bn1 = nn.BatchNorm2d(mid_channels)
         self.act = h_swish()
 
@@ -207,6 +206,7 @@ class MetaPooling_v4(nn.Module):
         out = self.bn(out)
         out = self.act(out)
         return torch.cat([x1, out], 1)
+
 
 class MetaPooling_v5(nn.Module):
     """Adjust Receptive Field by Meta Learning with split block."""
@@ -481,3 +481,6 @@ if __name__ == '__main__':
     # v2 flops: 0.33 GFlops params: 3.63M
     # v3 flops: 0.33 GFlops params: 3.51M
     print(f'flops: {f} params: {p}')
+
+    o = m(torch.randn(2, 3, 224, 224))
+    print(o.shape)

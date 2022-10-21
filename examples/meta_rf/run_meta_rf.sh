@@ -37,7 +37,7 @@ DATA=/data/public/imagenet-mini
 
 CUDA_VISIBLE_DEVICES=0,1,2,3 bash ./distributed_train.sh 4 47331 $DATA \
     --model MPMobileNetv2 \
-    -b 512 -j 4 \
+    -b 64 -j 4 \
     --sched cosine --epochs 250 \
     --decay-epochs 2.4 --decay-rate .973 \
     --opt lamb --opt-eps 1e-06 \
@@ -45,12 +45,14 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 bash ./distributed_train.sh 4 47331 $DATA \
     --drop 0.1 --drop-path 0.08 \
     --aa rand-m9-mstd0.5 --remode pixel \
     --reprob 0.2 --amp \
-    --lr 0.005 --lr-noise 0.42 0.9 \
-    --interpolation bicubic --min-lr 1e-5 --mixup 0.15 \
+    --lr 0.000625 --lr-noise 0.42 0.9 \
+    --interpolation bicubic --min-lr 1e-5 \
     --num-classes 1000 \
     --output metapooling_with_procedureB \
     --seed 666 \
     --train-interpolation bicubic
+
+    # --mixup 0.15 \
 
 # 如果不ok，可以用mobilenetv2进行蒸馏监督
 # 遇到问题，所有架构都收敛到coord attention
