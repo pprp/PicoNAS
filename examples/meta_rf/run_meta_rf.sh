@@ -36,7 +36,7 @@ source activate torchgpu
 DATA=/data/public/imagenet-mini
 
 CUDA_VISIBLE_DEVICES=0,1,2,3 bash ./distributed_train.sh 4 47331 $DATA \
-    --model mp_mobilenet_v2 \
+    --model MPMobileNetv2 \
     -b 512 -j 4 \
     --sched cosine --epochs 250 \
     --decay-epochs 2.4 --decay-rate .973 \
