@@ -157,7 +157,7 @@ class MetaPooling_v3(nn.Module):
             'max_pool_7x7':
             nn.MaxPool2d(7, stride=1, padding=3),
         })
-        self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.3)
+        self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.2)
         self.split = SplitBlock(ratio)
         self.bn = nn.BatchNorm2d(in_channels)
         self.act = h_swish()
@@ -195,7 +195,7 @@ class MetaPooling_v4(nn.Module):
             'avg_pool_7x7':
             nn.AvgPool2d(7, stride=1, padding=3),
         })
-        self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.3)
+        self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.2)
         self.split = SplitBlock(ratio)
         self.bn = nn.BatchNorm2d(in_channels)
         self.act = h_swish()
@@ -231,7 +231,7 @@ class MetaPooling_v5(nn.Module):
             'avg_pool_7x7':
             nn.AvgPool2d(7, stride=1, padding=3),
         })
-        self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.3)
+        self.meta_rf = DynaDiffOP(candidate_ops, dyna_thresh=0.2)
         self.bn = nn.BatchNorm2d(in_channels)
         self.act = h_swish()
 
