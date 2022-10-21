@@ -17,7 +17,7 @@ x_time_label = [
     '0', '5', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'
 ]
 
-from_idx = 1
+from_idx = 0
 choice = 12
 max_second = 40000
 x_list = np.linspace(0, 40000, 21)
@@ -101,15 +101,17 @@ for i, zc in enumerate(zc_proxies):
         marker=zc_marker[i],
         label=zc_label[i])
 
-plt.yticks(fontproperties='Times New Roman', size=27)
-plt.xticks(x, x_time_label, fontproperties='Times New Roman', size=27)
+
 plt.title(
     'Rank Consistency of NAS-Bench-201 CIFAR10',
     fontproperties='Times New Roman',
     size=33)
 plt.xlim(-1000, 22500)
-# plt.ylim(-0.35, 0.8)
-plt.ylim(0, 0.8)
+plt.ylim(-0.35, 0.8)
+# plt.ylim(0, 0.8)
+plt.yticks(np.linspace(0,0.8,5), fontproperties='Times New Roman', size=27)
+plt.xticks(x, x_time_label, fontproperties='Times New Roman', size=27)
+
 
 plt.annotate(
     'Ours',
