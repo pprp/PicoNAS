@@ -70,14 +70,6 @@ except ImportError as e:
     has_functorch = False
 
 torch.backends.cudnn.benchmark = True
-# logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
-#                     level=logging.DEBUG)
-# _logger = logging.getLogger('train')
-
-if not os.path.exists('./log/'):
-    os.makedirs('./log/')
-_logger = get_logger(
-    'timm_mobilenetv2_meta_rf', log_file='./log/timm_mobilenetv2_meta_rf.log')
 
 # The first arg parser parses out only the --config argument, this argument is used to
 # load a yaml file containing key-values that override the defaults for the main parser below
@@ -796,6 +788,15 @@ def main():
     args.device = 'cuda:0'
     args.world_size = 1
     args.rank = 0  # global rank
+
+    if args.local_rank == 0:
+        if not os.path.exists('./log/'):
+            os.makedirs('./log/')
+
+    _logger = get_logger(
+        'timm_mobilenetv2_meta_rf',
+        log_file='./log/timm_mobilenetv2_meta_rf.log')
+
     if args.distributed:
         args.device = 'cuda:%d' % args.local_rank
         torch.cuda.set_device(args.local_rank)
@@ -1157,7 +1158,8 @@ def main():
                 amp_autocast=amp_autocast,
                 loss_scaler=loss_scaler,
                 model_ema=model_ema,
-                mixup_fn=mixup_fn)
+                mixup_fn=mixup_fn,
+                _logger=_logger)
 
             if args.distributed and args.dist_bn in ('broadcast', 'reduce'):
                 if args.local_rank == 0:
@@ -1171,7 +1173,8 @@ def main():
                 loader_eval,
                 validate_loss_fn,
                 args,
-                amp_autocast=amp_autocast)
+                amp_autocast=amp_autocast,
+                _logger=_logger)
 
             if model_ema is not None and not args.model_ema_force_cpu:
                 if args.distributed and args.dist_bn in ('broadcast',
@@ -1184,7 +1187,8 @@ def main():
                     validate_loss_fn,
                     args,
                     amp_autocast=amp_autocast,
-                    log_suffix=' (EMA)')
+                    log_suffix=' (EMA)',
+                    _logger=_logger)
                 eval_metrics = ema_eval_metrics
 
             if lr_scheduler is not None:
@@ -1227,7 +1231,8 @@ def train_one_epoch(epoch,
                     amp_autocast=suppress,
                     loss_scaler=None,
                     model_ema=None,
-                    mixup_fn=None):
+                    mixup_fn=None,
+                    _logger=None):
 
     if args.mixup_off_epoch and epoch >= args.mixup_off_epoch:
         if args.prefetcher and loader_train.mixup_enabled:
@@ -1359,7 +1364,8 @@ def validate(model,
              loss_fn,
              args,
              amp_autocast=suppress,
-             log_suffix=''):
+             log_suffix='',
+             _logger=None):
     batch_time_m = utils.AverageMeter()
     losses_m = utils.AverageMeter()
     top1_m = utils.AverageMeter()
