@@ -2,12 +2,12 @@ from typing import List, Union
 
 import numpy as np
 import torch.nn.functional as F
-from nas_201_api import NASBench201API as API
 from tqdm import tqdm
 
 from pplib.evaluator.base import Evaluator
 from pplib.nas.mutators import DiffMutator, OneShotMutator
 from pplib.predictor.pruners.predictive import find_measures
+from pplib.utils.get_dataset_api import get_dataset_api
 from pplib.utils.rank_consistency import (concordant_pair_ratio, kendalltau,
                                           minmax_n_at_k, p_at_tb_k, pearson,
                                           rank_difference, spearman)
@@ -57,8 +57,12 @@ class NB201Evaluator(Evaluator):
                   value: train_losses, eval_losses, train_acc1es
                          eval_acc1es, cost_info
         """
-        self.api = API(
-            './data/benchmark/NAS-Bench-201-v1_0-e61699.pth', verbose=False)
+        self.api = self.load_benchmark()
+
+    def load_benchmark(self):
+        """load benchmark to get api controller."""
+        api = get_dataset_api(self.search_space, self.dataset)
+        return api['nb201_data']
 
     def generate_genotype(self, subnet_dict: dict,
                           mutator: Union[OneShotMutator, DiffMutator]) -> str:
@@ -92,9 +96,30 @@ class NB201Evaluator(Evaluator):
     def query_result(self, genotype: str, cost_key: str = 'flops'):
         """query the indictor by genotype."""
         dataset = self.trainer.dataset
-        index = self.api.query_index_by_arch(genotype)
-        xinfo = self.api.get_more_info(index, dataset, hp='200')
-        return xinfo['test-accuracy']
+        if dataset == 'cifar10':
+            dataset = 'cifar10-valid'
+        elif dataset == 'cifar100':
+            dataset = 'cifar100'
+        elif dataset == 'ImageNet16-120':
+            dataset = 'ImageNet16-120'
+        else:
+            raise NotImplementedError(f'Not Support dataset type:{dataset}')
+
+        # TODO default datasets is cifar10, support other dataset in the future.
+        if self.type in [
+                'train_losses', 'eval_losses', 'train_acc1es', 'eval_acc1es'
+        ]:
+            # return self.api[genotype][dataset][self.type][-1]
+            acc_list = self.api[genotype][dataset][self.type][-10:]
+            return max(acc_list)
+        elif self.type == 'cost_info':
+            # example:
+            # cost_info: {'flops': 78.56193, 'params': 0.559386,
+            #             'latency': 0.01493, 'train_time': 10.21598}
+            assert cost_key is not None
+            return self.api[genotype][dataset][self.type][cost_key]
+        else:
+            raise f'Not supported type: {self.type}.'
 
     def compute_rank_consistency(self, dataloader,
                                  mutator: OneShotMutator) -> List:
