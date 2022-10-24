@@ -94,7 +94,8 @@ class NB201Evaluator(Evaluator):
         dataset = self.trainer.dataset
         index = self.api.query_index_by_arch(genotype)
         xinfo = self.api.get_more_info(index, dataset, hp='200')
-        return xinfo['test-accuracy']
+        # TODO
+        return xinfo['valid-accuracy']
 
     def compute_rank_consistency(self, dataloader,
                                  mutator: OneShotMutator) -> List:
