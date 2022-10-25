@@ -93,7 +93,8 @@ class NB201Evaluator(Evaluator):
         """query the indictor by genotype."""
         dataset = self.trainer.dataset
         index = self.api.query_index_by_arch(genotype)
-        xinfo = self.api.get_more_info(index, dataset, hp='200')
+        # TODO
+        xinfo = self.api.get_more_info(index, 'cifar10-valid', hp='200')
         # TODO
         return xinfo['valid-accuracy']
 
