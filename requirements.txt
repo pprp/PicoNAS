@@ -22,3 +22,6 @@ xgboost
 nasbench301
 tqdm
 nas-bench-201
+
+# optional
+# torchcam

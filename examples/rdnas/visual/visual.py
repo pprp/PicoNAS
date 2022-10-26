@@ -53,7 +53,7 @@ def smooth_list(value_list: list):
 # random, flops, params, snip, synflow, zennas, nwot
 zc_proxies = [-0.26, 0.5292, 0.5664, 0.5116, 0.5883, 0.4880, 0.5513, 0.3405]
 zc_label = [
-    'Random', 'FLOPs', 'Params', 'Snip', 'Synflow', 'ZenNAS', 'Nwot', 'Grasp'
+    'Random', 'FLOPs', 'Params', 'Snip', 'Synflow', 'ZenNAS', 'NASWOT', 'Grasp'
 ]
 zc_marker = ['X', ',', 'o', 'v', 'D', 'p', '>', '^']
 zc_color = ['mediumblue', 'b', 'k', 'y', 'r', 'orange', 'g', 'grey']
@@ -67,7 +67,7 @@ if choice is not None:
     y_ours = y_ours[from_idx:choice]
     x_time_label = x_time_label[from_idx:]
 
-plt.figure(figsize=(12, 9), dpi=100)
+plt.figure(figsize=(12, 9), dpi=110)
 plt.grid(True, linestyle='-', alpha=0.9)
 
 plt.plot(
@@ -108,7 +108,8 @@ plt.title(
 plt.xlim(-1000, 22500)
 plt.ylim(-0.35, 0.8)
 # plt.ylim(0, 0.8)
-plt.yticks(np.linspace(0, 0.8, 5), fontproperties='Times New Roman', size=27)
+plt.yticks(
+    np.linspace(-0.2, 0.8, 6), fontproperties='Times New Roman', size=27)
 plt.xticks(x, x_time_label, fontproperties='Times New Roman', size=27)
 
 plt.annotate(
@@ -117,14 +118,55 @@ plt.annotate(
     fontsize=28,
     c='r',
     fontproperties='Times New Roman')
-# plt.annotate('100% faster', xy=(6000, 0.6), xytext=(12000, 0.6),
-#              arrowprops=dict(facecolor='r', shrink=0.01, ec='r'), fontsize=28, c='r')
+plt.annotate(
+    '',
+    xy=(6000, 0.6),
+    xytext=(12000, 0.6),
+    arrowprops=dict(facecolor='b', shrink=0.01, ec='b'),
+    fontsize=28,
+    c='b')
+plt.text(
+    x=8000, y=0.52, s='Faster', size=25, family='Times New Roman', color='b')
+
+plt.annotate(
+    '',
+    xy=(0, 0.6),
+    xytext=(0, 0.75),
+    arrowprops=dict(arrowstyle='<|-|>', facecolor='b', ec='b', lw=4),
+    fontsize=28,
+    c='b')
+plt.text(
+    x=300, y=0.65, s='Better', size=25, family='Times New Roman', color='b')
+
+plt.annotate(
+    '',
+    xy=(22000, 0.6),
+    xytext=(22000, 0.75),
+    arrowprops=dict(arrowstyle='<|-|>', facecolor='b', ec='b', lw=4),
+    fontsize=28,
+    c='b')
+plt.text(
+    x=19500, y=0.65, s='Better', size=25, family='Times New Roman', color='b')
+
+plt.annotate(
+    '',
+    xy=(-150, 0.75),
+    xytext=(22280, 0.75),
+    arrowprops=dict(
+        arrowstyle='-',
+        facecolor='brown',
+        ec='brown',
+        lw=2,
+        linestyle='dotted'),
+    fontsize=28,
+    c='b')
 
 plt.legend(fontsize=22, loc=4)
 plt.xlabel(
-    '$10^3$Time (seconds)', fontdict={
+    'Search Time ($10^3$ seconds)',
+    fontdict={
         'family': 'Times New Roman',
-        'size': 33
+        'size': 31
     })
 plt.ylabel("Kendall's Tau", fontdict={'family': 'Times New Roman', 'size': 33})
 plt.show()
