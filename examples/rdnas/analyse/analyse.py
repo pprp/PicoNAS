@@ -13,12 +13,21 @@ from pplib.trainer import NB201Trainer
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
 model = OneShotNASBench201Network()
+
+ckpt_path = '/home/stack/project/spos-cifar/examples/rank_nb201/checkpoints/normal_nb201_fairnas_fairsampling_exp-rerun/normal_nb201_fairnas_fairsampling_exp-rerun_nb201_ckpt_0191.pth.tar'
+
+model.load_state_dict(torch.load(ckpt_path)['state_dict'])
+
 mutator = OneShotMutator(with_alias=True)
 mutator.prepare_from_supernet(model)
+
 dataloader = build_dataloader(
     'cifar10', 'train', data_dir='../../../data/cifar')
+val_dataloader = build_dataloader(
+    'cifar10', 'val', data_dir='../../../data/cifar')
 trainer = NB201Trainer(model=model, mutator=None, device=torch.device('cpu'))
 evaluator = NB201Evaluator(trainer, 50)
+
 
 zen_model = OneShotNASBench201Network(with_residual=False)
 zen_mutator = OneShotMutator(with_alias=True)
@@ -36,6 +45,12 @@ def calc_gt_list(dct1, dct2):
         evaluator.generate_genotype(dct1, trainer.mutator))
     results2 = evaluator.query_result(
         evaluator.generate_genotype(dct2, trainer.mutator))
+    return results1 - results2
+
+
+def calc_os_list(dct1, dct2):
+    results1 = trainer.metric_score(val_dataloader, dct1)
+    results2 = trainer.metric_score(val_dataloader, dct2)
     return results1 - results2
 
 
@@ -167,6 +182,19 @@ def main():
     plot_rk(gt_list, zc_list, 'groudtruth', 'zerocost')
 
 
+def measure_one_shot_concordant(num_samples=200):
+    gt_list = []
+    os_list = []
+
+    for _ in tqdm(range(num_samples)):
+        sg1 = mutator.random_subnet
+        sg2 = mutator.random_subnet
+        gt_list.append(calc_gt_list(sg1, sg2))
+        os_list.append(calc_os_list(sg1, sg2))
+
+    calculate_concordant(gt_list, os_list, 'groudtruth', 'one-shot-fairnas')
+
+
 def measure_concordant(dist_type: str = None, threshold=None, num_samples=200):
     print(
         f'Current distance type is: {dist_type}, current threshold is: {threshold}'
@@ -254,10 +282,10 @@ def sample_with_hamming_distance():
 
 
 if __name__ == '__main__':
-    for t in [1, 3, 5, 7, 9, 11]:
-        measure_concordant(dist_type='adaptive', threshold=t)
+    # for t in [1, 3, 5, 7, 9, 11]:
+    #     measure_concordant(dist_type='adaptive', threshold=t)
 
-    for t in [1, 3, 5, 7, 9, 11]:
-        measure_concordant(dist_type='hamming', threshold=t)
+    # for t in [1, 3, 5, 7, 9, 11]:
+    #     measure_concordant(dist_type='hamming', threshold=t)
 
-    measure_concordant(dist_type=None, num_samples=200)
+    measure_one_shot_concordant(num_samples=200)
