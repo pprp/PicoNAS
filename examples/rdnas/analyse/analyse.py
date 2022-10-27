@@ -14,10 +14,13 @@ from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
 model = OneShotNASBench201Network()
 
-ckpt_path = '/home/stack/project/spos-cifar/examples/rank_nb201/checkpoints/normal_nb201_fairnas_fairsampling_exp-rerun/normal_nb201_fairnas_fairsampling_exp-rerun_nb201_ckpt_0191.pth.tar'
+# ckpt_path = '/home/stack/project/spos-cifar/examples/rank_nb201/checkpoints/normal_nb201_fairnas_fairsampling_exp-rerun/normal_nb201_fairnas_fairsampling_exp-rerun_nb201_ckpt_0191.pth.tar'
+
+# ckpt_path = '/home/stack/project/spos-cifar/examples/rank_nb201/checkpoints/pairwise-ranking_nb201_spos_adaptive-sampling_exp-rerun/pairwise-ranking_nb201_spos_adaptive-sampling_exp-rerun_nb201_ckpt_0191.pth.tar'
+
+ckpt_path = '/home/stack/project/spos-cifar/examples/rank_nb201/checkpoints/normal_nb201_spos_uniform-sampling_exp-rerun/normal_nb201_spos_uniform-sampling_exp-rerun_nb201_ckpt_0191.pth.tar'
 
 model.load_state_dict(torch.load(ckpt_path)['state_dict'])
-
 mutator = OneShotMutator(with_alias=True)
 mutator.prepare_from_supernet(model)
 
@@ -27,7 +30,6 @@ val_dataloader = build_dataloader(
     'cifar10', 'val', data_dir='../../../data/cifar')
 trainer = NB201Trainer(model=model, mutator=None, device=torch.device('cpu'))
 evaluator = NB201Evaluator(trainer, 50)
-
 
 zen_model = OneShotNASBench201Network(with_residual=False)
 zen_mutator = OneShotMutator(with_alias=True)
@@ -49,8 +51,8 @@ def calc_gt_list(dct1, dct2):
 
 
 def calc_os_list(dct1, dct2):
-    results1 = trainer.metric_score(val_dataloader, dct1)
-    results2 = trainer.metric_score(val_dataloader, dct2)
+    results1 = trainer.get_subnet_error(dct1, dataloader, val_dataloader)
+    results2 = trainer.get_subnet_error(dct2, dataloader, val_dataloader)
     return results1 - results2
 
 
@@ -288,4 +290,4 @@ if __name__ == '__main__':
     # for t in [1, 3, 5, 7, 9, 11]:
     #     measure_concordant(dist_type='hamming', threshold=t)
 
-    measure_one_shot_concordant(num_samples=200)
+    measure_one_shot_concordant(num_samples=50)
