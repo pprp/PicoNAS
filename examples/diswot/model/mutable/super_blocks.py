@@ -6,7 +6,7 @@ import uuid
 
 from torch import nn
 
-from ..register import register_model
+from ..registry import register_model
 from .basic_blocks import BN, ConvDW, ConvKX, PlainNetBasicBlockClass
 from .utils import (_get_right_parentheses_index_,
                     create_netblock_list_from_str, smart_round)

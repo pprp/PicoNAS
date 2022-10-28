@@ -24,7 +24,7 @@ def parse_cmd_options(argv):
     return module_opt
 
 
-class PlainNet(PlainNet):
+class MasterNet(PlainNet):
 
     def __init__(self,
                  argv=None,
@@ -72,7 +72,7 @@ class PlainNet(PlainNet):
         if self.dropout is not None:
             print('--- using dropout={:4g}'.format(self.dropout))
 
-        super(PlainNet, self).__init__(
+        super(MasterNet, self).__init__(
             argv=argv,
             opt=opt,
             num_classes=num_classes,
@@ -82,6 +82,7 @@ class PlainNet(PlainNet):
             no_BN=no_BN,
             use_se=use_se,
             **kwargs)
+
         self.last_channels = self.block_list[-1].out_channels
         self.fc_linear = Linear(
             in_channels=self.last_channels,

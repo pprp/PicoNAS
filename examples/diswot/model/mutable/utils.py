@@ -2,7 +2,7 @@ import argparse
 
 from torch import nn
 
-from .registry import _model_entrypoints
+from ..registry import _model_entrypoints
 
 
 def parse_cmd_options(argv, opt=None):
@@ -190,7 +190,10 @@ def _create_netblock_list_from_str_(s, no_create=False, **kwargs):
                 if len(s) > 0 and s[0] == ';':
                     return block_list, s[1:]
                 break
+            pass  # end if
+        pass  # end for
         assert is_found_block_class
+    pass  # end while
     return block_list, ''
 
 
