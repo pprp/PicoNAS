@@ -5,7 +5,8 @@ from mutable_student import mutable_resnet20
 from pplib.datasets import build_dataloader
 from pplib.predictor.pruners import predictive
 from pplib.utils.rank_consistency import kendalltau, pearson, spearman
-
+from mmcv.cnn import get_model_complexity_info
+from fixed_models import resnet110, resnet20 
 
 def generate_config(mutable_depth=None):
     if mutable_depth is None:
@@ -43,10 +44,34 @@ if __name__ == '__main__':
             measure_names=['nwot'],
             loss_fn=F.cross_entropy,
             device=torch.device('cuda:0'))
-        print(f'cfg: {cfg} score: {score}')
+        flops, params = get_model_complexity_info(net, input_shape=(3, 32, 32), print_per_layer_stat=False)
+        print(f'subnet cfg: {cfg} score: {score:.2f} \t flops: {flops} \t params: {params}')
         list_dp.append(sum(cfg))
         list_sc.append(score)
 
-    print(
-        f'kd: {kendalltau(list_dp, list_sc)} pr: {pearson(list_dp, list_sc)} sp: {spearman(list_dp, list_sc)}'
-    )
+    # print(f'kd: {kendalltau(list_dp, list_sc)} pr: {pearson(list_dp, list_sc)} sp: {spearman(list_dp, list_sc)}')
+    
+    # teacher resnet110 student resnet20
+    
+    tnet = resnet110()
+    snet = resnet20()
+    
+    score = predictive.find_measures(
+            tnet,
+            dataloader,
+            dataload_info=dataload_info,
+            measure_names=['nwot'],
+            loss_fn=F.cross_entropy,
+            device=torch.device('cuda:0'))
+    flops, params = get_model_complexity_info(tnet, input_shape=(3, 32, 32), print_per_layer_stat=False)
+    print(f'teacher net | score: {score:.2f} \t flops: {flops} \t params: {params}')
+    
+    score = predictive.find_measures(
+            snet,
+            dataloader,
+            dataload_info=dataload_info,
+            measure_names=['nwot'],
+            loss_fn=F.cross_entropy,
+            device=torch.device('cuda:0'))
+    flops, params = get_model_complexity_info(snet, input_shape=(3, 32, 32), print_per_layer_stat=False)
+    print(f'student net | score: {score:.2f} \t flops: {flops} \t params: {params}')
