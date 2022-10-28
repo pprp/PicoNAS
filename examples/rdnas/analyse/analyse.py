@@ -54,7 +54,7 @@ def calc_gt_list(dct1, dct2):
 def calc_os_list(dct1, dct2):
     results1 = trainer.get_subnet_error(dct1, dataloader, val_dataloader)
     results2 = trainer.get_subnet_error(dct2, dataloader, val_dataloader)
-    return -1*(results1 - results2)
+    return -1 * (results1 - results2)
 
 
 def calc_zerocost_dist(dct1, dct2, zc_proxy='zen'):
