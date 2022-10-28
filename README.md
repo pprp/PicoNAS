@@ -70,3 +70,4 @@ We welcome contributions to the library along with any potential issues or sugge
 - NASLib: https://github.com/automl/NASLib
 - MixPath: https://github.com/xiaomi-automl/MixPath
 - Zerocostnas: https://github.com/SamsungLabs/zero-cost-nas
+- RepDistiller: https://github.com/HobbitLong/RepDistiller
