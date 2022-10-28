@@ -1,20 +1,15 @@
 '''
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
-
-import os
-import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import uuid
 
 import numpy as np
 import torch
 import torch.nn.functional as F
-from PlainNet import (_create_netblock_list_from_str_,
-                      _get_right_parentheses_index_)
 from torch import nn
+
+from .utils import (_create_netblock_list_from_str_,
+                    _get_right_parentheses_index_)
 
 
 class PlainNetBasicBlockClass(nn.Module):
@@ -1181,7 +1176,7 @@ class ResBlock(PlainNetBasicBlockClass):
 
         if self.proj is not None:
             the_flops += self.in_channels * self.out_channels * (the_res / self.stride) ** 2 + \
-                         (the_res / self.stride) ** 2 * self.out_channels
+                (the_res / self.stride) ** 2 * self.out_channels
 
         return the_flops
 
@@ -1204,7 +1199,7 @@ class ResBlock(PlainNetBasicBlockClass):
         self.block_list[0].set_in_channels(c)
         last_channels = self.block_list[0].out_channels
         if len(self.block_list) >= 2 and \
-                ( isinstance(self.block_list[0], ConvKX) or isinstance(self.block_list[0], ConvDW)) and \
+                (isinstance(self.block_list[0], ConvKX) or isinstance(self.block_list[0], ConvDW)) and \
                 isinstance(self.block_list[1], BN):
             self.block_list[1].set_in_channels(last_channels)
 
@@ -1344,7 +1339,7 @@ class ResBlockProj(PlainNetBasicBlockClass):
 
         if self.proj is not None:
             the_flops += self.in_channels * self.out_channels * (the_res / self.stride) ** 2 + \
-                         (the_res / self.stride) ** 2 * self.out_channels
+                (the_res / self.stride) ** 2 * self.out_channels
 
         return the_flops
 
@@ -1367,7 +1362,7 @@ class ResBlockProj(PlainNetBasicBlockClass):
         self.block_list[0].set_in_channels(c)
         last_channels = self.block_list[0].out_channels
         if len(self.block_list) >= 2 and \
-                ( isinstance(self.block_list[0], ConvKX) or isinstance(self.block_list[0], ConvDW)) and \
+                (isinstance(self.block_list[0], ConvKX) or isinstance(self.block_list[0], ConvDW)) and \
                 isinstance(self.block_list[1], BN):
             self.block_list[1].set_in_channels(last_channels)
 
@@ -1695,8 +1690,8 @@ def _replace_relu_with_swish_layer_(block_list):
 def _fuse_convkx_and_bn_(convkx, bn):
     the_weight_scale = bn.weight / torch.sqrt(bn.running_var + bn.eps)
     convkx.weight[:] = convkx.weight * the_weight_scale.view((-1, 1, 1, 1))
-    the_bias_shift = (bn.weight * bn.running_mean) / \
-                     torch.sqrt(bn.running_var + bn.eps)
+    the_bias_shift = ((bn.weight * bn.running_mean) /
+                      torch.sqrt(bn.running_var + bn.eps))
     bn.weight[:] = 1
     bn.bias[:] = bn.bias - the_bias_shift
     bn.running_var[:] = 1.0 - bn.eps

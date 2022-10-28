@@ -2,23 +2,16 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
-import os
-import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import uuid
 
-import global_utils
-import numpy as np
-import PlainNet
-import torch
-import torch.nn.functional as F
-from PlainNet import _get_right_parentheses_index_, basic_blocks
 from torch import nn
 
+from .basic_blocks import BN, ConvDW, ConvKX, PlainNetBasicBlockClass
+from .utils import (_get_right_parentheses_index_,
+                    create_netblock_list_from_str, smart_round)
 
-class PlainNetSuperBlockClass(basic_blocks.PlainNetBasicBlockClass):
+
+class PlainNetSuperBlockClass(PlainNetBasicBlockClass):
 
     def __init__(self,
                  in_channels=None,
@@ -80,8 +73,8 @@ class PlainNetSuperBlockClass(basic_blocks.PlainNetBasicBlockClass):
         self.block_list[0].set_in_channels(c)
         last_channels = self.block_list[0].out_channels
         if len(self.block_list) >= 2 and \
-                (isinstance(self.block_list[0], basic_blocks.ConvKX) or isinstance(self.block_list[0], basic_blocks.ConvDW)) and \
-                isinstance(self.block_list[1], basic_blocks.BN):
+                (isinstance(self.block_list[0], ConvKX) or isinstance(self.block_list[0], ConvDW)) and \
+                isinstance(self.block_list[1], BN):
             self.block_list[1].set_in_channels(last_channels)
 
     def encode_structure(self):
@@ -107,10 +100,14 @@ class PlainNetSuperBlockClass(basic_blocks.PlainNetBasicBlockClass):
         out_channels = int(param_str_split[1])
         stride = int(param_str_split[2])
         sub_layers = int(param_str_split[3])
-        return cls(in_channels=in_channels, out_channels=out_channels, stride=stride,
-                                       sub_layers=sub_layers, block_name=tmp_block_name, no_create=no_create,
-                   **kwargs),\
-               s[idx + 1:]
+        return cls(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            stride=stride,
+            sub_layers=sub_layers,
+            block_name=tmp_block_name,
+            no_create=no_create,
+            **kwargs), s[idx + 1:]
 
 
 class SuperConvKXBNRELU(PlainNetSuperBlockClass):
@@ -158,7 +155,7 @@ class SuperConvKXBNRELU(PlainNetSuperBlockClass):
             current_stride = 1
         pass
 
-        self.block_list = PlainNet.create_netblock_list_from_str(
+        self.block_list = create_netblock_list_from_str(
             full_str, no_create=no_create, no_reslink=no_reslink, no_BN=no_BN)
         if not no_create:
             self.module_list = nn.ModuleList(self.block_list)
@@ -194,8 +191,7 @@ class SuperConvKXBNRELU(PlainNetSuperBlockClass):
         if sub_layer_scale is None:
             sub_layer_scale = scale
 
-        new_out_channels = global_utils.smart_round(self.out_channels *
-                                                    channel_scale)
+        new_out_channels = smart_round(self.out_channels * channel_scale)
         new_sub_layers = max(1, round(self.sub_layers * sub_layer_scale))
 
         return type(self).__name__ + '({},{},{},{})'.format(
@@ -278,12 +274,12 @@ class SuperConvK7BNRELU(SuperConvKXBNRELU):
             **kwargs)
 
 
-def register_netblocks_dict(netblocks_dict: dict):
-    this_py_file_netblocks_dict = {
-        'SuperConvK1BNRELU': SuperConvK1BNRELU,
-        'SuperConvK3BNRELU': SuperConvK3BNRELU,
-        'SuperConvK5BNRELU': SuperConvK5BNRELU,
-        'SuperConvK7BNRELU': SuperConvK7BNRELU,
-    }
-    netblocks_dict.update(this_py_file_netblocks_dict)
-    return netblocks_dict
+# def register_netblocks_dict(netblocks_dict: dict):
+#     this_py_file_netblocks_dict = {
+#         'SuperConvK1BNRELU': SuperConvK1BNRELU,
+#         'SuperConvK3BNRELU': SuperConvK3BNRELU,
+#         'SuperConvK5BNRELU': SuperConvK5BNRELU,
+#         'SuperConvK7BNRELU': SuperConvK7BNRELU,
+#     }
+#     netblocks_dict.update(this_py_file_netblocks_dict)
+#     return netblocks_dict

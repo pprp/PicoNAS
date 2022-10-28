@@ -6,7 +6,8 @@ from mutable_student import mutable_resnet20
 
 from pplib.datasets import build_dataloader
 from pplib.predictor.pruners import predictive
-from pplib.utils.rank_consistency import kendalltau, pearson, spearman
+
+# from pplib.utils.rank_consistency import kendalltau, pearson, spearman
 
 
 def generate_config(mutable_depth=None):
