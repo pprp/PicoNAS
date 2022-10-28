@@ -1,11 +1,6 @@
 '''
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
-
-import os
-import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import uuid
 
 from torch import nn

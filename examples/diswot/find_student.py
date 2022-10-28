@@ -1,8 +1,8 @@
 import torch
 import torch.nn.functional as F
-from fixed_models import resnet20, resnet110
 from mmcv.cnn import get_model_complexity_info
-from mutable_student import mutable_resnet20
+from model.fixed_models import resnet20, resnet110
+from model.mutable import mutable_resnet20
 
 from pplib.datasets import build_dataloader
 from pplib.predictor.pruners import predictive

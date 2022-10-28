@@ -29,7 +29,7 @@ class MasterNet(PlainNet):
     def __init__(self,
                  argv=None,
                  opt=None,
-                 num_classes=None,
+                 num_classes=10,
                  plainnet_struct=None,
                  no_create=False,
                  no_reslink=None,
@@ -145,8 +145,9 @@ class MasterNet(PlainNet):
         output = self.fc_linear(output)
         return output
 
-    def forward_pre_GAP(self, x):
+    def forward_before_global_avg_pool(self, x):
         output = x
+        # import pdb; pdb.set_trace()
         for the_block in self.block_list:
             output = the_block(output)
         return output

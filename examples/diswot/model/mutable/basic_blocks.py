@@ -624,7 +624,6 @@ class Linear(PlainNetBasicBlockClass):
 
             self.netblock = copy_from
         else:
-
             self.in_channels = in_channels
             self.out_channels = out_channels
             self.use_bias = bias

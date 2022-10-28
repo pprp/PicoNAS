@@ -71,3 +71,4 @@ We welcome contributions to the library along with any potential issues or sugge
 - MixPath: https://github.com/xiaomi-automl/MixPath
 - Zerocostnas: https://github.com/SamsungLabs/zero-cost-nas
 - RepDistiller: https://github.com/HobbitLong/RepDistiller
+- ZenNAS: https://github.com/idstcv/ZenNAS/
