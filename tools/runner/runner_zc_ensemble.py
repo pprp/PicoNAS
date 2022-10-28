@@ -43,7 +43,6 @@ utils.set_seed(config.seed)
 optimizer = supported_optimizers[config.optimizer]
 optimizer.adapt_search_space(search_space, dataset_api=dataset_api)
 
-# import ipdb; ipdb.set_trace()
 trainer = ZCTrainer(optimizer, config, lightweight_output=True)
 trainer.search(resume_from='', summary_writer=writer, report_incumbent=False)
 

@@ -42,7 +42,6 @@ class TestDataset(TestCase):
     def test_dataloader_simmim(self):
         loader = build_dataloader(type='val', dataset='simmim')
 
-        # import ipdb; ipdb.set_trace()
         for i, (img, mask, _) in enumerate(loader):
             if i > 2:
                 break

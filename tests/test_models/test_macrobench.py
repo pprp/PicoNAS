@@ -121,7 +121,6 @@ class TestMacroBench(TestCase):
     #     #         print(name, flops)
 
     #     mutator = OneShotMutator()
-    #     # import ipdb; ipdb.set_trace()
     #     mutator.prepare_from_supernet(copymodel)
 
     #     single_dict = self.generate_spos_path()  # {0: 'xx'}

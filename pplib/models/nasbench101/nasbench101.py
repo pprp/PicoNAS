@@ -141,6 +141,5 @@ if __name__ == '__main__':
     rand_subnet = mutator.random_subnet
     mutator.set_subnet(rand_subnet)
 
-    # import ipdb; ipdb.set_trace()
     input = torch.randn((1, 3, 32, 32))
     print(model.forward(input).shape)

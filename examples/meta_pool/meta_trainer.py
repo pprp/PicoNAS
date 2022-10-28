@@ -62,7 +62,6 @@ class MetaTrainer(BaseTrainer):
         if self.mutator is None:
             # Note: use alias to build search group
             self.mutator = DiffMutator()
-            # import pdb; pdb.set_trace()
             self.mutator.prepare_from_supernet(model)
             self.mutator.arch_params.to(self.device)
 

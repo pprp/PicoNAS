@@ -147,7 +147,6 @@ class MasterNet(PlainNet):
 
     def forward_before_global_avg_pool(self, x):
         output = x
-        # import pdb; pdb.set_trace()
         for the_block in self.block_list:
             output = the_block(output)
         return output
