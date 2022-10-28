@@ -8,6 +8,7 @@ from scipy.stats import stats
 
 def concordant_pair_ratio(list1, list2):
     """Proposed `cpr`"""
+    assert len(list1) == len(list2)
     total_number = len(list1)
     num_concordant = 0
     for i in range(len(list1)):

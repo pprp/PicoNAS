@@ -16,11 +16,12 @@ model = OneShotNASBench201Network()
 
 # ckpt_path = '/home/stack/project/spos-cifar/examples/rank_nb201/checkpoints/normal_nb201_fairnas_fairsampling_exp-rerun/normal_nb201_fairnas_fairsampling_exp-rerun_nb201_ckpt_0191.pth.tar'
 
-# ckpt_path = '/home/stack/project/spos-cifar/examples/rank_nb201/checkpoints/pairwise-ranking_nb201_spos_adaptive-sampling_exp-rerun/pairwise-ranking_nb201_spos_adaptive-sampling_exp-rerun_nb201_ckpt_0191.pth.tar'
+ckpt_path = '/home/stack/project/spos-cifar/examples/rank_nb201/checkpoints/pairwise-ranking_nb201_spos_adaptive-sampling_exp-rerun/pairwise-ranking_nb201_spos_adaptive-sampling_exp-rerun_nb201_ckpt_0191.pth.tar'
 
-ckpt_path = '/home/stack/project/spos-cifar/examples/rank_nb201/checkpoints/normal_nb201_spos_uniform-sampling_exp-rerun/normal_nb201_spos_uniform-sampling_exp-rerun_nb201_ckpt_0191.pth.tar'
+# ckpt_path = '/home/stack/project/spos-cifar/examples/rank_nb201/checkpoints/normal_nb201_spos_uniform-sampling_exp-rerun/normal_nb201_spos_uniform-sampling_exp-rerun_nb201_ckpt_0191.pth.tar'
 
 model.load_state_dict(torch.load(ckpt_path)['state_dict'])
+
 mutator = OneShotMutator(with_alias=True)
 mutator.prepare_from_supernet(model)
 
@@ -53,7 +54,7 @@ def calc_gt_list(dct1, dct2):
 def calc_os_list(dct1, dct2):
     results1 = trainer.get_subnet_error(dct1, dataloader, val_dataloader)
     results2 = trainer.get_subnet_error(dct2, dataloader, val_dataloader)
-    return results1 - results2
+    return -1*(results1 - results2)
 
 
 def calc_zerocost_dist(dct1, dct2, zc_proxy='zen'):
