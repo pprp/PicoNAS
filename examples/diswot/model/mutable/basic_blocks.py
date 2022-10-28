@@ -8,6 +8,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from ..registry import register_model
 from .utils import (_create_netblock_list_from_str_,
                     _get_right_parentheses_index_)
 
@@ -87,6 +88,7 @@ class PlainNetBasicBlockClass(nn.Module):
             return False
 
 
+@register_model
 class AdaptiveAvgPool(PlainNetBasicBlockClass):
 
     def __init__(self, out_channels, output_size, no_create=False, **kwargs):
@@ -149,6 +151,7 @@ class AdaptiveAvgPool(PlainNetBasicBlockClass):
             no_create=no_create), s[idx + 1:]
 
 
+@register_model
 class BN(PlainNetBasicBlockClass):
 
     def __init__(self,
@@ -220,6 +223,7 @@ class BN(PlainNetBasicBlockClass):
             no_create=no_create), s[idx + 1:]
 
 
+@register_model
 class ConvKX(PlainNetBasicBlockClass):
 
     def __init__(self,
@@ -328,6 +332,7 @@ class ConvKX(PlainNetBasicBlockClass):
             block_name=tmp_block_name), s[idx + 1:]
 
 
+@register_model
 class ConvDW(PlainNetBasicBlockClass):
 
     def __init__(self,
@@ -434,6 +439,7 @@ class ConvDW(PlainNetBasicBlockClass):
             block_name=tmp_block_name), s[idx + 1:]
 
 
+@register_model
 class ConvKXG2(ConvKX):
 
     def __init__(self,
@@ -455,6 +461,7 @@ class ConvKXG2(ConvKX):
             **kwargs)
 
 
+@register_model
 class ConvKXG4(ConvKX):
 
     def __init__(self,
@@ -476,6 +483,7 @@ class ConvKXG4(ConvKX):
             **kwargs)
 
 
+@register_model
 class ConvKXG8(ConvKX):
 
     def __init__(self,
@@ -497,6 +505,7 @@ class ConvKXG8(ConvKX):
             **kwargs)
 
 
+@register_model
 class ConvKXG16(ConvKX):
 
     def __init__(self,
@@ -518,6 +527,7 @@ class ConvKXG16(ConvKX):
             **kwargs)
 
 
+@register_model
 class ConvKXG32(ConvKX):
 
     def __init__(self,
@@ -539,6 +549,7 @@ class ConvKXG32(ConvKX):
             **kwargs)
 
 
+@register_model
 class Flatten(PlainNetBasicBlockClass):
 
     def __init__(self, out_channels, no_create=False, **kwargs):
@@ -590,6 +601,7 @@ class Flatten(PlainNetBasicBlockClass):
             block_name=tmp_block_name), s[idx + 1:]
 
 
+@register_model
 class Linear(PlainNetBasicBlockClass):
 
     def __init__(self,
@@ -677,6 +689,7 @@ class Linear(PlainNetBasicBlockClass):
             no_create=no_create), s[idx + 1:]
 
 
+@register_model
 class MaxPool(PlainNetBasicBlockClass):
 
     def __init__(self,
@@ -754,6 +767,7 @@ class MaxPool(PlainNetBasicBlockClass):
             block_name=tmp_block_name), s[idx + 1:]
 
 
+@register_model
 class Sequential(PlainNetBasicBlockClass):
 
     def __init__(self, block_list, no_create=False, **kwargs):
@@ -841,6 +855,7 @@ class Sequential(PlainNetBasicBlockClass):
             block_name=tmp_block_name), ''
 
 
+@register_model
 class MultiSumBlock(PlainNetBasicBlockClass):
 
     def __init__(self, block_list, no_create=False, **kwargs):
@@ -939,6 +954,7 @@ class MultiSumBlock(PlainNetBasicBlockClass):
             no_create=no_create), s[idx + 1:]
 
 
+@register_model
 class MultiCatBlock(PlainNetBasicBlockClass):
 
     def __init__(self, block_list, no_create=False, **kwargs):
@@ -1041,6 +1057,7 @@ class MultiCatBlock(PlainNetBasicBlockClass):
             no_create=no_create), s[idx + 1:]
 
 
+@register_model
 class RELU(PlainNetBasicBlockClass):
 
     def __init__(self, out_channels, no_create=False, **kwargs):
@@ -1092,6 +1109,7 @@ class RELU(PlainNetBasicBlockClass):
             block_name=tmp_block_name), s[idx + 1:]
 
 
+@register_model
 class ResBlock(PlainNetBasicBlockClass):
     '''
     ResBlock(in_channles, inner_blocks_str). If in_channels is missing, use block_list[0].in_channels as in_channels
@@ -1262,6 +1280,7 @@ class ResBlock(PlainNetBasicBlockClass):
             block_name=tmp_block_name), s[idx + 1:]
 
 
+@register_model
 class ResBlockProj(PlainNetBasicBlockClass):
     '''
     ResBlockProj(in_channles, inner_blocks_str). If in_channels is missing, use block_list[0].in_channels as in_channels
@@ -1425,6 +1444,7 @@ class ResBlockProj(PlainNetBasicBlockClass):
             block_name=tmp_block_name), s[idx + 1:]
 
 
+@register_model
 class SE(PlainNetBasicBlockClass):
 
     def __init__(self,
@@ -1545,6 +1565,7 @@ class SwishImplementation(torch.autograd.Function):
         return grad_output * (sigmoid_i * (1 + i * (1 - sigmoid_i)))
 
 
+@register_model
 class Swish(PlainNetBasicBlockClass):
 
     def __init__(self,
@@ -1725,31 +1746,3 @@ def _fuse_bn_layer_for_blocks_list_(block_list):
             pass
         pass
     pass  # end with
-
-
-def register_netblocks_dict(netblocks_dict: dict):
-    this_py_file_netblocks_dict = {
-        'AdaptiveAvgPool': AdaptiveAvgPool,
-        'BN': BN,
-        'ConvDW': ConvDW,
-        'ConvKX': ConvKX,
-        'ConvKXG2': ConvKXG2,
-        'ConvKXG4': ConvKXG4,
-        'ConvKXG8': ConvKXG8,
-        'ConvKXG16': ConvKXG16,
-        'ConvKXG32': ConvKXG32,
-        'Flatten': Flatten,
-        'Linear': Linear,
-        'MaxPool': MaxPool,
-        'MultiSumBlock': MultiSumBlock,
-        'MultiCatBlock': MultiCatBlock,
-        'PlainNetBasicBlockClass': PlainNetBasicBlockClass,
-        'RELU': RELU,
-        'ResBlock': ResBlock,
-        'ResBlockProj': ResBlockProj,
-        'Sequential': Sequential,
-        'SE': SE,
-        'Swish': Swish,
-    }
-    netblocks_dict.update(this_py_file_netblocks_dict)
-    return netblocks_dict

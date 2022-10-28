@@ -6,6 +6,7 @@ import uuid
 
 from torch import nn
 
+from ..register import register_model
 from .basic_blocks import BN, ConvDW, ConvKX, PlainNetBasicBlockClass
 from .utils import (_get_right_parentheses_index_,
                     create_netblock_list_from_str, smart_round)
@@ -198,6 +199,7 @@ class SuperConvKXBNRELU(PlainNetSuperBlockClass):
             self.in_channels, new_out_channels, self.stride, new_sub_layers)
 
 
+@register_model
 class SuperConvK1BNRELU(SuperConvKXBNRELU):
 
     def __init__(self,
@@ -217,6 +219,7 @@ class SuperConvK1BNRELU(SuperConvKXBNRELU):
             **kwargs)
 
 
+@register_model
 class SuperConvK3BNRELU(SuperConvKXBNRELU):
 
     def __init__(self,
@@ -236,6 +239,7 @@ class SuperConvK3BNRELU(SuperConvKXBNRELU):
             **kwargs)
 
 
+@register_model
 class SuperConvK5BNRELU(SuperConvKXBNRELU):
 
     def __init__(self,
@@ -255,6 +259,7 @@ class SuperConvK5BNRELU(SuperConvKXBNRELU):
             **kwargs)
 
 
+@register_model
 class SuperConvK7BNRELU(SuperConvKXBNRELU):
 
     def __init__(self,
@@ -272,14 +277,3 @@ class SuperConvK7BNRELU(SuperConvKXBNRELU):
             kernel_size=7,
             no_create=no_create,
             **kwargs)
-
-
-# def register_netblocks_dict(netblocks_dict: dict):
-#     this_py_file_netblocks_dict = {
-#         'SuperConvK1BNRELU': SuperConvK1BNRELU,
-#         'SuperConvK3BNRELU': SuperConvK3BNRELU,
-#         'SuperConvK5BNRELU': SuperConvK5BNRELU,
-#         'SuperConvK7BNRELU': SuperConvK7BNRELU,
-#     }
-#     netblocks_dict.update(this_py_file_netblocks_dict)
-#     return netblocks_dict
