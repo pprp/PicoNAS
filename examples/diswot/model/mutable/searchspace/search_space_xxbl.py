@@ -8,6 +8,7 @@ from model.mutable.SuperResKXKX import SuperResK3K3, SuperResK5K5, SuperResK7K7
 from model.mutable.utils import smart_round
 
 seach_space_block_type_list_list = [
+    # two types of blocks to search
     [SuperResK1K3K1, SuperResK1K5K1, SuperResK1K7K1],
     [SuperResK3K3, SuperResK5K5, SuperResK7K7],
 ]
@@ -63,6 +64,10 @@ def gen_search_space(block_list, block_id):
     student_blocks_list_list = []
 
     if isinstance(the_block, SuperConvKXBNRELU):
+        """
+        SuperConvK3BNRELU or SuperConvK1BNRELU is used as the first conv or
+        the last Conv and are not searchable.
+        """
         student_blocks_list = []
         student_out_channels_list = get_select_student_channels_list(
             the_block.out_channels)
@@ -76,6 +81,7 @@ def gen_search_space(block_list, block_id):
         assert len(student_blocks_list) >= 1
         student_blocks_list_list.append(student_blocks_list)
     else:
+        # For middle layers
         for student_block_type_list in seach_space_block_type_list_list:
             student_blocks_list = []
             student_out_channels_list = get_select_student_channels_list(

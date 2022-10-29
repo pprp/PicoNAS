@@ -6,10 +6,9 @@ import model  # noqa: F401,F403
 import torch
 import torch.nn.functional as F
 from model.mutable import MasterNet
-# from model.mutable.searchspace.xxbl import gen_search_space
+from model.mutable.searchspace.search_space_xxbl import gen_search_space
 # from model.mutable.basic_blocks import _remove_bn_layer_
-from model.mutable.utils import (PlainNet, create_netblock_list_from_str,
-                                 load_py_module_from_path)
+from model.mutable.utils import PlainNet, create_netblock_list_from_str
 
 from pplib.datasets import build_dataloader
 # from model.mutable.utils import pretty_format
@@ -19,12 +18,14 @@ from pplib.predictor.pruners import predictive
 class TestMutable(TestCase):
 
     def test_gen_search_space(self):
-        ...
+        # SuperResK1K5K1(in, out, stride, bottlenect_channel, sub_layers)
+        plainnet_struct = 'SuperConvK3BNRELU(3,64,1,1)SuperResK1K5K1(64,168,1,16,3)SuperResK1K3K1(168,80,2,32,4)SuperResK1K5K1(80,112,2,16,3)SuperResK1K5K1(112,144,1,24,3)SuperResK1K3K1(144,32,2,40,1)SuperConvK1BNRELU(32,512,1,1)'
+        net = MasterNet(plainnet_struct=plainnet_struct)
+        student_blocks_list_list = gen_search_space(net.block_list, 0)
+        print(student_blocks_list_list[0])
 
     def get_new_random_structure_str(self,
                                      the_net,
-                                     structure_str,
-                                     num_classes,
                                      get_search_space_func,
                                      num_replaces=1):
 
@@ -79,7 +80,6 @@ class TestMutable(TestCase):
 
         # print(pretty_format(plainnet_struct))
         net = MasterNet(plainnet_struct=plainnet_struct)
-        print(net)
         init_structure_str = str(net)
 
         # net.block_list = _remove_bn_layer_(net.block_list)
@@ -97,14 +97,9 @@ class TestMutable(TestCase):
 
         print(score)
 
-        search_space = load_py_module_from_path(
-            'examples/diswot/model/mutable/searchspace/search_space_xxbl.py')
-
         new_structures_str = self.get_new_random_structure_str(
             net,
-            init_structure_str,
-            10,
-            get_search_space_func=search_space.gen_search_space,
+            get_search_space_func=gen_search_space,
             num_replaces=2,
         )
 
