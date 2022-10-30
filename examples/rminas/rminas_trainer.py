@@ -1,5 +1,3 @@
-import pickle
-import sys
 import time
 
 import numpy as np
@@ -35,7 +33,7 @@ def rminas_hp_builder():
         RF_space = 'darts'
     elif cfg.SPACE.NAME == 'nasbenchmacro':
         RF_space = 'nasbenchmacro'
-        from xnas.evaluations.NASBenchMacro.evaluate import data, evaluate
+        from xnas.evaluations.NASBenchMacro.evaluate import data
         api = data
     elif cfg.SPACE.NAME == 'proxyless':
         RF_space = 'proxyless'
@@ -108,10 +106,10 @@ def main():
         _, indices = torch.topk(
             -ce_loss(more_logits, more_data_y).cpu().detach(),
             cfg.LOADER.BATCH_SIZE)
-        
+
     data_y = more_data_y.detach()
     data_X = more_data_X.detach()
-    
+
     with torch.no_grad():
         feature_res = network.feature_extractor(data_X)
 
@@ -170,7 +168,7 @@ def main():
             loss_cka = loss_fun_cka(features, feature_res)
             loss_logits = loss_fun_log(logits, data_y)
             loss = cfg.RMINAS.LOSS_BETA * loss_cka + \
-                (1-cfg.RMINAS.LOSS_BETA)*loss_logits
+                (1 - cfg.RMINAS.LOSS_BETA) * loss_logits
             loss.backward()
 
             optimizer.step()

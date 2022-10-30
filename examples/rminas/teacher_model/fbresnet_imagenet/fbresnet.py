@@ -6,13 +6,12 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.utils.model_zoo as model_zoo
 
 WEIGHT_PATH = 'xnas/algorithms/RMINAS/teacher_model/fbresnet_imagenet/fbresnet152.pth'
 
 __all__ = [
     'FBResNet',
-    #'fbresnet18', 'fbresnet34', 'fbresnet50', 'fbresnet101',
+    # 'fbresnet18', 'fbresnet34', 'fbresnet50', 'fbresnet101',
     'fbresnet152'
 ]
 
