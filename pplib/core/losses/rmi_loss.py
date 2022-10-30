@@ -186,6 +186,11 @@ def feature_space_linear_cka(features_x, features_y, debiased=False):
 
 
 class RMI_loss(nn.Module):
+    """_summary_
+
+    Args:
+        datasize (_type_): _description_
+    """
 
     def __init__(self, datasize):
         super(RMI_loss, self).__init__()
