@@ -108,8 +108,10 @@ def main():
         _, indices = torch.topk(
             -ce_loss(more_logits, more_data_y).cpu().detach(),
             cfg.LOADER.BATCH_SIZE)
+        
     data_y = more_data_y.detach()
     data_X = more_data_X.detach()
+    
     with torch.no_grad():
         feature_res = network.feature_extractor(data_X)
 
