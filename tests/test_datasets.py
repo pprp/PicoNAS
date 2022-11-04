@@ -2,6 +2,7 @@ import unittest
 from unittest import TestCase
 
 import numpy as np
+import torch
 from einops import rearrange
 
 from pplib.datasets import build_dataloader, build_dataset
@@ -14,6 +15,7 @@ class Dict(dict):
 
 class TestDataset(TestCase):
 
+    @unittest.skip('pass')
     def test_dataset(self):
         dataset = build_dataset(type='train', dataset='cifar10')
         assert dataset is not None
@@ -29,8 +31,17 @@ class TestDataset(TestCase):
         for i, (img, label) in enumerate(dataloader):
             if i > 2:
                 break
-            print(img.shape, label.shape)
+            print(img.shape, label.shape, type(img), type(label), label)
 
+    def test_immitate_dataloader(self):
+        import random
+        img = torch.randn(1, 3, 32, 32)
+        num_classes = 10
+        choiced = random.choice(list(range(num_classes)))
+        label = torch.tensor([choiced])
+        print(img.shape, label.shape, type(img), type(label), label)
+
+    @unittest.skip('pass')
     def convert2pltimg(self, img):
         img = img.numpy()
         img = np.transpose(img, (1, 2, 0))
@@ -39,6 +50,7 @@ class TestDataset(TestCase):
         img = std * img + mean
         return img
 
+    @unittest.skip('pass')
     def test_dataloader_simmim(self):
         loader = build_dataloader(type='val', dataset='simmim')
 
