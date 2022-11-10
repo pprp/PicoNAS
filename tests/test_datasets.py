@@ -35,10 +35,10 @@ class TestDataset(TestCase):
 
     def test_immitate_dataloader(self):
         import random
-        img = torch.randn(1, 3, 32, 32)
+        img = torch.randn(4, 3, 32, 32)
         num_classes = 10
-        choiced = random.choice(list(range(num_classes)))
-        label = torch.tensor([choiced])
+        choiced = random.sample(list(range(num_classes)), k=4)
+        label = torch.tensor(choiced)
         print(img.shape, label.shape, type(img), type(label), label)
 
     @unittest.skip('pass')
