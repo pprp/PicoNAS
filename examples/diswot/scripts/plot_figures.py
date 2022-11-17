@@ -4,29 +4,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from matplotlib import ticker
+
 plt.rc('font', family='Times New Roman')
 GLOBAL_DPI = 600
 FIGSIZE = (8, 6)
-PADINCHES = 0.1 #-0.005
+PADINCHES = 0.1  #-0.005
 GLOBAL_FONTSIZE = 34
 GLOBAL_LABELSIZE = 30
 GLOBAL_LEGENDSIZE = 20
 
-font1 = {'family': 'Times New Roman', 
-         'weight' : 'bold', 
-         'size': GLOBAL_LABELSIZE}
+font1 = {
+    'family': 'Times New Roman',
+    'weight': 'bold',
+    'size': GLOBAL_LABELSIZE
+}
 
 plt.rc('font', **font1)  # controls default text sizes
 plt.rc('axes', titlesize=GLOBAL_LABELSIZE)  # fontsize of the axes title
 plt.rc('axes', labelsize=GLOBAL_LABELSIZE)  # fontsize of the x and y labels
-plt.rc('xtick', labelsize=GLOBAL_LABELSIZE-10)  # fontsize of the tick labels
-plt.rc('ytick', labelsize=GLOBAL_LABELSIZE-10)  # fontsize of the tick labels
+plt.rc('xtick', labelsize=GLOBAL_LABELSIZE - 10)  # fontsize of the tick labels
+plt.rc('ytick', labelsize=GLOBAL_LABELSIZE - 10)  # fontsize of the tick labels
 plt.rc('legend', fontsize=GLOBAL_LEGENDSIZE)  # legend fontsize
 plt.rc('figure', titlesize=GLOBAL_LABELSIZE)
 
 ax = plt.gca()
-ax.spines['top'].set_color('black')  
-ax.spines['right'].set_color('black')  
+ax.spines['top'].set_color('black')
+ax.spines['right'].set_color('black')
 ax.spines['bottom'].set_color('black')
 ax.spines['left'].set_color('black')
 ax.spines['bottom'].set_linewidth(2)
@@ -41,11 +44,8 @@ def plot_standalone_model_rank(xlabel, ylabel, foldername, file_name):
 
     fig, axs = plt.subplots(1, 3, figsize=figsize)
     fig.add_subplot(111, frameon=False)
-    plt.tick_params(labelcolor='none',
-                    top=False,
-                    bottom=False,
-                    left=False,
-                    right=False)
+    plt.tick_params(
+        labelcolor='none', top=False, bottom=False, left=False, right=False)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     ticks = np.arange(0, 51, 10)
@@ -124,8 +124,12 @@ def plot_standalone_model_rank(xlabel, ylabel, foldername, file_name):
     save_path = os.path.join(foldername, file_name)
     # foldername / '{}'.format(file_name)
     print('save figure into {:}\n'.format(save_path))
-    plt.savefig(str(save_path), dpi=GLOBAL_DPI,
-                bbox_inches='tight', pad_inches=PADINCHES, format='pdf')
+    plt.savefig(
+        str(save_path),
+        dpi=GLOBAL_DPI,
+        bbox_inches='tight',
+        pad_inches=PADINCHES,
+        format='pdf')
     plt.clf()
 
 
@@ -160,25 +164,28 @@ def plot_ranking_stability(xlabel, ylabel, foldername, file_name):
     locations = [i + 1 - 0.135 for i in locations]
 
     positions1 = locations
-    boxplot1 = plt.boxplot(diswot_data,
-                           positions=positions1,
-                           patch_artist=True,
-                           showfliers=True,
-                           widths=width)
+    boxplot1 = plt.boxplot(
+        diswot_data,
+        positions=positions1,
+        patch_artist=True,
+        showfliers=True,
+        widths=width)
 
     positions2 = [x + (width + 0.08) for x in locations]
-    boxplot2 = plt.boxplot(ickd_data,
-                           positions=positions2,
-                           patch_artist=True,
-                           showfliers=True,
-                           widths=width)
+    boxplot2 = plt.boxplot(
+        ickd_data,
+        positions=positions2,
+        patch_artist=True,
+        showfliers=True,
+        widths=width)
 
     positions3 = [x + (width + 0.08) * 2 for x in locations]
-    boxplot3 = plt.boxplot(sp_data,
-                           positions=positions3,
-                           patch_artist=True,
-                           showfliers=True,
-                           widths=width)
+    boxplot3 = plt.boxplot(
+        sp_data,
+        positions=positions3,
+        patch_artist=True,
+        showfliers=True,
+        widths=width)
 
     for box in boxplot1['boxes']:
         box.set(color='#3c73a8')
@@ -201,18 +208,20 @@ def plot_ranking_stability(xlabel, ylabel, foldername, file_name):
     plt.xlabel(xlabel, fontsize=25)
     plt.ylabel(ylabel, fontsize=25)
 
-    plt.grid(lw=2,ls='-.')
+    plt.grid(lw=2, ls='-.')
     plt.plot([], c='#3c73a8', label='Acc. w/ ReBN')
     plt.plot([], c='#fec615', label='Angle')
-    plt.legend(ncol=6,
-                        loc='lower center',
-                        bbox_to_anchor=(0.5, -0.55))
+    plt.legend(ncol=6, loc='lower center', bbox_to_anchor=(0.5, -0.55))
 
     save_path = os.path.join(foldername, file_name)
 
     print('save figure into {:}\n'.format(save_path))
-    plt.savefig(str(save_path), bbox_inches='tight',
-                dpi=GLOBAL_DPI, pad_inches=PADINCHES, format='pdf')
+    plt.savefig(
+        str(save_path),
+        bbox_inches='tight',
+        dpi=GLOBAL_DPI,
+        pad_inches=PADINCHES,
+        format='pdf')
     plt.clf()
 
 
@@ -228,8 +237,8 @@ def plot_evolution_search_process():
             x.append(i)
             y.append(max_score)
 
-    ax.spines['top'].set_color('black')  
-    ax.spines['right'].set_color('black')  
+    ax.spines['top'].set_color('black')
+    ax.spines['right'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_linewidth(2)
@@ -237,10 +246,10 @@ def plot_evolution_search_process():
     ax.spines['top'].set_linewidth(2)
     ax.spines['right'].set_linewidth(2)
 
-    plt.grid(linestyle='-.', lw=2,alpha=0.9)
+    plt.grid(linestyle='-.', lw=2, alpha=0.9)
     # print(x, y)
-    plt.plot(x, y, color='salmon', linestyle='-',
-             lw=3, label='Evolution search')
+    plt.plot(
+        x, y, color='salmon', linestyle='-', lw=3, label='Evolution search')
 
     x2, y2 = [], []
     with open('./exps/rand_search_img.log', 'r') as f:
@@ -250,9 +259,9 @@ def plot_evolution_search_process():
             x2.append(i)
             y2.append(max_score)
 
-    plt.plot(x2, y2, color='skyblue', linestyle='-',
-             lw=4, label='Random search')
-    
+    plt.plot(
+        x2, y2, color='skyblue', linestyle='-', lw=4, label='Random search')
+
     plt.legend()
     xticks = np.arange(0, 1000, 250)
     plt.ylim([-0.00053, -0.00018])
@@ -267,8 +276,12 @@ def plot_evolution_search_process():
     ax.yaxis.set_major_formatter(formatter)
 
     plt.tight_layout()
-    plt.savefig('./tmp/ES_vs_RS.pdf', dpi=GLOBAL_DPI,
-                bbox_inches='tight', pad_inches=PADINCHES, format='pdf')
+    plt.savefig(
+        './tmp/ES_vs_RS.pdf',
+        dpi=GLOBAL_DPI,
+        bbox_inches='tight',
+        pad_inches=PADINCHES,
+        format='pdf')
     plt.clf()
 
 
@@ -300,35 +313,40 @@ def plot_kd_zc_box(foldername, file_name):
         labels.append(k)
         content_list.append(v)
 
-    plt.boxplot(content_list,
-                medianprops={
-                    'color': 'red',
-                    'linewidth': '1.5'
-                },
-                meanline=True,
-                showmeans=True,
-                meanprops={
-                    'color': 'blue',
-                    'ls': '-.',
-                    'linewidth': '1.5'
-                },
-                flierprops={
-                    'marker': 'o',
-                    'markerfacecolor': 'red',
-                    'markersize': 10
-                },
-                labels=labels)
+    plt.boxplot(
+        content_list,
+        medianprops={
+            'color': 'red',
+            'linewidth': '1.5'
+        },
+        meanline=True,
+        showmeans=True,
+        meanprops={
+            'color': 'blue',
+            'ls': '-.',
+            'linewidth': '1.5'
+        },
+        flierprops={
+            'marker': 'o',
+            'markerfacecolor': 'red',
+            'markersize': 10
+        },
+        labels=labels)
 
     plt.xlim(0, total_boxes + 1)
 
-    plt.grid(lw=2,ls='-.')
+    plt.grid(lw=2, ls='-.')
     plt.tight_layout()
 
     save_path = os.path.join(foldername, file_name)
 
     print('save figure into {:}\n'.format(save_path))
-    plt.savefig(str(save_path), bbox_inches='tight',
-                dpi=GLOBAL_DPI, pad_inches=PADINCHES, format='pdf')
+    plt.savefig(
+        str(save_path),
+        bbox_inches='tight',
+        dpi=GLOBAL_DPI,
+        pad_inches=PADINCHES,
+        format='pdf')
     plt.clf()
 
 
@@ -349,15 +367,15 @@ def plot_kd_box(foldername, file_name):
     total_boxes = len(merged_info)
     plt.figure(figsize=FIGSIZE)
     ax = plt.gca()
-    ax.spines['top'].set_color('black')  
-    ax.spines['right'].set_color('black')  
+    ax.spines['top'].set_color('black')
+    ax.spines['right'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_linewidth(2)
     ax.spines['left'].set_linewidth(2)
     ax.spines['top'].set_linewidth(2)
     ax.spines['right'].set_linewidth(2)
-    
+
     locations = list(range(total_boxes))
     locations = [i + 1 - 0.135 for i in locations]
 
@@ -367,46 +385,49 @@ def plot_kd_box(foldername, file_name):
         labels.append(k)
         content_list.append(v)
 
-    plt.boxplot(content_list,
-                medianprops={
-                    'color': 'red',
-                    'linewidth': '2'
-                },
-                meanline=True,
-                showmeans=True,
-                meanprops={
-                    'color': 'blue',
-                    'ls': '-.',
-                    'linewidth': '2'
-                },
-                flierprops={
-                    'marker': 'o',
-                    'markerfacecolor': 'red',
-                    'markersize': 20
-                },
-                labels=labels,
-                boxprops={
-                    'linewidth': '2'
-                },
-                whiskerprops={
-                    'linewidth': '2'
-                },
-                widths=0.8)
+    plt.boxplot(
+        content_list,
+        medianprops={
+            'color': 'red',
+            'linewidth': '2'
+        },
+        meanline=True,
+        showmeans=True,
+        meanprops={
+            'color': 'blue',
+            'ls': '-.',
+            'linewidth': '2'
+        },
+        flierprops={
+            'marker': 'o',
+            'markerfacecolor': 'red',
+            'markersize': 20
+        },
+        labels=labels,
+        boxprops={'linewidth': '2'},
+        whiskerprops={'linewidth': '2'},
+        widths=0.8)
 
     plt.xlim(0, total_boxes + 1)
 
-    plt.grid(lw=2,ls='-.')
+    plt.grid(lw=2, ls='-.')
     plt.tight_layout()
 
     save_path = os.path.join(foldername, file_name)
-    plt.ylabel('Spearman Coefficienct', fontsize=GLOBAL_LABELSIZE, weight='bold')
-    plt.xlabel('Distillation Method', fontsize=GLOBAL_LEGENDSIZE, weight='bold')
+    plt.ylabel(
+        'Spearman Coefficienct', fontsize=GLOBAL_LABELSIZE, weight='bold')
+    plt.xlabel(
+        'Distillation Method', fontsize=GLOBAL_LEGENDSIZE, weight='bold')
 
-    plt.tick_params(labelsize=GLOBAL_LEGENDSIZE-4)
+    plt.tick_params(labelsize=GLOBAL_LEGENDSIZE - 4)
 
     print('save figure into {:}\n'.format(save_path))
-    plt.savefig(str(save_path), bbox_inches='tight',
-                dpi=GLOBAL_DPI, pad_inches=PADINCHES, format='pdf')
+    plt.savefig(
+        str(save_path),
+        bbox_inches='tight',
+        dpi=GLOBAL_DPI,
+        pad_inches=PADINCHES,
+        format='pdf')
     plt.clf()
 
 
@@ -417,17 +438,17 @@ def plot_different_teacher_diswot():
     diswot_list = [71.01, 71.25, 71.63, 71.84]
     diswot_plus_list = [71.85, 72.12, 72.56, 72.92]
     marker_size = 13
-    
+
     ax = plt.gca()
-    ax.spines['top'].set_color('black')  
-    ax.spines['right'].set_color('black')  
+    ax.spines['top'].set_color('black')
+    ax.spines['right'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_linewidth(2)
     ax.spines['left'].set_linewidth(2)
     ax.spines['top'].set_linewidth(2)
     ax.spines['right'].set_linewidth(2)
-    
+
     plt.grid(linestyle='-.', alpha=0.9, lw=2)
     plt.plot(
         labels,
@@ -454,16 +475,20 @@ def plot_different_teacher_diswot():
         # mfc='white',
         linewidth=2,
         marker='*',
-        markersize=marker_size+5,
+        markersize=marker_size + 5,
         label='DisWOT+')
     plt.tick_params(labelsize=GLOBAL_LEGENDSIZE)
     plt.xlabel('Teacher Models', fontsize=GLOBAL_LEGENDSIZE, weight='bold')
     plt.ylabel('Top-1 Accuracy (%)', fontsize=GLOBAL_FONTSIZE, weight='bold')
     label_size = plt.legend().get_texts()
-    [label.set_fontsize(GLOBAL_LEGENDSIZE-6) for label in label_size]
+    [label.set_fontsize(GLOBAL_LEGENDSIZE - 6) for label in label_size]
     plt.tight_layout()
-    plt.savefig('./tmp/diff_teacher_diswot.pdf', dpi=GLOBAL_DPI,
-                bbox_inches='tight', pad_inches=PADINCHES, format='pdf')
+    plt.savefig(
+        './tmp/diff_teacher_diswot.pdf',
+        dpi=GLOBAL_DPI,
+        bbox_inches='tight',
+        pad_inches=PADINCHES,
+        format='pdf')
     plt.clf()
 
 
@@ -504,7 +529,7 @@ def plot_hist_rank_consistency():
     #         'kd': 0.8521
     #     }
     # }
-    
+
     labels = result.keys()
     x = np.arange(len(labels))
     y1 = [v['cls'] for k, v in result.items()]
@@ -513,8 +538,8 @@ def plot_hist_rank_consistency():
 
     fig, ax = plt.subplots(figsize=FIGSIZE)
 
-    ax.spines['top'].set_color('black')  
-    ax.spines['right'].set_color('black')  
+    ax.spines['top'].set_color('black')
+    ax.spines['right'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_linewidth(2)
@@ -522,29 +547,35 @@ def plot_hist_rank_consistency():
     ax.spines['top'].set_linewidth(2)
     ax.spines['right'].set_linewidth(2)
 
-    rects1 = ax.bar(x - width / 2, y1, width,
-                    label='Vanilla acc.', color='salmon')
-    rects2 = ax.bar(x + width / 2, y2, width,
-                    label='Distill acc.', color='skyblue')
+    rects1 = ax.bar(
+        x - width / 2, y1, width, label='Vanilla acc.', color='salmon')
+    rects2 = ax.bar(
+        x + width / 2, y2, width, label='Distill acc.', color='skyblue')
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel("Kendall's Tau", fontsize=GLOBAL_FONTSIZE, weight='bold')
-    ax.set_xticks(x, labels, fontsize=GLOBAL_LEGENDSIZE-2)
+    ax.set_xticks(x, labels, fontsize=GLOBAL_LEGENDSIZE - 2)
     yticks = np.arange(0.1, 1.2, 0.1)
-    plt.tick_params(labelsize=GLOBAL_LEGENDSIZE-2)
+    plt.tick_params(labelsize=GLOBAL_LEGENDSIZE - 2)
     ax.set_yticks(yticks, fontsize=GLOBAL_LABELSIZE)
     ax.set_ylim(0.2, 1.05)
     label_size = ax.legend().get_texts()
-    [label.set_fontsize(GLOBAL_LEGENDSIZE-3) for label in label_size]
+    [label.set_fontsize(GLOBAL_LEGENDSIZE - 3) for label in label_size]
 
-    ax.bar_label(rects1, padding=-26, label_type='edge', fontsize=GLOBAL_LEGENDSIZE-2)
-    ax.bar_label(rects2, padding=-26, label_type='edge', fontsize=GLOBAL_LEGENDSIZE-2)
+    ax.bar_label(
+        rects1, padding=-26, label_type='edge', fontsize=GLOBAL_LEGENDSIZE - 2)
+    ax.bar_label(
+        rects2, padding=-26, label_type='edge', fontsize=GLOBAL_LEGENDSIZE - 2)
 
     fig.tight_layout()
     plt.grid(linestyle='-.', alpha=0.9, lw=2)
 
-    plt.savefig('./tmp/hist_rank_consistency.pdf', dpi=GLOBAL_DPI,
-                bbox_inches='tight', pad_inches=PADINCHES, format='pdf')
+    plt.savefig(
+        './tmp/hist_rank_consistency.pdf',
+        dpi=GLOBAL_DPI,
+        bbox_inches='tight',
+        pad_inches=PADINCHES,
+        format='pdf')
     plt.clf()
 
 
@@ -552,7 +583,7 @@ def plot_param_cls_kd_ours_all():
     import json
     kd_dict = {}
     pre_dict = {}
-    with open("./exps/diswot_sp_score_info.txt", 'r') as f:
+    with open('./exps/diswot_sp_score_info.txt', 'r') as f:
         js = f.read()
         info_dict = json.loads(js)
         for k, v in info_dict.items():
@@ -576,22 +607,34 @@ def plot_param_cls_kd_ours_all():
     x = np.arange(len(labels))
     kd_list = [v[0] for k, v in merged_dict.items()]
     cls_list = [v[1] for k, v in merged_dict.items()]
-    pre_list = [0.001-v[2] for k, v in merged_dict.items()]
+    pre_list = [0.001 - v[2] for k, v in merged_dict.items()]
 
     fig, ax1 = plt.subplots(1, 1, figsize=(30, 5))
     ax1.bar(x, cls_list, width=bar_width, label='Cls. ACC', fc='steelblue')
-    ax1.bar(x+bar_width, kd_list, width=bar_width,
-            label='KD. ACC', fc='seagreen')
+    ax1.bar(
+        x + bar_width,
+        kd_list,
+        width=bar_width,
+        label='KD. ACC',
+        fc='seagreen')
     ax1.set_ylim([55, 80])
 
     ax2 = ax1.twinx()
-    ax2.bar(x+bar_width*2, pre_list, width=bar_width,
-            label='DisWOT', fc='indianred')
+    ax2.bar(
+        x + bar_width * 2,
+        pre_list,
+        width=bar_width,
+        label='DisWOT',
+        fc='indianred')
     # ax2.set_ylim([])
     fig.legend(loc=1)
     ax1.set_xticks(x, labels)
-    plt.savefig('./tmp/param_cls_kd_diswot.pdf', dpi=GLOBAL_DPI,
-                bbox_inches='tight', pad_inches=PADINCHES, format='pdf')
+    plt.savefig(
+        './tmp/param_cls_kd_diswot.pdf',
+        dpi=GLOBAL_DPI,
+        bbox_inches='tight',
+        pad_inches=PADINCHES,
+        format='pdf')
     plt.clf()
 
 
@@ -607,41 +650,60 @@ def plot_param_cls_kd_ours():
     pre_label = ['4.4e-4', '3.3e-4']
 
     fig, ax1 = plt.subplots(1, 1, figsize=FIGSIZE)
-    
-    ax1.spines['top'].set_color('black')  
-    ax1.spines['right'].set_color('black')  
+
+    ax1.spines['top'].set_color('black')
+    ax1.spines['right'].set_color('black')
     ax1.spines['bottom'].set_color('black')
     ax1.spines['left'].set_color('black')
     ax1.spines['bottom'].set_linewidth(2)
     ax1.spines['left'].set_linewidth(2)
     ax1.spines['top'].set_linewidth(2)
     ax1.spines['right'].set_linewidth(2)
-    
+
     ax1.yaxis.label.set_size(GLOBAL_LEGENDSIZE)
 
-    rects0 = ax1.bar(x, cls_list, width=bar_width,
-                     label='Vanilla acc.', fc='salmon')
-    rects1 = ax1.bar(x+bar_width, kd_list, width=bar_width,
-                     label='Distill acc.', fc='skyblue')
+    rects0 = ax1.bar(
+        x, cls_list, width=bar_width, label='Vanilla acc.', fc='salmon')
+    rects1 = ax1.bar(
+        x + bar_width,
+        kd_list,
+        width=bar_width,
+        label='Distill acc.',
+        fc='skyblue')
     ax1.set_ylim([68.8, 71.5])
-    ax1.set_ylabel('Top-1 Accuracy (%)', fontsize=GLOBAL_FONTSIZE-2, weight='bold')
+    ax1.set_ylabel(
+        'Top-1 Accuracy (%)', fontsize=GLOBAL_FONTSIZE - 2, weight='bold')
 
     for i, rect in enumerate(rects0):
         height = rect.get_height()
-        plt.text(rect.get_x() + rect.get_width() / 2, height-0.18,
-                 cls_list[i], ha='center', va='bottom', fontsize=GLOBAL_LEGENDSIZE-2)
+        plt.text(
+            rect.get_x() + rect.get_width() / 2,
+            height - 0.18,
+            cls_list[i],
+            ha='center',
+            va='bottom',
+            fontsize=GLOBAL_LEGENDSIZE - 2)
 
     for i, rect in enumerate(rects1):
         height = rect.get_height()
-        plt.text(rect.get_x() + rect.get_width() / 2, height-0.18,
-                 kd_list[i], ha='center', va='bottom', fontsize=GLOBAL_LEGENDSIZE-2)
+        plt.text(
+            rect.get_x() + rect.get_width() / 2,
+            height - 0.18,
+            kd_list[i],
+            ha='center',
+            va='bottom',
+            fontsize=GLOBAL_LEGENDSIZE - 2)
 
     ax2 = ax1.twinx()
-    rects2 = ax2.bar(x+bar_width*2, pre_list, width=bar_width,
-                     label='DisWOT Score', fc='plum')
+    rects2 = ax2.bar(
+        x + bar_width * 2,
+        pre_list,
+        width=bar_width,
+        label='DisWOT Score',
+        fc='plum')
     ax2.set_ylim([0.0003, 0.0005])
-    ax2.set_ylabel('DisWOT Score', fontsize=GLOBAL_FONTSIZE-2, weight='bold')
-    
+    ax2.set_ylabel('DisWOT Score', fontsize=GLOBAL_FONTSIZE - 2, weight='bold')
+
     formatter = ticker.ScalarFormatter(useMathText=True)
     formatter.set_scientific(True)
     formatter.set_powerlimits((0, 0))
@@ -649,42 +711,54 @@ def plot_param_cls_kd_ours():
 
     for i, rect in enumerate(rects2):
         height = rect.get_height()
-        plt.text(rect.get_x() + rect.get_width() / 2, height-0.000014,
-                 pre_label[i], ha='center', va='bottom', fontsize=GLOBAL_LEGENDSIZE-2)
+        plt.text(
+            rect.get_x() + rect.get_width() / 2,
+            height - 0.000014,
+            pre_label[i],
+            ha='center',
+            va='bottom',
+            fontsize=GLOBAL_LEGENDSIZE - 2)
 
     label_size = fig.legend(
         loc='upper right', bbox_to_anchor=(0.83, 0.89)).get_texts()
-    [label.set_fontsize(GLOBAL_LEGENDSIZE-5) for label in label_size]
+    [label.set_fontsize(GLOBAL_LEGENDSIZE - 5) for label in label_size]
 
-    ax1.set_xticks(x+bar_width, labels, fontsize=GLOBAL_LEGENDSIZE)
-    ax1.tick_params(labelsize=GLOBAL_LEGENDSIZE-3)
-    ax2.tick_params(labelsize=GLOBAL_LEGENDSIZE-3)
+    ax1.set_xticks(x + bar_width, labels, fontsize=GLOBAL_LEGENDSIZE)
+    ax1.tick_params(labelsize=GLOBAL_LEGENDSIZE - 3)
+    ax2.tick_params(labelsize=GLOBAL_LEGENDSIZE - 3)
     plt.tight_layout()
     plt.grid(linestyle='-.', alpha=0.9, lw=2)
-    plt.savefig('./tmp/param_cls_kd_diswot.pdf', dpi=GLOBAL_DPI,
-                bbox_inches='tight', pad_inches=PADINCHES, format='pdf')
+    plt.savefig(
+        './tmp/param_cls_kd_diswot.pdf',
+        dpi=GLOBAL_DPI,
+        bbox_inches='tight',
+        pad_inches=PADINCHES,
+        format='pdf')
     plt.clf()
 
 
 def plot_time_cost_vs_accuracy():
     # C100
     # RS, RL, BOHB, DARTS, GDAS, NWOT, TE-NAS, DisWOT, DisWOT+
-    labels = ["RS", "RL", "BOHB", "DARTS", "GDAS", "NWOT", "TE-NAS", "DisWOT", r'DisWOT($M_r$)']
+    labels = [
+        'RS', 'RL', 'BOHB', 'DARTS', 'GDAS', 'NWOT', 'TE-NAS', 'DisWOT',
+        r'DisWOT($M_r$)'
+    ]
     time_cost = [216000, 216000, 216000, 23000, 22000, 2200, 2200, 1200, 720]
     acc = [71.28, 71.71, 70.84, 66.24, 70.70, 73.31, 71.24, 74.21, 73.62]
     markers = ['X', ',', 'o', 'v', 'D', 'p', '>', '^', '*']
     x_offset = [-110000, -100000, -110000, 1000, 1000, 100, 100, 100, -160]
-    y_offset = [  -0.1,     0.2,     -0.16,  0.2,  0.2,  0.2,  0.2, -0.2, -0.8]
+    y_offset = [-0.1, 0.2, -0.16, 0.2, 0.2, 0.2, 0.2, -0.2, -0.8]
 
     plt.figure(figsize=FIGSIZE)
     plt.rc('font', family='Times New Roman')
     plt.grid(linestyle='-.', alpha=0.9, lw=2)
 
     _len = len(labels)
-    
+
     ax = plt.gca()
-    ax.spines['top'].set_color('black')  
-    ax.spines['right'].set_color('black')  
+    ax.spines['top'].set_color('black')
+    ax.spines['right'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_linewidth(2)
@@ -696,27 +770,35 @@ def plot_time_cost_vs_accuracy():
         '',
         xy=(1200, 73.62),
         xytext=(216000, 71.28),
-        arrowprops=dict(arrowstyle="->", lw=2), #, facecolor='b', shrink=0.01, ec='b'),
+        arrowprops=dict(arrowstyle='->',
+                        lw=2),  #, facecolor='b', shrink=0.01, ec='b'),
         fontsize=GLOBAL_LEGENDSIZE,
         c='b')
 
     plt.text(22000, 72.5, '180x faster', fontsize=GLOBAL_LEGENDSIZE)
 
     for i in range(_len):
-        plt.scatter(time_cost[i], acc[i], label=labels[i], s=100, marker=markers[i])
-        plt.text(time_cost[i]+x_offset[i], 
-                 acc[i]+y_offset[i],
-                 s=labels[i], fontsize=GLOBAL_LEGENDSIZE-5)
+        plt.scatter(
+            time_cost[i], acc[i], label=labels[i], s=100, marker=markers[i])
+        plt.text(
+            time_cost[i] + x_offset[i],
+            acc[i] + y_offset[i],
+            s=labels[i],
+            fontsize=GLOBAL_LEGENDSIZE - 5)
 
     plt.xscale('symlog')
     plt.ylim([64, 76])
     plt.tick_params(labelsize=GLOBAL_LEGENDSIZE)
-    plt.xlabel("Log Time Cost (s)", fontsize=GLOBAL_LEGENDSIZE, weight='bold')
-    plt.ylabel("Top-1 Accuracy (%)", fontsize=GLOBAL_FONTSIZE, weight='bold')
+    plt.xlabel('Log Time Cost (s)', fontsize=GLOBAL_LEGENDSIZE, weight='bold')
+    plt.ylabel('Top-1 Accuracy (%)', fontsize=GLOBAL_FONTSIZE, weight='bold')
     plt.tight_layout()
-    plt.legend(loc='lower left', fontsize=GLOBAL_LEGENDSIZE-8)
-    plt.savefig("./tmp/plot_time_cost_vs_accuracy.pdf",
-                dpi=GLOBAL_DPI, bbox_inches='tight', pad_inches=PADINCHES, format='pdf')
+    plt.legend(loc='lower left', fontsize=GLOBAL_LEGENDSIZE - 8)
+    plt.savefig(
+        './tmp/plot_time_cost_vs_accuracy.pdf',
+        dpi=GLOBAL_DPI,
+        bbox_inches='tight',
+        pad_inches=PADINCHES,
+        format='pdf')
     plt.clf()
 
 
@@ -729,10 +811,9 @@ if __name__ == '__main__':
     #                        ylabel='Ranking Correlation',
     #                        foldername='./tmp',
     #                        file_name='ranking_stability.pdf')
-    
+
     plot_evolution_search_process()  # fig6
-    plot_kd_box(foldername='./tmp',
-                file_name='kd_box.pdf')  # fig5
+    plot_kd_box(foldername='./tmp', file_name='kd_box.pdf')  # fig5
     plot_different_teacher_diswot()  # fig3
     plot_hist_rank_consistency()  # fig1
     plot_param_cls_kd_ours()  # fig2
