@@ -2,7 +2,7 @@ import argparse
 import os
 import time
 
-import pgonas_trainer  # noqa: F401
+import rdnas_trainer  # noqa: F401
 import torch
 from nb201_datasets import get_datasets, get_nas_search_loaders
 
