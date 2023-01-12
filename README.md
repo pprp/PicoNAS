@@ -1,6 +1,6 @@
-# FluentNAS
+# NanoNAS
 
-FluentNAS is a modularized NAS Framework designed for One-Shot NAS.
+NanoNAS is a modularized NAS Framework designed for One-Shot NAS.
 
 
 
