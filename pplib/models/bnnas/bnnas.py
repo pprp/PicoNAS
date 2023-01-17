@@ -7,6 +7,7 @@ from ..registry import register_model
 
 
 @register_model
+# This is a comment.
 class BNNAS(nn.Module):
 
     def __init__(
@@ -53,6 +54,16 @@ class BNNAS(nn.Module):
             self.freeze_except_bn()
 
     def _make_layer(self, out_channels, num_blocks, stride) -> nn.Sequential:
+        """Builds a layer of the network.
+
+        Args:
+            out_channels: The number of output channels for the layer.
+            num_blocks: The number of blocks in the layer.
+            stride: The stride of the layer.
+
+        Returns:
+            A nn.Sequential object containing the blocks in the layer.
+        """
         layers = []
         for i in range(num_blocks):
             if i == 0 and stride == 2:

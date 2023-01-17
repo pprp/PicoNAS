@@ -19,6 +19,16 @@ blocks_dict = {
 
 
 class InvertedResidual(nn.Module):
+    '''
+    This class is the implementation of the Inverted Residual Block. This block is used as the building block of the MobileNet architecture. It is a 1x1 convolution layer followed by a 3x3 depthwise convolution layer followed by a 1x1 convolution layer. The 1x1 convolution layers are used to control the number of channels in the network. The 3x3 depthwise convolution layer is used to create the depthwise separable convolution layers. The stride of the 3x3 convolution layer is used to control the spatial dimensions of the network. The 1x1 convolution layer is used to control the number of channels in the network. The InvertedResidual class also performs some shortcut connections to the input of the block. If the input and output of the block have the same number of channels and the same spatial dimensions, then the input is added to the output. Otherwise, no shortcut connection is performed.
+    Inputs:
+    - inp: integer representing the number of channels in the input to the block
+    - oup: integer representing the number of channels in the output of the block
+    - ksize: integer representing the size of the 3x3 convolution kernel
+    - padding: integer representing the padding of the 3x3 convolution layer
+    - stride: integer representing the stride of the 3x3 convolution layer
+    - expand_ratio: integer representing the expansion ratio of the 1x1 convolution layer
+    '''
 
     def __init__(self, inp, oup, ksize, padding, stride, expand_ratio):
         super(InvertedResidual, self).__init__()
