@@ -8,7 +8,7 @@ from matplotlib import ticker
 plt.rc('font', family='Times New Roman')
 GLOBAL_DPI = 600
 FIGSIZE = (8, 6)
-PADINCHES = 0.1  #-0.005
+PADINCHES = 0.1  # -0.005
 GLOBAL_FONTSIZE = 34
 GLOBAL_LABELSIZE = 30
 GLOBAL_LEGENDSIZE = 20
@@ -39,10 +39,7 @@ ax.spines['right'].set_linewidth(2)
 
 
 def plot_standalone_model_rank(xlabel, ylabel, foldername, file_name):
-    dpi, width, height = GLOBAL_DPI, 4000, 1350
-    figsize = width / float(dpi), height / float(dpi)
-
-    fig, axs = plt.subplots(1, 3, figsize=figsize)
+    fig, axs = plt.subplots(1, 3, figsize=FIGSIZE)
     fig.add_subplot(111, frameon=False)
     plt.tick_params(
         labelcolor='none', top=False, bottom=False, left=False, right=False)
@@ -771,7 +768,7 @@ def plot_time_cost_vs_accuracy():
         xy=(1200, 73.62),
         xytext=(216000, 71.28),
         arrowprops=dict(arrowstyle='->',
-                        lw=2),  #, facecolor='b', shrink=0.01, ec='b'),
+                        lw=2),  # , facecolor='b', shrink=0.01, ec='b'),
         fontsize=GLOBAL_LEGENDSIZE,
         c='b')
 
@@ -802,24 +799,156 @@ def plot_time_cost_vs_accuracy():
     plt.clf()
 
 
+def plot_rank_zc_vs_kd(xlabel, ylabel, foldername, file_name):
+    fig, axs = plt.subplots(1, 3, figsize=FIGSIZE)
+    fig.add_subplot(111, frameon=False)
+    plt.tick_params(
+        labelcolor='none', top=False, bottom=False, left=False, right=False)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    ticks = np.arange(0, 51, 10)
+    axs[0].set_xticks(ticks)
+    axs[0].set_xticklabels(ticks)
+    axs[1].set_xticks(ticks)
+    axs[1].set_xticklabels(ticks)
+    axs[2].set_xticks(ticks)
+    axs[2].set_xticklabels(ticks)
+    axs[0].set_xticks(ticks)
+    axs[0].set_yticklabels(ticks)
+    axs[1].set_yticks(ticks)
+    axs[1].set_yticklabels(ticks)
+    axs[2].set_yticks(ticks)
+    axs[2].set_yticklabels(ticks)
+    for ax in axs.flat:
+        ax.label_outer()
+
+    ax1 = axs[0]
+    real_rank = [
+        0, 16, 32, 48, 4, 20, 36, 52, 8, 24, 1, 40, 12, 56, 17, 28, 33, 44, 21,
+        5, 60, 49, 37, 2, 53, 25, 9, 50, 13, 18, 3, 34, 57, 29, 61, 41, 6, 45,
+        10, 22, 35, 38, 19, 26, 7, 58, 54, 46, 39, 14, 30, 51, 23, 62, 42, 55,
+        11, 15, 59, 31, 27, 63, 47, 43
+    ]
+    angle_rank = [
+        28, 0, 12, 36, 32, 16, 24, 20, 8, 60, 4, 52, 40, 48, 44, 56, 9, 5, 21,
+        17, 13, 1, 29, 25, 61, 37, 53, 41, 33, 57, 49, 30, 45, 10, 2, 6, 18,
+        14, 46, 26, 7, 38, 34, 22, 35, 27, 47, 23, 42, 19, 11, 3, 39, 54, 50,
+        15, 31, 58, 51, 59, 63, 62, 55, 43
+    ]
+
+    ax1.scatter(real_rank, angle_rank, alpha=0.6)
+    ax1.set_title('CIFAR-10')
+    ax1.text(real_rank[-1] - 23, 2, 'Tau=0.710', fontsize=20)
+    ax1.set_xticks(np.arange(0, real_rank[-1] + 1, 10))
+    ax1.set_yticks(np.arange(0, real_rank[-1] + 1, 10))
+
+    ax2 = axs[1]
+
+    real_rank = [
+        31, 38, 3, 15, 47, 30, 0, 37, 44, 9, 36, 19, 10, 16, 45, 13, 35, 41,
+        25, 1, 28, 14, 22, 18, 48, 46, 42, 33, 32, 26, 40, 34, 24, 23, 5, 12,
+        6, 17, 4, 20, 7, 11, 8, 43, 29, 39, 49, 27, 2, 21
+    ]
+    angle_rank = [
+        31, 15, 9, 25, 30, 35, 14, 38, 13, 10, 16, 1, 3, 22, 40, 32, 47, 37,
+        46, 48, 11, 5, 2, 42, 45, 0, 23, 34, 18, 8, 26, 6, 12, 33, 41, 36, 19,
+        17, 4, 29, 21, 44, 27, 43, 20, 7, 39, 24, 28, 49
+    ]
+
+    ax2.scatter(real_rank, angle_rank, alpha=0.6)
+    ax2.set_title('CIFAR-100')
+    ax2.text(real_rank[-1] - 23, 2, 'Tau=0.471', fontsize=20)
+    ax2.set_xticks(np.arange(0, real_rank[-1] + 1, 10))
+    ax2.set_yticks(np.arange(0, real_rank[-1] + 1, 10))
+
+    ax3 = axs[2]
+    real_rank = [
+        28, 1, 22, 37, 39, 19, 27, 25, 33, 8, 29, 17, 24, 49, 21, 20, 44, 4, 5,
+        6, 40, 16, 12, 45, 9, 18, 36, 23, 38, 15, 46, 43, 41, 0, 10, 35, 3, 11,
+        2, 26, 32, 13, 14, 34, 7, 30, 31, 48, 42, 47
+    ]
+    angle_rank = [
+        17, 1, 28, 29, 25, 22, 27, 35, 39, 20, 19, 38, 11, 44, 0, 15, 8, 12, 3,
+        37, 32, 9, 36, 41, 46, 47, 2, 30, 23, 13, 18, 24, 7, 14, 49, 33, 40, 4,
+        21, 48, 31, 34, 26, 10, 16, 6, 5, 45, 42, 43
+    ]
+    ax3.scatter(real_rank, angle_rank, alpha=0.6)
+    ax3.set_title('ImageNet-16-120')  # 0.851
+    ax3.text(real_rank[-1] - 23, 2, 'Tau=0.324', fontsize=20)
+    ax3.set_xticks(np.arange(0, real_rank[-1] + 1, 10))
+    ax3.set_yticks(np.arange(0, real_rank[-1] + 1, 10))
+    fig.tight_layout()
+
+    save_path = os.path.join(foldername, file_name)
+    # foldername / '{}'.format(file_name)
+    print('save figure into {:}\n'.format(save_path))
+    plt.savefig(
+        str(save_path),
+        dpi=GLOBAL_DPI,
+        bbox_inches='tight',
+        pad_inches=PADINCHES,
+        format='pdf')
+    plt.clf()
+
+
 if __name__ == '__main__':
     # plot_standalone_model_rank(xlabel='Ranking at ground-truth setting',
     #                            ylabel='Ranking by DisWOT',
-    #                            foldername='./tmp',
+    #                            foldername='./',
     #                            file_name='standalone_ranks.pdf')
     # plot_ranking_stability(xlabel='Datasets',
     #                        ylabel='Ranking Correlation',
     #                        foldername='./tmp',
     #                        file_name='ranking_stability.pdf')
 
-    plot_evolution_search_process()  # fig6
-    plot_kd_box(foldername='./tmp', file_name='kd_box.pdf')  # fig5
-    plot_different_teacher_diswot()  # fig3
-    plot_hist_rank_consistency()  # fig1
-    plot_param_cls_kd_ours()  # fig2
-    plot_time_cost_vs_accuracy()  # fig4
+    # plot_evolution_search_process()  # fig6
+    # plot_kd_box(foldername='./tmp', file_name='kd_box.pdf')  # fig5
+    # plot_different_teacher_diswot()  # fig3
+    # plot_hist_rank_consistency()  # fig1
+    # plot_param_cls_kd_ours()  # fig2
+    # plot_time_cost_vs_accuracy()  # fig4
 
     # plot_kd_zc_box(xlabel='Datasets',
     #                ylabel='Ranking Correlation',
     #                foldername='./tmp',
     #                file_name='kd_zc_box.pdf')
+
+    # fig in tvt
+    plot_rank_zc_vs_kd(
+        xlabel='Ranking at ground-truth setting',
+        ylabel='Ranking by TVT',
+        foldername='./',
+        file_name='standalone_ranks.pdf')
+
+    dss = [
+        1554.430786, 1383.300659, 1448.073608, 1409.27002, 2565.606201,
+        2007.947632, 2216.806641, 2325.537842, 1606.255859, 1090.185425,
+        2018.861816, 1509.470215, 1328.55249, 1658.336914, 1594.845459,
+        1394.445679, 1201.393799, 1614.613159, 1813.315308, 1560.898438,
+        1773.530151, 1460.662109, 1625.580322, 1665.712158, 1397.320557,
+        1494.111328, 1640.723633, 1706.824829, 1619.442871, 1785.955078
+    ]
+
+    gt_kd = [
+        73.89, 74.48, 76.01, 72.76, 77.4, 77.13, 76.33, 76.01, 75.79, 74.82,
+        76.15, 75.38, 74.78, 73.41, 75.79, 73.7, 75.23, 75.96, 74.18, 75.43,
+        75.37, 76.11, 75.99, 76.4, 75.35, 75.22, 74.15, 76.64, 76.79, 74.96
+    ]
+
+    nwot = [
+        2676.474151, 2706.832047, 2621.554935, 2559.312687, 2575.374508,
+        2593.654245, 2616.150691, 2642.540602, 2614.857578, 2740.515246,
+        2460.098292, 2759.42362, 2708.179912, 2504.614926, 2703.349088,
+        2528.311908, 2830.474173, 2704.365364, 2625.012215, 2686.743993,
+        2684.339116, 2707.845929, 2819.136458, 2757.885222, 2715.408368,
+        2585.20549, 2642.281182, 2783.681252, 2687.266922, 2603.500675
+    ]
+
+    tvt = [
+        1.198387861, 1.525884151, 2.531708479, -0.068590581, 6.74075079,
+        4.206535339, 5.456796646, 5.542688847, 4.207839489, 2.706525803,
+        3.490617752, 3.624777794, 4.659010887, -0.051572323, 4.525275707,
+        -0.775546551, 4.568459511, 5.48222065, 4.901263237, 3.72074914,
+        6.613634109, 6.067817688, 8.530457497, 6.914101601, 4.09213829,
+        1.475031853, 1.424633265, 5.01853323, 5.066050529, 3.137051582
+    ]

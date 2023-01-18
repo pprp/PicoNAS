@@ -1,4 +1,3 @@
-
 import argparse
 import os
 
@@ -7,7 +6,6 @@ import numpy as np
 import pygraphviz as pgv
 import torch
 from tqdm import tqdm
-
 
 # define a adjacent matrix of straight networks
 s0_adj = torch.LongTensor([[0, 1, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0],
@@ -166,7 +164,6 @@ def get_straight(dataset, num=1):
         return np.random.choice(idx, num).tolist()
 
 
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser('Visualize Networks (Graph)')
@@ -217,28 +214,23 @@ if __name__ == '__main__':
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
 
-    output_path = os.path.join(
-        args.output_path, args.data_type, '{}steps'.format(args.path_step))
+    output_path = os.path.join(args.output_path, args.data_type,
+                               '{}steps'.format(args.path_step))
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     if not os.path.exists(os.path.join(output_path, 'compare')):
         os.makedirs(os.path.join(output_path, 'compare'))
-    
-    adj = torch.tensor([[0, 1, 0, 0, 0, 0, 1],
-                        [0, 0, 1, 0, 0, 0, 0],
-                        [0, 0, 0, 1, 0, 0, 1],
-                        [0, 0, 0, 0, 1, 1, 0],
-                        [0, 0, 0, 0, 0, 1, 0],
-                        [0, 0, 0, 0, 0, 0, 1],
-                        [0, 0, 0, 0, 0, 0, 0]], dtype=torch.int32)
 
-    ops = torch.tensor([[1, 0, 0, 0, 0],
-                        [0, 0, 1, 0, 0],
-                        [0, 1, 0, 0, 0],
-                        [0, 0, 1, 0, 0],
-                        [0, 1, 0, 0, 0],
-                        [0, 0, 0, 1, 0],
-                        [0, 0, 0, 0, 1]], dtype=torch.int32)
+    adj = torch.tensor(
+        [[0, 1, 0, 0, 0, 0, 1], [0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 1],
+         [0, 0, 0, 0, 1, 1, 0], [0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 1],
+         [0, 0, 0, 0, 0, 0, 0]],
+        dtype=torch.int32)
+
+    ops = torch.tensor(
+        [[1, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 1, 0, 0, 0], [0, 0, 1, 0, 0],
+         [0, 1, 0, 0, 0], [0, 0, 0, 1, 0], [0, 0, 0, 0, 1]],
+        dtype=torch.int32)
 
     G = adj2graph(ops, adj)
     file_name = plot_DAG(G[0], os.path.curdir, 'example', 'nasbench201')
