@@ -508,24 +508,6 @@ def plot_hist_rank_consistency():
             'kd': 0.85
         }
     }
-    # result = {
-    #     'Fisher': {
-    #         'cls': 0.8168,
-    #         'kd': 0.6286
-    #     },
-    #     'Nwot': {
-    #         'cls': 0.4029,
-    #         'kd': 0.3187
-    #     },
-    #     'Snip': {
-    #         'cls': 0.8466,
-    #         'kd': 0.6722
-    #     },
-    #     'Vanilla': {
-    #         'cls': 1,
-    #         'kd': 0.8521
-    #     }
-    # }
 
     labels = result.keys()
     x = np.arange(len(labels))
@@ -551,10 +533,10 @@ def plot_hist_rank_consistency():
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel("Kendall's Tau", fontsize=GLOBAL_FONTSIZE, weight='bold')
-    ax.set_xticks(x, labels, fontsize=GLOBAL_LEGENDSIZE - 2)
+    ax.set_xticks(x, labels)#, fontsize=GLOBAL_LEGENDSIZE - 2)
     yticks = np.arange(0.1, 1.2, 0.1)
     plt.tick_params(labelsize=GLOBAL_LEGENDSIZE - 2)
-    ax.set_yticks(yticks, fontsize=GLOBAL_LABELSIZE)
+    ax.set_yticks(yticks)#, fontsize=GLOBAL_LABELSIZE)
     ax.set_ylim(0.2, 1.05)
     label_size = ax.legend().get_texts()
     [label.set_fontsize(GLOBAL_LEGENDSIZE - 3) for label in label_size]
@@ -568,7 +550,7 @@ def plot_hist_rank_consistency():
     plt.grid(linestyle='-.', alpha=0.9, lw=2)
 
     plt.savefig(
-        './tmp/hist_rank_consistency.pdf',
+        './hist_rank_consistency.pdf',
         dpi=GLOBAL_DPI,
         bbox_inches='tight',
         pad_inches=PADINCHES,
@@ -1002,6 +984,81 @@ def plot_rank_zc_vs_kd(xlabel, ylabel, foldername, file_name):
     plt.clf()
 
 
+def plot_hist_rank_consistency_tvt():
+    """Plot the histogram of the rank consistency of TVT."""
+    result = {
+        'CIFAR-100': {
+            'NWOT': 0.39,
+            'DSS': 0.48,
+            'TVT': 0.67
+        },
+        'Flowers': {
+            'NWOT': 0.62,
+            'DSS': 0.63,
+            'TVT': 0.72
+        },
+        'Chaoyang': {
+            'NWOT': 0.19,
+            'DSS': 0.19,
+            'TVT': 0.24,
+        }
+    }
+
+    labels = result.keys()
+    x = np.arange(len(labels))
+    y1 = [v['NWOT'] for k, v in result.items()]
+    y2 = [v['DSS'] for k, v in result.items()]
+    y3 = [v['TVT'] for k, v in result.items()]
+    width = 0.3
+
+    fig, ax = plt.subplots(figsize=FIGSIZE)
+
+    ax.spines['top'].set_color('black')
+    ax.spines['right'].set_color('black')
+    ax.spines['bottom'].set_color('black')
+    ax.spines['left'].set_color('black')
+    ax.spines['bottom'].set_linewidth(2)
+    ax.spines['left'].set_linewidth(2)
+    ax.spines['top'].set_linewidth(2)
+    ax.spines['right'].set_linewidth(2)
+
+    rects1 = ax.bar(
+        x - width / 2, y1, width, label='NWOT', color='navajowhite')
+    rects2 = ax.bar(
+        x + width / 2, y2, width, label='DSS', color='palegreen')
+    rects3 = ax.bar(
+        x + width * 3 / 2, y3, width, label='TVT', color='plum')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel("Kendall's Tau", fontsize=GLOBAL_FONTSIZE-6, weight='bold')
+    ax.set_xticks(x, labels)#, fontsize=GLOBAL_LEGENDSIZE - 2)
+    yticks = np.arange(0, 0.81, 0.1)
+    plt.tick_params(labelsize=GLOBAL_LEGENDSIZE - 2)
+    ax.set_yticks(yticks)#, fontsize=GLOBAL_LABELSIZE)
+    ax.set_ylim(0, 0.85)
+
+    ax.legend(loc='upper right', 
+          fancybox=True, shadow=False, ncol=1, fontsize=GLOBAL_LEGENDSIZE - 4)
+
+
+    ax.bar_label(
+        rects1, padding=-26, label_type='edge', fontsize=GLOBAL_LEGENDSIZE - 4)
+    ax.bar_label(
+        rects2, padding=-26, label_type='edge', fontsize=GLOBAL_LEGENDSIZE - 4)
+    ax.bar_label(
+        rects3, padding=-26, label_type='edge', fontsize=GLOBAL_LEGENDSIZE - 4)
+
+    fig.tight_layout()
+    plt.grid(linestyle='-.', alpha=0.4, lw=2)
+
+    plt.savefig(
+        './hist_rank_consistency.pdf',
+        dpi=GLOBAL_DPI,
+        bbox_inches='tight',
+        pad_inches=PADINCHES,
+        format='pdf')
+    plt.clf()
+
 if __name__ == '__main__':
     # plot_standalone_model_rank(xlabel='Ranking at ground-truth setting',
     #                            ylabel='Ranking by DisWOT',
@@ -1025,106 +1082,11 @@ if __name__ == '__main__':
     #                file_name='kd_zc_box.pdf')
 
     # fig in tvt
-    plot_rank_zc_vs_kd(
-        xlabel='Ranking at ground-truth setting',
-        ylabel='Ranking by TVT',
-        foldername='./',
-        file_name='standalone_ranks.pdf')
+    # plot_rank_zc_vs_kd(
+    #     xlabel='Ranking at ground-truth setting',
+    #     ylabel='Ranking by TVT',
+    #     foldername='./',
+    #     file_name='standalone_ranks.pdf')
 
-    dss = [
-        4145.683105, 4799.123047, 4024.583984, 4375.201172, 3561.372803,
-        4926.327148, 2634.248047, 3344.092529, 4404.67041, 3111.337402,
-        3150.290527, 3000.343018, 3412.984619, 4330.97168, 4594.281738,
-        4353.151855, 4587.629395, 4617.634766, 2788.365723, 2872.154297,
-        4242.019043, 4149.510742, 3089.888916, 3034.133057, 4695.02832,
-        3069.503906, 4334.349609, 2609.932373, 3143.085205, 3148.53833,
-        2857.14209, 3095.276123, 3256.250732, 4044.222656, 4332.634766,
-        3192.061035, 3207.60083, 3634.115967, 4066.041748, 3312.422119,
-        3613.144531, 2995.722168, 3252.499023, 3305.830078, 3822.026611,
-        3502.48291, 3378.203857, 4440.628418, 4617.788086, 3585.275635
-    ]
-
-    gt_kd = [
-        76.75, 77.24, 76.61, 76.41, 75.14, 77.33, 74.83, 76.79, 76.57, 75.9,
-        74.49, 76.09, 76.32, 76.93, 77.13, 76.71, 76.68, 76.08, 74.75, 77.04,
-        76.53, 76.01, 74.6, 76.18, 76.82, 76.19, 76.75, 75.07, 76.74, 76.84,
-        75.11, 75.69, 74.97, 75.92, 76.09, 76.42, 76.03, 75.63, 76.27, 75.26,
-        76.88, 74.38, 75.82, 76.48, 76.06, 76.24, 75.9, 76.34, 77.24, 75.3
-    ]
-
-    nwot = [
-        2711.494266, 2734.211071, 2712.730157, 2719.634916, 2687.746854,
-        2746.497689, 2657.110352, 2689.30117, 2709.067469, 2674.746818,
-        2660.576121, 2678.422764, 2668.074388, 2726.498039, 2731.76399,
-        2702.020873, 2724.971784, 2728.213263, 2663.589139, 2686.231929,
-        2702.974753, 2706.17532, 2658.266452, 2681.724273, 2720.948938,
-        2688.706139, 2716.821096, 2649.120147, 2686.573856, 2678.8868,
-        2659.079581, 2665.270435, 2678.199153, 2704.597875, 2706.848585,
-        2689.689538, 2674.191961, 2684.16801, 2704.355081, 2671.713318,
-        2697.175953, 2657.722367, 2678.721231, 2691.128114, 2696.6998,
-        2708.437728, 2698.647358, 2702.515418, 2732.517964, 2683.023065
-    ]
-
-    tvt = [
-        0.74492836, 1.163174391, 0.556266069, 0.885845959, 0.126344383,
-        1.159842849, -0.089496128, 0.528368056, 0.227971435, 0.32792148,
-        -0.034721799, 0.264405727, 0.154160023, 0.977773845, 0.950507998,
-        0.505683661, 0.689054012, 0.826016009, -0.093540639, 0.466592014,
-        0.444869161, 0.465212703, -0.071431227, 0.161217093, 0.777460814,
-        0.557035625, 0.925504208, 0.040708162, 0.456271529, 0.468022764,
-        -0.080131732, 0.208643124, 0.156481594, 0.295685828, 0.422289848,
-        0.635275006, 0.324828148, 0.176252931, 0.502469718, 0.145171553,
-        0.63678807, -0.048148148, 0.096564233, 0.723720849, 0.453535855,
-        0.452835709, 0.538046539, 0.367605388, 1.101762295, 0.127271473
-    ]
-
-    synflow = [
-        4198.71084, 5138.428212, 4041.120977, 4565.916224, 3360.512096,
-        4994.736445, 2614.283989, 3120.025931, 4465.322085, 3096.769874,
-        2968.190255, 2777.244931, 3431.282556, 4427.186413, 4875.221549,
-        4167.831732, 4798.57632, 4394.019605, 3039.392078, 3199.83765,
-        4057.086416, 4213.409783, 2967.781689, 3119.844338, 4557.930746,
-        3069.497178, 4361.635757, 3050.925728, 3058.217855, 3148.542513,
-        2625.119717, 3115.759016, 3262.195007, 4103.098239, 4341.162674,
-        3041.72299, 3180.673396, 3672.348205, 4185.907185, 3385.68227,
-        3321.391893, 2785.907458, 3240.058542, 3098.38063, 3491.337615,
-        3558.552052, 4076.841277, 4276.703023, 4897.367611, 3450.749509
-    ]
-
-    def min_max_scale(x):
-        x = np.array(x)
-        return (x - x.min()) / (x.max() - x.min())
-
-    dss = min_max_scale(dss)
-    gt_kd = min_max_scale(gt_kd)
-    nwot = min_max_scale(nwot)
-    tvt = min_max_scale(tvt)
-    synflow = min_max_scale(synflow)
-
-    print('dss:', dss.tolist())
-    print('nwot:', nwot.tolist())
-    print('tvt:', tvt.tolist())
-    print('synflow:', synflow.tolist())
-    print('kd:', gt_kd.tolist())
-
-    # import numpy as np
-
-    # dss = np.array(dss)
-    # dss_idx = np.argsort(dss)
-
-    # gt_kd = np.array(gt_kd)
-    # gt_kd_idx = np.argsort(gt_kd)
-
-    # nwot = np.array(nwot)
-    # nwot_idx = np.argsort(nwot)
-
-    # tvt = np.array(tvt)
-    # tvt_idx = np.argsort(tvt)
-
-    # print("dss:", dss_idx.tolist())
-
-    # print("kd:", gt_kd_idx.tolist())
-
-    # print("nwot:", nwot_idx.tolist())
-
-    # print("tvt:", tvt_idx.tolist())
+    plot_hist_rank_consistency_tvt()
+   
