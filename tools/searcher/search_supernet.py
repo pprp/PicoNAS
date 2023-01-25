@@ -7,9 +7,9 @@ from thop import profile
 # from torchsummary import summary
 from tqdm import tqdm
 
-import pplib.utils.utils as utils
-from pplib.datasets import build_dataloader
-from pplib.models import SearchableMobileNet
+import nanonas.utils.utils as utils
+from nanonas.datasets import build_dataloader
+from nanonas.models import SearchableMobileNet
 
 
 def get_args():

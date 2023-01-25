@@ -1,10 +1,10 @@
 import unittest
 from unittest import TestCase
 
-from pplib.evaluator import NB301Evaluator
-from pplib.models.nasbench301 import OneShotNASBench301Network
-from pplib.nas.mutators import OneShotMutator
-from pplib.trainer import NB301Trainer
+from nanonas.evaluator import NB301Evaluator
+from nanonas.models.nasbench301 import OneShotNASBench301Network
+from nanonas.nas.mutators import OneShotMutator
+from nanonas.trainer import NB301Trainer
 
 
 class TestNB301Evaluator(TestCase):

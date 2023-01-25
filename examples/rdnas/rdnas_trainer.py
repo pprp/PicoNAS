@@ -7,15 +7,15 @@ import torch
 import torch.nn.functional as F
 from mmcv.cnn import get_model_complexity_info
 
-import pplib.utils.utils as utils
-from pplib.core.losses import KLDivergence, PairwiseRankLoss
-from pplib.evaluator.nb201_evaluator import NB201Evaluator
-from pplib.models.nasbench201 import OneShotNASBench201Network
-from pplib.nas.mutators import OneShotMutator
-from pplib.predictor.pruners.predictive import find_measures
-from pplib.trainer.base import BaseTrainer
-from pplib.trainer.registry import register_trainer
-from pplib.utils.utils import AvgrageMeter, accuracy
+import nanonas.utils.utils as utils
+from nanonas.core.losses import KLDivergence, PairwiseRankLoss
+from nanonas.evaluator.nb201_evaluator import NB201Evaluator
+from nanonas.models.nasbench201 import OneShotNASBench201Network
+from nanonas.nas.mutators import OneShotMutator
+from nanonas.predictor.pruners.predictive import find_measures
+from nanonas.trainer.base import BaseTrainer
+from nanonas.trainer.registry import register_trainer
+from nanonas.utils.utils import AvgrageMeter, accuracy
 
 
 @register_trainer

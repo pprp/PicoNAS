@@ -4,8 +4,8 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 
-from pplib.nas.mutables import OneShotChoiceRoute, OneShotOP
-from pplib.nas.mutators import OneShotMutator
+from nanonas.nas.mutables import OneShotChoiceRoute, OneShotOP
+from nanonas.nas.mutators import OneShotMutator
 
 
 class TestOneShot(TestCase):

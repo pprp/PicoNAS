@@ -4,14 +4,14 @@ import time
 
 import torch
 
-import pplib.utils.utils as utils
-from pplib.core import build_criterion, build_optimizer, build_scheduler
-from pplib.datasets.build import build_dataloader
-from pplib.models import build_model
-from pplib.searcher import RandomSearcher
-from pplib.trainer import build_trainer
-from pplib.utils import set_random_seed
-from pplib.utils.config import Config
+import nanonas.utils.utils as utils
+from nanonas.core import build_criterion, build_optimizer, build_scheduler
+from nanonas.datasets.build import build_dataloader
+from nanonas.models import build_model
+from nanonas.searcher import RandomSearcher
+from nanonas.trainer import build_trainer
+from nanonas.utils import set_random_seed
+from nanonas.utils.config import Config
 
 
 def get_args():

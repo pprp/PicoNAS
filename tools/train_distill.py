@@ -7,14 +7,14 @@ import torch
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 
-import pplib.utils.utils as utils
-from pplib.core import build_optimizer, build_scheduler
-from pplib.core.losses import build_criterion
-from pplib.datasets.transforms.cutout import Cutout
-from pplib.models import resnet20, resnet56
-from pplib.trainer import Distill_Trainer
-from pplib.utils import set_random_seed
-from pplib.utils.config import Config
+import nanonas.utils.utils as utils
+from nanonas.core import build_optimizer, build_scheduler
+from nanonas.core.losses import build_criterion
+from nanonas.datasets.transforms.cutout import Cutout
+from nanonas.models import resnet20, resnet56
+from nanonas.trainer import Distill_Trainer
+from nanonas.utils import set_random_seed
+from nanonas.utils.config import Config
 
 
 def get_args():

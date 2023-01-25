@@ -1,3 +1,3 @@
-coverage run --branch --source pplib -m pytest tests/
+coverage run --branch --source nanonas -m pytest tests/
 coverage xml
 coverage report -m

@@ -1,8 +1,8 @@
 import unittest
 from unittest import TestCase
 
-from pplib.models import MacroBenchmarkSuperNet
-from pplib.trainer import MacroTrainer
+from nanonas.models import MacroBenchmarkSuperNet
+from nanonas.trainer import MacroTrainer
 
 
 class TestMacroTrainer(TestCase):

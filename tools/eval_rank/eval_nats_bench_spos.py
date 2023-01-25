@@ -6,12 +6,12 @@ from typing import Dict, List
 import torch
 import yaml
 
-from pplib.datasets import build_dataloader
-from pplib.models import SupernetNATS
-from pplib.trainer import NATSTrainer
-from pplib.utils.config import Config
-from pplib.utils.misc import convert_channel2idx
-from pplib.utils.rank_consistency import kendalltau, pearson, spearman
+from nanonas.datasets import build_dataloader
+from nanonas.models import SupernetNATS
+from nanonas.trainer import NATSTrainer
+from nanonas.utils.config import Config
+from nanonas.utils.misc import convert_channel2idx
+from nanonas.utils.rank_consistency import kendalltau, pearson, spearman
 
 
 def load_json(path):

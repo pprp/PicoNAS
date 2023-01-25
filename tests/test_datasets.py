@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from einops import rearrange
 
-from pplib.datasets import build_dataloader, build_dataset
+from nanonas.datasets import build_dataloader, build_dataset
 
 
 class Dict(dict):

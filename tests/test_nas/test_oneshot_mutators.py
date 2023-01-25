@@ -3,8 +3,8 @@ from unittest import TestCase
 import torch.nn as nn
 from torch import Tensor
 
-from pplib.nas.mutables import OneShotOP
-from pplib.nas.mutators import OneShotMutator
+from nanonas.nas.mutables import OneShotOP
+from nanonas.nas.mutators import OneShotMutator
 
 
 class OneShotMutableModel(nn.Module):

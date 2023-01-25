@@ -3,12 +3,12 @@ import logging
 import random
 import timeit
 
-from pplib.datasets import build_dataloader
-from pplib.nas.search_spaces import get_search_space
-from pplib.nas.search_spaces.core.query_metrics import Metric
-from pplib.predictor.zerocost import ZeroCost
-from pplib.utils import get_logger, utils
-from pplib.utils.get_dataset_api import get_dataset_api
+from nanonas.datasets import build_dataloader
+from nanonas.nas.search_spaces import get_search_space
+from nanonas.nas.search_spaces.core.query_metrics import Metric
+from nanonas.predictor.zerocost import ZeroCost
+from nanonas.utils import get_logger, utils
+from nanonas.utils.get_dataset_api import get_dataset_api
 
 
 def translate_str(s, replace_str='[]', with_str='()'):

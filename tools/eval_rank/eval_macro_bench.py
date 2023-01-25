@@ -5,13 +5,13 @@ from typing import Dict, List
 
 import torch
 
-from pplib.datasets import build_dataloader
-from pplib.models import MacroBenchmarkSuperNet
-from pplib.nas.mutators import OneShotMutator
-from pplib.trainer import MacroTrainer
-from pplib.utils.config import Config
-from pplib.utils.misc import convert_arch2dict
-from pplib.utils.rank_consistency import kendalltau, pearson, spearman
+from nanonas.datasets import build_dataloader
+from nanonas.models import MacroBenchmarkSuperNet
+from nanonas.nas.mutators import OneShotMutator
+from nanonas.trainer import MacroTrainer
+from nanonas.utils.config import Config
+from nanonas.utils.misc import convert_arch2dict
+from nanonas.utils.rank_consistency import kendalltau, pearson, spearman
 
 
 def load_json(path):

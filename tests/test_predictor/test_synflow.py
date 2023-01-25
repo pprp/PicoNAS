@@ -5,10 +5,11 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 
-from pplib.models.nasbench201.oneshot_nasbench201 import \
+from nanonas.models.nasbench201.oneshot_nasbench201 import \
     OneShotNASBench201Network
-from pplib.nas.mutators import OneShotMutator
-from pplib.predictor.pruners.measures.synflow import compute_synflow_per_weight
+from nanonas.nas.mutators import OneShotMutator
+from nanonas.predictor.pruners.measures.synflow import \
+    compute_synflow_per_weight
 
 
 class ToyModel(nn.Module):

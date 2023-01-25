@@ -1,8 +1,8 @@
 import unittest
 from unittest import TestCase
 
-from pplib.models import OneShotNASBench301Network
-from pplib.nas.mutators import OneShotMutator
+from nanonas.models import OneShotNASBench301Network
+from nanonas.nas.mutators import OneShotMutator
 
 
 class TestNB301Trainer(TestCase):

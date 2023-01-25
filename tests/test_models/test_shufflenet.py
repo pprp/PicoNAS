@@ -3,8 +3,8 @@ from unittest import TestCase
 
 import torch
 
-from pplib.models import SearchableShuffleNetV2
-from pplib.models.spos.spos_modules import ShuffleModule, ShuffleXModule
+from nanonas.models import SearchableShuffleNetV2
+from nanonas.models.spos.spos_modules import ShuffleModule, ShuffleXModule
 
 
 class TestShuffleNet(TestCase):
