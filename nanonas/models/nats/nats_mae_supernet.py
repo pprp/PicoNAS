@@ -24,9 +24,6 @@ class MAESupernetNATS(SupernetNATS):
         # avgpool
         self.avgpool = nn.AdaptiveAvgPool2d(1)
 
-        # avgpool
-        self.avgpool = nn.AdaptiveAvgPool2d(1)
-
         # convert from dynamic to static
         self.last_dynamic_conv = SlimmableConv2d(
             self.candidate_Cs,
