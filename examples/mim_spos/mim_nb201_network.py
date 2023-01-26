@@ -516,6 +516,9 @@ class MIMOSNASBench201Network(nn.Module):
             feature = cell(feature)
 
         out = self.lastact(feature)
+        o1 = self.decoder(out)
         out = self.global_pooling(out)
         out = out.view(out.size(0), -1)
-        return self.decoder(out), self.classifier(out)
+
+        o2 = self.classifier(out)
+        return o1, o2

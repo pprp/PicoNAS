@@ -11,7 +11,7 @@ from nanonas.utils.misc import convertTensor2BoardImage
 
 
 @register_trainer
-class MAESPOSTrainer(BaseTrainer):
+class MIMSPOSTrainer(BaseTrainer):
 
     def __init__(
         self,
@@ -43,6 +43,7 @@ class MAESPOSTrainer(BaseTrainer):
 
         if self.criterion is None:
             self.criterion = nn.MSELoss()
+        self.ce_loss = nn.CrossEntropyLoss()
 
     def _forward(self, batch_inputs):
         img, mask, _ = batch_inputs
@@ -55,9 +56,9 @@ class MAESPOSTrainer(BaseTrainer):
 
     def _loss(self, batch_inputs) -> None:
         """Forward and compute loss. Low Level API"""
-        img, mask, _ = batch_inputs
-        out = self._forward(batch_inputs)
-        return self._compute_loss(out, img)
+        img, mask, target = batch_inputs
+        mim_out, logits = self._forward(batch_inputs)
+        return self._compute_loss(mim_out, img) + self.ce_loss(logits, target)
 
     def _compute_loss(self, real, target):
         real = self._to_device(real, self.device)

@@ -2,6 +2,8 @@ import argparse
 import os
 import time
 
+import mim_nb201_network
+import mim_spos_trainer
 import torch
 
 import nanonas.utils.utils as utils
@@ -14,7 +16,7 @@ from nanonas.utils.config import Config
 
 
 def get_args():
-    parser = argparse.ArgumentParser('train macro benchmark')
+    parser = argparse.ArgumentParser('train mim nasbench201')
     parser.add_argument(
         '--config',
         type=str,
@@ -36,17 +38,17 @@ def get_args():
     parser.add_argument(
         '--model_name',
         type=str,
-        default='MAESupernetNATS',
+        default='MIMOSNASBench201Network',
         help='name of model')
     parser.add_argument(
         '--trainer_name',
         type=str,
-        default='MAESPOSTrainer',
+        default='MIMSPOSTrainer',
         help='name of trainer')
     parser.add_argument(
         '--log_name',
         type=str,
-        default='MAESPOSTrainer',
+        default='MIMSPOSTrainer',
         help='name of this experiments',
     )
 
@@ -86,7 +88,7 @@ def get_args():
         help='validate and save frequency')
     # ******************************* dataset *******************************#
     parser.add_argument(
-        '--dataset', type=str, default='cifar10', help='path to the dataset')
+        '--dataset', type=str, default='simmim', help='path to the dataset')
     parser.add_argument('--cutout', action='store_true', help='use cutout')
     parser.add_argument(
         '--cutout_length', type=int, default=16, help='cutout length')
@@ -147,9 +149,10 @@ def main():
         num_classes = 100
     elif cfg.dataset == 'ImageNet16-120':
         num_classes = 120
+    elif cfg.dataset == 'simmim':
+        num_classes = 10
     else:
-        raise NotImplementedError(
-            f'Not Support Type of datasets: {cfg.dataset}.')
+        raise NotImplementedError
 
     model = build_model(cfg.model_name, num_classes=num_classes)
 
