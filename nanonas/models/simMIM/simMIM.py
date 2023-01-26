@@ -79,20 +79,19 @@ class SimMIM(nn.Module):
             mask.repeat_interleave(self.patch_size, 1).repeat_interleave(
                 self.patch_size, 2).unsqueeze(1).contiguous())
         loss_recon = F.l1_loss(x, x_rec, reduction='none')
-        loss = (loss_recon * mask).sum() / (mask.sum() + 1e-5) / self.in_chans
-        return loss
+        return (loss_recon * mask).sum() / (mask.sum() + 1e-5) / self.in_chans
 
     @torch.jit.ignore
     def no_weight_decay(self):
         if hasattr(self.encoder, 'no_weight_decay'):
-            return {'encoder.' + i for i in self.encoder.no_weight_decay()}
+            return {f'encoder.{i}' for i in self.encoder.no_weight_decay()}
         return {}
 
     @torch.jit.ignore
     def no_weight_decay_keywords(self):
         if hasattr(self.encoder, 'no_weight_decay_keywords'):
             return {
-                'encoder.' + i
+                f'encoder.{i}'
                 for i in self.encoder.no_weight_decay_keywords()
             }
         return {}
