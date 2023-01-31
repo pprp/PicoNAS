@@ -111,7 +111,7 @@ class MIMNB201Evaluator(Evaluator):
         batch_inputs = next(iter(dataloader))
 
         self.trainer.logger.info('Begin to compute rank consistency...')
-        num_sample = 50 if self.num_sample is None else self.num_sample
+        num_sample = 20 if self.num_sample is None else self.num_sample
 
         for _ in range(num_sample):
             # sample random subnet by mutator

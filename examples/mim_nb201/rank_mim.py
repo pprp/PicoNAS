@@ -3,7 +3,7 @@ import os
 import time
 
 import mim_nb201_network
-import mim_spos_trainer
+import mim_nb201_trainer
 import torch
 from mim_nb201_evaluator import MIMNB201Evaluator
 

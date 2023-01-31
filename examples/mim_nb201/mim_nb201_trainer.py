@@ -8,6 +8,7 @@ from nanonas.nas.mutators import OneShotMutator
 from nanonas.trainer.base import BaseTrainer
 from nanonas.trainer.registry import register_trainer
 from nanonas.utils.misc import convertTensor2BoardImage
+from nanonas.predictor.pruners.measures.zen import network_weight_gaussian_init
 
 
 @register_trainer
@@ -57,9 +58,9 @@ class MIMSPOSTrainer(BaseTrainer):
     def _loss(self, batch_inputs) -> None:
         """Forward and compute loss. Low Level API"""
         img, mask, target = batch_inputs
-        img = self._to_device(img)
-        mask = self._to_device(mask)
-        target = self._to_device(target)
+        img = self._to_device(img, self.device)
+        mask = self._to_device(mask, self.device)
+        target = self._to_device(target, self.device)
         mim_out, logits = self._forward(batch_inputs)
         return self._compute_loss(mim_out, img) 
         # + self.ce_loss(logits, target)
@@ -186,6 +187,9 @@ class MIMSPOSTrainer(BaseTrainer):
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
 
     def metric_score(self, batch_inputs, subnet_dict=None):
+        # init with gaussian
+        network_weight_gaussian_init(self.model)
+
         # compute loss
         self.model.eval()
 
