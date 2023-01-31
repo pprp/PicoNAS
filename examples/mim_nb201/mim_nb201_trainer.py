@@ -61,7 +61,8 @@ class MIMSPOSTrainer(BaseTrainer):
         mask = self._to_device(mask)
         target = self._to_device(target)
         mim_out, logits = self._forward(batch_inputs)
-        return self._compute_loss(mim_out, img) + self.ce_loss(logits, target)
+        return self._compute_loss(mim_out, img) 
+        # + self.ce_loss(logits, target)
 
     def _compute_loss(self, real, target):
         real = self._to_device(real, self.device)
@@ -184,12 +185,9 @@ class MIMSPOSTrainer(BaseTrainer):
         self.logger.info(
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
 
-    def metric_score(self, loader, subnet_dict=None):
+    def metric_score(self, batch_inputs, subnet_dict=None):
         # compute loss
         self.model.eval()
-
-        # get a batch of data
-        batch_inputs = next(iter(loader))
 
         # set the specified subnet
         self.mutator.set_subnet(subnet_dict)
