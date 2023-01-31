@@ -38,7 +38,7 @@ class MIMSPOSTrainer(BaseTrainer):
         )
 
         if self.mutator is None:
-            self.mutator = OneShotMutator()
+            self.mutator = OneShotMutator(with_alias=True)
             self.mutator.prepare_from_supernet(self.model)
 
         if self.criterion is None:
