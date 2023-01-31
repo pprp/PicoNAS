@@ -180,3 +180,16 @@ class MIMSPOSTrainer(BaseTrainer):
         # final message
         self.logger.info(
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
+
+    def metric_score(self, loader, subnet_dict=None):
+        # compute loss
+        self.model.eval()
+
+        # get a batch of data
+        batch_inputs = next(iter(loader))
+
+        # set the specified subnet
+        self.mutator.set_subnet(subnet_dict)
+
+        # compute loss
+        return self.forward(batch_inputs, mode='loss')
