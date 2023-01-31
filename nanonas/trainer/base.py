@@ -11,7 +11,7 @@ from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
 import nanonas.utils.utils as utils
-from nanonas.utils.loggings import get_logger
+from nanonas.utils.nano_logging import get_logger
 from nanonas.utils.utils import AvgrageMeter, accuracy
 
 

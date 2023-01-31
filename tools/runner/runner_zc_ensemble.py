@@ -7,7 +7,7 @@ from nanonas.core.optims import Bananas, Npenas
 from nanonas.nas.search_spaces import get_search_space
 from nanonas.trainer import ZCTrainer
 from nanonas.utils import get_zc_benchmark_api, utils
-from nanonas.utils.loggings import get_logger
+from nanonas.utils.nano_logging import get_logger
 
 config = utils.get_config_from_args()
 

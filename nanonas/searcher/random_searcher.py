@@ -1,7 +1,7 @@
 import torch
 
 from nanonas.trainer import NB201Trainer
-from nanonas.utils.loggings import get_logger
+from nanonas.utils.nano_logging import get_logger
 
 
 class RandomSearcher(object):

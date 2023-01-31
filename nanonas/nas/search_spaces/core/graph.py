@@ -7,7 +7,7 @@ import networkx as nx
 import torch
 from networkx.algorithms.dag import lexicographical_topological_sort
 
-from nanonas.utils.loggings import log_first_n, log_formats
+from nanonas.utils.nano_logging import log_first_n, log_formats
 from nanonas.utils.utils import AttrDict, iter_flatten
 from .primitives import AbstractCombOp, AbstractPrimitive, Identity
 from .query_metrics import Metric

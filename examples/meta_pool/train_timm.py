@@ -40,7 +40,7 @@ from torch.nn.parallel import DistributedDataParallel as NativeDDP
 
 from nanonas.models import build_model
 from nanonas.trainer import build_trainer
-from nanonas.utils.loggings import get_logger
+from nanonas.utils.nano_logging import get_logger
 
 try:
     from apex import amp

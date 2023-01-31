@@ -16,7 +16,7 @@ from fvcore.common.checkpoint import PeriodicCheckpointer
 from nanonas.nas.search_spaces.core.graph import Graph
 from nanonas.nas.search_spaces.core.query_metrics import Metric
 from nanonas.utils import utils
-from nanonas.utils.loggings import log_every_n_seconds, log_first_n
+from nanonas.utils.nano_logging import log_every_n_seconds, log_first_n
 
 # from .additional_primitives import DropPathWrapper
 

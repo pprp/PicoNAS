@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 from nanonas.trainer.nb201_trainer import NB201Trainer
-from nanonas.utils.loggings import get_logger
+from nanonas.utils.nano_logging import get_logger
 
 sys.setrecursionlimit(10000)
 

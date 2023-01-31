@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-from nanonas.utils.loggings import get_logger
+from nanonas.utils.nano_logging import get_logger
 from .genotypes import GENOTYPES
 from .ops import OPS, FactorizedReduce, Identity, ReLUConvBN
 

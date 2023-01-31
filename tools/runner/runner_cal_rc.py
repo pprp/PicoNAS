@@ -6,7 +6,7 @@ from nanonas.evaluator.zc_evaluator import ZeroCostPredictorEvaluator
 from nanonas.nas.search_spaces import get_search_space
 from nanonas.predictor import ZeroCost
 from nanonas.utils import get_zc_benchmark_api
-from nanonas.utils.loggings import get_logger
+from nanonas.utils.nano_logging import get_logger
 from nanonas.utils.utils import get_config_from_args, log_args, set_seed
 
 # Get the configs from naslib/configs/predictor_config.yaml and the command line arguments
