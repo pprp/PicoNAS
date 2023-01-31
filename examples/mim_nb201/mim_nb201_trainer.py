@@ -57,6 +57,9 @@ class MIMSPOSTrainer(BaseTrainer):
     def _loss(self, batch_inputs) -> None:
         """Forward and compute loss. Low Level API"""
         img, mask, target = batch_inputs
+        img = self._to_device(img)
+        mask = self._to_device(mask)
+        target = self._to_device(target)
         mim_out, logits = self._forward(batch_inputs)
         return self._compute_loss(mim_out, img) + self.ce_loss(logits, target)
 

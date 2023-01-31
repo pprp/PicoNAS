@@ -56,7 +56,7 @@ def get_args():
     # ******************************* settings *******************************#
 
     parser.add_argument(
-        '--crit', type=str, default='ce', help='decide the criterion')
+        '--crit', type=str, default='mse', help='decide the criterion')
     parser.add_argument(
         '--optims', type=str, default='sgd', help='decide the optimizer')
     parser.add_argument(
@@ -70,7 +70,7 @@ def get_args():
     parser.add_argument(
         '--num_choices', type=int, default=4, help='number choices per layer')
     parser.add_argument(
-        '--batch_size', type=int, default=256, help='batch size')
+        '--batch_size', type=int, default=32, help='batch size')
     parser.add_argument('--epochs', type=int, default=200, help='batch size')
     parser.add_argument(
         '--lr', type=float, default=0.025, help='initial learning rate')
