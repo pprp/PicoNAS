@@ -143,7 +143,8 @@ class MIMNB201Evaluator(Evaluator):
             results2 = self.query_result(genotype)  # type is eval_acc1es
             subtract_true_list.append(results - results2)
 
-            score2 = self.trainer.metric_score(batch_inputs, random_subnet_dict)
+            score2 = self.trainer.metric_score(batch_inputs,
+                                               random_subnet_dict)
             subtract_indicator_list.append(score - score2)
 
         return self.calc_results(true_indicator_list, generated_indicator_list,

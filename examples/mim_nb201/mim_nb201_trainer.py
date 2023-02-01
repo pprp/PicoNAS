@@ -62,7 +62,7 @@ class MIMSPOSTrainer(BaseTrainer):
         mask = self._to_device(mask, self.device)
         target = self._to_device(target, self.device)
         mim_out, logits = self._forward(batch_inputs)
-        return self._compute_loss(mim_out, img) 
+        return self._compute_loss(mim_out, img)
         # + self.ce_loss(logits, target)
 
     def _compute_loss(self, real, target):
