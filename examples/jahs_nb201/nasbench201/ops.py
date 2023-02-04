@@ -106,8 +106,10 @@ PARAMETER_OP = [
 
 CONNECT_NAS_BENCHMARK = ['none', 'skip_connect', 'nor_conv_3x3']
 NAS_BENCH_201 = [
-    'none', 'skip_connect', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3'
+    'skip_connect', 'none', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3'
 ]
+
+
 DARTS_SPACE = [
     'none',
     'skip_connect',
@@ -135,7 +137,7 @@ def get_op_index(op_list, parameter_list):
 
 
 class ReLUConvBN(nn.Module):
-
+    """ ReLU -> Conv -> BN"""
     def __init__(
         self,
         C_in,
@@ -177,6 +179,7 @@ class ReLUConvBN(nn.Module):
 
 
 class SepConv(nn.Module):
+    """ SepConv: ReLU -> SepConv -> BN"""
 
     def __init__(
         self,
@@ -212,6 +215,7 @@ class SepConv(nn.Module):
 
 
 class DualSepConv(nn.Module):
+    """ DualSepConv: ReLU -> SepConv -> BN -> SepConv -> BN"""
 
     def __init__(
         self,
@@ -245,6 +249,7 @@ class DualSepConv(nn.Module):
 
 
 class ResNetBasicblock(nn.Module):
+    """ ResNetBasicblock: ReLU -> Conv -> BN -> ReLU -> Conv -> BN -> + -> ReLU"""
 
     def __init__(self, inplanes, planes, stride, affine=True):
         super(ResNetBasicblock, self).__init__()
@@ -289,6 +294,7 @@ class ResNetBasicblock(nn.Module):
 
 
 class POOLING(nn.Module):
+    """ POOLING: ReLU -> POOLING -> BN"""
 
     def __init__(self,
                  C_in,

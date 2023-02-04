@@ -7,9 +7,19 @@ import torch.nn as nn
 from .ops import (NAS_BENCH_201, NON_PARAMETER_OP, OPS, PARAMETER_OP,
                   ResNetBasicblock, get_op_index)
 
-
-# This module is used for NAS-Bench-201, represents a small search space with a complete DAG
 class NAS201SearchCell(nn.Module):
+    """ 
+    This module is used for NAS-Bench-201, represents a small search space with a complete DAG
+    
+    Args:
+        C_in (int): input channel
+        C_out (int): output channel
+        stride (int): stride
+        max_nodes (int): maximum number of nodes
+        op_names (list): operation names
+        affine (bool): whether to use affine
+        track_running_stats (bool): whether to use track_running_stats
+    """
 
     def __init__(
         self,
@@ -162,8 +172,17 @@ class SPOS_NAS201SearchCell(NAS201SearchCell):
             nodes.append(sum(inter_nodes))
         return nodes[-1]
 
-
 class NASBench201CNN(nn.Module):
+    """ 
+    The CNN model used in NAS-Bench-201.
+    
+    Args:
+        C (int): the number of channels.
+        N (int): the number of layers.
+        max_nodes (int): the maximum number of nodes.
+        num_classes (int): the number of classes.
+        basic_op_list (list): the basic operation list.
+    """
 
     def __init__(self,
                  C=16,
@@ -247,7 +266,16 @@ class NASBench201CNN(nn.Module):
         return logits
 
 
-class SPOS_nb201_CNN(NASBench201CNN):
+class SPOS_NB201_CNN(NASBench201CNN):
+    """SPOS-NAS201 model.
+
+    Args:
+        C (int): number of channels.
+        N (int): number of cells.
+        max_nodes (int): maximum number of nodes.
+        num_classes (int): number of classes.
+        basic_op_list (list): list of basic operations.
+    """
 
     def __init__(self,
                  C=16,
@@ -426,18 +454,6 @@ class TinyNetwork(nn.Module):
         return '{name}(C={_C}, N={_layerN}, L={_Layer})'.format(
             name=self.__class__.__name__, **self.__dict__)
 
-    # def feature_extractor(self, inputs):
-    #     features = []
-    #     feature = self.stem(inputs)
-    #     features.append(feature)
-
-    #     for i, cell in enumerate(self.cells):
-    #         feature = cell(feature)
-    #         features.append(feature)
-    #     out = self.lastact(feature)
-    #     features.append(out)
-    #     return features
-
     def forward(self, inputs):
         feature = self.stem(inputs)
 
@@ -490,8 +506,6 @@ class TinyNetwork(nn.Module):
 
 
 # build API
-
-
 def _NASBench201():
     from xnas.core.config import cfg
     return NASBench201CNN(
@@ -502,9 +516,9 @@ def _NASBench201():
         basic_op_list=cfg.SPACE.BASIC_OP)
 
 
-def _SPOS_nb201_CNN():
+def _SPOS_NB201_CNN():
     from xnas.core.config import cfg
-    return SPOS_nb201_CNN(
+    return SPOS_NB201_CNN(
         C=cfg.SPACE.CHANNELS,
         N=cfg.SPACE.LAYERS,
         max_nodes=cfg.SPACE.NODES,
