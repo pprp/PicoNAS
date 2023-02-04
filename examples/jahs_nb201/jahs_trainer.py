@@ -13,9 +13,9 @@ from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models.nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
 from piconas.predictor.pruners.predictive import find_measures
-from piconas.utils.utils import AvgrageMeter, accuracy
 from piconas.trainer.base import BaseTrainer
 from piconas.trainer.registry import register_trainer
+from piconas.utils.utils import AvgrageMeter, accuracy
 
 
 @register_trainer

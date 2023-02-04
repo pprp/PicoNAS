@@ -1,8 +1,8 @@
 from typing import List, Union
 
+import jahs_bench
 import numpy as np
 import torch.nn.functional as F
-from nas_201_api import NASBench201API as API
 from tqdm import tqdm
 
 from piconas.evaluator.base import Evaluator
@@ -24,6 +24,9 @@ class JAHSEvaluator(Evaluator):
         type (str, optional): _description_. Defaults to 'eval_acc1es'.
     """
 
+    __known_metrics = ('FLOPS', 'latency', 'runtime', 'size_MB', 'test-acc',
+                       'train-acc', 'valid-acc')
+
     def __init__(self,
                  trainer,
                  num_sample: int = None,
@@ -38,27 +41,13 @@ class JAHSEvaluator(Evaluator):
 
         if dataset == 'cifar10':
             self.num_classes = 10
-        elif dataset == 'cifar100':
-            self.num_classes = 100
-        elif dataset == 'ImageNet16-120':
-            self.num_classes = 120
-            self.dataset = 'ImageNet16-120'
+        elif dataset == 'Fashion-MNIST':
+            self.num_classes = 10
 
-        assert type in ['train_losses', 'eval_losses',
-                        'train_acc1es', 'eval_acc1es', 'cost_info'], \
+        assert type in self.__known_metrics, \
             f'Not support type {type}.'
-        """
-        The key of api is the genotype of nb201
-            such as '|avg_pool_3x3~0|+
-                     |nor_conv_1x1~0|skip_connect~1|+
-                     |nor_conv_1x1~0|skip_connect~1|skip_connect~2|'
-        The value of api is also a dict:
-                  key: cifar10-valid
-                  value: train_losses, eval_losses, train_acc1es
-                         eval_acc1es, cost_info
-        """
-        self.api = API(
-            './data/benchmark/NAS-Bench-201-v1_0-e61699.pth', verbose=False)
+
+        self.api = jahs_bench.Benchmark(task='cifar10', download=False)
 
     def generate_genotype(self, subnet_dict: dict,
                           mutator: Union[OneShotMutator, DiffMutator]) -> str:
@@ -89,14 +78,18 @@ class JAHSEvaluator(Evaluator):
             subnet_dict[i] = geno.split('~')[0]
         return subnet_dict
 
-    def query_result(self, genotype: str, cost_key: str = 'flops'):
-        """query the indictor by genotype."""
-        dataset = self.trainer.dataset
-        index = self.api.query_index_by_arch(genotype)
-        # TODO
-        xinfo = self.api.get_more_info(index, 'cifar10-valid', hp='200')
-        # TODO
-        return xinfo['valid-accuracy']
+    def query_result(self, config: dict):
+        """query result by config.
+        {200: {'runtime': 32470.873046875,
+        'size_MB': 0.024951867759227753,
+        'valid-acc': 74.22746276855469,
+        'latency': 0.3497772514820099,
+        'FLOPS': 2.98705792427063,
+        'test-acc': 76.1904296875,
+        'train-acc': 75.95040893554688}}
+        """
+        results = self.api(config, nepochs=200)
+        return results[200][self.type]
 
     def compute_rank_consistency(self, dataloader,
                                  mutator: OneShotMutator) -> List:

@@ -15,7 +15,7 @@ https://github.com/automl/jahs_bench_201
 pip install jahs-bench
 ```
 
-2. Download the source file 
+2. Download the source file
 
 ```
 python -m jahs_bench.download --target surrogates
@@ -61,7 +61,13 @@ print(f"Result: {results}")  # A dict
 ```
 
 
-## Search space 
+## Search space
+
+### Task
+
+- CIFAR-10
+- Colorectal Histology
+- Fashion-MNIST
 
 ### Discrete search space
 
