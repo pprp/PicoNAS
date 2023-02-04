@@ -3,6 +3,7 @@ from typing import List, Union
 import jahs_bench
 import numpy as np
 import torch.nn.functional as F
+from nas_201_api import NASBench201API as API
 from tqdm import tqdm
 
 from piconas.evaluator.base import Evaluator
@@ -24,14 +25,22 @@ class JAHSEvaluator(Evaluator):
         type (str, optional): _description_. Defaults to 'eval_acc1es'.
     """
 
-    __known_metrics = ('FLOPS', 'latency', 'runtime', 'size_MB', 'test-acc',
-                       'train-acc', 'valid-acc')
+    __known_metrics_in_jahs = ('FLOPS', 'latency', 'runtime', 'size_MB',
+                               'test-acc', 'train-acc', 'valid-acc')
+
+    __known_metrics_in_nb201 = ('train_losses', 'eval_losses', 'train_acc1es',
+                                'eval_acc1es', 'cost_info')
+
+    __candidate_ops = ('skip_connect', 'none', 'nor_conv_1x1', 'nor_conv_3x3',
+                       'avg_pool_3x3')
 
     def __init__(self,
                  trainer,
                  num_sample: int = None,
                  dataset: str = 'cifar10',
-                 type: str = 'eval_acc1es'):
+                 nb201_type: str = 'eval_acc1es',
+                 jahs_type: str = 'test-acc',
+                 **kwargs):
         super().__init__(trainer=trainer, dataset=dataset)
         self.trainer = trainer
         self.num_sample = num_sample
@@ -41,13 +50,22 @@ class JAHSEvaluator(Evaluator):
 
         if dataset == 'cifar10':
             self.num_classes = 10
-        elif dataset == 'Fashion-MNIST':
-            self.num_classes = 10
 
-        assert type in self.__known_metrics, \
-            f'Not support type {type}.'
+        assert jahs_type in self.__known_metrics_in_jahs, \
+            f'Not support type {jahs_type}.'
+        assert nb201_type in self.__known_metrics_in_nb201, \
+            f'Not support type {nb201_type}.'
 
-        self.api = jahs_bench.Benchmark(task='cifar10', download=False)
+        self.nb201_api = API(
+            './data/benchmark/NAS-Bench-201-v1_0-e61699.pth', verbose=False)
+        self.jahs_api = jahs_bench.Benchmark(task='cifar10', download=False)
+
+    def convert_cfg2subnt(self, cfg: dict) -> dict:
+        """ Convert the cfg to the subnet dict of mutator."""
+        return {
+            i - 1: self.__candidate_ops[cfg[f'Op{i}']]
+            for i in range(1, 7)
+        }
 
     def generate_genotype(self, subnet_dict: dict,
                           mutator: Union[OneShotMutator, DiffMutator]) -> str:
@@ -73,12 +91,9 @@ class JAHSEvaluator(Evaluator):
         assert genotype is not None
         genotype = genotype.replace('|+|', '|')
         geno_list = genotype.split('|')[1:-1]
-        subnet_dict = dict()
-        for i, geno in enumerate(geno_list):
-            subnet_dict[i] = geno.split('~')[0]
-        return subnet_dict
+        return {i: geno.split('~')[0] for i, geno in enumerate(geno_list)}
 
-    def query_result(self, config: dict):
+    def query_jahs_result(self, config: dict):
         """query result by config.
         {200: {'runtime': 32470.873046875,
         'size_MB': 0.024951867759227753,
@@ -90,6 +105,15 @@ class JAHSEvaluator(Evaluator):
         """
         results = self.api(config, nepochs=200)
         return results[200][self.type]
+
+    def query_nb201_result(self, genotype: str, cost_key: str = 'flops'):
+        """query the indictor by genotype."""
+        dataset = self.trainer.dataset
+        index = self.api.query_index_by_arch(genotype)
+        # TODO
+        xinfo = self.api.get_more_info(index, 'cifar10-valid', hp='200')
+        # TODO
+        return xinfo['valid-accuracy']
 
     def compute_rank_consistency(self, dataloader,
                                  mutator: OneShotMutator) -> List:
@@ -108,14 +132,13 @@ class JAHSEvaluator(Evaluator):
             # sample random subnet by mutator
             random_subnet_dict_ = mutator.random_subnet
 
-            # process for search space shrink and expand
-            random_subnet_dict = dict()
-            for k, v in random_subnet_dict_.items():
-                random_subnet_dict[k] = v.rstrip('_')
-
+            random_subnet_dict = {
+                k: v.rstrip('_')
+                for k, v in random_subnet_dict_.items()
+            }
             # get true indictor by query nb201 api
             genotype = self.generate_genotype(random_subnet_dict, mutator)
-            results = self.query_result(genotype)  # type is eval_acc1es
+            results = self.query_jahs_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
 
             # get score based on supernet
@@ -123,7 +146,7 @@ class JAHSEvaluator(Evaluator):
             generated_indicator_list.append(score)
 
             # get flops
-            flops_result = self.query_result(genotype, cost_key='flops')
+            flops_result = self.query_jahs_result(genotype, cost_key='flops')
             flops_indicator_list.append(flops_result)
 
             # sample another subnet pair for cpr
@@ -131,7 +154,7 @@ class JAHSEvaluator(Evaluator):
             self.trainer.mutator.set_subnet(random_subnet_dict2)
             genotype = self.generate_genotype(random_subnet_dict,
                                               self.trainer.mutator)
-            results2 = self.query_result(genotype)  # type is eval_acc1es
+            results2 = self.query_jahs_result(genotype)  # type is eval_acc1es
             subtract_true_list.append(results - results2)
 
             score2 = self.trainer.metric_score(dataloader, random_subnet_dict)
@@ -156,7 +179,7 @@ class JAHSEvaluator(Evaluator):
             subnet_dict = self.generate_subnet(genotype)
 
             # get true indictor by query nb201 api
-            results = self.query_result(genotype)  # type is eval_acc1es
+            results = self.query_jahs_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
 
             # get score based on supernet
@@ -164,7 +187,7 @@ class JAHSEvaluator(Evaluator):
             generated_indicator_list.append(results)
 
             # get flops
-            flops_result = self.query_result(genotype, cost_key='flops')
+            flops_result = self.query_jahs_result(genotype, cost_key='flops')
             flops_indicator_list.append(flops_result)
 
         return self.calc_results(true_indicator_list, generated_indicator_list,
@@ -195,7 +218,7 @@ class JAHSEvaluator(Evaluator):
             # get true indictor by query nb201 api
             genotype = self.generate_genotype(random_subnet_dict,
                                               self.trainer.mutator)
-            results = self.query_result(genotype)  # type is eval_acc1es
+            results = self.query_jahs_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
 
             assert isinstance(measure_name, list) and len(measure_name) == 1, \
@@ -217,7 +240,7 @@ class JAHSEvaluator(Evaluator):
             # get score based on flops
             tmp_type = self.type
             self.type = 'cost_info'
-            results = self.query_result(genotype, cost_key='flops')
+            results = self.query_jahs_result(genotype, cost_key='flops')
             flops_indicator_list.append(results)
             self.type = tmp_type
 
@@ -226,7 +249,7 @@ class JAHSEvaluator(Evaluator):
             self.trainer.mutator.set_subnet(random_subnet_dict2)
             genotype = self.generate_genotype(random_subnet_dict,
                                               self.trainer.mutator)
-            results2 = self.query_result(genotype)  # type is eval_acc1es
+            results2 = self.query_jahs_result(genotype)  # type is eval_acc1es
             subtract_true_list.append(results - results2)
 
             score2 = find_measures(
