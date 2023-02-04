@@ -74,7 +74,7 @@ print(f"Result: {results}")  # A dict
 1. `activation` functions (Mish, Hardswish or ReLU)
 2. `augmentations` (TrivialAugment or None)
 3. `depth-multiplier` Each cell may be repeated `N` in {1, 3, 5}
-4. `base-filters` The first convolution layer of any cell contains `W` in {4, 8, 16} filters, with the number of filters doubling in every subsequent convolution layer in the same cell.
+4. `width-filters` The first convolution layer of any cell contains `W` in {4, 8, 16} filters, with the number of filters doubling in every subsequent convolution layer in the same cell.
 5. `resolution-multiplier R` in in {0.25, 0.5, 1.0}.
 6. `epoch` in {1, 2, ..., 200}.
 

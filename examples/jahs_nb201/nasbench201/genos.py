@@ -44,9 +44,11 @@ class Structure:
             self.nodes.append(tuple(deepcopy(node_info)))
 
     def tolist(self, remove_str):
-        # convert this class to the list, if remove_str is 'none', then remove the 'none' operation.
+        # convert this class to the list, if remove_str is 'none',
+        # then remove the 'none' operation.
         # note that we re-order the input node in this function
-        # return the-genotype-list and success [if unsuccess, it is not a connectivity]
+        # return the-genotype-list and success [if unsuccess,
+        # it is not a connectivity]
         genotypes = []
         for node_info in self.nodes:
             node_info = list(node_info)

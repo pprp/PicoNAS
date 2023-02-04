@@ -7,10 +7,11 @@ import torch.nn as nn
 from .ops import (NAS_BENCH_201, NON_PARAMETER_OP, OPS, PARAMETER_OP,
                   ResNetBasicblock, get_op_index)
 
+
 class NAS201SearchCell(nn.Module):
-    """ 
+    """
     This module is used for NAS-Bench-201, represents a small search space with a complete DAG
-    
+
     Args:
         C_in (int): input channel
         C_out (int): output channel
@@ -172,10 +173,11 @@ class SPOS_NAS201SearchCell(NAS201SearchCell):
             nodes.append(sum(inter_nodes))
         return nodes[-1]
 
+
 class NASBench201CNN(nn.Module):
-    """ 
+    """
     The CNN model used in NAS-Bench-201.
-    
+
     Args:
         C (int): the number of channels.
         N (int): the number of layers.
@@ -347,6 +349,17 @@ class SPOS_NB201_CNN(NASBench201CNN):
 
 # Infer cell for NAS-Bench-201
 class InferCell(nn.Module):
+    """ Inference cell for NAS-Bench-201.
+
+    Args:
+        genotype (Genotype): the genotype of the cell.
+        C_in (int): number of input channels.
+        C_out (int): number of output channels.
+        stride (int): stride of the cell.
+        affine (bool): whether to use affine in batch norm.
+        track_running_stats (bool): whether to use
+            track_running_stats in batch norm.
+    """
 
     def __init__(self,
                  genotype,
@@ -408,9 +421,26 @@ class InferCell(nn.Module):
 
 # The macro structure for architectures in NAS-Bench-201
 class TinyNetwork(nn.Module):
+    """ The macro structure for architectures in NAS-Bench-201
 
-    def __init__(self, C, N, genotype, num_classes):
+    Support `activation`, `depth-multiplier` - `N` , `width-multiplier` - `C`
+
+    Args:
+        C : the number of channels for the first convolution layer
+        N : the number of layers for each cell
+        genotype : the genotype of the network
+        num_classes : the number of classes for the classification task
+    """
+
+    __N_DEPTH_MULTIPLIER = {1, 3, 5}
+    __C_WIDTH_MULTIPLIER = {4, 8, 16}
+
+    def __init__(self, C, N, genotype, num_classes=10, activation=nn.ReLU):
         super(TinyNetwork, self).__init__()
+        assert C in self.__C_WIDTH_MULTIPLIER
+        assert N in self.__N_DEPTH_MULTIPLIER
+        assert activation in {nn.ReLU, nn.Mish, nn.Hardswish}
+
         self._C = C
         self._layerN = N
         # self._datasize = datasize
@@ -428,18 +458,16 @@ class TinyNetwork(nn.Module):
 
         C_prev = C
         self.cells = nn.ModuleList()
-        for index, (C_curr, reduction) in enumerate(
-                zip(layer_channels, layer_reductions)):
-            if reduction:
-                cell = ResNetBasicblock(C_prev, C_curr, 2, True)
-            else:
-                cell = InferCell(genotype, C_prev, C_curr, 1)
+        for C_curr, reduction in zip(layer_channels, layer_reductions):
+            cell = (
+                ResNetBasicblock(C_prev, C_curr, 2, True, activation)
+                if reduction else InferCell(genotype, C_prev, C_curr, 1))
             self.cells.append(cell)
             C_prev = cell.out_dim
         self._Layer = len(self.cells)
 
         self.lastact = nn.Sequential(
-            nn.BatchNorm2d(C_prev), nn.ReLU(inplace=True))
+            nn.BatchNorm2d(C_prev), activation(inplace=True))
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(C_prev, num_classes)
 
@@ -503,34 +531,3 @@ class TinyNetwork(nn.Module):
         logits = self.classifier(out)
 
         return features, logits
-
-
-# build API
-def _NASBench201():
-    from xnas.core.config import cfg
-    return NASBench201CNN(
-        C=cfg.SPACE.CHANNELS,
-        N=cfg.SPACE.LAYERS,
-        max_nodes=cfg.SPACE.NODES,
-        num_classes=cfg.LOADER.NUM_CLASSES,
-        basic_op_list=cfg.SPACE.BASIC_OP)
-
-
-def _SPOS_NB201_CNN():
-    from xnas.core.config import cfg
-    return SPOS_NB201_CNN(
-        C=cfg.SPACE.CHANNELS,
-        N=cfg.SPACE.LAYERS,
-        max_nodes=cfg.SPACE.NODES,
-        num_classes=cfg.LOADER.NUM_CLASSES,
-        basic_op_list=cfg.SPACE.BASIC_OP)
-
-
-def _infer_NASBench201():
-    from xnas.core.config import cfg
-    return TinyNetwork(
-        C=cfg.TRAIN.CHANNELS,
-        N=cfg.TRAIN.LAYERS,
-        genotype=cfg.TRAIN.GENOTYPE,
-        num_classes=cfg.LOADER.NUM_CLASSES,
-    )

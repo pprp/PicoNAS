@@ -7,16 +7,19 @@ __all__ = ['OPS', 'ResNetBasicblock', 'SearchSpaceNames']
 
 OPS = {
     'none':
-    lambda C_in, C_out, stride, affine, track_running_stats: Zero(
+    lambda C_in, C_out, stride, affine, track_running_stats, activation: Zero(
         C_in, C_out, stride),
     'avg_pool_3x3':
-    lambda C_in, C_out, stride, affine, track_running_stats: POOLING(
-        C_in, C_out, stride, 'avg', affine, track_running_stats),
+    lambda C_in, C_out,
+    stride, affine, track_running_stats, activation: POOLING(
+        C_in, C_out, stride, 'avg', affine, track_running_stats, activation),
     'max_pool_3x3':
-    lambda C_in, C_out, stride, affine, track_running_stats: POOLING(
-        C_in, C_out, stride, 'max', affine, track_running_stats),
+    lambda C_in, C_out,
+    stride, affine, track_running_stats, activation: POOLING(
+        C_in, C_out, stride, 'max', affine, track_running_stats, activation),
     'nor_conv_7x7':
-    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+    lambda C_in, C_out, stride, affine, track_running_stats, activation:
+    ActConvBN(
         C_in,
         C_out,
         (7, 7),
@@ -25,9 +28,11 @@ OPS = {
         (1, 1),
         affine,
         track_running_stats,
+        activation,
     ),
     'nor_conv_3x3':
-    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+    lambda C_in, C_out, stride, affine, track_running_stats, activation:
+    ActConvBN(
         C_in,
         C_out,
         (3, 3),
@@ -36,9 +41,11 @@ OPS = {
         (1, 1),
         affine,
         track_running_stats,
+        activation,
     ),
     'nor_conv_1x1':
-    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+    lambda C_in, C_out, stride, affine, track_running_stats, activation:
+    ActConvBN(
         C_in,
         C_out,
         (1, 1),
@@ -47,9 +54,11 @@ OPS = {
         (1, 1),
         affine,
         track_running_stats,
+        activation,
     ),
     'dua_sepc_3x3':
-    lambda C_in, C_out, stride, affine, track_running_stats: DualSepConv(
+    lambda C_in, C_out, stride, affine, track_running_stats, activation:
+    DualSepConv(
         C_in,
         C_out,
         (3, 3),
@@ -58,9 +67,11 @@ OPS = {
         (1, 1),
         affine,
         track_running_stats,
+        activation,
     ),
     'dua_sepc_5x5':
-    lambda C_in, C_out, stride, affine, track_running_stats: DualSepConv(
+    lambda C_in, C_out, stride, affine, track_running_stats, activation:
+    DualSepConv(
         C_in,
         C_out,
         (5, 5),
@@ -69,9 +80,11 @@ OPS = {
         (1, 1),
         affine,
         track_running_stats,
+        activation,
     ),
     'dil_sepc_3x3':
-    lambda C_in, C_out, stride, affine, track_running_stats: SepConv(
+    lambda C_in, C_out, stride, affine, track_running_stats, activation:
+    SepConv(
         C_in,
         C_out,
         (3, 3),
@@ -80,9 +93,11 @@ OPS = {
         (2, 2),
         affine,
         track_running_stats,
+        activation,
     ),
     'dil_sepc_5x5':
-    lambda C_in, C_out, stride, affine, track_running_stats: SepConv(
+    lambda C_in, C_out, stride, affine, track_running_stats, activation:
+    SepConv(
         C_in,
         C_out,
         (5, 5),
@@ -91,10 +106,11 @@ OPS = {
         (2, 2),
         affine,
         track_running_stats,
+        activation,
     ),
     'skip_connect':
-    lambda C_in, C_out, stride, affine, track_running_stats: Identity()
-    if stride == 1 and C_in == C_out else FactorizedReduce(
+    lambda C_in, C_out, stride, affine, track_running_stats, activation:
+    Identity() if stride == 1 and C_in == C_out else FactorizedReduce(
         C_in, C_out, stride, affine, track_running_stats),
 }
 
@@ -108,7 +124,6 @@ CONNECT_NAS_BENCHMARK = ['none', 'skip_connect', 'nor_conv_3x3']
 NAS_BENCH_201 = [
     'skip_connect', 'none', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3'
 ]
-
 
 DARTS_SPACE = [
     'none',
@@ -136,8 +151,9 @@ def get_op_index(op_list, parameter_list):
     return op_idx_list
 
 
-class ReLUConvBN(nn.Module):
+class ActConvBN(nn.Module):
     """ ReLU -> Conv -> BN"""
+
     def __init__(
         self,
         C_in,
@@ -148,10 +164,11 @@ class ReLUConvBN(nn.Module):
         dilation,
         affine,
         track_running_stats=True,
+        activation=nn.ReLU,
     ):
-        super(ReLUConvBN, self).__init__()
+        super(ActConvBN, self).__init__()
         self.op = nn.Sequential(
-            nn.ReLU(inplace=False),
+            activation(inplace=False),
             nn.Conv2d(
                 C_in,
                 C_out,
@@ -191,10 +208,11 @@ class SepConv(nn.Module):
         dilation,
         affine,
         track_running_stats=True,
+        activation=nn.ReLU,
     ):
         super(SepConv, self).__init__()
         self.op = nn.Sequential(
-            nn.ReLU(inplace=False),
+            activation(inplace=False),
             nn.Conv2d(
                 C_in,
                 C_in,
@@ -227,20 +245,13 @@ class DualSepConv(nn.Module):
         dilation,
         affine,
         track_running_stats=True,
+        activation=nn.ReLU,
     ):
         super(DualSepConv, self).__init__()
-        self.op_a = SepConv(
-            C_in,
-            C_in,
-            kernel_size,
-            stride,
-            padding,
-            dilation,
-            affine,
-            track_running_stats,
-        )
+        self.op_a = SepConv(C_in, C_in, kernel_size, stride, padding, dilation,
+                            affine, track_running_stats, activation)
         self.op_b = SepConv(C_in, C_out, kernel_size, 1, padding, dilation,
-                            affine, track_running_stats)
+                            affine, track_running_stats, activation)
 
     def forward(self, x):
         x = self.op_a(x)
@@ -251,11 +262,17 @@ class DualSepConv(nn.Module):
 class ResNetBasicblock(nn.Module):
     """ ResNetBasicblock: ReLU -> Conv -> BN -> ReLU -> Conv -> BN -> + -> ReLU"""
 
-    def __init__(self, inplanes, planes, stride, affine=True):
+    def __init__(self,
+                 inplanes,
+                 planes,
+                 stride,
+                 affine=True,
+                 activation=nn.ReLU):
         super(ResNetBasicblock, self).__init__()
         assert stride == 1 or stride == 2, 'invalid stride {:}'.format(stride)
-        self.conv_a = ReLUConvBN(inplanes, planes, 3, stride, 1, 1, affine)
-        self.conv_b = ReLUConvBN(planes, planes, 3, 1, 1, 1, affine)
+        self.conv_a = ActConvBN(inplanes, planes, 3, stride, 1, 1, affine,
+                                activation)
+        self.conv_b = ActConvBN(planes, planes, 3, 1, 1, 1, affine, activation)
         if stride == 2:
             self.downsample = nn.Sequential(
                 nn.AvgPool2d(kernel_size=2, stride=2, padding=0),
@@ -268,7 +285,8 @@ class ResNetBasicblock(nn.Module):
                     bias=False),
             )
         elif inplanes != planes:
-            self.downsample = ReLUConvBN(inplanes, planes, 1, 1, 0, 1, affine)
+            self.downsample = ActConvBN(inplanes, planes, 1, 1, 0, 1, affine,
+                                        activation)
         else:
             self.downsample = None
         self.in_dim = inplanes
@@ -294,7 +312,7 @@ class ResNetBasicblock(nn.Module):
 
 
 class POOLING(nn.Module):
-    """ POOLING: ReLU -> POOLING -> BN"""
+    """ POOLING"""
 
     def __init__(self,
                  C_in,
@@ -302,13 +320,14 @@ class POOLING(nn.Module):
                  stride,
                  mode,
                  affine=True,
-                 track_running_stats=True):
+                 track_running_stats=True,
+                 activation=nn.ReLU):
         super(POOLING, self).__init__()
         if C_in == C_out:
             self.preprocess = None
         else:
-            self.preprocess = ReLUConvBN(C_in, C_out, 1, 1, 0, affine,
-                                         track_running_stats)
+            self.preprocess = ActConvBN(C_in, C_out, 1, 1, 0, affine,
+                                        track_running_stats, activation)
         if mode == 'avg':
             self.op = nn.AvgPool2d(
                 3, stride=stride, padding=1, count_include_pad=False)
@@ -371,6 +390,7 @@ class Zero(nn.Module):
 
 
 class FactorizedReduce(nn.Module):
+    """ FactorizedReduce"""
 
     def __init__(self, C_in, C_out, stride, affine, track_running_stats):
         super(FactorizedReduce, self).__init__()
