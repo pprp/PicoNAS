@@ -7,14 +7,14 @@ import torch
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 
-import nanonas.utils.utils as utils
-from nanonas.core import build_optimizer, build_scheduler
-from nanonas.core.losses import build_criterion
-from nanonas.datasets.transforms.cutout import Cutout
-from nanonas.models import resnet20, resnet56
-from nanonas.trainer import Distill_Trainer
-from nanonas.utils import set_random_seed
-from nanonas.utils.config import Config
+import piconas.utils.utils as utils
+from piconas.core import build_optimizer, build_scheduler
+from piconas.core.losses import build_criterion
+from piconas.datasets.transforms.cutout import Cutout
+from piconas.models import resnet20, resnet56
+from piconas.trainer import Distill_Trainer
+from piconas.utils import set_random_seed
+from piconas.utils.config import Config
 
 
 def get_args():

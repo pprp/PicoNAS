@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from nanonas.utils.nano_logging import get_logger, print_log
+from piconas.utils.pico_logging import get_logger, print_log
 
 if platform.system() == 'Windows':
     import regex as re

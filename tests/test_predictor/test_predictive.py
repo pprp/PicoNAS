@@ -6,11 +6,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from nanonas.datasets import build_dataloader
-from nanonas.models.nasbench201.oneshot_nasbench201 import \
+from piconas.datasets import build_dataloader
+from piconas.models.nasbench201.oneshot_nasbench201 import \
     OneShotNASBench201Network
-from nanonas.nas.mutators import OneShotMutator
-from nanonas.predictor.pruners.predictive import find_measures
+from piconas.nas.mutators import OneShotMutator
+from piconas.predictor.pruners.predictive import find_measures
 
 
 class ToyModel(nn.Module):

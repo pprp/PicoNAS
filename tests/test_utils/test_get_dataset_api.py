@@ -1,7 +1,7 @@
 import unittest
 from unittest import TestCase
 
-from nanonas.utils.get_dataset_api import get_dataset_api
+from piconas.utils.get_dataset_api import get_dataset_api
 
 
 class TestNasBench(TestCase):

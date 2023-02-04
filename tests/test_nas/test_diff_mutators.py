@@ -3,8 +3,8 @@ from unittest import TestCase
 
 import torch
 
-from nanonas.models import DiffNASBench201Network
-from nanonas.nas.mutators import DiffMutator
+from piconas.models import DiffNASBench201Network
+from piconas.nas.mutators import DiffMutator
 
 
 class TestDiffMutator(TestCase):

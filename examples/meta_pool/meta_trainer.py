@@ -7,13 +7,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import get_model_complexity_info
 
-import nanonas.utils.utils as utils
-from nanonas.core.losses import PairwiseRankLoss
-from nanonas.models.nasbench201 import DiffNASBench201Network
-from nanonas.nas.mutators import DiffMutator
-from nanonas.trainer.base import BaseTrainer
-from nanonas.trainer.registry import register_trainer
-from nanonas.utils.utils import AvgrageMeter, accuracy
+import piconas.utils.utils as utils
+from piconas.core.losses import PairwiseRankLoss
+from piconas.models.nasbench201 import DiffNASBench201Network
+from piconas.nas.mutators import DiffMutator
+from piconas.trainer.base import BaseTrainer
+from piconas.trainer.registry import register_trainer
+from piconas.utils.utils import AvgrageMeter, accuracy
 
 
 @register_trainer

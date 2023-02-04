@@ -4,11 +4,11 @@ from unittest import TestCase
 import numpy as np
 import seaborn as sns
 
-from nanonas.datasets import build_dataloader
-from nanonas.models import DiffNASBench201Network, OneShotNASBench201Network
-from nanonas.nas.mutators import DiffMutator, OneShotMutator
-from nanonas.predictor.pruners.predictive import find_measures
-from nanonas.utils.get_dataset_api import get_dataset_api
+from piconas.datasets import build_dataloader
+from piconas.models import DiffNASBench201Network, OneShotNASBench201Network
+from piconas.nas.mutators import DiffMutator, OneShotMutator
+from piconas.predictor.pruners.predictive import find_measures
+from piconas.utils.get_dataset_api import get_dataset_api
 
 
 class TestNasBench201(TestCase):
@@ -77,8 +77,8 @@ class TestNasBench201(TestCase):
         mutator = OneShotMutator(with_alias=True)
         mutator.prepare_from_supernet(model)
 
-        from nanonas.evaluator import NB201Evaluator
-        from nanonas.trainer import NB201Trainer
+        from piconas.evaluator import NB201Evaluator
+        from piconas.trainer import NB201Trainer
 
         trainer = NB201Trainer(model=model, mutator=None)
         evaluator = NB201Evaluator(trainer, 50)
@@ -138,7 +138,7 @@ class TestNasBench201(TestCase):
             true_list.append(calc_eval_dist(sg1, sg2))
 
         print('=' * 20)
-        from nanonas.utils.rank_consistency import (kendalltau, pearson,
+        from piconas.utils.rank_consistency import (kendalltau, pearson,
                                                     spearman)
         kt = kendalltau(dst_list, true_list)
         ps = pearson(dst_list, true_list)
@@ -162,8 +162,8 @@ class TestNasBench201(TestCase):
         mutator.prepare_from_supernet(model)
         dataloader = build_dataloader('cifar10', 'train')
 
-        from nanonas.evaluator import NB201Evaluator
-        from nanonas.trainer import NB201Trainer
+        from piconas.evaluator import NB201Evaluator
+        from piconas.trainer import NB201Trainer
 
         trainer = NB201Trainer(model=model, mutator=None)
         evaluator = NB201Evaluator(trainer, 50)
@@ -253,7 +253,7 @@ class TestNasBench201(TestCase):
             zc_list.append(calc_zerocost_dist(sg1, sg2))
 
         print('=' * 20)
-        from nanonas.utils.rank_consistency import (kendalltau, pearson,
+        from piconas.utils.rank_consistency import (kendalltau, pearson,
                                                     spearman)
         kt = kendalltau(dst_list, zc_list)
         ps = pearson(dst_list, zc_list)

@@ -4,13 +4,13 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from nanonas.datasets import build_dataloader
-from nanonas.evaluator import NB201Evaluator
-from nanonas.models import OneShotNASBench201Network
-from nanonas.nas.mutators import OneShotMutator
-from nanonas.predictor.pruners.predictive import find_measures
-from nanonas.trainer import NB201Trainer
-from nanonas.utils.rank_consistency import kendalltau, pearson, spearman
+from piconas.datasets import build_dataloader
+from piconas.evaluator import NB201Evaluator
+from piconas.models import OneShotNASBench201Network
+from piconas.nas.mutators import OneShotMutator
+from piconas.predictor.pruners.predictive import find_measures
+from piconas.trainer import NB201Trainer
+from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 
 model = OneShotNASBench201Network()
 

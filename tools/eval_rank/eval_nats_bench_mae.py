@@ -3,11 +3,11 @@ import argparse
 import torch
 import torch.nn as nn
 
-from nanonas.datasets.data_simmim import build_loader_simmim
-from nanonas.evaluator import NATSEvaluator
-from nanonas.models.nats.nats_supernet import MAESupernetNATS
-from nanonas.trainer.nats_trainer import MAENATSTrainer
-from nanonas.utils.nano_logging import get_logger
+from piconas.datasets.data_simmim import build_loader_simmim
+from piconas.evaluator import NATSEvaluator
+from piconas.models.nats.nats_supernet import MAESupernetNATS
+from piconas.trainer.nats_trainer import MAENATSTrainer
+from piconas.utils.pico_logging import get_logger
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('rank evaluation')

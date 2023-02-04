@@ -5,10 +5,10 @@ import torch.nn.functional as F
 from nas_201_api import NASBench201API as API
 from tqdm import tqdm
 
-from nanonas.evaluator.base import Evaluator
-from nanonas.nas.mutators import DiffMutator, OneShotMutator
-from nanonas.predictor.pruners.predictive import find_measures
-from nanonas.utils.rank_consistency import (concordant_pair_ratio, kendalltau,
+from piconas.evaluator.base import Evaluator
+from piconas.nas.mutators import DiffMutator, OneShotMutator
+from piconas.predictor.pruners.predictive import find_measures
+from piconas.utils.rank_consistency import (concordant_pair_ratio, kendalltau,
                                             minmax_n_at_k, p_at_tb_k, pearson,
                                             rank_difference, spearman)
 
@@ -192,7 +192,7 @@ class MIMNB201Evaluator(Evaluator):
         subtract_indicator_list: List[float] = []
 
         if dataloader is None:
-            from nanonas.datasets import build_dataloader
+            from piconas.datasets import build_dataloader
             dataloader = build_dataloader('cifar10', 'train')
 
         num_sample = 50 if self.num_sample is None else self.num_sample

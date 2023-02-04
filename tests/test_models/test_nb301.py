@@ -4,9 +4,9 @@ from unittest import TestCase
 
 import torch
 
-from nanonas.models import DiffNASBench301Network, OneShotNASBench301Network
-from nanonas.nas.mutables import OneShotChoiceRoute
-from nanonas.nas.mutators import DiffMutator, OneShotMutator
+from piconas.models import DiffNASBench301Network, OneShotNASBench301Network
+from piconas.nas.mutables import OneShotChoiceRoute
+from piconas.nas.mutators import DiffMutator, OneShotMutator
 
 Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
 
@@ -84,7 +84,7 @@ class TestNB301(TestCase):
             reduce_concat=[2, 3, 4, 5])
         print(genotype)
 
-        from nanonas.utils.get_dataset_api import get_dataset_api
+        from piconas.utils.get_dataset_api import get_dataset_api
         api = get_dataset_api('nasbench301', dataset='cifar10')
         api = api['nb301_model']
         p_m, r_m = api
@@ -125,7 +125,7 @@ class TestNB301(TestCase):
         print(o.shape)
 
     def test_nb301_api(self):
-        from nanonas.utils.get_dataset_api import get_dataset_api
+        from piconas.utils.get_dataset_api import get_dataset_api
         api = get_dataset_api('nasbench301', dataset='cifar10')
         api = api['nb301_model']
 

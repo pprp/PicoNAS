@@ -38,9 +38,9 @@ from timm.scheduler import create_scheduler
 from timm.utils import ApexScaler, NativeScaler
 from torch.nn.parallel import DistributedDataParallel as NativeDDP
 
-from nanonas.models import build_model
-from nanonas.trainer import build_trainer
-from nanonas.utils.nano_logging import get_logger
+from piconas.models import build_model
+from piconas.trainer import build_trainer
+from piconas.utils.pico_logging import get_logger
 
 try:
     from apex import amp

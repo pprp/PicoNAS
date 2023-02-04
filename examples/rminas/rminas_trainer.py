@@ -13,7 +13,7 @@ from xnas.spaces.DARTS.utils import geno_from_alpha, reformat_DARTS
 from xnas.spaces.NASBench201.utils import (CellStructure, dict2config,
                                            get_cell_based_tiny_net)
 
-from nanonas.core.losses.rmi_loss import RMI_loss
+from piconas.core.losses.rmi_loss import RMI_loss
 
 config.load_configs()
 logger = logging.get_logger(__name__)

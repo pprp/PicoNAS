@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import torch
 
-from nanonas.core.losses import RMI_loss
+from piconas.core.losses import RMI_loss
 
 
 class TestRMILoss(TestCase):

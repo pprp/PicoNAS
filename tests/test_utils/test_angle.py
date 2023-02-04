@@ -4,9 +4,9 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 
-from nanonas.models.spos import SearchableMobileNet
-from nanonas.nas.mutators import OneShotMutator
-from nanonas.utils.angle.weight_vector import get_mb_arch_vector
+from piconas.models.spos import SearchableMobileNet
+from piconas.nas.mutators import OneShotMutator
+from piconas.utils.angle.weight_vector import get_mb_arch_vector
 
 
 class TestAngle(TestCase):

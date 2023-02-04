@@ -4,10 +4,10 @@ from mmcv.cnn import get_model_complexity_info
 from model.fixed_models import resnet20, resnet110
 from model.mutable import mutable_resnet20
 
-from nanonas.datasets import build_dataloader
-from nanonas.predictor.pruners import predictive
+from piconas.datasets import build_dataloader
+from piconas.predictor.pruners import predictive
 
-# from nanonas.utils.rank_consistency import kendalltau, pearson, spearman
+# from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 
 
 def generate_config(mutable_depth=None):

@@ -6,12 +6,12 @@ import rdnas_trainer  # noqa: F401
 import torch
 from nb201_datasets import get_datasets, get_nas_search_loaders
 
-import nanonas.utils.utils as utils
-from nanonas.core import build_criterion, build_optimizer, build_scheduler
-from nanonas.models import build_model
-from nanonas.trainer import build_trainer
-from nanonas.utils import set_random_seed
-from nanonas.utils.config import Config
+import piconas.utils.utils as utils
+from piconas.core import build_criterion, build_optimizer, build_scheduler
+from piconas.models import build_model
+from piconas.trainer import build_trainer
+from piconas.utils import set_random_seed
+from piconas.utils.config import Config
 
 
 def get_args():

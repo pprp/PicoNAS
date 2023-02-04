@@ -3,8 +3,8 @@ import torch.nn as nn
 from einops import rearrange
 from torch import Tensor
 
-from nanonas.models.registry import register_model
-from nanonas.nas.mutables import OneShotOP
+from piconas.models.registry import register_model
+from piconas.nas.mutables import OneShotOP
 
 
 class ReLUConvBN(nn.Module):

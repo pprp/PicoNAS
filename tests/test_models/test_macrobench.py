@@ -7,8 +7,8 @@ import numpy as np
 import seaborn as sns
 import torch
 
-from nanonas.models import MacroBenchmarkSuperNet
-from nanonas.nas.mutators import OneShotMutator
+from piconas.models import MacroBenchmarkSuperNet
+from piconas.nas.mutators import OneShotMutator
 
 
 class TestMacroBench(TestCase):

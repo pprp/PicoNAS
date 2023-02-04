@@ -5,13 +5,13 @@ from typing import Dict, List
 
 import torch
 
-from nanonas.datasets import build_dataloader
-from nanonas.models import MacroBenchmarkSuperNet
-from nanonas.nas.mutators import OneShotMutator
-from nanonas.trainer import MacroTrainer
-from nanonas.utils.config import Config
-from nanonas.utils.misc import convert_arch2dict
-from nanonas.utils.rank_consistency import kendalltau, pearson, spearman
+from piconas.datasets import build_dataloader
+from piconas.models import MacroBenchmarkSuperNet
+from piconas.nas.mutators import OneShotMutator
+from piconas.trainer import MacroTrainer
+from piconas.utils.config import Config
+from piconas.utils.misc import convert_arch2dict
+from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 
 
 def load_json(path):

@@ -4,11 +4,11 @@ import torch
 import torch.nn as nn
 import torchvision
 
-from nanonas.nas.mutators import OneShotMutator
-from nanonas.trainer.base import BaseTrainer
-from nanonas.trainer.registry import register_trainer
-from nanonas.utils.misc import convertTensor2BoardImage
-from nanonas.predictor.pruners.measures.zen import network_weight_gaussian_init
+from piconas.nas.mutators import OneShotMutator
+from piconas.predictor.pruners.measures.zen import network_weight_gaussian_init
+from piconas.trainer.base import BaseTrainer
+from piconas.trainer.registry import register_trainer
+from piconas.utils.misc import convertTensor2BoardImage
 
 
 @register_trainer

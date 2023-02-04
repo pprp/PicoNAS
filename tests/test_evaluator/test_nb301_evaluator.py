@@ -1,10 +1,10 @@
 import unittest
 from unittest import TestCase
 
-from nanonas.evaluator import NB301Evaluator
-from nanonas.models.nasbench301 import OneShotNASBench301Network
-from nanonas.nas.mutators import OneShotMutator
-from nanonas.trainer import NB301Trainer
+from piconas.evaluator import NB301Evaluator
+from piconas.models.nasbench301 import OneShotNASBench301Network
+from piconas.nas.mutators import OneShotMutator
+from piconas.trainer import NB301Trainer
 
 
 class TestNB301Evaluator(TestCase):

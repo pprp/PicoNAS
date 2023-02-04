@@ -5,8 +5,8 @@ import math
 import torch
 import torch.nn as nn
 
-from nanonas.models.registry import register_model
-from nanonas.nas.mutables import DynaDiffOP
+from piconas.models.registry import register_model
+from piconas.nas.mutables import DynaDiffOP
 
 # simplified version
 # class SpatialSeperablePooling(nn.Module):

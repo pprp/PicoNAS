@@ -1,8 +1,8 @@
 import unittest
 from unittest import TestCase
 
-from nanonas.models import MacroBenchmarkSuperNet
-from nanonas.trainer import MacroTrainer
+from piconas.models import MacroBenchmarkSuperNet
+from piconas.trainer import MacroTrainer
 
 
 class TestMacroTrainer(TestCase):

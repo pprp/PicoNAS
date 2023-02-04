@@ -1,6 +1,6 @@
-# NanoNAS
+# PicoNAS
 
-NanoNAS is a modularized NAS Framework designed for One-Shot NAS.
+PicoNAS is a modularized NAS Framework designed for One-Shot NAS.
 
 
 

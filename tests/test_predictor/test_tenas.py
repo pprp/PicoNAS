@@ -5,10 +5,10 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 
-from nanonas.models.nasbench201.oneshot_nasbench201 import \
+from piconas.models.nasbench201.oneshot_nasbench201 import \
     OneShotNASBench201Network
-from nanonas.nas.mutators import OneShotMutator
-from nanonas.predictor.pruners.measures.te_nas import compute_tenas
+from piconas.nas.mutators import OneShotMutator
+from piconas.predictor.pruners.measures.te_nas import compute_tenas
 
 
 class ToyModel(nn.Module):

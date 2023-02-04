@@ -4,12 +4,12 @@ import time
 
 import torch
 
-import nanonas.utils.utils as utils
-from nanonas.core import build_criterion, build_optimizer, build_scheduler
-from nanonas.evaluator import NB201Evaluator  # noqa: F401
-from nanonas.models import build_model
-from nanonas.trainer import build_trainer
-from nanonas.utils.config import Config
+import piconas.utils.utils as utils
+from piconas.core import build_criterion, build_optimizer, build_scheduler
+from piconas.evaluator import NB201Evaluator  # noqa: F401
+from piconas.models import build_model
+from piconas.trainer import build_trainer
+from piconas.utils.config import Config
 
 
 def get_args():

@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torchvision.datasets.imagenet import ImageFolder
 
-from nanonas.datasets.build import build_dataloader
+from piconas.datasets.build import build_dataloader
 
 
 def get_random_data(name):

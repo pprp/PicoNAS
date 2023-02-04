@@ -2,8 +2,8 @@ import random
 import unittest
 from unittest import TestCase
 
-# from nanonas.trainer.nb201_trainer import NB201Trainer
-from nanonas.structures.sucessive_halving import Brick, Level
+# from piconas.trainer.nb201_trainer import NB201Trainer
+from piconas.structures.sucessive_halving import Brick, Level
 
 # SuccessiveHalvingPyramid
 

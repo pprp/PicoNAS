@@ -3,11 +3,11 @@ import os
 
 from torch.utils.tensorboard import SummaryWriter
 
-from nanonas.core.optims import Bananas, Npenas
-from nanonas.nas.search_spaces import get_search_space
-from nanonas.trainer import ZCTrainer
-from nanonas.utils import get_zc_benchmark_api, utils
-from nanonas.utils.nano_logging import get_logger
+from piconas.core.optims import Bananas, Npenas
+from piconas.nas.search_spaces import get_search_space
+from piconas.trainer import ZCTrainer
+from piconas.utils import get_zc_benchmark_api, utils
+from piconas.utils.pico_logging import get_logger
 
 config = utils.get_config_from_args()
 

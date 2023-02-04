@@ -5,10 +5,10 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 
-from nanonas.models.nasbench201.oneshot_nasbench201 import \
+from piconas.models.nasbench201.oneshot_nasbench201 import \
     OneShotNASBench201Network
-from nanonas.nas.mutators import OneShotMutator
-from nanonas.predictor.pruners.measures.nwot import compute_nwot
+from piconas.nas.mutators import OneShotMutator
+from piconas.predictor.pruners.measures.nwot import compute_nwot
 
 
 class ToyModel(nn.Module):
@@ -76,21 +76,21 @@ class TestNWOT(TestCase):
         print(f'The score of model is {score}')
 
         # after init
-        from nanonas.predictor.pruners.measures.zen import \
+        from piconas.predictor.pruners.measures.zen import \
             network_weight_gaussian_init
         m = network_weight_gaussian_init(m)
         score = compute_nwot(net=m, inputs=inputs, targets=targets)
         print(f'After init The score of model is {score}')
 
         # after init
-        from nanonas.predictor.pruners.measures.zen import \
+        from piconas.predictor.pruners.measures.zen import \
             network_weight_gaussian_init
         m = network_weight_gaussian_init(m)
         score = compute_nwot(net=m, inputs=inputs, targets=targets)
         print(f'After init The score of model is {score}')
 
         # after init
-        from nanonas.predictor.pruners.measures.zen import \
+        from piconas.predictor.pruners.measures.zen import \
             network_weight_gaussian_init
         m = network_weight_gaussian_init(m)
         score = compute_nwot(net=m, inputs=inputs, targets=targets)

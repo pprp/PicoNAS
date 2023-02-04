@@ -4,8 +4,8 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 
-from nanonas.nas.mutables import MutableValue
-from nanonas.nas.mutators import ValueMutator
+from piconas.nas.mutables import MutableValue
+from piconas.nas.mutators import ValueMutator
 
 
 class ToyBlock(nn.Module):

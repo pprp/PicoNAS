@@ -8,9 +8,9 @@ from model.mutable.searchspace.search_space_xxbl import gen_search_space
 # from model.mutable.basic_blocks import _remove_bn_layer_
 from model.mutable.utils import PlainNet, create_netblock_list_from_str
 
-from nanonas.datasets import build_dataloader
+from piconas.datasets import build_dataloader
 # from model.mutable.utils import pretty_format
-from nanonas.predictor.pruners import predictive
+from piconas.predictor.pruners import predictive
 
 
 def get_new_random_structure_str(the_net,

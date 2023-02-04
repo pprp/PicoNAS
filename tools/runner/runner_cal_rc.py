@@ -2,12 +2,12 @@
 
 import logging
 
-from nanonas.evaluator.zc_evaluator import ZeroCostPredictorEvaluator
-from nanonas.nas.search_spaces import get_search_space
-from nanonas.predictor import ZeroCost
-from nanonas.utils import get_zc_benchmark_api
-from nanonas.utils.nano_logging import get_logger
-from nanonas.utils.utils import get_config_from_args, log_args, set_seed
+from piconas.evaluator.zc_evaluator import ZeroCostPredictorEvaluator
+from piconas.nas.search_spaces import get_search_space
+from piconas.predictor import ZeroCost
+from piconas.utils import get_zc_benchmark_api
+from piconas.utils.pico_logging import get_logger
+from piconas.utils.utils import get_config_from_args, log_args, set_seed
 
 # Get the configs from naslib/configs/predictor_config.yaml and the command line arguments
 # The configs include the zero-cost method to use, the search space and dataset/task to use,

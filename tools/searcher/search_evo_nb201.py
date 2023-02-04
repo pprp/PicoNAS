@@ -4,14 +4,14 @@ import time
 
 import torch
 
-import nanonas.utils.utils as utils
-from nanonas.core import build_criterion, build_optimizer, build_scheduler
-from nanonas.datasets.build import build_dataloader
-from nanonas.models import build_model
-from nanonas.searcher import EvolutionSearcher
-from nanonas.trainer import build_trainer
-from nanonas.utils import set_random_seed
-from nanonas.utils.config import Config
+import piconas.utils.utils as utils
+from piconas.core import build_criterion, build_optimizer, build_scheduler
+from piconas.datasets.build import build_dataloader
+from piconas.models import build_model
+from piconas.searcher import EvolutionSearcher
+from piconas.trainer import build_trainer
+from piconas.utils import set_random_seed
+from piconas.utils.config import Config
 
 
 def get_args():
