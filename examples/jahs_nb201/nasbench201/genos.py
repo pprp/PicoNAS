@@ -20,6 +20,7 @@ def get_combination(space, num):
 
 
 class Structure:
+    """ The structure of a cell in NAS-Bench-201. """
 
     def __init__(self, genotype):
         assert isinstance(genotype, list) or isinstance(
@@ -160,8 +161,8 @@ class Structure:
                 assert len(xinput.split(
                     '~')) == 2, 'invalid input length : {:}'.format(xinput)
             inputs = (xi.split('~') for xi in inputs)
-            input_infos = list((op, int(IDX)) for (op, IDX) in inputs)
-            all_in_nodes = list(x[1] for x in input_infos)
+            input_infos = [(op, int(IDX)) for (op, IDX) in inputs]
+            all_in_nodes = [x[1] for x in input_infos]
             for j in range(i):
                 if j not in all_in_nodes:
                     input_infos.append((default_name, j))
@@ -171,9 +172,9 @@ class Structure:
 
     @staticmethod
     def gen_all(search_space, num, return_ori):
-        assert isinstance(search_space, list) or isinstance(
-            search_space, tuple), 'invalid class of search-space : {:}'.format(
-                type(search_space))
+        assert isinstance(
+            search_space, (list, tuple)
+        ), 'invalid class of search-space : {:}'.format(type(search_space))
         assert (
             num >= 2
         ), 'There should be at least two nodes in a neural cell instead of {:}'.format(

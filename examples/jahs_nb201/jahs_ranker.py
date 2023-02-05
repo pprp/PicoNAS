@@ -7,18 +7,18 @@ import torch
 import piconas.utils.utils as utils
 from piconas.core import build_criterion, build_optimizer, build_scheduler
 from piconas.datasets.build import build_dataloader
-from piconas.evaluator import NB201Evaluator
+from jahs_evaluator import JAHSEvaluator
 from piconas.models import build_model
 from piconas.trainer import build_trainer
 from piconas.utils.config import Config
-
+import jahs_trainer # noqa: F401
 
 def get_args():
     parser = argparse.ArgumentParser('train macro benchmark')
     parser.add_argument(
         '--config',
         type=str,
-        default='configs/spos/spos_cifar10.py',
+        default='configs/cifar10_cfg.py',
         required=False,
         help='user settings config',
     )
@@ -120,9 +120,6 @@ def main():
     else:
         device = torch.device('cpu')
 
-    # train_dataloader = build_dataloader(
-    #     type='train', dataset=cfg.dataset, config=cfg)
-
     val_dataloader = build_dataloader(
         type='val', dataset=cfg.dataset, config=cfg)
 
@@ -145,25 +142,6 @@ def main():
     # load checkpoint
     assert cfg.ckpt_path is not None
 
-    for k, v in model.state_dict().items():
-        print(k)
-
-    print('===' * 30)
-
-    state_dict = torch.load(cfg.ckpt_path)['state_dict']
-    treated_sd = dict()
-    for k, v in state_dict.items():
-        if 'conv_3x3' in k:
-            new_k = k.replace('conv_3x3', 'nor_conv_3x3')
-        elif 'conv_1x1' in k:
-            new_k = k.replace('conv_1x1', 'nor_conv_1x1')
-        else:
-            new_k = k
-        print(new_k)
-        treated_sd[new_k] = v
-
-    model.load_state_dict(treated_sd)
-
     model = model.to(device)
 
     trainer = build_trainer(
@@ -180,28 +158,15 @@ def main():
 
     start = time.time()
 
-    evaluator = NB201Evaluator(trainer, num_sample=1000)
+    evaluator = JAHSEvaluator(trainer, num_sample=10)
 
-    kt, pt, sp, rd_list, minn_at_ks, patks = \
+    kt, pt, sp = \
         evaluator.compute_rank_consistency(dataloader=val_dataloader,
                                            mutator=trainer.mutator)
 
     print('==' * 20)
     print('=>>> overall rank consistency')
     print(f'Kendall tau: {kt} Pearson coeff: {pt} Spearman: {sp}')
-    print('=>>> overall rank difference')
-    for i, rd in enumerate(rd_list):
-        print(f'RD_{20*i}%: {rd}')
-    print('=>>> BR@K and WR@K')
-    for k, minn, brk, maxn, wrk in minn_at_ks:
-        print(f'{k}_BR@K: {brk} {k}_WR@K: {wrk}')
-    print('=>>> KD@topK and KD@bottomK')
-    for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
-        print(f'{ratio}_KD@topk: {kd_at_topk} {ratio}_KD@bottomK: {kd_at_bk}')
-
-    print('=>>> P@topK and P@bottomK')
-    for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
-        print(f'{ratio}_P@topk: {p_at_topk} {ratio}_P@bottomK: {p_at_bk}')
     print('==' * 20)
 
     utils.time_record(start)

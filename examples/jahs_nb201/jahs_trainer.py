@@ -9,35 +9,33 @@ from mmcv.cnn import get_model_complexity_info
 
 import piconas.utils.utils as utils
 from piconas.core.losses import KLDivergence, PairwiseRankLoss
-from piconas.evaluator.nb201_evaluator import NB201Evaluator
-from piconas.models.nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
 from piconas.predictor.pruners.predictive import find_measures
 from piconas.trainer.base import BaseTrainer
 from piconas.trainer.registry import register_trainer
 from piconas.utils.utils import AvgrageMeter, accuracy
+from jahs_evaluator import JAHSEvaluator
 
 
 @register_trainer
 class JAHSTrainer(BaseTrainer):
-    """Trainer for Macro Benchmark.
+    """Trainer for JAHS Benchmark.
 
     Args:
-        model (nn.Module): _description_
-        dataloader (Dict): _description_
-        optimizer (_type_): _description_
-        criterion (_type_): _description_
-        scheduler (_type_): _description_
-        epochs (int): _description_
-        searching (bool, optional): _description_. Defaults to True.
-        num_choices (int, optional): _description_. Defaults to 4.
-        num_layers (int, optional): _description_. Defaults to 20.
-        device (torch.device, optional): _description_. Defaults to None.
+        model (nn.Module): model to be trained.
+        mutator (Mutator): mutator to mutate the model.
+        optimizer (Optimizer): optimizer for training.
+        criterion (Criterion): criterion for training.
+        scheduler (Scheduler): scheduler for training.
+        device (torch.device): device to put model on.
+        log_name (str): name of the logger.
+        searching (bool): whether in searching mode.
+        dataset (str): dataset name.
     """
 
     def __init__(
         self,
-        model: OneShotNASBench201Network,
+        model,
         mutator: OneShotMutator,
         optimizer=None,
         criterion=None,
@@ -69,8 +67,7 @@ class JAHSTrainer(BaseTrainer):
             self.mutator.prepare_from_supernet(model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(
-            num_sample=50, dataset=self.dataset)
+        self.evaluator = JAHSEvaluator(self, num_sample=20, dataset='cifar10')
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -83,23 +80,6 @@ class JAHSTrainer(BaseTrainer):
         #  => is_specific is False: normal mode
         self.is_specific = False
 
-        self.max_subnet = {
-            0: 'nor_conv_3x3',
-            1: 'nor_conv_3x3',
-            2: 'nor_conv_3x3',
-            3: 'nor_conv_3x3',
-            4: 'nor_conv_3x3',
-            5: 'nor_conv_3x3'
-        }
-
-        self.min_subnet = {
-            0: 'nor_conv_3x3',
-            1: 'skip_connect',
-            2: 'skip_connect',
-            3: 'skip_connect',
-            4: 'skip_connect',
-            5: 'skip_connect'
-        }
 
         # type from kwargs can be random, hamming, adaptive
         if 'type' in kwargs:
@@ -113,8 +93,6 @@ class JAHSTrainer(BaseTrainer):
 
         self.kl_loss = KLDivergence(loss_weight=1)
 
-    def _build_evaluator(self, num_sample=50, dataset='cifar10'):
-        return NB201Evaluator(self, num_sample, dataset)
 
     def sample_subnet_by_type(self, type: str = 'random') -> List[Dict]:
         """Return two subnets based on ``type``.
@@ -460,53 +438,13 @@ class JAHSTrainer(BaseTrainer):
         self.logger.info(
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
 
-    def metric_score(self, loader, subnet_dict: Dict = None):
-        # self.model.eval()
+    def metric_score(self, loader, subnet_dict: Dict = None, cfg: Dict = None):
+        from .nasbench201.cnn import TinyNetwork
+        # compute zero cost score 
+        gennoobj = self.evaluator.convert_subnet2genoobj(subnet_dict)
+        model = TinyNetwork(C=cfg['W'], N=cfg['N'], genotype=gennoobj)
+        return 1 
 
-        val_loss = 0.0
-        top1_vacc = AvgrageMeter()
-        top5_vacc = AvgrageMeter()
-
-        with torch.no_grad():
-            for step, batch_inputs in enumerate(loader):
-                # move to device
-                outputs, labels = self._predict(
-                    batch_inputs, subnet_dict=subnet_dict)
-
-                # compute loss
-                loss = self._compute_loss(outputs, labels)
-
-                # compute accuracy
-                n = labels.size(0)
-                top1, top5 = accuracy(outputs, labels, topk=(1, 5))
-                top1_vacc.update(top1.item(), n)
-                top5_vacc.update(top5.item(), n)
-
-                # accumulate loss
-                val_loss += loss.item()
-
-                # print every 50 iter
-                if step % 50 == 0:
-                    self.writer.add_scalar(
-                        'STEP_LOSS/valid_step_loss',
-                        loss.item(),
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-                    self.writer.add_scalar(
-                        'VAL_ACC/top1_val_acc',
-                        top1_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-                    self.writer.add_scalar(
-                        'VAL_ACC/top5_val_acc',
-                        top5_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-            # self.logger.info(
-            #     f'Val loss: {loss.item()}'
-            #     f'Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}')
-
-        return top1_vacc.avg
 
     def _init_flops(self):
         """generate flops."""
@@ -777,29 +715,3 @@ class JAHSTrainer(BaseTrainer):
         sum_loss.backward()
 
         return sum_loss, outputs
-
-    def _forward_sandwich(self, batch_inputs):
-        inputs, labels = batch_inputs
-        inputs = self._to_device(inputs, self.device)
-        labels = self._to_device(labels, self.device)
-
-        # execuate full-network
-        self.mutator.set_subnet(self.max_subnet)
-        teacher_output = self.model(inputs)
-        loss = self._compute_loss(teacher_output, labels)
-        loss.backward()
-
-        # execuate min-network
-        self.mutator.set_subnet(self.min_subnet)
-        student_output = self.model(inputs)
-        loss = self.kl_loss(student_output, teacher_output.detach())
-        loss.backward()
-
-        # random sample two subnet
-        for _ in range(2):
-            self.mutator.set_subnet(self.mutator.random_subnet)
-            student_output = self.model(inputs)
-            loss = self.kl_loss(student_output, teacher_output.detach())
-            loss.backward()
-
-        return loss, student_output

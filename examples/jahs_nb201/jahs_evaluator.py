@@ -27,10 +27,8 @@ class JAHSEvaluator(Evaluator):
 
     __known_metrics_in_jahs = ('FLOPS', 'latency', 'runtime', 'size_MB',
                                'test-acc', 'train-acc', 'valid-acc')
-
     __known_metrics_in_nb201 = ('train_losses', 'eval_losses', 'train_acc1es',
                                 'eval_acc1es', 'cost_info')
-
     __candidate_ops = ('skip_connect', 'none', 'nor_conv_1x1', 'nor_conv_3x3',
                        'avg_pool_3x3')
 
@@ -67,7 +65,7 @@ class JAHSEvaluator(Evaluator):
             for i in range(1, 7)
         }
 
-    def generate_genotype(self, subnet_dict: dict,
+    def convert_subnet2genostr(self, subnet_dict: dict,
                           mutator: Union[OneShotMutator, DiffMutator]) -> str:
         """subnet_dict represent the subnet dict of mutator."""
         # Please make sure that the mutator have been called the
@@ -75,7 +73,6 @@ class JAHSEvaluator(Evaluator):
         alias2group_id = mutator.alias2group_id
         genotype = ''
         for i, (k, v) in enumerate(subnet_dict.items()):
-            # v = 'nor_conv_3x3'
             alias_name = list(alias2group_id.keys())[k]
             rank = alias_name.split('_')[1][-1]  # 0 or 1 or 2
             genotype += '|'
@@ -83,15 +80,20 @@ class JAHSEvaluator(Evaluator):
             genotype += '|'
             if i in [0, 2]:
                 genotype += '+'
-        genotype = genotype.replace('||', '|')
-        return genotype
+        return genotype.replace('||', '|')
 
-    def generate_subnet(self, genotype: str):
+    def convert_genostr2subnet(self, genotype: str):
         """|avg_pool_3x3~0|+|nor_conv_1x1~0|skip_connect~1|+|nor_conv_1x1~0|skip_connect~1|skip_connect~2|"""
         assert genotype is not None
         genotype = genotype.replace('|+|', '|')
         geno_list = genotype.split('|')[1:-1]
         return {i: geno.split('~')[0] for i, geno in enumerate(geno_list)}
+    
+    def convert_subnet2genoobj(self, subnet_dict: dict):
+        genno_obj = []
+        for i, (k, v) in enumerate(subnet_dict.items()):
+            genno_obj.append((v, i))
+        return genno_obj
 
     def query_jahs_result(self, config: dict):
         """query result by config.
@@ -120,49 +122,21 @@ class JAHSEvaluator(Evaluator):
         """compute rank consistency of different types of indicators."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
-        flops_indicator_list: List[float] = []
-        # for cpr
-        subtract_true_list: List[float] = []
-        subtract_indicator_list: List[float] = []
 
         self.trainer.logger.info('Begin to compute rank consistency...')
         num_sample = 50 if self.num_sample is None else self.num_sample
 
-        for _ in range(num_sample):
-            # sample random subnet by mutator
-            random_subnet_dict_ = mutator.random_subnet
-
-            random_subnet_dict = {
-                k: v.rstrip('_')
-                for k, v in random_subnet_dict_.items()
-            }
-            # get true indictor by query nb201 api
-            genotype = self.generate_genotype(random_subnet_dict, mutator)
-            results = self.query_jahs_result(genotype)  # type is eval_acc1es
+        for _ in range(num_sample):          
+            cfg = self.jahs_api.sample_config()
+            results = self.query_jahs_result(cfg)  # type is eval_acc1es
             true_indicator_list.append(results)
 
             # get score based on supernet
-            score = self.trainer.metric_score(dataloader, random_subnet_dict)
+            subnet_dict = self.convert_cfg2subnt(cfg)
+            score = self.trainer.metric_score(dataloader, subnet_dict, cfg)
             generated_indicator_list.append(score)
 
-            # get flops
-            flops_result = self.query_jahs_result(genotype, cost_key='flops')
-            flops_indicator_list.append(flops_result)
-
-            # sample another subnet pair for cpr
-            random_subnet_dict2 = self.trainer.mutator.random_subnet
-            self.trainer.mutator.set_subnet(random_subnet_dict2)
-            genotype = self.generate_genotype(random_subnet_dict,
-                                              self.trainer.mutator)
-            results2 = self.query_jahs_result(genotype)  # type is eval_acc1es
-            subtract_true_list.append(results - results2)
-
-            score2 = self.trainer.metric_score(dataloader, random_subnet_dict)
-            subtract_indicator_list.append(score - score2)
-
-        return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 flops_indicator_list, subtract_true_list,
-                                 subtract_indicator_list)
+        return self.calc_results(true_indicator_list, generated_indicator_list)
 
     def compute_overall_rank_consistency(self, dataloader) -> List:
         """compute rank consistency of all search space."""
@@ -267,51 +241,9 @@ class JAHSEvaluator(Evaluator):
 
     def calc_results(self,
                      true_indicator_list,
-                     generated_indicator_list,
-                     flops_indicator_list=None,
-                     subtract_true_list=None,
-                     subtract_indicator_list=None):
+                     generated_indicator_list):
 
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)
-        minn_at_ks = minmax_n_at_k(true_indicator_list,
-                                   generated_indicator_list)
-        patks = p_at_tb_k(true_indicator_list, generated_indicator_list)
-
-        cpr = -1
-        if subtract_indicator_list is not None:
-            cpr = concordant_pair_ratio(true_indicator_list,
-                                        generated_indicator_list)
-
-        if flops_indicator_list is not None:
-            # calculate rank difference by range.
-
-            # compute rank diff in 5 section with different flops range.
-            sorted_idx_by_flops = np.array(flops_indicator_list).argsort()
-
-            # compute splited index by flops
-            range_length = len(sorted_idx_by_flops) // 5
-            splited_idx_by_flops = [
-                sorted_idx_by_flops[i * range_length:(i + 1) * range_length]
-                for i in range(
-                    int(len(sorted_idx_by_flops) / range_length) + 1)
-                if (sorted_idx_by_flops[i * range_length:(i + 1) *
-                                        range_length]).any()
-            ]
-
-            true_indicator_list = np.array(true_indicator_list)
-            generated_indicator_list = np.array(generated_indicator_list)
-
-            rd_list = []
-            for splited_idx_by_flop in splited_idx_by_flops:
-                current_idx = np.array(splited_idx_by_flop)
-                tmp_rd = rank_difference(true_indicator_list[current_idx],
-                                         generated_indicator_list[current_idx])
-                rd_list.append(tmp_rd)
-
-        print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}, rank diff: {rd_list}, cpr: {cpr}."
-        )
-
-        return kt, ps, sp, rd_list, minn_at_ks, patks, cpr
+        return [kt, ps, sp]

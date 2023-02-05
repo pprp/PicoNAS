@@ -359,6 +359,7 @@ class InferCell(nn.Module):
         affine (bool): whether to use affine in batch norm.
         track_running_stats (bool): whether to use
             track_running_stats in batch norm.
+    
     """
 
     def __init__(self,
@@ -437,6 +438,7 @@ class TinyNetwork(nn.Module):
 
     def __init__(self, C, N, genotype, num_classes=10, activation=nn.ReLU):
         super(TinyNetwork, self).__init__()
+        # constraints the search space
         assert C in self.__C_WIDTH_MULTIPLIER
         assert N in self.__N_DEPTH_MULTIPLIER
         assert activation in {nn.ReLU, nn.Mish, nn.Hardswish}
