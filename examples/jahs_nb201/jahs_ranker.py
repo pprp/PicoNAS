@@ -18,7 +18,7 @@ def get_args():
     parser.add_argument(
         '--config',
         type=str,
-        default='configs/cifar10_cfg.py',
+        default='./configs/spos/spos_cifar10.py',
         required=False,
         help='user settings config',
     )

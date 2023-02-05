@@ -42,7 +42,8 @@ class JAHSEvaluator(Evaluator):
         super().__init__(trainer=trainer, dataset=dataset)
         self.trainer = trainer
         self.num_sample = num_sample
-        self.type = type
+        self.nb201_type = nb201_type 
+        self.jahs_type = jahs_type
         self.search_space = 'nasbench201'
         self.dataset = dataset
 
@@ -56,7 +57,7 @@ class JAHSEvaluator(Evaluator):
 
         self.nb201_api = API(
             './data/benchmark/NAS-Bench-201-v1_0-e61699.pth', verbose=False)
-        self.jahs_api = jahs_bench.Benchmark(task='cifar10', download=False)
+        self.jahs_api = jahs_bench.Benchmark(task='cifar10', save_dir="./data/", download=False)
 
     def convert_cfg2subnt(self, cfg: dict) -> dict:
         """ Convert the cfg to the subnet dict of mutator."""
@@ -105,15 +106,15 @@ class JAHSEvaluator(Evaluator):
         'test-acc': 76.1904296875,
         'train-acc': 75.95040893554688}}
         """
-        results = self.api(config, nepochs=200)
-        return results[200][self.type]
+        results = self.jahs_api(config, nepochs=200)
+        return results[200][self.jahs_type]
 
     def query_nb201_result(self, genotype: str, cost_key: str = 'flops'):
         """query the indictor by genotype."""
         dataset = self.trainer.dataset
-        index = self.api.query_index_by_arch(genotype)
+        index = self.nb201_api.query_index_by_arch(genotype)
         # TODO
-        xinfo = self.api.get_more_info(index, 'cifar10-valid', hp='200')
+        xinfo = self.nb201_api.get_more_info(index, 'cifar10-valid', hp='200')
         # TODO
         return xinfo['valid-accuracy']
 
@@ -137,35 +138,6 @@ class JAHSEvaluator(Evaluator):
             generated_indicator_list.append(score)
 
         return self.calc_results(true_indicator_list, generated_indicator_list)
-
-    def compute_overall_rank_consistency(self, dataloader) -> List:
-        """compute rank consistency of all search space."""
-        true_indicator_list: List[float] = []
-        generated_indicator_list: List[float] = []
-        flops_indicator_list: List[float] = []
-
-        self.trainer.logger.info('Begin to compute rank consistency...')
-
-        for genotype in list(self.api.keys()):
-            if 'none' in genotype:
-                continue
-
-            subnet_dict = self.generate_subnet(genotype)
-
-            # get true indictor by query nb201 api
-            results = self.query_jahs_result(genotype)  # type is eval_acc1es
-            true_indicator_list.append(results)
-
-            # get score based on supernet
-            results = self.trainer.metric_score(dataloader, subnet_dict)
-            generated_indicator_list.append(results)
-
-            # get flops
-            flops_result = self.query_jahs_result(genotype, cost_key='flops')
-            flops_indicator_list.append(flops_result)
-
-        return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 flops_indicator_list)
 
     def compute_rank_by_predictive(self,
                                    dataloader=None,
@@ -212,11 +184,11 @@ class JAHSEvaluator(Evaluator):
             generated_indicator_list.append(score)
 
             # get score based on flops
-            tmp_type = self.type
-            self.type = 'cost_info'
+            tmp_type = self.nb201_type
+            self.nb201_type = 'cost_info'
             results = self.query_jahs_result(genotype, cost_key='flops')
             flops_indicator_list.append(results)
-            self.type = tmp_type
+            self.nb201_type = tmp_type
 
             # add another pair for cpr
             random_subnet_dict2 = self.trainer.mutator.random_subnet
