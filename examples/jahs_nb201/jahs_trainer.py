@@ -15,6 +15,7 @@ from piconas.trainer.base import BaseTrainer
 from piconas.trainer.registry import register_trainer
 from piconas.utils.utils import AvgrageMeter, accuracy
 from jahs_evaluator import JAHSEvaluator
+from piconas.predictor.pruners.predictive import find_measures
 
 
 @register_trainer
@@ -60,7 +61,7 @@ class JAHSTrainer(BaseTrainer):
 
         # init flops
         self._init_flops()
-
+        self.num_classes = 10
         if self.mutator is None:
             # Note: use alias to build search group
             self.mutator = OneShotMutator(with_alias=True)
@@ -444,7 +445,21 @@ class JAHSTrainer(BaseTrainer):
         genostr = self.evaluator.convert_subnet2genostr(subnet_dict, self.mutator)
         gennoobj = self.evaluator.convert_genostr2genoobj(genostr)
         model = TinyNetwork(C=cfg['W'], N=cfg['N'], genotype=gennoobj)
-        return 1 
+
+        dataload_info = ['random', 3, self.num_classes]
+        measure_name = ['synflow']
+
+        # get predict indicator by predictive.
+        score = find_measures(
+            model,
+            loader,
+            dataload_info=dataload_info,
+            measure_names=measure_name,
+            loss_fn=F.cross_entropy,
+            device=self.device)
+
+        del model
+        return score
 
 
     def _init_flops(self):

@@ -93,8 +93,7 @@ class JAHSEvaluator(Evaluator):
     def convert_genostr2genoobj(self, genotype: str):
         from examples.jahs_nb201.nasbench201.genos import Structure
         structure = Structure.str2structure(genotype)
-        import pdb; pdb.set_trace()
-        return structure
+        return structure.tolist(remove_str="")[0]
 
 
     def query_jahs_result(self, config: dict):

@@ -368,7 +368,8 @@ class InferCell(nn.Module):
                  C_out,
                  stride,
                  affine=True,
-                 track_running_stats=True):
+                 track_running_stats=True, 
+                 activation=nn.ReLU):
         super(InferCell, self).__init__()
 
         self.layers = nn.ModuleList()
@@ -379,14 +380,13 @@ class InferCell(nn.Module):
             node_info = genotype[i - 1]
             cur_index = []
             cur_innod = []
-            import pdb; pdb.set_trace()
             for op_name, op_in in node_info:
                 if op_in == 0:
                     layer = OPS[op_name](C_in, C_out, stride, affine,
-                                         track_running_stats)
+                                         track_running_stats, activation)
                 else:
                     layer = OPS[op_name](C_out, C_out, 1, affine,
-                                         track_running_stats)
+                                         track_running_stats, activation)
                 cur_index.append(len(self.layers))
                 cur_innod.append(op_in)
                 self.layers.append(layer)
@@ -464,7 +464,7 @@ class TinyNetwork(nn.Module):
         for C_curr, reduction in zip(layer_channels, layer_reductions):
             cell = (
                 ResNetBasicblock(C_prev, C_curr, 2, True, activation)
-                if reduction else InferCell(genotype, C_prev, C_curr, 1))
+                if reduction else InferCell(genotype, C_prev, C_curr, 1, activation))
             self.cells.append(cell)
             C_prev = cell.out_dim
         self._Layer = len(self.cells)
