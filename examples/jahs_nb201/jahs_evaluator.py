@@ -52,11 +52,11 @@ class JAHSEvaluator(Evaluator):
 
         assert jahs_type in self.__known_metrics_in_jahs, \
             f'Not support type {jahs_type}.'
-        assert nb201_type in self.__known_metrics_in_nb201, \
-            f'Not support type {nb201_type}.'
+        # assert nb201_type in self.__known_metrics_in_nb201, \
+        #     f'Not support type {nb201_type}.'
 
-        self.nb201_api = API(
-            './data/benchmark/NAS-Bench-201-v1_0-e61699.pth', verbose=False)
+        # self.nb201_api = API(
+        #     './data/benchmark/NAS-Bench-201-v1_0-e61699.pth', verbose=False)
         self.jahs_api = jahs_bench.Benchmark(task='cifar10', save_dir="./data/", download=False)
 
     def convert_cfg2subnt(self, cfg: dict) -> dict:
@@ -90,11 +90,12 @@ class JAHSEvaluator(Evaluator):
         geno_list = genotype.split('|')[1:-1]
         return {i: geno.split('~')[0] for i, geno in enumerate(geno_list)}
     
-    def convert_subnet2genoobj(self, subnet_dict: dict):
-        genno_obj = []
-        for i, (k, v) in enumerate(subnet_dict.items()):
-            genno_obj.append((v, i))
-        return genno_obj
+    def convert_genostr2genoobj(self, genotype: str):
+        from examples.jahs_nb201.nasbench201.genos import Structure
+        structure = Structure.str2structure(genotype)
+        import pdb; pdb.set_trace()
+        return structure
+
 
     def query_jahs_result(self, config: dict):
         """query result by config.
@@ -109,14 +110,14 @@ class JAHSEvaluator(Evaluator):
         results = self.jahs_api(config, nepochs=200)
         return results[200][self.jahs_type]
 
-    def query_nb201_result(self, genotype: str, cost_key: str = 'flops'):
-        """query the indictor by genotype."""
-        dataset = self.trainer.dataset
-        index = self.nb201_api.query_index_by_arch(genotype)
-        # TODO
-        xinfo = self.nb201_api.get_more_info(index, 'cifar10-valid', hp='200')
-        # TODO
-        return xinfo['valid-accuracy']
+    # def query_nb201_result(self, genotype: str, cost_key: str = 'flops'):
+    #     """query the indictor by genotype."""
+    #     dataset = self.trainer.dataset
+    #     index = self.nb201_api.query_index_by_arch(genotype)
+    #     # TODO
+    #     xinfo = self.nb201_api.get_more_info(index, 'cifar10-valid', hp='200')
+    #     # TODO
+    #     return xinfo['valid-accuracy']
 
     def compute_rank_consistency(self, dataloader,
                                  mutator: OneShotMutator) -> List:

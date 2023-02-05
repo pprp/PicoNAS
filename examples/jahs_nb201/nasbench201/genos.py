@@ -256,7 +256,7 @@ AllIdentity_CODE = Structure([
     (('skip_connect', 0), ('skip_connect', 1)),  # node-2
     (('skip_connect', 0), ('skip_connect', 1), ('skip_connect', 2)),
 ]  # node-3
-                             )
+)
 
 architectures = {
     'resnet': ResNet_CODE,

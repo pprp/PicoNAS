@@ -38,7 +38,7 @@ def get_args():
     parser.add_argument(
         '--trainer_name',
         type=str,
-        default='NB201Trainer',
+        default='JAHSTrainer',
         help='name of trainer')
     parser.add_argument(
         '--log_name',

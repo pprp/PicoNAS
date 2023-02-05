@@ -439,9 +439,10 @@ class JAHSTrainer(BaseTrainer):
             f"""End of training. Total time: {round(total_time, 5)} seconds""")
 
     def metric_score(self, loader, subnet_dict: Dict = None, cfg: Dict = None):
-        from .nasbench201.cnn import TinyNetwork
+        from examples.jahs_nb201.nasbench201.cnn import TinyNetwork
         # compute zero cost score 
-        gennoobj = self.evaluator.convert_subnet2genoobj(subnet_dict)
+        genostr = self.evaluator.convert_subnet2genostr(subnet_dict, self.mutator)
+        gennoobj = self.evaluator.convert_genostr2genoobj(genostr)
         model = TinyNetwork(C=cfg['W'], N=cfg['N'], genotype=gennoobj)
         return 1 
 
