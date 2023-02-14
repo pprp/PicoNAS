@@ -11,7 +11,7 @@ import piconas.utils.utils as utils
 from piconas.core.losses import KLDivergence, PairwiseRankLoss
 from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models.nasbench201 import OneShotNASBench201Network
-from piconas.models.registry import register_trainer
+from piconas.trainer.registry import register_trainer
 from piconas.nas.mutators import OneShotMutator
 from piconas.predictor.pruners.measures.gd_nas import compute_gdnas_score
 from piconas.predictor.pruners.predictive import find_measures

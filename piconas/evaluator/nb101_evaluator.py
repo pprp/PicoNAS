@@ -9,18 +9,18 @@ from piconas.evaluator.base import Evaluator
 from piconas.predictor.pruners.predictive import find_measures
 from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 
-nasbench_path = '/data/home/scv6681/run/github/nasbench/nasbench_only108.tfrecord'
-nb = api.NASBench(nasbench_path)
+# nasbench_path = '/data/home/scv6681/run/github/nasbench/nasbench_only108.tfrecord'
+# nb = api.NASBench(nasbench_path)
 
-# net_hash = nb.hash_iterator()
-# you can get hashes using nasbench.hash_iterator()
-m = nb.get_metrics_from_hash('fe4395df38d94c4fafb973a8b04bbd65')
-ops = m[0]['module_operations']
-adjacency = m[0]['module_adjacency']
+# # net_hash = nb.hash_iterator()
+# # you can get hashes using nasbench.hash_iterator()
+# m = nb.get_metrics_from_hash('fe4395df38d94c4fafb973a8b04bbd65')
+# ops = m[0]['module_operations']
+# adjacency = m[0]['module_adjacency']
 
-net = NBNetwork((adjacency, ops))
+# net = NBNetwork((adjacency, ops))
 
-print(net)
+# print(net)
 
 s50_0 = [
     '9bf6f79e80397de4f50e1ece2a89a26a', '0aa07f2ad9b17b4382ffb0071126a0ab',
@@ -134,15 +134,15 @@ class NB101Evaluator(Evaluator):
         if dataset == 'cifar10':
             self.num_classes = 10
 
-        self.nb101 = api.NASBench('./data/benchmark/nasbench_only108.tfrecord')
+        self.nb101_api = api.NASBench('/data/home/scv6681/run/github/nasbench/nasbench_only108.tfrecord')
 
     def query_nb101_result(self, _hash):
         """query the indictor by hash."""
-        m = nb.get_metrics_from_hash(_hash)
+        m = self.nb101_api.get_metrics_from_hash(_hash)
         return m[1][108][0][self.NB101_type]
 
-    def get_nb101_model(_hash):
-        m = nb.get_metrics_from_hash(_hash)
+    def get_nb101_model(self, _hash):
+        m = self.nb101_api.get_metrics_from_hash(_hash)
         ops = m[0]['module_operations']
         adjacency = m[0]['module_adjacency']
         return NBNetwork((adjacency, ops))

@@ -8,7 +8,8 @@ import torch
 import piconas.utils.utils as utils
 from piconas.core import build_criterion, build_optimizer, build_scheduler
 from piconas.datasets.build import build_dataloader
-from piconas.evaluator.nb101_evaluator import NB101Evaluator, NB201Evaluator
+from piconas.evaluator.nb101_evaluator import NB101Evaluator
+from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models import build_model
 from piconas.trainer import build_trainer
 from piconas.utils.config import Config
@@ -166,6 +167,9 @@ def main():
 
     start = time.time()
 
+    print('==' * 20)
+    print('Build NAS Evaluator....')
+
     if cfg.evaluator == 'NB101Evaluator':
         evaluator = NB101Evaluator(trainer)
     elif cfg.evaluator == 'NB201Evaluator':
@@ -173,6 +177,7 @@ def main():
     else:
         raise 'Not support evaluator, only support NB101Evaluator and NB201Evaluator'
 
+    print('Begin to compute rank by predictive - gdnas')
 
     kt, pt, sp = \
         evaluator.compute_rank_by_predictive(dataloader=val_dataloader,

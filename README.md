@@ -39,6 +39,7 @@ Intall from source code
 git clone https://github.com/pprp/PicoNAS.git
 cd PicoNAS
 pip install -r requirements.txt
+# install piconas
 pip install -e .
 ```
 
