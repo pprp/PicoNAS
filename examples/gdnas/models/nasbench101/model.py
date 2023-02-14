@@ -8,18 +8,19 @@ projected instead.
 """
 
 from __future__ import absolute_import, division, print_function
-
 import math
 
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.nn.init import _calculate_fan_in_and_fan_out
+
 from .base_ops import *
 from .model_spec import ModelSpec
-from torch.nn.init import _calculate_fan_in_and_fan_out
 
 
 class Network(nn.Module):
+
     def __init__(self,
                  spec,
                  num_labels=100,
@@ -52,13 +53,8 @@ class Network(nn.Module):
 
         # initial stem convolution
         out_channels = stem_out_channels
-        stem_conv = ConvBnRelu(in_channels,
-                               out_channels,
-                               3,
-                               1,
-                               1,
-                               momentum=momentum,
-                               eps=eps)
+        stem_conv = ConvBnRelu(
+            in_channels, out_channels, 3, 1, 1, momentum=momentum, eps=eps)
         self.layers.append(stem_conv)
 
         # stacked cells
@@ -72,11 +68,12 @@ class Network(nn.Module):
                 out_channels *= 2
 
             for module_num in range(num_modules_per_stack):
-                cell = Cell(spec,
-                            in_channels,
-                            out_channels,
-                            momentum=momentum,
-                            eps=eps)
+                cell = Cell(
+                    spec,
+                    in_channels,
+                    out_channels,
+                    momentum=momentum,
+                    eps=eps)
                 self.layers.append(cell)
                 in_channels = out_channels
 
@@ -96,7 +93,7 @@ class Network(nn.Module):
         out = self.classifier(out)
 
         if is_feat:
-            return feat_list, out 
+            return feat_list, out
         else:
             return out
 
@@ -111,24 +108,22 @@ class Network(nn.Module):
         logits = self.classifier(out)
         return features, logits
 
-
     def forward_before_global_avg_pool(self, x, is_feat=False, preact=False):
         # feat_list = []
         for _, layer in enumerate(self.layers):
             x = layer(x)
             # feat_list.append(x)
-        return x 
-
+        return x
 
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 if self.tf_like:
                     fan_in, _ = _calculate_fan_in_and_fan_out(m.weight)
-                    torch.nn.init.normal_(m.weight,
-                                          mean=0,
-                                          std=1.0 /
-                                          torch.sqrt(torch.tensor(fan_in)))
+                    torch.nn.init.normal_(
+                        m.weight,
+                        mean=0,
+                        std=1.0 / torch.sqrt(torch.tensor(fan_in)))
                 else:
                     n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                     m.weight.data.normal_(0, math.sqrt(2.0 / n))
@@ -154,6 +149,7 @@ class Cell(nn.Module):
     determined via equally splitting the channel count whenever there is a
     concatenation of Tensors.
     """
+
     def __init__(self,
                  spec,
                  in_channels,
@@ -185,10 +181,11 @@ class Cell(nn.Module):
         for t in range(1, self.num_vertices):
             if self.matrix[0, t]:
                 self.input_op.append(
-                    projection(in_channels,
-                               self.vertex_channels[t],
-                               momentum=momentum,
-                               eps=eps))
+                    projection(
+                        in_channels,
+                        self.vertex_channels[t],
+                        momentum=momentum,
+                        eps=eps))
             else:
                 self.input_op.append(Placeholder())
 
@@ -199,8 +196,8 @@ class Cell(nn.Module):
 
         out_concat = []
         # range(1, self.num_vertices - 1),
-        for t, (inmod, outmod) in enumerate(zip(self.input_op,
-                                                self.vertex_op)):
+        for t, (inmod,
+                outmod) in enumerate(zip(self.input_op, self.vertex_op)):
             if 0 < t < (self.num_vertices - 1):
 
                 fan_in = []
@@ -326,6 +323,7 @@ def compute_vertex_channels(in_channels, out_channels, matrix):
 
 
 class Placeholder(torch.nn.Module):
+
     def __init__(self):
         super().__init__()
         self.a = torch.nn.Parameter(torch.randn(()))

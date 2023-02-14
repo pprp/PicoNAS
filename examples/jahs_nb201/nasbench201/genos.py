@@ -173,8 +173,9 @@ class Structure:
     @staticmethod
     def gen_all(search_space, num, return_ori):
         assert isinstance(
-            search_space, (list, tuple)
-        ), 'invalid class of search-space : {:}'.format(type(search_space))
+            search_space,
+            (list, tuple)), 'invalid class of search-space : {:}'.format(
+                type(search_space))
         assert (
             num >= 2
         ), 'There should be at least two nodes in a neural cell instead of {:}'.format(
@@ -256,7 +257,7 @@ AllIdentity_CODE = Structure([
     (('skip_connect', 0), ('skip_connect', 1)),  # node-2
     (('skip_connect', 0), ('skip_connect', 1), ('skip_connect', 2)),
 ]  # node-3
-)
+                             )
 
 architectures = {
     'resnet': ResNet_CODE,

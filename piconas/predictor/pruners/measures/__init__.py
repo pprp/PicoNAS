@@ -55,6 +55,7 @@ def calc_measure(name, net, device, *args, **kwargs):
 def load_all():
     from . import epe_nas  # noqa: F401
     from . import fisher  # noqa: F401
+    from . import gd_nas  # noqa: F401
     from . import grad_norm  # noqa: F401
     from . import grasp  # noqa: F401
     from . import jacov  # noqa: F401
@@ -65,7 +66,6 @@ def load_all():
     from . import synflow  # noqa: F401
     from . import te_nas  # noqa: F401
     from . import zen  # noqa: F401
-    from . import gd_nas  # noqa: F401 
 
 
 load_all()

@@ -17,7 +17,6 @@ avoid creating any TensorFlow models (this is done inside model_builder.py).
 """
 
 from __future__ import absolute_import, division, print_function
-
 import copy
 
 import numpy as np
@@ -32,6 +31,7 @@ except ImportError:
 
 class ModelSpec(object):
     """Model specification given adjacency matrix and labeling."""
+
     def __init__(self, matrix, ops, data_format='channels_last'):
         """Initialize the module spec.
     Args:

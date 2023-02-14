@@ -359,7 +359,7 @@ class InferCell(nn.Module):
         affine (bool): whether to use affine in batch norm.
         track_running_stats (bool): whether to use
             track_running_stats in batch norm.
-    
+
     """
 
     def __init__(self,
@@ -368,7 +368,7 @@ class InferCell(nn.Module):
                  C_out,
                  stride,
                  affine=True,
-                 track_running_stats=True, 
+                 track_running_stats=True,
                  activation=nn.ReLU):
         super(InferCell, self).__init__()
 
@@ -463,8 +463,9 @@ class TinyNetwork(nn.Module):
         self.cells = nn.ModuleList()
         for C_curr, reduction in zip(layer_channels, layer_reductions):
             cell = (
-                ResNetBasicblock(C_prev, C_curr, 2, True, activation)
-                if reduction else InferCell(genotype, C_prev, C_curr, 1, activation))
+                ResNetBasicblock(C_prev, C_curr, 2, True,
+                                 activation) if reduction else InferCell(
+                                     genotype, C_prev, C_curr, 1, activation))
             self.cells.append(cell)
             C_prev = cell.out_dim
         self._Layer = len(self.cells)

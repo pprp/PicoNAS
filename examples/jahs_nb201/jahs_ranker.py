@@ -2,16 +2,17 @@ import argparse
 import os
 import time
 
+import jahs_trainer  # noqa: F401
 import torch
+from jahs_evaluator import JAHSEvaluator
 
 import piconas.utils.utils as utils
 from piconas.core import build_criterion, build_optimizer, build_scheduler
 from piconas.datasets.build import build_dataloader
-from jahs_evaluator import JAHSEvaluator
 from piconas.models import build_model
 from piconas.trainer import build_trainer
 from piconas.utils.config import Config
-import jahs_trainer # noqa: F401
+
 
 def get_args():
     parser = argparse.ArgumentParser('train macro benchmark')

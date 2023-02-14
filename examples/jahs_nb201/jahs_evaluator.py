@@ -42,7 +42,7 @@ class JAHSEvaluator(Evaluator):
         super().__init__(trainer=trainer, dataset=dataset)
         self.trainer = trainer
         self.num_sample = num_sample
-        self.nb201_type = nb201_type 
+        self.nb201_type = nb201_type
         self.jahs_type = jahs_type
         self.search_space = 'nasbench201'
         self.dataset = dataset
@@ -57,7 +57,8 @@ class JAHSEvaluator(Evaluator):
 
         # self.nb201_api = API(
         #     './data/benchmark/NAS-Bench-201-v1_0-e61699.pth', verbose=False)
-        self.jahs_api = jahs_bench.Benchmark(task='cifar10', save_dir="./data/", download=False)
+        self.jahs_api = jahs_bench.Benchmark(
+            task='cifar10', save_dir='./data/', download=False)
 
     def convert_cfg2subnt(self, cfg: dict) -> dict:
         """ Convert the cfg to the subnet dict of mutator."""
@@ -66,8 +67,9 @@ class JAHSEvaluator(Evaluator):
             for i in range(1, 7)
         }
 
-    def convert_subnet2genostr(self, subnet_dict: dict,
-                          mutator: Union[OneShotMutator, DiffMutator]) -> str:
+    def convert_subnet2genostr(
+            self, subnet_dict: dict, mutator: Union[OneShotMutator,
+                                                    DiffMutator]) -> str:
         """subnet_dict represent the subnet dict of mutator."""
         # Please make sure that the mutator have been called the
         # `prepare_from_supernet` function.
@@ -89,12 +91,11 @@ class JAHSEvaluator(Evaluator):
         genotype = genotype.replace('|+|', '|')
         geno_list = genotype.split('|')[1:-1]
         return {i: geno.split('~')[0] for i, geno in enumerate(geno_list)}
-    
+
     def convert_genostr2genoobj(self, genotype: str):
         from examples.jahs_nb201.nasbench201.genos import Structure
         structure = Structure.str2structure(genotype)
-        return structure.tolist(remove_str="")[0]
-
+        return structure.tolist(remove_str='')[0]
 
     def query_jahs_result(self, config: dict):
         """query result by config.
@@ -127,7 +128,7 @@ class JAHSEvaluator(Evaluator):
         self.trainer.logger.info('Begin to compute rank consistency...')
         num_sample = 50 if self.num_sample is None else self.num_sample
 
-        for _ in range(num_sample):          
+        for _ in range(num_sample):
             cfg = self.jahs_api.sample_config()
             results = self.query_jahs_result(cfg)  # type is eval_acc1es
             true_indicator_list.append(results)
@@ -211,9 +212,7 @@ class JAHSEvaluator(Evaluator):
                                  flops_indicator_list, subtract_true_list,
                                  subtract_indicator_list)
 
-    def calc_results(self,
-                     true_indicator_list,
-                     generated_indicator_list):
+    def calc_results(self, true_indicator_list, generated_indicator_list):
 
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)

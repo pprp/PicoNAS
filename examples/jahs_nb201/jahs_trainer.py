@@ -5,6 +5,7 @@ from typing import Dict, List
 import numpy as np
 import torch
 import torch.nn.functional as F
+from jahs_evaluator import JAHSEvaluator
 from mmcv.cnn import get_model_complexity_info
 
 import piconas.utils.utils as utils
@@ -14,8 +15,6 @@ from piconas.predictor.pruners.predictive import find_measures
 from piconas.trainer.base import BaseTrainer
 from piconas.trainer.registry import register_trainer
 from piconas.utils.utils import AvgrageMeter, accuracy
-from jahs_evaluator import JAHSEvaluator
-from piconas.predictor.pruners.predictive import find_measures
 
 
 @register_trainer
@@ -81,7 +80,6 @@ class JAHSTrainer(BaseTrainer):
         #  => is_specific is False: normal mode
         self.is_specific = False
 
-
         # type from kwargs can be random, hamming, adaptive
         if 'type' in kwargs:
             self.type = kwargs['type']
@@ -93,7 +91,6 @@ class JAHSTrainer(BaseTrainer):
         self.logger.info(f'Current type of nb201 trainer is: {self.type}.')
 
         self.kl_loss = KLDivergence(loss_weight=1)
-
 
     def sample_subnet_by_type(self, type: str = 'random') -> List[Dict]:
         """Return two subnets based on ``type``.
@@ -441,8 +438,10 @@ class JAHSTrainer(BaseTrainer):
 
     def metric_score(self, loader, subnet_dict: Dict = None, cfg: Dict = None):
         from examples.jahs_nb201.nasbench201.cnn import TinyNetwork
-        # compute zero cost score 
-        genostr = self.evaluator.convert_subnet2genostr(subnet_dict, self.mutator)
+
+        # compute zero cost score
+        genostr = self.evaluator.convert_subnet2genostr(
+            subnet_dict, self.mutator)
         gennoobj = self.evaluator.convert_genostr2genoobj(genostr)
         model = TinyNetwork(C=cfg['W'], N=cfg['N'], genotype=gennoobj)
 
@@ -460,7 +459,6 @@ class JAHSTrainer(BaseTrainer):
 
         del model
         return score
-
 
     def _init_flops(self):
         """generate flops."""

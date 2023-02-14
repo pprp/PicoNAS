@@ -1,10 +1,10 @@
+import random
+
 import nasbench
-from nasbench import api
-import random 
-
 from models.nasbench101.model import Network as NBNetwork
+from nasbench import api
 
-nasbench_path = '/data/home/scv6681/run/github/nasbench/nasbench_only108.tfrecord'
+nasbench_path = './data/benchmark/nasbench_only108.tfrecord'
 nb = api.NASBench(nasbench_path)
 # # hash_iterator
 

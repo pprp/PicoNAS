@@ -13,7 +13,6 @@
 # limitations under the License.
 """Utility functions used by generate_graph.py."""
 from __future__ import absolute_import, division, print_function
-
 import hashlib
 import itertools
 
@@ -41,6 +40,7 @@ def gen_is_edge_fn(bits):
   Returns:
     vectorized function that returns True when an edge is present.
   """
+
     def is_edge(x, y):
         """Is there an edge from x to y (0-indexed)?"""
         if x >= y:
@@ -129,9 +129,8 @@ def permute_graph(graph, label, permutation):
     forward_perm = zip(permutation, list(range(len(permutation))))
     inverse_perm = [x[1] for x in sorted(forward_perm)]
     edge_fn = lambda x, y: graph[inverse_perm[x], inverse_perm[y]] == 1
-    new_matrix = np.fromfunction(np.vectorize(edge_fn),
-                                 (len(label), len(label)),
-                                 dtype=np.int8)
+    new_matrix = np.fromfunction(
+        np.vectorize(edge_fn), (len(label), len(label)), dtype=np.int8)
     new_label = [label[inverse_perm[i]] for i in range(len(label))]
     return new_matrix, new_label
 
