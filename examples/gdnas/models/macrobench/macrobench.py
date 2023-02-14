@@ -3,9 +3,9 @@ from typing import List
 import torch.nn as nn
 from torch.nn import Sequential
 
+from piconas.models.registry import register_model
 from piconas.nas.mutables import OneShotOP
 from piconas.utils.misc import convert_arch2dict
-from piconas.models.registry import register_model
 
 
 class ConvBNReLU(nn.Sequential):

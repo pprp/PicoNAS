@@ -16,6 +16,11 @@ Size: ~499 MB, SHA256: 4c39c3936e36a85269881d659e44e61a245babcb72cb374eacacf75d0
 
 We thank the authors for providing the PyTorch vision of NASBench: https://github.com/romulus0914/NASBench-PyTorch
 
+```bash
+git clone https://github.com/romulus0914/NASBench-PyTorch
+cd NASBench-PyTorch
+```
+
 ## Usage
 
 Get the PyTorch architecture of a network like this:

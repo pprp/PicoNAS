@@ -1,6 +1,18 @@
+from typing import List, Union
+
 import nasbench
+import numpy as np
+import torch.nn.functional as F
 from nasbench import api
 from nasbench_pytorch.model import Network as NBNetwork
+from tqdm import tqdm
+
+from piconas.evaluator.base import Evaluator
+from piconas.nas.mutators import DiffMutator, OneShotMutator
+from piconas.predictor.pruners.predictive import find_measures
+from piconas.utils.rank_consistency import (concordant_pair_ratio, kendalltau,
+                                            minmax_n_at_k, p_at_tb_k, pearson,
+                                            rank_difference, spearman)
 
 nasbench_path = '/data/home/scv6681/run/github/nasbench/nasbench_only108.tfrecord'
 nb = api.NASBench(nasbench_path)
@@ -98,3 +110,85 @@ s50_2 = [
     '6ff09b9aa50010612e21c31e300a9cf1', '82b0b8ae4998f247d49cca416e0f40a7',
     'd0f67450c5372ef8c8e84eb4f36942ae', '3c3c6862f05fe0accb0af75b4daf0565'
 ]
+
+RANDOM_SAMPLED_HASHES = s50_0
+
+
+class NB101Evaluator(Evaluator):
+    """Evaluate the NB101 Benchmark
+
+    Args:
+        trainer (NB101Trainer): _description_
+        num_sample (int, optional): _description_. Defaults to None.
+        search_space (str, optional): _description_. Defaults to 'nasbench201'.
+        dataset (str, optional): _description_. Defaults to 'cifar10'.
+        type (str, optional): _description_. Defaults to 'eval_acc1es'.
+    """
+
+    def __init__(self,
+                 trainer,
+                 num_sample: int = None,
+                 dataset: str = 'cifar10',
+                 NB101_type: str = 'final_test_accuracy',
+                 **kwargs):
+        super().__init__(trainer=trainer, dataset=dataset)
+        self.trainer = trainer
+        self.num_sample = num_sample
+        self.NB101_type = NB101_type
+        self.search_space = 'nasbench201'
+        self.dataset = dataset
+
+        if dataset == 'cifar10':
+            self.num_classes = 10
+
+        self.nb101 = api.NASBench('./data/benchmark/nasbench_only108.tfrecord')
+
+    def query_nb101_result(self, _hash):
+        """query the indictor by hash."""
+        m = nb.get_metrics_from_hash(_hash)
+        return m[1][108][0][self.NB101_type]
+
+    def get_nb101_model(_hash):
+        m = nb.get_metrics_from_hash(_hash)
+        ops = m[0]['module_operations']
+        adjacency = m[0]['module_adjacency']
+        return NBNetwork((adjacency, ops))
+
+    def compute_rank_by_predictive(self,
+                                   dataloader=None,
+                                   measure_name: List = ['flops']) -> List:
+        """compute rank consistency by zero cost metric."""
+        true_indicator_list: List[float] = []
+        generated_indicator_list: List[float] = []
+
+        if dataloader is None:
+            from piconas.datasets import build_dataloader
+            dataloader = build_dataloader('cifar10', 'train')
+
+        for _hash in RANDOM_SAMPLED_HASHES:
+            # query the true indicator by hash.
+            results = self.query_nb101_result(_hash)
+            true_indicator_list.append(results)
+
+            # get the model by hash.
+            model = self.get_nb101_model(_hash)
+            dataload_info = ['random', 3, self.num_classes]
+
+            # get predict indicator by predictive.
+            score = find_measures(
+                model,
+                dataloader,
+                dataload_info=dataload_info,
+                measure_names=measure_name,
+                loss_fn=F.cross_entropy,
+                device=self.trainer.device)
+            generated_indicator_list.append(score)
+
+        return self.calc_results(true_indicator_list, generated_indicator_list)
+
+    def calc_results(self, true_indicator_list, generated_indicator_list):
+
+        kt = kendalltau(true_indicator_list, generated_indicator_list)
+        ps = pearson(true_indicator_list, generated_indicator_list)
+        sp = spearman(true_indicator_list, generated_indicator_list)
+        return [kt, ps, sp]
