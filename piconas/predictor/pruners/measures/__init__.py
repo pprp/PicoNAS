@@ -65,6 +65,7 @@ def load_all():
     from . import synflow  # noqa: F401
     from . import te_nas  # noqa: F401
     from . import zen  # noqa: F401
+    from . import gd_nas  # noqa: F401 
 
 
 load_all()
