@@ -1,18 +1,13 @@
-from typing import List, Union
+from typing import List
 
 import nasbench
-import numpy as np
 import torch.nn.functional as F
 from nasbench import api
 from nasbench_pytorch.model import Network as NBNetwork
-from tqdm import tqdm
 
 from piconas.evaluator.base import Evaluator
-from piconas.nas.mutators import DiffMutator, OneShotMutator
 from piconas.predictor.pruners.predictive import find_measures
-from piconas.utils.rank_consistency import (concordant_pair_ratio, kendalltau,
-                                            minmax_n_at_k, p_at_tb_k, pearson,
-                                            rank_difference, spearman)
+from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 
 nasbench_path = '/data/home/scv6681/run/github/nasbench/nasbench_only108.tfrecord'
 nb = api.NASBench(nasbench_path)
@@ -127,13 +122,11 @@ class NB101Evaluator(Evaluator):
 
     def __init__(self,
                  trainer,
-                 num_sample: int = None,
                  dataset: str = 'cifar10',
                  NB101_type: str = 'final_test_accuracy',
                  **kwargs):
         super().__init__(trainer=trainer, dataset=dataset)
         self.trainer = trainer
-        self.num_sample = num_sample
         self.NB101_type = NB101_type
         self.search_space = 'nasbench201'
         self.dataset = dataset

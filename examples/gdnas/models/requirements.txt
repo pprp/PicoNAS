@@ -1,2 +1,3 @@
-nasbench
+nasbench # https://github.com/gabikadlecova/nasbench
+nasbench-pytorch # https://github.com/romulus0914/NASBench-PyTorch
 nas-bench-201

@@ -26,7 +26,7 @@ class NB201Evaluator(Evaluator):
 
     def __init__(self,
                  trainer,
-                 num_sample: int = None,
+                 num_sample: int = 50,
                  dataset: str = 'cifar10',
                  type: str = 'eval_acc1es'):
         super().__init__(trainer=trainer, dataset=dataset)
@@ -183,10 +183,6 @@ class NB201Evaluator(Evaluator):
         """compute rank consistency by zero cost metric."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
-        flops_indicator_list: List[float] = []
-        # for cpr
-        subtract_true_list: List[float] = []
-        subtract_indicator_list: List[float] = []
 
         if dataloader is None:
             from piconas.datasets import build_dataloader
@@ -221,33 +217,8 @@ class NB201Evaluator(Evaluator):
                 device=self.trainer.device)
             generated_indicator_list.append(score)
 
-            # get score based on flops
-            tmp_type = self.type
-            self.type = 'cost_info'
-            results = self.query_result(genotype, cost_key='flops')
-            flops_indicator_list.append(results)
-            self.type = tmp_type
-
-            # add another pair for cpr
-            random_subnet_dict2 = self.trainer.mutator.random_subnet
-            self.trainer.mutator.set_subnet(random_subnet_dict2)
-            genotype = self.generate_genotype(random_subnet_dict,
-                                              self.trainer.mutator)
-            results2 = self.query_result(genotype)  # type is eval_acc1es
-            subtract_true_list.append(results - results2)
-
-            score2 = find_measures(
-                self.trainer.model,
-                dataloader,
-                dataload_info=dataload_info,
-                measure_names=measure_name,
-                loss_fn=F.cross_entropy,
-                device=self.trainer.device)
-            subtract_indicator_list.append(score - score2)
-
-        return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 flops_indicator_list, subtract_true_list,
-                                 subtract_indicator_list)
+        return self.calc_simple_results(true_indicator_list,
+                                        generated_indicator_list)
 
     def calc_results(self,
                      true_indicator_list,
@@ -299,3 +270,11 @@ class NB201Evaluator(Evaluator):
         )
 
         return kt, ps, sp, rd_list, minn_at_ks, patks, cpr
+
+    def calc_simple_results(self, true_indicator_list,
+                            generated_indicator_list):
+
+        kt = kendalltau(true_indicator_list, generated_indicator_list)
+        ps = pearson(true_indicator_list, generated_indicator_list)
+        sp = spearman(true_indicator_list, generated_indicator_list)
+        return kt, ps, sp

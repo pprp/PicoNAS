@@ -2,12 +2,13 @@ import argparse
 import os
 import time
 
-import gdnas_trainer  # noqa: F401
+import gdnas_trainer
 import torch
 
 import piconas.utils.utils as utils
 from piconas.core import build_criterion, build_optimizer, build_scheduler
 from piconas.datasets.build import build_dataloader
+from piconas.evaluator.nb101_evaluator import NB101Evaluator, NB201Evaluator
 from piconas.models import build_model
 from piconas.trainer import build_trainer
 from piconas.utils.config import Config
@@ -38,7 +39,7 @@ def get_args():
     parser.add_argument(
         '--trainer_name',
         type=str,
-        default='gdnasTrainer',
+        default='GDNASTrainer',
         help='name of trainer')
     parser.add_argument(
         '--log_name',
@@ -77,6 +78,13 @@ def get_args():
         type=int,
         default=1000,
         help='validate and save frequency')
+
+    parser.add_argument(
+        '--evaluator',
+        type=str,
+        default='NB201Evaluator',
+        help='evaluator for the model')
+
     # ******************************* dataset *******************************#
     parser.add_argument(
         '--dataset', type=str, default='cifar10', help='path to the dataset')
@@ -158,11 +166,17 @@ def main():
 
     start = time.time()
 
-    evaluator = gdnasEvaluator(trainer, num_sample=10)
+    if cfg.evaluator == 'NB101Evaluator':
+        evaluator = NB101Evaluator(trainer)
+    elif cfg.evaluator == 'NB201Evaluator':
+        evaluator = NB201Evaluator(trainer)
+    else:
+        raise 'Not support evaluator, only support NB101Evaluator and NB201Evaluator'
+
 
     kt, pt, sp = \
-        evaluator.compute_rank_consistency(dataloader=val_dataloader,
-                                           mutator=trainer.mutator)
+        evaluator.compute_rank_by_predictive(dataloader=val_dataloader,
+                                             measure_name=['gdnas'])
 
     print('==' * 20)
     print('=>>> overall rank consistency')
