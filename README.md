@@ -19,6 +19,8 @@ This repository support multiple NAS algorithms:
 - FairNAS
 - AutoSlim
 - AngleNAS
+- [RD-NAS](https://github.com/pprp/PicoNAS/tree/dev/examples/rdnas)
+- [MetaPool](https://github.com/pprp/PicoNAS/tree/dev/examples/meta_pool)
 
 This repository support multiple dataset:
 
