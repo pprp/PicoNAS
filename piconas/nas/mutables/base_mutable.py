@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Generic, List, Optional, TypeVar
 
-from piconas.nas.base_module import BaseModule 
+from piconas.nas.base_module import BaseModule
 
 CHOICE_TYPE = TypeVar('CHOICE_TYPE')
 

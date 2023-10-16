@@ -34,6 +34,9 @@ Requirements:
 
 - python>=3.7
 - pytorch>=1.9
+- nasbench
+
+Note that tensorflow 1.x only support Python<=3.7 to install nasbench.
 
 Intall from source code
 
@@ -97,3 +100,9 @@ If you find this repository useful in your research, please consider citing:
   journal = {GitHub repository}
 }
 ```
+
+## TODO List
+
+- [ ] update config system
+- [ ] update log system
+- [ ] update summarywriter

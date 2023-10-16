@@ -3,9 +3,9 @@ import copy
 from abc import ABC, abstractmethod
 from typing import Dict, Generic, List, Optional, Type, TypeVar
 
-from mmengine.model import BaseModule
 from torch.nn import Module
 
+from piconas.nas.base_module import BaseModule
 from ..mutables.base_mutable import BaseMutable
 
 

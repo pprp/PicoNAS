@@ -5,8 +5,7 @@ import pandas as pd
 import torch
 from sklearn import preprocessing
 
-BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'\
-      + '/' + 'nas_embedding_suite/embedding_datasets/'
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'
 NDS_DPATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets' \
     + '/' + 'nas_embedding_suite/NDS/nds_data/'
 

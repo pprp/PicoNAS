@@ -4,16 +4,21 @@ torchvision
 fvcore
 pytest
 # pytorch-msssim==0.2.1
-pandas==1.3.5
-tensorwatch==0.9.1
+pandas
+tensorwatch
 scikit-learn
 tqdm
 ConfigSpace
 einops
 timm
 # nasbench
-networkx==2.6.3
+networkx
 xgboost
 nasbench301
 tqdm
 nas-bench-201
+nasbench
+urllib3==1.26.6
+tornado
+tensorboard==1.15
+protobuf==3.20
