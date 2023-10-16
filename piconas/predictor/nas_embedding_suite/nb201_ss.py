@@ -14,7 +14,7 @@ from tqdm import tqdm
 from piconas.predictor.nas_embedding_suite.nb123.nas_bench_201.cell_201 import \
     Cell201
 
-BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
 
 
 class NASBench201:

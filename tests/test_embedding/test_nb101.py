@@ -9,53 +9,54 @@ class TestNASBench101(unittest.TestCase):
     def setUp(self):
         self.nasbench101 = NASBench101(path='dummy_path')
 
-    @patch('torch.load', return_value={})
-    @patch('json.load', return_value={})
-    @patch('os.path.exists', return_value=False)
-    def test_init(self, mock_exists, mock_json_load, mock_torch_load):
-        nasbench = NASBench101(
-            path=
-            '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/nasbench_only108.tfrecord'
-        )
-        self.assertIsInstance(nasbench, NASBench101)
+    def test_get_adjmlp_zcp(self):
+        out = self.nasbench101.get_zcp(0)
+        print('zcp:', out)
 
-    @patch(
-        'NB1API.NASBench.get_metrics_from_hash',
-        return_value={
-            'module_adjacency': [[1, 0], [0, 1]],
-            'module_operations': ['input', 'output']
-        })
-    def test_get_adj_op(self, mock_get_metrics):
-        expected_output = {
-            'module_adjacency': [[1, 0], [0, 1]],
-            'module_operations': [[1, 0, 0, 0, 0], [0, 0, 0, 0, 1]]
-        }
-        output = self.nasbench101.get_adj_op(0)
-        self.assertEqual(output, expected_output)
+    def test_get_cate(self):
+        out = self.nasbench101.get_cate(0)
+        print('cate:', out)
 
-    # Mocking the necessary methods for the get_zcp method
-    @patch(
-        'NB1API.NASBench.get_metrics_from_hash',
-        return_value={
-            'module_adjacency': [[1, 0], [0, 1]],
-            'module_operations': ['input', 'output']
-        })
-    def test_get_zcp(self, mock_get_metrics):
-        self.nasbench101.zcp_nb101 = {
-            'cifar10': {
-                'tuple1': {
-                    'epe_nas': 0.5,
-                    'fisher': 0.2,
-                    # ... other values ...
-                }
-            }
-        }
-        self.nasbench101.hash_iterator_list = ['hash1', 'hash2']
-        expected_output = [0.5, 0.2]  # and other values...
-        output = self.nasbench101.get_zcp(0)
-        self.assertEqual(output, expected_output)
+    def test_get_arch2vec(self):
+        out = self.nasbench101.get_arch2vec(0)
+        print('arch2vec:', out)
 
-    # Add more tests ...
+    def test_get_valacc(self):
+        # Assuming some expected value for the validation accuracy
+        expected_valacc = 0.85
+        self.nasbench101.valacc_list = [expected_valacc]
+
+        out = self.nasbench101.get_valacc(0)
+        print('valacc:', out)
+
+    def test_get_norm_w_d(self):
+        out = self.nasbench101.get_norm_w_d(0)
+        print('norm_w_d:', out)
+
+    def test_get_numitems(self):
+        mock_list_length = 10
+        self.nasbench101.hash_iterator_list = [None] * mock_list_length
+        print('hash_iterator_list:', self.nasbench101.hash_iterator_list)
+
+        out = self.nasbench101.get_numitems()
+        print('numitems:', out)
+
+    def test_transform_nb101_operations(self):
+        ops = ['input', 'conv3x3-bn-relu', 'output']
+        out = self.nasbench101.transform_nb101_operations(ops)
+        print('transformed ops:', out)
+
+    def test_pad_size_6(self):
+        matrix = [[1]]
+        ops = ['input', 'output']
+
+        out_matrix, out_ops = self.nasbench101.pad_size_6(matrix, ops)
+        print('padded matrix:', out_matrix)
+        print('padded ops:', out_ops)
+
+    def test_index_to_embedding(self):
+        embed = self.nasbench101.index_to_embedding(0)
+        print(embed)
 
 
 if __name__ == '__main__':

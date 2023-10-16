@@ -4,7 +4,7 @@ if __name__ == '__main__':
         print('=' * 53)
         print('=' * 20, 'NASBench101', '=' * 20)
         print('=' * 53)
-        from nb101_ss import NASBench101
+        from piconas.predictor.nas_embedding_suite.nb101_ss import NASBench101
         nb101 = NASBench101()
         print(nb101.index_to_embedding(0))
         print(nb101.index_to_embedding(52))
@@ -21,7 +21,7 @@ if __name__ == '__main__':
         print('=' * 53)
         print('=' * 20, 'NASBench201', '=' * 20)
         print('=' * 53)
-        from nb201_ss import NASBench201
+        from piconas.predictor.nas_embedding_suite.nb201_ss import NASBench201
         nb201 = NASBench201()
         print(nb201.index_to_embedding(0))
         print(nb201.index_to_embedding(1522))
@@ -29,7 +29,7 @@ if __name__ == '__main__':
         print('=' * 53)
         print('=' * 20, 'NASBench301', '=' * 20)
         print('=' * 53)
-        from nb301_ss import NASBench301
+        from piconas.predictor.nas_embedding_suite.nb301_ss import NASBench301
         nb301 = NASBench301(use_nb3_performance_model=False)
         print(nb301.index_to_embedding(0))
         print(nb301.index_to_embedding(1000000))
@@ -50,7 +50,8 @@ if __name__ == '__main__':
         print('=' * 53)
         print('=' * 20, 'TB101MICRO', '=' * 20)
         print('=' * 53)
-        from tb101_micro_ss import TransNASBench101Micro
+        from piconas.predictor.nas_embedding_suite.tb101_micro_ss import \
+            TransNASBench101Micro
         tb1mic = TransNASBench101Micro()
         print(tb1mic.index_to_embedding(0, task='normal'))
         print(tb1mic.index_to_embedding(52, task='normal'))
@@ -61,7 +62,7 @@ if __name__ == '__main__':
         print('=' * 53)
         print('=' * 20, 'NDS', '=' * 20)
         print('=' * 53)
-        from nds_ss import NDS
+        from piconas.predictor.nas_embedding_suite.nds_ss import NDS
         nds = NDS()
         print(nds.get_adj_op(0))
         print(nds.get_adj_op(10))

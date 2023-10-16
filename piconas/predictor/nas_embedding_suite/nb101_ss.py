@@ -12,8 +12,7 @@ from tqdm import tqdm
 from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.cell_101 import \
     Cell101
 
-BASE_PATH = '/data2/dongpeijie/share/bench'\
-      + '/' + 'predictor_embeddings/embedding_datasets/'
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
 
 
 class NASBench101:
@@ -42,7 +41,7 @@ class NASBench101:
         self.zcp_dict = zcp_dict
 
         if path is None:
-            path = ''
+            path = BASE_PATH
 
         self.load_files(path)
         self.normalize_and_process_zcp(normalize_zcp, log_synflow)
@@ -65,7 +64,6 @@ class NASBench101:
             np.array(valacc_list).reshape(-1, 1)).reshape(-1)
 
     # Key Functions Begin
-
     def get_adjmlp_zcp(self, idx):
         hash = self.hash_iterator_list[idx]
         metrics_hashed = self.nb1_api.get_metrics_from_hash(hash)
@@ -161,13 +159,17 @@ class NASBench101:
     def normalize_and_process_zcp(self, normalize_zcp, log_synflow):
         if normalize_zcp:
             print('Normalizing ZCP dict')
-            self.norm_zcp = pd.DataFrame({
-                k0: {
-                    k1: v1['score']
-                    for k1, v1 in v0.items() if v1.__class__() == {}
-                }
-                for k0, v0 in self.zcp_nb101['cifar10'].items()
-            }).T
+            try:
+                self.norm_zcp = pd.DataFrame({
+                    k0: {
+                        k1: v1['score']
+                        for k1, v1 in v0.items() if v1.__class__() == {}
+                    }
+                    for k0, v0 in self.zcp_nb101['cifar10'].items()
+                }).T
+            except KeyError:
+                import pdb
+                pdb.set_trace()
 
             # Add normalization code here
             self.norm_zcp['epe_nas'] = self.min_max_scaling(
@@ -191,12 +193,14 @@ class NASBench101:
                 self.norm_zcp['plain'])
             self.norm_zcp['snip'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['snip']))
+
             if log_synflow:
                 self.norm_zcp['synflow'] = self.min_max_scaling(
                     self.log_transform(self.norm_zcp['synflow']))
             else:
                 self.norm_zcp['synflow'] = self.min_max_scaling(
                     self.norm_zcp['synflow'])
+
             self.norm_zcp['zen'] = self.min_max_scaling(self.norm_zcp['zen'])
             self.norm_zcp['val_accuracy'] = self.min_max_scaling(
                 self.norm_zcp['val_accuracy'])
@@ -290,6 +294,8 @@ class NASBench101:
                 print(f'Probably {encoding} matrix mismatch: ', e)
                 output_dict[encoding] = None
 
-        output_dict['zcp'] = self.get_zcp(zcp_stringarg)
+        # output_dict['zcp'] = self.get_zcp(zcp_stringarg)
+        # bug fix
+        output_dict['zcp'] = self.get_zcp(idx)
         output_dict['valacc'] = self.get_valacc(idx)
         return output_dict

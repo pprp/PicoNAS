@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 from sklearn import preprocessing
 
-BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
 
 
 class TransNASBench101Micro:
