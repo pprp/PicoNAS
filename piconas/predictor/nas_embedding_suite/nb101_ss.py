@@ -203,28 +203,6 @@ class NASBench101:
 
             self.zcp_nb101 = {'cifar10': self.norm_zcp.T.to_dict()}
 
-    # def normalize_and_process_zcp(self, normalize_zcp, log_synflow):
-    #     if normalize_zcp:
-    #         print("Normalizing ZCP dict")
-    #         self.norm_zcp = pd.DataFrame({k0: {k1: v1["score"] for k1, v1 in v0.items() if v1.__class__() == {}}
-    #                                       for k0, v0 in self.zcp_nb101['cifar10'].items()}).T
-
-    #         if log_synflow:
-    #             # loglist = ['synflow', 'fisher', 'flops', 'grad_norm', ]
-    #             self.norm_zcp['synflow'] = np.log1p(self.norm_zcp['synflow'])
-    #             # self.norm_zcp['fisher'] = np.log1p(self.norm_zcp['fisher'])
-    #             # self.norm_zcp['flops'] = np.log1p(self.norm_zcp['flops'])
-    #             # self.norm_zcp
-    #         else:
-    #             print("WARNING: Not taking log of synflow values for normalization results in very small synflow inputs")
-
-    #         minfinite = self.norm_zcp['synflow'].replace(-np.inf, 1000).min()
-    #         self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(-np.inf, minfinite + 1e-2)
-
-    #         # Normalize each column of self.norm_zcp
-    #         min_max_scaler = preprocessing.MinMaxScaler()
-    #         self.norm_zcp = pd.DataFrame(min_max_scaler.fit_transform(self.norm_zcp), columns=self.norm_zcp.columns, index=self.norm_zcp.index)
-    #         self.zcp_nb101 = {'cifar10': self.norm_zcp.T.to_dict()}
 
     def create_hash_to_idx(self):
         self.hash_iterator_list = list(self.nb1_api.hash_iterator())
