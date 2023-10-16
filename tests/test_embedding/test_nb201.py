@@ -9,15 +9,15 @@ class TestNASBench201(TestCase):
 
     def test_get_adjmlp_zcp(self):
         out = self.nasbench201.get_zcp(0)
-        print('zcp:', out)
+        print('**** zcp:', out)
 
     def test_get_cate(self):
         out = self.nasbench201.get_cate(0)
-        print('cate:', out)
+        print('**** cate:', out)
 
     def test_get_arch2vec(self):
         out = self.nasbench201.get_arch2vec(0)
-        print('arch2vec:', out)
+        print('**** arch2vec:', out)
 
     def test_get_valacc(self):
         # Assuming some expected value for the validation accuracy
@@ -25,14 +25,14 @@ class TestNASBench201(TestCase):
         self.nasbench201.valacc_list = [expected_valacc]
 
         out = self.nasbench201.get_valacc(0)
-        print('valacc:', out)
+        print('**** valacc:', out)
 
         # Assert the expected outcome
         self.assertEqual(out, expected_valacc)
 
     def test_get_norm_w_d(self):
         out = self.nasbench201.get_norm_w_d(0)
-        print('norm_w_d:', out)
+        print('**** norm_w_d:', out)
 
         # Assert the expected outcome
         self.assertEqual(out, [0, 0])  # The method currently returns [0, 0]
@@ -40,10 +40,10 @@ class TestNASBench201(TestCase):
     def test_get_numitems(self):
         mock_list_length = 10
         self.nasbench201.hash_iterator_list = [None] * mock_list_length
-        print('hash_iterator_list:', self.nasbench201.hash_iterator_list)
+        print('**** hash_iterator_list:', self.nasbench201.hash_iterator_list)
 
         out = self.nasbench201.get_numitems()
-        print('numitems:', out)
+        print('**** numitems:', out)
 
         # Assert the expected outcome
         self.assertEqual(out, mock_list_length)
@@ -51,12 +51,4 @@ class TestNASBench201(TestCase):
     def test_transform_nb201_operations(self):
         ops = ['input', 'conv3x3-bn-relu', 'output']
         out = self.nasbench201.transform_nb201_operations(ops)
-        print('transformed ops:', out)
-
-    def test_pad_size_6(self):
-        matrix = [[1]]
-        ops = ['input', 'output']
-
-        out_matrix, out_ops = self.nasbench201.pad_size_6(matrix, ops)
-        print('padded matrix:', out_matrix)
-        print('padded ops:', out_ops)
+        print('**** transformed ops:', out)

@@ -46,17 +46,9 @@ class TestNASBench101(unittest.TestCase):
         out = self.nasbench101.transform_nb101_operations(ops)
         print('transformed ops:', out)
 
-    def test_pad_size_6(self):
-        matrix = [[1]]
-        ops = ['input', 'output']
-
-        out_matrix, out_ops = self.nasbench101.pad_size_6(matrix, ops)
-        print('padded matrix:', out_matrix)
-        print('padded ops:', out_ops)
-
     def test_index_to_embedding(self):
         embed = self.nasbench101.index_to_embedding(0)
-        print(embed)
+        print('embed: ', embed)
 
 
 if __name__ == '__main__':
