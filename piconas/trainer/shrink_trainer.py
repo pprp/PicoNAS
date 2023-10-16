@@ -7,7 +7,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmcv.cnn import get_model_complexity_info
 from torch import Tensor
 from torch.optim import lr_scheduler
 
@@ -17,6 +16,7 @@ from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models.nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
 from piconas.predictor.pruners.predictive import find_measures
+from piconas.utils.flops_counter import get_model_complexity_info
 from piconas.utils.utils import AvgrageMeter, accuracy
 from piconas.utils.weight_init import constant_init, normal_init
 from .base import BaseTrainer

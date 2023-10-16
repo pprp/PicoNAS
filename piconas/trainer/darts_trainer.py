@@ -4,13 +4,13 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
-from mmcv.cnn import get_model_complexity_info
 
 import piconas.utils.utils as utils
 from piconas.core.losses import PairwiseRankLoss
 # from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models.nasbench201 import DiffNASBench201Network
 from piconas.nas.mutators import DiffMutator
+from piconas.utils.flops_counter import get_model_complexity_info
 from piconas.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 from .registry import register_trainer

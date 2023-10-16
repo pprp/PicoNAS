@@ -105,7 +105,7 @@ class TestMacroBench(TestCase):
     # def test_model_complexity(self):
     #     import copy
 
-    #     from mmcv.cnn import get_model_complexity_info
+    #     from piconas.utils.flops_counter import get_model_complexity_info
 
     #     model = MacroBenchmarkSuperNet()
 

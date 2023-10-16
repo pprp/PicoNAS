@@ -5,7 +5,6 @@ from typing import Dict, List
 import numpy as np
 import torch
 import torch.nn.functional as F
-from mmcv.cnn import get_model_complexity_info
 
 import piconas.utils.utils as utils
 from piconas.core.losses import KLDivergence, PairwiseRankLoss
@@ -13,6 +12,7 @@ from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models.nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
 from piconas.predictor.pruners.predictive import find_measures
+from piconas.utils.flops_counter import get_model_complexity_info
 from piconas.utils.utils import AvgrageMeter, accuracy
 from .base import BaseTrainer
 from .registry import register_trainer

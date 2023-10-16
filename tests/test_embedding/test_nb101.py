@@ -1,13 +1,8 @@
 import unittest
-from unittest.mock import patch, MagicMock
-import numpy as np
-import torch
+from unittest.mock import patch
+
 from piconas.predictor.nas_embedding_suite.nb101_ss import NASBench101
 
-import unittest
-from unittest.mock import patch, Mock
-import numpy as np
-import torch
 
 class TestNASBench101(unittest.TestCase):
 
@@ -18,13 +13,18 @@ class TestNASBench101(unittest.TestCase):
     @patch('json.load', return_value={})
     @patch('os.path.exists', return_value=False)
     def test_init(self, mock_exists, mock_json_load, mock_torch_load):
-        nasbench = NASBench101(path='/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/nasbench_only108.tfrecord')
+        nasbench = NASBench101(
+            path=
+            '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/nasbench_only108.tfrecord'
+        )
         self.assertIsInstance(nasbench, NASBench101)
 
-    @patch('NB1API.NASBench.get_metrics_from_hash', return_value={
-        'module_adjacency': [[1, 0], [0, 1]],
-        'module_operations': ['input', 'output']
-    })
+    @patch(
+        'NB1API.NASBench.get_metrics_from_hash',
+        return_value={
+            'module_adjacency': [[1, 0], [0, 1]],
+            'module_operations': ['input', 'output']
+        })
     def test_get_adj_op(self, mock_get_metrics):
         expected_output = {
             'module_adjacency': [[1, 0], [0, 1]],
@@ -34,10 +34,12 @@ class TestNASBench101(unittest.TestCase):
         self.assertEqual(output, expected_output)
 
     # Mocking the necessary methods for the get_zcp method
-    @patch('NB1API.NASBench.get_metrics_from_hash', return_value={
-        'module_adjacency': [[1, 0], [0, 1]],
-        'module_operations': ['input', 'output']
-    })
+    @patch(
+        'NB1API.NASBench.get_metrics_from_hash',
+        return_value={
+            'module_adjacency': [[1, 0], [0, 1]],
+            'module_operations': ['input', 'output']
+        })
     def test_get_zcp(self, mock_get_metrics):
         self.nasbench101.zcp_nb101 = {
             'cifar10': {
@@ -54,6 +56,7 @@ class TestNASBench101(unittest.TestCase):
         self.assertEqual(output, expected_output)
 
     # Add more tests ...
+
 
 if __name__ == '__main__':
     unittest.main()

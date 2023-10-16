@@ -85,7 +85,7 @@ def parse_requirements(fname='requirements.txt', with_version=True):
 if __name__ == '__main__':
     setup(
         name='piconas',
-        version='0.1',
+        version='0.2',
         description='library for pprp',
         long_description=readme(),
         long_description_content_type='text/markdown',

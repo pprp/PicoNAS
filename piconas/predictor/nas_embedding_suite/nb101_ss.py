@@ -203,7 +203,6 @@ class NASBench101:
 
             self.zcp_nb101 = {'cifar10': self.norm_zcp.T.to_dict()}
 
-
     def create_hash_to_idx(self):
         self.hash_iterator_list = list(self.nb1_api.hash_iterator())
         self.hash_to_idx = {
