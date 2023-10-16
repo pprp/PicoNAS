@@ -110,9 +110,15 @@ class NDS:
             space = space.replace('.json', '')
             self.all_accs[space] = []
             for idx in range(len(self.space_dicts[space])):
-                self.all_accs[space].append(
-                    float(100. -
-                          self.space_dicts[space][idx]['test_ep_top1'][-1]))
+                try:
+                    self.all_accs[space].append(
+                        float(
+                            100. -
+                            self.space_dicts[space][idx]['test_ep_top1'][-1]))
+                except:
+                    self.all_accs[space].append(
+                        float(100. - self.space_dicts[space][str(idx)]
+                              ['test_ep_top1'][-1]))
             # RobustScaler normalize this space
             min_max_scaler = preprocessing.QuantileTransformer()
             self.all_accs[space] = min_max_scaler.fit_transform(

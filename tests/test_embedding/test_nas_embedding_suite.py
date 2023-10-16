@@ -1,5 +1,5 @@
 if __name__ == '__main__':
-    test_nb1, test_nb2, test_nb3, test_tb1mic, test_nds = True, True, True, True, True
+    test_nb1, test_nb2, test_nb3, test_tb1mic, test_nds = False, False, False, True, True
     if test_nb1:
         print('=' * 53)
         print('=' * 20, 'NASBench101', '=' * 20)

@@ -20,3 +20,4 @@ lib/*
 *.log
 log*
 *.th
+*.pdf

@@ -6,13 +6,15 @@ import time
 import numpy as np
 import pandas as pd
 import torch
-from predictor.nas_embedding_suite.nb101_ss import NASBench101
-from predictor.nas_embedding_suite.nb201_ss import NASBench201
-from predictor.nas_embedding_suite.nb301_ss import NASBench301
-from predictor.nas_embedding_suite.nds_ss import NDS
-from predictor.nas_embedding_suite.tb101_micro_ss import TransNASBench101Micro
 
-CACHE_DIR = '/scratch/XXXX-1/emb_cache'
+from piconas.predictor.nas_embedding_suite.nb101_ss import NASBench101
+from piconas.predictor.nas_embedding_suite.nb201_ss import NASBench201
+from piconas.predictor.nas_embedding_suite.nb301_ss import NASBench301
+from piconas.predictor.nas_embedding_suite.nds_ss import NDS
+from piconas.predictor.nas_embedding_suite.tb101_micro_ss import \
+    TransNASBench101Micro
+
+CACHE_DIR = '/var/tmp/piconas_cache'
 FILE_MAPPINGS = {
     'nb101': (CACHE_DIR + '/nb101.pkl', NASBench101),
     'nb201': (CACHE_DIR + '/nb201.pkl', NASBench201),
@@ -360,4 +362,4 @@ class AllSS:
         return [int(x) for x in f'{self.ss_mapper[space]:04b}']
 
 
-# all_ss = AllSS()
+all_ss = AllSS()
