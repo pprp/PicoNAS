@@ -1,15 +1,14 @@
 import copy
-import itertools
-import pickle
 import random
 
 import numpy as np
 import torch
 from nasbench import api
-from nb123.nas_bench_101.distances import *
-from nb123.nas_bench_101.encodings import *
-from nb123.nas_bench_101.mutations import *
-from nb123.nas_bench_101.sample_random import *
+
+from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.distances import *  # noqa: F401, F403
+from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.encodings import *  # noqa: F401, F403
+from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.mutations import *  # noqa: F401, F403
+from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.sample_random import *  # noqa: F401, F403
 
 INPUT = 'input'
 OUTPUT = 'output'

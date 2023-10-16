@@ -1,6 +1,5 @@
 from typing import List
 
-import nasbench
 import torch.nn.functional as F
 from nasbench import api
 from nasbench_pytorch.model import Network as NBNetwork

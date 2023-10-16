@@ -1,18 +1,4 @@
-import json
-import os
-import random
-import sys
-
 import numpy as np
-import torch
-
-sys.path.insert(0, os.getcwd())
-from collections import namedtuple
-
-from nasbench.lib import graph_util
-from nb123.darts.cnn.genotypes import Genotype
-from nb123.darts.cnn.model import NetworkCIFAR as Network
-from thop import profile
 
 OPS = [
     'max_pool_3x3', 'avg_pool_3x3', 'skip_connect', 'sep_conv_3x3',

@@ -1,17 +1,14 @@
 import json
-import os
-import sys
 
 import numpy as np
 import pandas as pd
 import torch
 from sklearn import preprocessing
 
-sys.path.append(os.environ['PROJ_BPATH'] + '/' + 'nas_embedding_suite')
-
-BASE_PATH = os.environ[
-    'PROJ_BPATH'] + '/' + 'nas_embedding_suite/embedding_datasets/'
-NDS_DPATH = os.environ['PROJ_BPATH'] + '/' + 'nas_embedding_suite/NDS/nds_data/'
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'\
+      + '/' + 'nas_embedding_suite/embedding_datasets/'
+NDS_DPATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets' \
+    + '/' + 'nas_embedding_suite/NDS/nds_data/'
 
 
 class NDS:
@@ -129,7 +126,7 @@ class NDS:
         self.unnorm_accs = self.all_accs  # need to comment out this line.
         self.all_accs = self.all_accs
 
-    #################### Key Functions Begin ###################
+    # Key Functions Begin
     def get_adjmlp_zcp(self, idx, space='Amoeba'):
         adj_mat_norm, op_mat_norm, adj_mat_red, op_mat_red = self.get_adj_op(
             idx, space=space).values()
@@ -177,14 +174,14 @@ class NDS:
 
     def get_norm_w_d(self, idx, space='Amoeba'):
         try:
-            return [self.space_dicts[space][idx]['net']['width']/32., \
-                    self.space_dicts[space][idx]['net']['depth']/20.]
+            return [self.space_dicts[space][idx]['net']['width'] / 32., \
+                    self.space_dicts[space][idx]['net']['depth'] / 20.]
         except:
             print('WARNING: No width/depth information found for idx: ', idx,
                   ',', space)
             exit(0)
 
-    ##################### Key Functions End #####################
+    # Key Functions End #
 
     def get_flops(self, idx, space='Amoeba'):
         return self.space_dicts[space][idx]['flops']

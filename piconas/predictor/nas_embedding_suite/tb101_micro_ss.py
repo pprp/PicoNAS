@@ -1,16 +1,13 @@
 import copy
 import json
-import os
 
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn.functional as F
 from sklearn import preprocessing
-from tqdm import tqdm
 
-BASE_PATH = os.environ[
-    'PROJ_BPATH'] + '/' + 'nas_embedding_suite/embedding_datasets/'
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'\
+      + '/' + 'nas_embedding_suite/embedding_datasets/'
 
 
 class TransNASBench101Micro:
@@ -129,7 +126,7 @@ class TransNASBench101Micro:
         }
         self.hash_iterator_list = list(self.zcp_tb101['normal'].keys())
 
-    #################### Key Functions Begin ###################
+    # Key Functions Begin
     def get_adjmlp_zcp(self, idx, task=None):
         adj_mat, op_mat = self.get_adj_op(idx, task).values()
         adj_mat = np.asarray(adj_mat).flatten()
@@ -188,7 +185,7 @@ class TransNASBench101Micro:
     def get_norm_w_d(self, idx, space=None):
         return [0, 0]
 
-    ##################### Key Functions End #####################
+    # Key Functions End
     def opslist_onehot(self, op_list):
         op_map = [self.OUTPUT, self.INPUT, *self.OPS]
         ops_ = [self.init_op_map[x] for x in op_list]
@@ -273,7 +270,7 @@ class TransNASBench101Micro:
             if not keep_dims:
                 labels = list(filter(lambda l: l is not None, labels))
             assert visited_fw[-1] == visited_bw[0]
-            assert visited_fw[-1] == False or matrix
+            assert visited_fw[-1] is False or matrix
             verts = len(matrix)
             assert verts == len(labels)
             for row in matrix:

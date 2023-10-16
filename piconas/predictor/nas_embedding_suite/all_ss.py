@@ -1,30 +1,16 @@
 import copy
-import json
 import os
-import random
-import sys
-# import pickle
+import pickle
 import time
-import types
 
-import dill as pickle
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn.functional as F
-from sklearn import preprocessing
-from tqdm import tqdm
-
-sys.path.append(os.environ['PROJ_BPATH'] + '/' + 'nas_embedding_suite')
-
-import os
-import pickle
-
-from nb101_ss import NASBench101
-from nb201_ss import NASBench201
-from nb301_ss import NASBench301
-from nds_ss import NDS
-from tb101_micro_ss import TransNASBench101Micro
+from predictor.nas_embedding_suite.nb101_ss import NASBench101
+from predictor.nas_embedding_suite.nb201_ss import NASBench201
+from predictor.nas_embedding_suite.nb301_ss import NASBench301
+from predictor.nas_embedding_suite.nds_ss import NDS
+from predictor.nas_embedding_suite.tb101_micro_ss import TransNASBench101Micro
 
 CACHE_DIR = '/scratch/XXXX-1/emb_cache'
 FILE_MAPPINGS = {

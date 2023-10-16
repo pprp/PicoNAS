@@ -1,25 +1,17 @@
-import copy
 import json
-import os
-import random
-import sys
 import time
-import types
 
-import numpy as np
-import pandas as pd
-import torch
-import torch.nn.functional as F
-from sklearn import preprocessing
-from tqdm import tqdm
-
-sys.path.append(os.environ['PROJ_BPATH'] + '/' + 'nas_embedding_suite')
 import nasbench301 as nb3_api
-from nb123.nas_bench_301.cell_301 import Cell301
-from nb123.nb301_arch_tuple_to_nb101 import convert_arch_tuple_to_idx
+import numpy as np
+import torch
 
-BASE_PATH = os.environ[
-    'PROJ_BPATH'] + '/' + 'nas_embedding_suite/embedding_datasets/'
+from piconas.predictor.nas_embedding_suite.nb123.nas_bench_301.cell_301 import \
+    Cell301
+from piconas.predictor.nas_embedding_suite.nb123.nb301_arch_tuple_to_nb101 import \
+    convert_arch_tuple_to_idx
+
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'\
+      + '/' + 'nas_embedding_suite/embedding_datasets/'
 
 
 class NASBench301:
@@ -35,7 +27,7 @@ class NASBench301:
                      'adj', 'adj_op', 'paths', 'path_indices', 'genotypes',
                      'cate', 'zcp', 'arch2vec', 'valacc'
                  ]):
-        if path == None:
+        if path is None:
             path = ''
         print('Loading Files for NASBench301...')
         a = time.time()
@@ -70,7 +62,7 @@ class NASBench301:
 
         self.op_dict_rev = {v: k for k, v in self.op_dict.items()}
 
-    #################### Key Functions Begin ###################
+    # Key Functions Begin #
     def get_adjmlp_zcp(self, idx):
         adj_mat, op_mat = self.get_adj_op(idx)
         adj_mat = np.asarray(adj_mat).flatten()
@@ -119,7 +111,7 @@ class NASBench301:
     def get_numitems(self, space=None):
         return 1000000
 
-    ##################### Key Functions End #####################
+    # Key Functions End #
 
     def get_genotype(self, idx):
         return self.index_to_embedding(idx)['genotypes']

@@ -2,24 +2,20 @@ import copy
 import json
 import os
 import pickle
-import random
-import sys
 import time
-import types
 
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn.functional as F
+from nas_201_api import NASBench201API as NB2API
 from sklearn import preprocessing
 from tqdm import tqdm
 
-sys.path.append(os.environ['PROJ_BPATH'] + '/' + 'nas_embedding_suite')
-from nas_201_api import NASBench201API as NB2API
-from nb123.nas_bench_201.cell_201 import Cell201
+from piconas.predictor.nas_embedding_suite.nb123.nas_bench_201.cell_201 import \
+    Cell201
 
-BASE_PATH = os.environ[
-    'PROJ_BPATH'] + '/' + 'nas_embedding_suite/embedding_datasets/'
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'\
+      + '/' + 'nas_embedding_suite/embedding_datasets/'
 
 
 class NASBench201:
@@ -34,7 +30,7 @@ class NASBench201:
                      'adj', 'adj_op', 'path', 'trunc_path', 'gcn',
                      'path_indices', 'one_hot', 'zcp', 'arch2vec', 'valacc'
                  ]):
-        if path == None:
+        if path is None:
             path = ''
         print('Loading files for NASBench201...')
         a = time.time()
@@ -185,7 +181,7 @@ class NASBench201:
 
             self.zcp_nb201 = {'cifar10': self.norm_zcp.T.to_dict()}
 
-    #################### Key Functions Begin ###################
+    # Key Functions Begin #
 
     def get_adjmlp_zcp(self, idx):
         # Check if result exists in cache
@@ -285,7 +281,7 @@ class NASBench201:
     def get_cate(self, idx, joint=None, space=None):
         return self.cate_nb201['embeddings'][idx].tolist()
 
-    ##################### Key Functions End #####################
+    # Key Functions End #
 
     def get_matrix_and_ops(self, g, prune=True, keep_dims=True):
         ''' Return the adjacency matrix and label vector.
@@ -361,7 +357,7 @@ class NASBench201:
             if not keep_dims:
                 labels = list(filter(lambda l: l is not None, labels))
             assert visited_fw[-1] == visited_bw[0]
-            assert visited_fw[-1] == False or matrix
+            assert visited_fw[-1] is False or matrix
             verts = len(matrix)
             assert verts == len(labels)
             for row in matrix:

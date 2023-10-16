@@ -23,7 +23,7 @@ start=`date +%s`
 # 第四章 实验1.3 alter subnet
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Alter_Trainer --log_name graduate_nb201_spos_altersubnet_exp1.3 --dataset cifar10 --crit ce --lr 0.025
 
-#########################################################################################################################################################################
+#################
 
 # 第四章 实验2.1 基于flops采样
 # CUDA_VISIBLE_DEVICES=0 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_balanced_flopspolicysampler_exp2.1 --dataset cifar10 --crit ce --lr 0.025
@@ -81,7 +81,7 @@ start=`date +%s`
 # CUDA_VISIBLE_DEVICES=2 python tools/searcher/search_evo_nb201.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name evo_graduate_nb201_balanced_zenscore-policy-sampler-imagenet16_exp2.4_img16 --dataset imagenet16 --crit ce --lr 0.1 --data_dir ./data/ImageNet16  --model_path '/home/stack/project/spos-cifar/checkpoints/graduate_nb201_balanced_zenscore-policy-sampler-imagenet16_exp2.4_img16/graduate_nb201_balanced_zenscore-policy-sampler-imagenet16_exp2.4_img16_nb201_ckpt_0191.pth.tar'
 
 
-#########################################################################################################################################################################
+#################
 
 # 第四章 实验3.0 uniform sampling cifar10
 # CUDA_VISIBLE_DEVICES=1 python tools/train.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench201Network --trainer_name NB201_Balance_Trainer --log_name graduate_nb201_spos_uniform-sampling_exp3.0 --dataset cifar10 --crit ce --lr 0.025

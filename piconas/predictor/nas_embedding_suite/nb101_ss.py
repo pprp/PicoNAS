@@ -1,24 +1,19 @@
-import copy
 import json
 import os
-import random
-import sys
 import time
-import types
 
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn.functional as F
+from nasbench import api as NB1API
 from sklearn import preprocessing
 from tqdm import tqdm
 
-sys.path.append(os.environ['PROJ_BPATH'] + '/' + 'nas_embedding_suite')
-from nasbench import api as NB1API
-from nb123.nas_bench_101.cell_101 import Cell101
+from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.cell_101 import \
+    Cell101
 
-BASE_PATH = os.environ[
-    'PROJ_BPATH'] + '/' + 'nas_embedding_suite/embedding_datasets/'
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'\
+      + '/' + 'nas_embedding_suite/embedding_datasets/'
 
 
 class NASBench101:
@@ -69,7 +64,7 @@ class NASBench101:
         self.valacc_list = self.min_max_scaler.fit_transform(
             np.array(valacc_list).reshape(-1, 1)).reshape(-1)
 
-    #################### Key Functions Begin ###################
+    # Key Functions Begin
 
     def get_adjmlp_zcp(self, idx):
         hash = self.hash_iterator_list[idx]
@@ -136,7 +131,7 @@ class NASBench101:
     def get_numitems(self, space=None):
         return len(self.hash_iterator_list)
 
-    ##################### Key Functions End #####################
+    # Key Functions End #
     def load_files(self, path):
         print('Loading Files for NASBench101...')
         start_time = time.time()

@@ -1,11 +1,6 @@
-import copy
-import itertools
-import pickle
 import random
-import sys
 from collections import namedtuple
 
-import nasbench301 as nb
 import numpy as np
 
 OPS = [
@@ -132,7 +127,7 @@ class Cell301:
         # first convert tuple to array so that it is mutable
         mutation = self.make_mutable()
 
-        #make mutations
+        # make mutations
         for _ in range(int(mutation_rate)):
             cell = np.random.choice(2)
             pair = np.random.choice(len(OPS))
@@ -171,9 +166,9 @@ class Cell301:
         for i in range(NUM_VERTICES):
             ops = np.random.choice(range(len(OPS)), NUM_VERTICES)
 
-            #input nodes for conv
+            # input nodes for conv
             nodes_in_normal = np.random.choice(range(i + 2), 2, replace=False)
-            #input nodes for reduce
+            # input nodes for reduce
             nodes_in_reduce = np.random.choice(range(i + 2), 2, replace=False)
 
             normal.extend([(nodes_in_normal[0], ops[0]),
@@ -311,7 +306,7 @@ class Cell301:
 
                 # mutate the edge
                 other = j + 1 - 2 * (j % 2)
-                available = [edge for edge in range(j//2+2) \
+                available = [edge for edge in range(j // 2 + 2) \
                              if edge not in [cell[other][0], pair[0]]]
 
                 for edge in available:
