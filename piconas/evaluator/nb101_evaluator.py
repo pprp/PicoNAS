@@ -134,7 +134,8 @@ class NB101Evaluator(Evaluator):
         if dataset == 'cifar10':
             self.num_classes = 10
 
-        self.nb101_api = api.NASBench('/data/home/scv6681/run/github/nasbench/nasbench_only108.tfrecord')
+        self.nb101_api = api.NASBench(
+            '/data/home/scv6681/run/github/nasbench/nasbench_only108.tfrecord')
 
     def query_nb101_result(self, _hash):
         """query the indictor by hash."""
