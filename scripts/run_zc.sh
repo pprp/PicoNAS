@@ -29,7 +29,7 @@ seed=$(($start_seed + $seed))
 # benchmarks
 # CUDA_VISIBLE_DEVICES=1 python tools/runner/runner_benchmark.py --config-file configs/${experiment}/${optimizer}/${searchspace}-${start_seed}/${dataset}/config_${start_seed}.yaml start_idx 0 n_models $N_MODELS predictor $predictor
 
-CUDA_VISIBLE_DEVICES=1 python tools/ranker/zerocost_ranker.py --config configs/spos/spos_cifar10.py --model_name OneShotNASBench301Network --trainer_name NB301Trainer --log_name nb301_spos_test_x1 --dataset cifar10 --crit ce --lr 0.025
+CUDA_VISIBLE_DEVICES=1 python tools/ranker/zerocost_ranker.py  --model_name OneShotNASBench301Network --trainer_name NB301Trainer --log_name nb301_spos_test_x1 --dataset cifar10 --crit ce --lr 0.025
 
 end=`date +%s`
 runtime=$((end-start))

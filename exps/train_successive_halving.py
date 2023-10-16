@@ -12,18 +12,10 @@ from piconas.datasets.build import build_dataloader
 from piconas.models import build_model
 from piconas.trainer import SuccessiveHalvingPyramid, build_trainer
 from piconas.utils import set_random_seed
-from piconas.utils.config import Config
 
 
 def main():
-    args = get_args()
-
-    # merge argparse and config file
-    if args.config is not None:
-        cfg = Config.fromfile(args.config)
-        cfg.merge_from_dict(vars(args))
-    else:
-        cfg = Config(args)
+    cfg = get_args()
 
     # set envirs
     set_random_seed(cfg.seed, deterministic=True)

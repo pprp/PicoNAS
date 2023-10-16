@@ -13,18 +13,10 @@ from piconas.datasets.transforms.cutout import Cutout
 from piconas.models import build_model
 from piconas.trainer import build_trainer
 from piconas.utils import set_random_seed
-from piconas.utils.config import Config
 
 
 def get_args():
     parser = argparse.ArgumentParser('train macro benchmark')
-    parser.add_argument(
-        '--config',
-        type=str,
-        default='configs/spos/spos_cifar10.py',
-        required=False,
-        help='user settings config',
-    )
     parser.add_argument(
         '--work_dir', type=str, default='./work_dir', help='experiment name')
     parser.add_argument(
@@ -107,7 +99,7 @@ def get_args():
     return parser.parse_args()
 
 
-def data_transforms_cifar10(args):
+def data_transforms_cifar10(cfg):
     CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
     CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
 
@@ -117,8 +109,8 @@ def data_transforms_cifar10(args):
         transforms.ToTensor(),
         transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
     ])
-    if args.cutout:
-        train_transform.transforms.append(Cutout(length=args.cutout_length))
+    if cfg.cutout:
+        train_transform.transforms.append(Cutout(length=cfg.cutout_length))
 
     valid_transform = transforms.Compose([
         transforms.ToTensor(),
@@ -128,14 +120,7 @@ def data_transforms_cifar10(args):
 
 
 def main():
-    args = get_args()
-
-    # merge argparse and config file
-    if args.config is not None:
-        cfg = Config.fromfile(args.config)
-        cfg.merge_from_dict(vars(args))
-    else:
-        cfg = Config(args)
+    cfg = get_args()
 
     # set envirs
     set_random_seed(cfg.seed, deterministic=True)
@@ -155,27 +140,27 @@ def main():
     else:
         device = torch.device('cpu')
 
-    train_transform, valid_transform = data_transforms_cifar10(args)
+    train_transform, valid_transform = data_transforms_cifar10(cfg)
     train_data = dset.CIFAR10(
-        root=args.data_dir,
+        root=cfg.data_dir,
         train=True,
         download=True,
         transform=train_transform)
 
     num_train = len(train_data)
     indices = list(range(num_train))
-    split = int(np.floor(args.train_portion * num_train))
+    split = int(np.floor(cfg.train_portion * num_train))
 
     train_loader = torch.utils.data.DataLoader(
         train_data,
-        batch_size=args.batch_size,
+        batch_size=cfg.batch_size,
         sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
         pin_memory=True,
         num_workers=2)
 
     val_loader = torch.utils.data.DataLoader(
         train_data,
-        batch_size=args.batch_size,
+        batch_size=cfg.batch_size,
         sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:]),
         pin_memory=True,
         num_workers=2)

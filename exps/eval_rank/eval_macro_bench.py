@@ -9,7 +9,6 @@ from piconas.datasets import build_dataloader
 from piconas.models import MacroBenchmarkSuperNet
 from piconas.nas.mutators import OneShotMutator
 from piconas.trainer import MacroTrainer
-from piconas.utils.config import Config
 from piconas.utils.misc import convert_arch2dict
 from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 
@@ -81,7 +80,7 @@ if __name__ == '__main__':
         help='number of sample for rank evaluation.',
     )
 
-    args = parser.parse_args()
+    cfg = parser.parse_args()
 
     valid_args = dict(
         name='cifar10',
@@ -95,8 +94,6 @@ if __name__ == '__main__':
         batch_size=32,
     )
 
-    val_config = Config(valid_args)
-
     if torch.cuda.is_available():
         print('Train on GPU!')
         device = torch.device('cuda')
@@ -104,11 +101,11 @@ if __name__ == '__main__':
         device = torch.device('cpu')
 
     # load arch from json
-    arch_dict = load_json(args.json_path)
+    arch_dict = load_json(cfg.json_path)
 
     # random sample `num_sample` archs
     sampled_archs: List[str] = random.sample(
-        arch_dict.keys(), k=args.num_sample)
+        arch_dict.keys(), k=cfg.num_sample)
 
     # generate sampled dict
     sampled_dict: Dict = {arch: arch_dict[arch] for arch in sampled_archs}
@@ -116,7 +113,7 @@ if __name__ == '__main__':
     supernet = MacroBenchmarkSuperNet()
 
     # load supernet checkpoints
-    state = torch.load(args.ckpt_path)['state_dict']
+    state = torch.load(cfg.ckpt_path)['state_dict']
     supernet.load_state_dict(state, strict=False)
 
     # build one-shot mutator
@@ -124,7 +121,7 @@ if __name__ == '__main__':
     mutator.prepare_from_supernet(supernet)
 
     # build valid dataloader
-    dataloader = build_dataloader(config=val_config, type='val')
+    dataloader = build_dataloader(config=cfg, type='val')
 
     # get trainer
     trainer = MacroTrainer(supernet, mutator=mutator, device=device)
@@ -134,4 +131,4 @@ if __name__ == '__main__':
         loader=dataloader,
         sampled_dict=sampled_dict,
         trainer=trainer,
-        type=args.type)
+        type=cfg.type)

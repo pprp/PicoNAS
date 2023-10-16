@@ -9,7 +9,6 @@ import yaml
 from piconas.datasets import build_dataloader
 from piconas.models import SupernetNATS
 from piconas.trainer import NATSTrainer
-from piconas.utils.config import Config
 from piconas.utils.misc import convert_channel2idx
 from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 
@@ -79,8 +78,6 @@ if __name__ == '__main__':
         batch_size=128,
     )
 
-    val_config = Config(valid_args)
-
     if torch.cuda.is_available():
         print('Train on GPU!')
         device = torch.device('cuda')
@@ -105,7 +102,7 @@ if __name__ == '__main__':
     supernet.load_state_dict(state, strict=False)
 
     # build valid dataloader
-    dataloader = build_dataloader(config=val_config, type='val')
+    dataloader = build_dataloader(config=valid_args, type='val')
 
     # get trainer
     trainer = NATSTrainer(supernet, mutator=None, device=device)
