@@ -9,7 +9,6 @@ tensorwatch==0.9.1
 scikit-learn
 tqdm
 ConfigSpace
-mmengine
 einops
 timm
 # nasbench
