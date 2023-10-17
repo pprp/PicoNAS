@@ -6,8 +6,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric.data
-from models.PINAT.gatset_conv import GATSetConv_v5 as GATConv
 from scipy import sparse as sp
+
+from piconas.predictor.pinat.gatset_conv import GATSetConv_v5 as GATConv
 
 
 def graph_pooling(inputs, num_vertices):

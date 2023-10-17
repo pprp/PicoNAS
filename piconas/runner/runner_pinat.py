@@ -7,10 +7,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from datasets.data_factory import create_dataloader
-from models.model_factory import create_model
 from scipy.stats import kendalltau
-from utils import AverageMeterGroup, accuracy_mse, run_func, set_seed, to_cuda
+
+from piconas.datasets.predictor.data_factory import create_dataloader
+from piconas.predictor.pinat.model_factory import create_model
+from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, run_func,
+                                 set_seed, to_cuda)
 
 parser = ArgumentParser()
 # exp and dataset

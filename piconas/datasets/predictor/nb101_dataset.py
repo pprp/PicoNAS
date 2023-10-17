@@ -93,7 +93,9 @@ class Nb101DatasetPINAT(Dataset):
                  pos_enc_dim=2,
                  data_type='train'):
         self.hash2id = dict()
-        with h5py.File('data/nasbench101/nasbench.hdf5', mode='r') as f:
+        with h5py.File(
+                '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/nasbench.hdf5',
+                mode='r') as f:
             for i, h in enumerate(f['hash'][()]):
                 self.hash2id[h.decode()] = i
             self.num_vertices = f['num_vertices'][()]
@@ -103,18 +105,23 @@ class Nb101DatasetPINAT(Dataset):
             self.metrics = f['metrics'][()]
         self.random_state = np.random.RandomState(0)
         if split is not None and split != 'all':
-            self.sample_range = np.load('data/nasbench101/train_samples.npz')[
-                str(split)]
+            self.sample_range = np.load(
+                '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz'
+            )[str(split)]
         else:
             self.sample_range = list(range(len(self.hash2id)))
         self.debug = debug
         self.seed = 0
         self.candidate_ops = candidate_ops
         # self.lap_pos_enc = laplacian_positional_encoding(self.adjacency, pos_enc_dim=pos_enc_dim)
-        # self.lap_pos_enc = np.load('data/nasbench101/bench101_pos_enc.npy')
+        # self.lap_pos_enc = np.load('/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/bench101_pos_enc.npy')
         # generate_lapla_matrix(self.adjacency)
-        self.lapla = np.load('data/nasbench101/lapla_matrix.npy')
-        self.lapla_nor = np.load('data/nasbench101/lapla_nor_matrix.npy')
+        self.lapla = np.load(
+            '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/lapla_matrix.npy'
+        )
+        self.lapla_nor = np.load(
+            '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/lapla_nor_matrix.npy'
+        )
 
         self.data_type = data_type
 
