@@ -1,534 +1,866 @@
-import math
+import os
+
+BASE_PATH = os.environ[
+    'PROJ_BPATH'] + '/' + 'nas_embedding_suite/embedding_datasets/'
+import argparse
+import os
+import random
+import sys
+import time
+from pprint import pprint
 
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from scipy.stats import kendalltau, spearmanr
+from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+from utils import CustomDataset, get_tagates_sample_indices
+
+from piconas.predictor.flan.flan_model1 import FullyConnectedNN, GIN_Model
+
+sys.path.append(os.environ['PROJ_BPATH'] + '/' + 'nas_embedding_suite')
+
+# python -i new_main.py --space nb101 --representation adj_gin_zcp --test_tagates --loss_type pwl --sample_sizes 72 --batch_size 8
+# python -i new_main.py --space nb201 --representation adj_gin_zcp --test_tagates --loss_type pwl --sample_sizes 40 --batch_size 8
+
+parser = argparse.ArgumentParser()
+####################################################### Search Space Choices #######################################################
+parser.add_argument(
+    '--space', type=str, default='Amoeba'
+)  # nb101, nb201, nb301, tb101, amoeba, darts, darts_fix-w-d, darts_lr-wd, enas, enas_fix-w-d, nasnet, pnas, pnas_fix-w-d supported
+parser.add_argument(
+    '--task', type=str, default='class_scene')  # all tb101 tasks supported
+parser.add_argument(
+    '--representation', type=str, default='cate'
+)  # adj_mlp, adj_gin, zcp (except nb301), cate, arch2vec, adj_gin_zcp, adj_gin_arch2vec, adj_gin_cate supported.
+parser.add_argument(
+    '--test_tagates', action='store_true'
+)  # Currently only supports testing on NB101 networks. Easy to extend.
+parser.add_argument(
+    '--loss_type', type=str, default='pwl')  # mse, pwl supported
+parser.add_argument(
+    '--gnn_type', type=str, default='dense')  # dense, gat, gat_mh supported
+parser.add_argument(
+    '--back_dense',
+    action='store_true')  # If True, backward flow will be DenseFlow
+parser.add_argument('--num_trials', type=int, default=3)
+parser.add_argument('--no_residual', action='store_true')
+parser.add_argument('--no_leakyrelu', action='store_true')
+parser.add_argument('--no_unique_attention_projection', action='store_true')
+parser.add_argument('--no_opattention', action='store_true')
+parser.add_argument('--no_attention_rescale', action='store_true')
+parser.add_argument('--timesteps', type=int, default=2)
+###################################################### Other Hyper-Parameters ######################################################
+parser.add_argument('--name_desc', type=str, default=None)
+parser.add_argument(
+    '--sample_sizes', nargs='+', type=int, default=[72, 364, 728, 3645,
+                                                    7280])  # Default NB101
+parser.add_argument('--device', type=str, default='cuda:0')
+parser.add_argument('--batch_size', type=int, default=16)
+parser.add_argument('--test_batch_size', type=int, default=128)
+parser.add_argument('--num_workers', type=int, default=4)
+parser.add_argument('--test_size', type=int, default=None)
+parser.add_argument('--epochs', type=int, default=150)
+parser.add_argument('--lr_step', type=int, default=10)
+parser.add_argument('--lr_gamma', type=float, default=0.6)
+parser.add_argument('--lr', type=float, default=1e-3)
+parser.add_argument('--eta_min', type=float, default=1e-6)
+parser.add_argument('--weight_decay', type=float, default=1e-5)
+parser.add_argument('--seed', type=int, default=None)
+parser.add_argument('--id', type=int, default=0)
+####################################################################################################################################
+args = parser.parse_args()
+device = args.device
+sample_tests = {}
+sample_tests[args.space] = args.sample_sizes
+args.residual = not args.no_residual
+args.unique_attention_projection = not args.no_unique_attention_projection
+args.opattention = not args.no_opattention
+args.leakyrelu = not args.no_leakyrelu
+args.attention_rescale = not args.no_attention_rescale
+
+assert args.name_desc is not None, 'Please provide a name description for the experiment.'
 
 
-class FullyConnectedNN(nn.Module):
+# Set random seeds
+def seed_everything(seed: int):
+    import os
+    import random
 
-    def __init__(self, layer_sizes):
-        super(FullyConnectedNN, self).__init__()
-
-        self.layers = nn.ModuleList()
-
-        for i in range(len(layer_sizes) - 1):
-            self.layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
-            if i < len(layer_sizes) - 2:
-                self.layers.append(nn.BatchNorm1d(
-                    layer_sizes[i + 1]))  # Add batch normalization
-                self.layers.append(nn.ReLU())
-
-    def forward(self, x):
-        for layer in self.layers:
-            x = layer(x)
-        return x
+    import numpy as np
+    import torch
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = True
 
 
-class EnsembleGATDGFLayer(nn.Module):
+if args.seed is not None:
+    seed_everything(args.seed)
 
-    def __init__(self, in_features, out_features, op_emb_dim, residual,
-                 unique_attn_proj, opattention, leakrelu, attention_rescale):
-        super(EnsembleGATDGFLayer, self).__init__()
-
-        # Instantiate both modules
-        self.dense_graph_flow = DenseGraphFlow(in_features, out_features,
-                                               op_emb_dim, residual,
-                                               unique_attn_proj, opattention,
-                                               leakrelu, attention_rescale)
-        self.graph_attention_layer = GraphAttentionLayer(
-            in_features, out_features, op_emb_dim, residual, unique_attn_proj,
-            opattention, leakrelu, attention_rescale)
-
-    def forward(self, inputs, adj, op_emb):
-        # Get outputs from both modules
-        dense_output = self.dense_graph_flow(inputs, adj, op_emb)
-        gat_output = self.graph_attention_layer(inputs, adj, op_emb)
-
-        # Average the outputs
-        ensemble_output = (dense_output + gat_output) / 2
-
-        return ensemble_output
+nb101_train_tagates_sample_indices, \
+    nb101_tagates_sample_indices = get_tagates_sample_indices(args)
 
 
-class DenseGraphFlow(nn.Module):
-
-    def __init__(self, in_features, out_features, op_emb_dim, residual,
-                 unique_attn_proj, opattention, leakrelu, attention_rescale):
-        super(DenseGraphFlow, self).__init__()
-        self.in_features = in_features
-        self.out_features = out_features
-        self.op_emb_dim = op_emb_dim
-        self.residual = residual
-        self.unique_attn_proj = unique_attn_proj
-        self.opattention = opattention
-        self.leakrelu = leakrelu
-
-        self.weight = nn.Parameter(
-            torch.FloatTensor(in_features, out_features))
-        self.op_attention = nn.Linear(op_emb_dim, out_features)
-        self.bias = nn.Parameter(torch.FloatTensor(out_features))
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        stdv = 1. / math.sqrt(self.weight.size(1))
-        self.weight.data.uniform_(-stdv, stdv)
-        if self.bias is not None:
-            self.bias.data.uniform_(-stdv, stdv)
-
-    def forward(self, inputs, adj,
-                op_emb):  # Why is inputs shape 8, when adj is 7?
-        adj_aug = adj
-        support = torch.matmul(
-            inputs, self.weight)  # no mismatch here, adj-shape propagated
-        if self.opattention:
-            output = torch.sigmoid(self.op_attention(op_emb)) * torch.matmul(
-                adj_aug, support)
+def flatten_mixed_list(pred_scores):
+    flattened = []
+    for sublist in pred_scores:
+        if isinstance(sublist, (list, tuple)):  # Check if the item is iterable
+            flattened.extend(
+                sublist)  # If it's iterable, extend the flattened list
         else:
-            output = torch.sigmoid(op_emb) * torch.matmul(adj_aug, support)
-        if self.residual:
-            output += support
-        return output + self.bias
-
-    def __repr__(self):
-        return self.__class__.__name__ + ' (' \
-               + str(self.in_features) + ' -> ' \
-               + str(self.out_features) + ')'
+            flattened.append(
+                sublist)  # If it's not iterable, append it directly
+    return flattened
 
 
-class GraphAttentionLayer(nn.Module):
-
-    def __init__(self, in_features, out_features, op_emb_dim, residual,
-                 unique_attn_proj, opattention, leakrelu, attention_rescale):
-        super(GraphAttentionLayer, self).__init__()
-        self.in_features = in_features
-        self.out_features = out_features
-        self.residual = residual
-        self.unique_attn_proj = unique_attn_proj
-        self.opattention = opattention
-        self.leakrelu = leakrelu
-        self.attention_rescale = attention_rescale
-        self.op_attention = nn.Linear(op_emb_dim, out_features)
-        self.Wk = nn.Linear(in_features, out_features, bias=False)
-        if self.unique_attn_proj:
-            self.Wv = nn.Linear(in_features, out_features, bias=False)
-            self.Wq = nn.Linear(in_features, out_features, bias=False)
-        self.a = nn.Linear(out_features, 1, bias=False)
-        self.leakyrelu = nn.LeakyReLU(0.2)
-        self.layernorm = nn.LayerNorm(out_features)
-
-    def forward(self, h, adj, op_emb):
-        Whk = self.Wk(
-            h)  # model actual attention -> 3 different Ws, remove leakyrelu
-        if self.unique_attn_proj:
-            Whv = self.Wv(h)
-            Whq = self.Wq(h)
+def pwl_train(args, model, dataloader, criterion, optimizer, scheduler,
+              test_dataloader, epoch):
+    model.training = True
+    model.train()
+    running_loss = 0.0
+    for inputs, targets in dataloader:
+        if args.representation in ['adj_mlp', 'zcp', 'arch2vec', 'cate']:
+            if inputs.shape[0] == 1 and args.space in [
+                    'nb101', 'nb201', 'nb301', 'tb101'
+            ]:
+                continue
+            elif inputs.shape[0] <= 2 and args.space not in [
+                    'nb101', 'nb201', 'nb301', 'tb101'
+            ]:
+                continue
         else:
-            Whv = Whk
-            Whq = Whk
-        a_input = torch.einsum(
-            'balm,beam->belm',
-            Whk.unsqueeze(-3).expand(-1, -1, Whk.size(1), -1),
-            Whq.unsqueeze(-2).expand(-1, Whq.size(1), -1, -1))
-        if self.attention_rescale:
-            a_input = a_input / np.sqrt(self.out_features)
-        if self.leakrelu:
-            alpha = F.leaky_relu(self.a(a_input))
-        else:
-            alpha = self.a(a_input)
-        alpha = alpha * adj.unsqueeze(-1)
-        attention = F.softmax(alpha, dim=-2)
-        if self.opattention:
-            h_prime = torch.sigmoid(self.op_attention(op_emb)) * torch.einsum(
-                'bijl,bjl->bil', attention, Whv)
-        else:
-            h_prime = torch.sigmoid(op_emb) * torch.einsum(
-                'bijl,bjl->bil', attention, Whv)
-        # if self.residual:
-        #     h_prime += Whk
-        h_prime = self.layernorm(h_prime)
-        return h_prime
-
-
-class MultiHeadGraphAttentionLayer(nn.Module):
-
-    def __init__(self, in_features, out_features, op_emb_dim):
-        super(MultiHeadGraphAttentionLayer, self).__init__()
-        n_heads = 4
-        self.heads = nn.ModuleList()
-        for _ in range(n_heads):
-            self.heads.append(
-                GraphAttentionLayer(in_features, out_features, op_emb_dim))
-        self.n_heads = n_heads
-
-    def forward(self, h, adj, op_emb):
-        # Compute attention for each head
-        outputs = [head(h, adj, op_emb) for head in self.heads]
-        return torch.mean(torch.stack(outputs), dim=0)
-
-
-class GIN_Model(nn.Module):
-
-    def __init__(
-        self,
-        device='cpu',
-        back_dense=False,
-        dual_input=False,
-        dual_gcn=False,
-        num_zcps=13,
-        vertices=7,
-        none_op_ind=3,
-        op_embedding_dim=48,
-        node_embedding_dim=48,
-        zcp_embedding_dim=48,
-        hid_dim=96,
-        gcn_out_dims=[128, 128, 128, 128, 128],
-        mlp_dims=[200, 200, 200],
-        dropout=0.0,
-        num_time_steps=1,
-        fb_conversion_dims=[128, 128],
-        backward_gcn_out_dims=[128, 128, 128, 128, 128],
-        updateopemb_dims=[128],
-        updateopemb_scale=0.1,
-        nn_emb_dims=128,
-        input_zcp=False,
-        zcp_embedder_dims=[128, 128],
-        gtype='dense',
-        residual=True,
-        unique_attention_projection=False,
-        opattention=True,
-        leakyrelu=True,
-        attention_rescale=False,
-    ):
-        super(GIN_Model, self).__init__()
-        # if num_time_steps > 1:
-        #     raise NotImplementedError
-        self.device = device
-        self.dual_input = dual_input
-        self.wd_repr_dims = 8
-        self.dinp = 2
-        self.dual_gcn = dual_gcn
-        self.num_zcps = num_zcps
-        self.op_embedding_dim = op_embedding_dim
-        self.node_embedding_dim = node_embedding_dim
-        self.zcp_embedding_dim = zcp_embedding_dim
-        self.hid_dim = hid_dim
-        self.gcn_out_dims = gcn_out_dims
-        self.dropout = dropout
-        self.num_time_steps = num_time_steps
-        self.fb_conversion_dims = fb_conversion_dims
-        self.backward_gcn_out_dims = backward_gcn_out_dims
-        self.updateopemb_dims = updateopemb_dims
-        self.updateopemb_scale = updateopemb_scale
-        self.mlp_dims = mlp_dims
-        self.nn_emb_dims = nn_emb_dims
-        self.input_zcp = input_zcp
-        self.zcp_embedder_dims = zcp_embedder_dims
-        self.vertices = vertices
-        self.none_op_ind = none_op_ind
-        self.gtype = gtype
-        self.back_dense = back_dense
-        self.residual = residual
-        self.unique_attn_proj = unique_attention_projection
-        self.opattention = opattention
-        self.leakyrelu = leakyrelu
-        self.attention_rescale = attention_rescale
-        if not self.opattention:
-            self.op_embedding_dim = self.gcn_out_dims[0]
-            self.node_embedding_dim = self.gcn_out_dims[0]
-            self.zcp_embedding_dim = self.gcn_out_dims[0]
-            op_embedding_dim = self.gcn_out_dims[0]
-            node_embedding_dim = self.gcn_out_dims[0]
-            zcp_embedding_dim = self.gcn_out_dims[0]
-        self.mlp_dropout = 0.1
-        self.training = True
-
-        if self.gtype == 'dense':
-            LayerType = DenseGraphFlow
-            BackLayerType = DenseGraphFlow
-        elif self.gtype == 'gat':
-            LayerType = GraphAttentionLayer
-            BackLayerType = GraphAttentionLayer
-        elif self.gtype == 'gat_mh':
-            LayerType = MultiHeadGraphAttentionLayer
-            BackLayerType = MultiHeadGraphAttentionLayer
-        elif self.gtype == 'ensemble':
-            LayerType = EnsembleGATDGFLayer
-            BackLayerType = EnsembleGATDGFLayer
+            if inputs[0].shape[0] == 1 and args.space in [
+                    'nb101', 'nb201', 'nb301', 'tb101'
+            ]:
+                continue
+            elif inputs[0].shape[0] <= 2 and args.space not in [
+                    'nb101', 'nb201', 'nb301', 'tb101'
+            ]:
+                continue
+        #### Params for PWL Loss
+        accs = targets
+        max_compare_ratio = 4
+        compare_threshold = 0.0
+        max_grad_norm = None
+        compare_margin = 0.1
+        margin = [compare_margin]
+        n = targets.shape[0]
+        ######
+        n_max_pairs = int(max_compare_ratio * n)
+        acc_diff = np.array(accs)[:, None] - np.array(accs)
+        acc_abs_difF_matrix = np.triu(np.abs(acc_diff), 1)
+        ex_thresh_inds = np.where(acc_abs_difF_matrix > compare_threshold)
+        ex_thresh_nums = len(ex_thresh_inds[0])
+        if ex_thresh_nums > n_max_pairs:
+            keep_inds = np.random.choice(
+                np.arange(ex_thresh_nums), n_max_pairs, replace=False)
+            ex_thresh_inds = (ex_thresh_inds[0][keep_inds],
+                              ex_thresh_inds[1][keep_inds])
+        if args.representation in ['adj_mlp', 'zcp', 'arch2vec', 'cate']:
+            archs_1 = [
+                torch.stack(
+                    list((inputs[indx] for indx in ex_thresh_inds[1])))
+            ]
+            archs_2 = [
+                torch.stack(
+                    list((inputs[indx] for indx in ex_thresh_inds[0])))
+            ]
+            X_input_1 = archs_1[0].to(device)
+            s_1 = model(X_input_1).squeeze()
+            X_input_2 = archs_2[0].to(device)
+            s_2 = model(X_input_2).squeeze()
+        elif args.representation in ['adj_gin']:
+            if args.space in ['nb101', 'nb201', 'nb301', 'tb101']:
+                archs_1 = [
+                    torch.stack(
+                        list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[2][indx] for indx in ex_thresh_inds[1])))
+                ]
+                archs_2 = [
+                    torch.stack(
+                        list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[2][indx] for indx in ex_thresh_inds[0])))
+                ]
+                X_adj_1, X_ops_1, norm_w_d_1 = archs_1[0].to(
+                    device), archs_1[1].to(device), archs_1[2].to(device)
+                s_1 = model(
+                    x_ops_1=X_ops_1,
+                    x_adj_1=X_adj_1.to(torch.long),
+                    x_ops_2=None,
+                    x_adj_2=None,
+                    zcp=None,
+                    norm_w_d=norm_w_d_1).squeeze()
+                X_adj_2, X_ops_2, norm_w_d_2 = archs_2[0].to(
+                    device), archs_2[1].to(device), archs_2[2].to(device)
+                s_2 = model(
+                    x_ops_1=X_ops_2,
+                    x_adj_1=X_adj_2.to(torch.long),
+                    x_ops_2=None,
+                    x_adj_2=None,
+                    zcp=None,
+                    norm_w_d=norm_w_d_2).squeeze()
+            else:
+                archs_1 = [
+                    torch.stack(
+                        list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[3][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[4][indx] for indx in ex_thresh_inds[1])))
+                ]
+                archs_2 = [
+                    torch.stack(
+                        list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[3][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[4][indx] for indx in ex_thresh_inds[0])))
+                ]
+                X_adj_a_1, X_ops_a_1, X_adj_b_1, X_ops_b_1, norm_w_d_1 = archs_1[
+                    0].to(device), archs_1[1].to(device), archs_1[2].to(
+                        device), archs_1[3].to(device), archs_1[4].to(device)
+                s_1 = model(
+                    x_ops_1=X_ops_a_1,
+                    x_adj_1=X_adj_a_1.to(torch.long),
+                    x_ops_2=X_ops_b_1,
+                    x_adj_2=X_adj_b_1.to(torch.long),
+                    zcp=None,
+                    norm_w_d=norm_w_d_1).squeeze()
+                X_adj_a_2, X_ops_a_2, X_adj_b_2, X_ops_b_2, norm_w_d_2 = archs_2[
+                    0].to(device), archs_2[1].to(device), archs_2[2].to(
+                        device), archs_2[3].to(device), archs_2[4].to(device)
+                s_2 = model(
+                    x_ops_1=X_ops_a_2,
+                    x_adj_1=X_adj_a_2.to(torch.long),
+                    x_ops_2=X_ops_b_2,
+                    x_adj_2=X_adj_b_2.to(torch.long),
+                    zcp=None,
+                    norm_w_d=norm_w_d_2).squeeze()
+        elif args.representation in [
+                'adj_gin_zcp', 'adj_gin_arch2vec', 'adj_gin_cate',
+                'adj_gin_a2vcatezcp'
+        ]:
+            if args.space in ['nb101', 'nb201', 'nb301', 'tb101']:
+                archs_1 = [
+                    torch.stack(
+                        list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[3][indx] for indx in ex_thresh_inds[1])))
+                ]
+                archs_2 = [
+                    torch.stack(
+                        list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[3][indx] for indx in ex_thresh_inds[0])))
+                ]
+                X_adj_1, X_ops_1, zcp, norm_w_d_1 = archs_1[0].to(
+                    device), archs_1[1].to(device), archs_1[2].to(
+                        device), archs_1[3].to(device)
+                s_1 = model(
+                    x_ops_1=X_ops_1,
+                    x_adj_1=X_adj_1.to(torch.long),
+                    x_ops_2=None,
+                    x_adj_2=None,
+                    zcp=zcp,
+                    norm_w_d=norm_w_d_1).squeeze()
+                X_adj_2, X_ops_2, zcp, norm_w_d_2 = archs_2[0].to(
+                    device), archs_2[1].to(device), archs_2[2].to(
+                        device), archs_2[3].to(device)
+                s_2 = model(
+                    x_ops_1=X_ops_2,
+                    x_adj_1=X_adj_2.to(torch.long),
+                    x_ops_2=None,
+                    x_adj_2=None,
+                    zcp=zcp,
+                    norm_w_d=norm_w_d_2).squeeze()
+            else:
+                archs_1 = [
+                    torch.stack(
+                        list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[3][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[4][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(
+                        list((inputs[5][indx] for indx in ex_thresh_inds[1])))
+                ]
+                archs_2 = [
+                    torch.stack(
+                        list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[3][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[4][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(
+                        list((inputs[5][indx] for indx in ex_thresh_inds[0])))
+                ]
+                X_adj_a_1, X_ops_a_1, X_adj_b_1, X_ops_b_1, zcp, norm_w_d_1 = archs_1[
+                    0].to(device), archs_1[1].to(device), archs_1[2].to(
+                        device), archs_1[3].to(device), archs_1[4].to(
+                            device), archs_1[5].to(device)
+                s_1 = model(
+                    x_ops_1=X_ops_a_1,
+                    x_adj_1=X_adj_a_1.to(torch.long),
+                    x_ops_2=X_ops_b_1,
+                    x_adj_2=X_adj_b_1.to(torch.long),
+                    zcp=zcp,
+                    norm_w_d=norm_w_d_1).squeeze()
+                X_adj_a_2, X_ops_a_2, X_adj_b_2, X_ops_b_2, zcp, norm_w_d_2 = archs_2[
+                    0].to(device), archs_2[1].to(device), archs_2[2].to(
+                        device), archs_2[3].to(device), archs_2[4].to(
+                            device), archs_2[5].to(device)
+                s_2 = model(
+                    x_ops_1=X_ops_a_2,
+                    x_adj_1=X_adj_a_2.to(torch.long),
+                    x_ops_2=X_ops_b_2,
+                    x_adj_2=X_adj_b_2.to(torch.long),
+                    zcp=zcp,
+                    norm_w_d=norm_w_d_2).squeeze()
         else:
             raise NotImplementedError
+        better_lst = (acc_diff > 0)[ex_thresh_inds]
+        better_pm = 2 * s_1.new(np.array(better_lst, dtype=np.float32)) - 1
+        zero_ = s_1.new([0.])
+        margin = s_1.new(margin)
+        pair_loss = torch.mean(
+            torch.max(zero_, margin - better_pm * (s_2 - s_1)))
+        optimizer.zero_grad()
+        pair_loss.backward()
+        optimizer.step()
+        running_loss += pair_loss.item()
+    scheduler.step()
 
-        if self.back_dense:
-            BackLayerType = DenseGraphFlow
-
-        # regression MLP
-        self.mlp = []
-        reg_inp_dims = self.nn_emb_dims
-        if self.input_zcp:
-            reg_inp_dims += self.zcp_embedding_dim
-        if self.dual_gcn:
-            reg_inp_dims += self.wd_repr_dims
-        dim = reg_inp_dims
-        for hidden_size in self.mlp_dims:
-            self.mlp.append(
-                nn.Sequential(
-                    nn.Linear(dim, hidden_size), nn.ReLU(inplace=False),
-                    nn.Dropout(p=self.mlp_dropout)))
-            dim = hidden_size
-        self.mlp.append(nn.Linear(dim, 1))
-        self.mlp = nn.Sequential(*self.mlp)
-
-        # op embeddings
-        self.input_node_emb = nn.Embedding(1, self.node_embedding_dim)
-        self.other_node_emb = nn.Parameter(
-            torch.zeros(1, self.node_embedding_dim), requires_grad=True)
-        self.input_op_emb = nn.Parameter(
-            torch.zeros(1, self.op_embedding_dim), requires_grad=False)
-        self.op_emb = nn.Embedding(128, self.op_embedding_dim)
-        self.output_op_emb = nn.Embedding(1, self.op_embedding_dim)
-        self.x_hidden = nn.Linear(self.node_embedding_dim, self.hid_dim)
-
-        # gcn
-        self.gcns = []
-        in_dim = self.hid_dim
-        for dim in self.gcn_out_dims:
-            self.gcns.append(
-                LayerType(in_dim, dim, self.op_embedding_dim, self.residual,
-                          self.unique_attn_proj, self.opattention,
-                          self.leakyrelu, self.attention_rescale
-                          # potential issue
-                          ))
-            in_dim = dim
-        self.gcns = nn.ModuleList(self.gcns)
-        self.num_gcn_layers = len(self.gcns)
-        self.out_dim = in_dim
-
-        # zcp
-        self.zcp_embedder = []
-        zin_dim = self.num_zcps
-        for zcp_emb_dim in self.zcp_embedder_dims:
-            self.zcp_embedder.append(
-                nn.Sequential(
-                    nn.Linear(zin_dim, zcp_emb_dim), nn.ReLU(inplace=False),
-                    nn.Dropout(p=self.mlp_dropout)))
-            zin_dim = zcp_emb_dim
-        self.zcp_embedder.append(nn.Linear(zin_dim, self.zcp_embedding_dim))
-        self.zcp_embedder = nn.Sequential(*self.zcp_embedder)
-
-        # backward gcn
-        self.b_gcns = []
-        in_dim = self.fb_conversion_dims[-1]
-        for dim in self.backward_gcn_out_dims:
-            self.b_gcns.append(
-                BackLayerType(in_dim, dim, self.op_embedding_dim,
-                              self.residual, self.unique_attn_proj,
-                              self.opattention, self.leakyrelu,
-                              self.attention_rescale))
-            in_dim = dim
-        self.b_gcns = nn.ModuleList(self.b_gcns)
-        self.num_b_gcn_layers = len(self.b_gcns)
-
-        # fb_conversion
-        if self.num_time_steps > 1:
-            self.fb_conversion_list = []
-            dim = self.gcn_out_dims[-1]
-            num_fb_layers = len(self.fb_conversion_dims)
-            for i_dim, fb_conversion_dim in enumerate(fb_conversion_dims):
-                self.fb_conversion_list.append(
-                    nn.Linear(dim, fb_conversion_dim))
-                if i_dim < num_fb_layers - 1:
-                    self.fb_conversion_list.append(nn.ReLU(inplace=False))
-                dim = fb_conversion_dim
-            self.fb_conversion = nn.Sequential(*self.fb_conversion_list)
-
-        # updateop_embedder
-        self.updateop_embedder = []
-        in_dim = self.gcn_out_dims[-1] + self.backward_gcn_out_dims[
-            -1] + self.op_embedding_dim
-        for embedder_dim in self.updateopemb_dims:
-            self.updateop_embedder.append(nn.Linear(in_dim, embedder_dim))
-            self.updateop_embedder.append(nn.ReLU(inplace=False))
-            in_dim = embedder_dim
-        self.updateop_embedder.append(nn.Linear(in_dim, self.op_embedding_dim))
-        self.updateop_embedder = nn.Sequential(*self.updateop_embedder)
-
-        # combine y_1 and y_2
-        if self.dual_gcn:
-            self.y_combiner = nn.Linear(self.gcn_out_dims[-1] * 2,
-                                        self.gcn_out_dims[-1])
-            # add 1 relu and layer
-            self.y_combiner = nn.Sequential(
-                self.y_combiner, nn.ReLU(inplace=False),
-                nn.Linear(self.gcn_out_dims[-1], self.gcn_out_dims[-1]))
-
-        if self.dual_gcn:
-            # wd embedder
-            self.norm_wd_embedder = []
-            in_dim = 2
-            for embedder_dim in [self.wd_repr_dims]:
-                self.norm_wd_embedder.append(nn.Linear(in_dim, embedder_dim))
-                self.norm_wd_embedder.append(nn.ReLU(inplace=False))
-                in_dim = embedder_dim
-            self.norm_wd_embedder.append(nn.Linear(in_dim, self.wd_repr_dims))
-            self.norm_wd_embedder = nn.Sequential(*self.norm_wd_embedder)
-
-    def embed_and_transform_arch(self, archs):
-        # If self.dual input, remove first 2 and use input_op_emb.
-        adjs = self.input_op_emb.new([arch.T for arch in archs[0]])
-        # import pdb; pdb.set_trace()
-        op_inds = self.input_op_emb.new([arch for arch in archs[1]]).long()
-        op_embs = self.op_emb(op_inds)
-        # Remove the first and last index of op_emb
-        # shape is [128, 7, 48], remove [128, 0, 48] and [128, 6, 48]
-        if self.dual_input:
-            op_embs = op_embs[:, self.dinp:-1, :]
-            op_inds = op_inds[:, self.dinp:-1]
+    model.training = False
+    model.eval()
+    pred_scores, true_scores = [], []
+    repr_max = int(80 / args.test_batch_size)
+    for repr_idx, (reprs, scores) in enumerate(tqdm(test_dataloader)):
+        if epoch < args.epochs - 5 and repr_idx > repr_max:
+            break
+        if args.representation in ['adj_mlp', 'zcp', 'arch2vec', 'cate']:
+            pred_scores.append(
+                model(reprs.to(device)).squeeze().detach().cpu().tolist())
+        elif args.representation in ['adj_gin']:
+            if args.space in ['nb101', 'nb201', 'nb301', 'tb101']:
+                pred_scores.append(
+                    model(
+                        x_ops_1=reprs[1].to(device),
+                        x_adj_1=reprs[0].to(torch.long),
+                        x_ops_2=None,
+                        x_adj_2=None,
+                        zcp=None,
+                        norm_w_d=reprs[-1].to(
+                            device)).squeeze().detach().cpu().tolist())
+            else:
+                pred_scores.append(
+                    model(
+                        x_ops_1=reprs[1].to(device),
+                        x_adj_1=reprs[0].to(torch.long),
+                        x_ops_2=reprs[3].to(device),
+                        x_adj_2=reprs[2].to(torch.long),
+                        zcp=None,
+                        norm_w_d=reprs[-1].to(
+                            device)).squeeze().detach().cpu().tolist())
+        elif args.representation in [
+                'adj_gin_zcp', 'adj_gin_arch2vec', 'adj_gin_cate',
+                'adj_gin_a2vcatezcp'
+        ]:
+            if args.space in ['nb101', 'nb201', 'nb301', 'tb101']:
+                pred_scores.append(
+                    model(
+                        x_ops_1=reprs[1].to(device),
+                        x_adj_1=reprs[0].to(torch.long),
+                        x_ops_2=None,
+                        x_adj_2=None,
+                        zcp=reprs[2].to(device),
+                        norm_w_d=reprs[-1].to(
+                            device)).squeeze().detach().cpu().tolist())
+            else:
+                pred_scores.append(
+                    model(
+                        x_ops_1=reprs[1].to(device),
+                        x_adj_1=reprs[0].to(torch.long),
+                        x_ops_2=reprs[3].to(device),
+                        x_adj_2=reprs[2].to(torch.long),
+                        zcp=reprs[4].to(device),
+                        norm_w_d=reprs[-1].to(
+                            device)).squeeze().detach().cpu().tolist())
         else:
-            op_embs = op_embs[:, 1:-1, :]
-            op_inds = op_inds[:, 1:-1]
-        b_size = op_embs.shape[0]
-        if self.dual_input:
-            # if False:
-            op_embs = torch.cat(
-                (self.input_op_emb.unsqueeze(0).repeat([b_size, 1, 1]),
-                 self.input_op_emb.unsqueeze(0).repeat([b_size, 1, 1]),
-                 op_embs, self.output_op_emb.weight.unsqueeze(0).repeat(
-                     [b_size, 1, 1])),
-                dim=1)
-            node_embs = torch.cat(
-                (self.input_node_emb.weight.unsqueeze(0).repeat([
-                    b_size, 1, 1
-                ]), self.input_node_emb.weight.unsqueeze(0).repeat(
-                    [b_size, 1, 1]), self.other_node_emb.unsqueeze(0).repeat(
-                        [b_size, self.vertices - 2, 1])),
-                dim=1)
+            raise NotImplementedError
+        true_scores.append(scores.cpu().tolist())
+    # pred_scores = [t for sublist in pred_scores for t in sublist]
+    # true_scores = [t for sublist in true_scores for t in sublist]
+    pred_scores = flatten_mixed_list(pred_scores)
+    true_scores = flatten_mixed_list(true_scores)
+    num_test_items = len(pred_scores)
+    return model, num_test_items, running_loss / len(dataloader), spearmanr(
+        true_scores,
+        pred_scores).correlation, kendalltau(true_scores,
+                                             pred_scores).correlation
+
+
+sys.path.append('..')
+if args.space in [
+        'Amoeba', 'DARTS', 'DARTS_fix-w-d', 'DARTS_lr-wd', 'ENAS',
+        'ENAS_fix-w-d', 'NASNet', 'PNAS', 'PNAS_fix-w-d'
+]:
+    from nas_embedding_suite.nds_ss import NDS as EmbGenClass
+elif args.space in ['nb101', 'nb201', 'nb301']:
+    exec('from nas_embedding_suite.nb{}_ss import NASBench{} as EmbGenClass'.
+         format(args.space[-3:], args.space[-3:]))
+elif args.space in ['tb101']:
+    from nas_embedding_suite.tb101_micro_ss import \
+        TransNASBench101Micro as EmbGenClass
+
+embedding_gen = EmbGenClass(normalize_zcp=True, log_synflow=True)
+
+
+def get_dataloader(args,
+                   embedding_gen,
+                   space,
+                   sample_count,
+                   representation,
+                   mode,
+                   train_indexes=None,
+                   test_size=None):
+    representations = []
+    accs = []
+    if space == 'nb101' and args.test_tagates:
+        print('Sampling ONLY TAGATES NB101 networks for replication')
+        if mode == 'train':
+            sample_indexes = nb101_train_tagates_sample_indices[:sample_count]
         else:
-            op_embs = torch.cat(
-                (self.input_op_emb.unsqueeze(0).repeat([b_size, 1, 1]),
-                 op_embs, self.output_op_emb.weight.unsqueeze(0).repeat(
-                     [b_size, 1, 1])),
-                dim=1)
-            node_embs = torch.cat(
-                (self.input_node_emb.weight.unsqueeze(0).repeat(
-                    [b_size, 1, 1]), self.other_node_emb.unsqueeze(0).repeat(
-                        [b_size, self.vertices - 1, 1])),
-                dim=1)
-
-        x = self.x_hidden(node_embs)
-        return adjs, x, op_embs, op_inds
-
-    def _forward_pass(self, x, adjs, auged_op_emb):
-        # --- forward pass ---
-        y = x
-        for i_layer, gcn in enumerate(self.gcns):
-            y = gcn(y, adjs, auged_op_emb)
-            # if self.use_bn:
-            #     shape_y = y.shape
-            #     y = self.bns[i_layer](y.reshape(shape_y[0], -1, shape_y[-1])).reshape(
-            #         shape_y
-            #     )
-            if i_layer != self.num_gcn_layers - 1:
-                y = F.relu(y)
-            y = F.dropout(y, self.dropout, training=self.training)
-        return y
-
-    def _backward_pass(self, y, adjs, auged_op_emb):
-        # If activating, define b_gcns, fb_conversion
-        # --- backward pass ---
-        b_info = y[:, -1:, :]
-        b_info = self.fb_conversion(b_info)
-        b_info = torch.cat(
-            (torch.zeros([y.shape[0], self.vertices - 1, b_info.shape[-1]],
-                         device=y.device), b_info),
-            dim=1)
-        # start backward flow
-        b_adjs = adjs.transpose(1, 2)
-        b_y = b_info
-        for i_layer, gcn in enumerate(self.b_gcns):
-            b_y = gcn(b_y, b_adjs, auged_op_emb)
-            if i_layer != self.num_b_gcn_layers - 1:
-                b_y = F.relu(b_y)
-                b_y = F.dropout(b_y, self.dropout, training=self.training)
-        return b_y
-
-    def _update_op_emb(self, y, b_y, op_emb):
-        # If activating, define updateop_embedder
-        # --- UpdateOpEmb ---
-        in_embedding = torch.cat((op_emb.detach(), y.detach(), b_y), dim=-1)
-        update = self.updateop_embedder(in_embedding)
-        op_emb = op_emb + self.updateopemb_scale * update
-        return op_emb
-
-    def _final_process(self, y, op_inds):
-        if self.dual_input:
-            y = y[:, self.dinp:, :]
+            sample_indexes = nb101_tagates_sample_indices
+    else:
+        if mode == 'train':
+            if space not in ['nb101', 'nb201', 'nb301', 'tb101']:
+                sample_indexes = random.sample(
+                    range(embedding_gen.get_numitems(space) - 1), sample_count)
+            else:
+                sample_indexes = random.sample(
+                    range(embedding_gen.get_numitems() - 1), sample_count)
         else:
-            y = y[:, 1:, :]
-        y = torch.cat((
-            y[:, :-1, :] *
-            (op_inds != self.none_op_ind)[:, :, None].to(torch.float32),
-            y[:, -1:, :],
-        ),
-                      dim=1)
-        y = torch.mean(y, dim=1)
-        return y
+            if space not in ['nb101', 'nb201', 'nb301', 'tb101']:
+                remaining_indexes = list(
+                    set(range(embedding_gen.get_numitems(space) - 1)) -
+                    set(train_indexes))
+            else:
+                remaining_indexes = list(
+                    set(range(embedding_gen.get_numitems() - 1)) -
+                    set(train_indexes))
+            if test_size is not None:
+                sample_indexes = random.sample(remaining_indexes, test_size)
+            else:
+                sample_indexes = remaining_indexes
+    if representation.__contains__(
+            'gin'
+    ) == False:  # adj_mlp, zcp, arch2vec, cate --> FullyConnectedNN
+        if representation == 'adj_mlp':  # adj_mlp --> FullyConnectedNN
+            for i in tqdm(sample_indexes):
+                if space not in ['nb101', 'nb201', 'nb301', 'tb101']:
+                    adj_mat_norm, op_mat_norm, adj_mat_red, op_mat_red = embedding_gen.get_adj_op(
+                        i, space=space).values()
+                    norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
+                    norm_w_d = np.asarray(norm_w_d).flatten()
+                    accs.append(embedding_gen.get_valacc(i, space=space))
+                    adj_mat_norm = np.asarray(adj_mat_norm).flatten()
+                    adj_mat_red = np.asarray(adj_mat_red).flatten()
+                    op_mat_norm = torch.Tensor(np.asarray(op_mat_norm)).argmax(
+                        dim=1).numpy().flatten()  # Careful here.
+                    op_mat_red = torch.Tensor(np.asarray(op_mat_red)).argmax(
+                        dim=1).numpy().flatten()  # Careful here.
+                    representations.append(
+                        np.concatenate((adj_mat_norm, op_mat_norm, adj_mat_red,
+                                        op_mat_red, norm_w_d)).tolist())
+                else:
+                    adj_mat, op_mat = embedding_gen.get_adj_op(i).values()
+                    if space == 'tb101':
+                        accs.append(
+                            embedding_gen.get_valacc(i, task=args.task))
+                    else:
+                        accs.append(embedding_gen.get_valacc(i))
+                    norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
+                    norm_w_d = np.asarray(norm_w_d).flatten()
+                    adj_mat = np.asarray(adj_mat).flatten()
+                    op_mat = torch.Tensor(np.asarray(op_mat)).argmax(
+                        dim=1).numpy().flatten()  # Careful here.
+                    representations.append(
+                        np.concatenate((adj_mat, op_mat, norm_w_d)).tolist())
+        else:  # zcp, arch2vec, cate --> FullyConnectedNN
+            for i in tqdm(sample_indexes):
+                if space in ['nb101', 'nb201', 'nb301']:
+                    exec(
+                        'representations.append(np.concatenate((embedding_gen.get_{}(i), np.asarray(embedding_gen.get_norm_w_d(i, space="{}")).flatten())))'
+                        .format(representation, space))
+                elif space == 'tb101':
+                    exec(
+                        'representations.append(np.concatenate((embedding_gen.get_{}(i, "{}"), np.asarray(embedding_gen.get_norm_w_d(i, space="{}")).flatten())))'
+                        .format(representation, args.task, args.task))
+                else:
+                    exec(
+                        'representations.append(np.concatenate((embedding_gen.get_{}(i, "{}"), np.asarray(embedding_gen.get_norm_w_d(i, space="{}")).flatten())))'
+                        .format(representation, space, space))
+                if space == 'tb101':
+                    accs.append(embedding_gen.get_valacc(i, task=args.task))
+                elif space not in ['nb101', 'nb201', 'nb301']:
+                    accs.append(embedding_gen.get_valacc(i, space=space))
+                else:
+                    accs.append(embedding_gen.get_valacc(i))
+        representations = torch.stack(
+            [torch.FloatTensor(nxx) for nxx in representations])
+    else:  # adj_gin, adj_gin_zcp, adj_gin_arch2vec, adj_gin_cate --> GIN_Model
+        assert representation in [
+            'adj_gin', 'adj_gin_zcp', 'adj_gin_arch2vec', 'adj_gin_cate',
+            'adj_gin_a2vcatezcp'
+        ], 'Representation Not Supported!'
+        if args.representation == 'adj_gin':
+            for i in tqdm(sample_indexes):
+                if space not in ['nb101', 'nb201', 'nb301', 'tb101']:
+                    adj_mat_norm, op_mat_norm, adj_mat_red, op_mat_red = embedding_gen.get_adj_op(
+                        i, space=space).values()
+                    norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
+                    norm_w_d = np.asarray(norm_w_d).flatten()
+                    op_mat_norm = torch.Tensor(
+                        np.array(op_mat_norm)).argmax(dim=1)
+                    op_mat_red = torch.Tensor(
+                        np.array(op_mat_red)).argmax(dim=1)
+                    accs.append(embedding_gen.get_valacc(i, space=space))
+                    representations.append(
+                        (torch.Tensor(adj_mat_norm), torch.Tensor(op_mat_norm),
+                         torch.Tensor(adj_mat_red), torch.Tensor(op_mat_red),
+                         torch.Tensor(norm_w_d)))
+                else:
+                    adj_mat, op_mat = embedding_gen.get_adj_op(i).values()
+                    op_mat = torch.Tensor(np.array(op_mat)).argmax(dim=1)
+                    norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
+                    norm_w_d = np.asarray(norm_w_d).flatten()
+                    if space == 'tb101':
+                        accs.append(embedding_gen.get_valacc(i, task=task))
+                    else:
+                        accs.append(embedding_gen.get_valacc(i))
+                    representations.append(
+                        (torch.Tensor(adj_mat), torch.Tensor(op_mat),
+                         torch.Tensor(norm_w_d)))
+        else:  # "adj_gin_zcp", "adj_gin_arch2vec", "adj_gin_cate"
+            for i in tqdm(sample_indexes):
+                if space not in ['nb101', 'nb201', 'nb301', 'tb101']:
+                    adj_mat_norm, op_mat_norm, adj_mat_red, op_mat_red = embedding_gen.get_adj_op(
+                        i, space=space).values()
+                    method_name = 'get_{}'.format(
+                        args.representation.split('_')[-1])
+                    method_to_call = getattr(embedding_gen, method_name)
+                    zcp_ = method_to_call(i, space=space)
+                    norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
+                    norm_w_d = np.asarray(norm_w_d).flatten()
+                    op_mat_norm = torch.Tensor(
+                        np.array(op_mat_norm)).argmax(dim=1)
+                    op_mat_red = torch.Tensor(
+                        np.array(op_mat_red)).argmax(dim=1)
+                    accs.append(embedding_gen.get_valacc(i, space=space))
+                    representations.append(
+                        (torch.Tensor(adj_mat_norm), torch.Tensor(op_mat_norm),
+                         torch.Tensor(adj_mat_red), torch.Tensor(op_mat_red),
+                         torch.Tensor(zcp_), torch.Tensor(norm_w_d)))
+                else:
+                    adj_mat, op_mat = embedding_gen.get_adj_op(i).values()
+                    method_name = 'get_{}'.format(
+                        args.representation.split('_')[-1])
+                    method_to_call = getattr(embedding_gen, method_name)
+                    if space == 'tb101':
+                        zcp_ = method_to_call(i, task=args.task)
+                    else:
+                        zcp_ = method_to_call(i)
+                    norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
+                    norm_w_d = np.asarray(norm_w_d).flatten()
+                    op_mat = torch.Tensor(np.array(op_mat)).argmax(dim=1)
+                    if space == 'tb101':
+                        accs.append(
+                            embedding_gen.get_valacc(i, task=args.task))
+                    else:
+                        accs.append(embedding_gen.get_valacc(i))
+                    representations.append(
+                        (torch.Tensor(adj_mat), torch.LongTensor(op_mat),
+                         torch.Tensor(zcp_), torch.Tensor(norm_w_d)))
 
-    def forward(self,
-                x_ops_1=None,
-                x_adj_1=None,
-                x_ops_2=None,
-                x_adj_2=None,
-                zcp=None,
-                norm_w_d=None):
-        archs_1 = [[np.asarray(x.cpu()) for x in x_adj_1],
-                   [np.asarray(x.cpu()) for x in x_ops_1]]
-        if zcp is not None:
-            zcp = zcp.to(self.device)
-        # import pdb; pdb.set_trace()
-        adjs_1, x_1, op_emb_1, op_inds_1 = self.embed_and_transform_arch(
-            archs_1)
-        adjs_1, x_1, op_emb_1, op_inds_1 = adjs_1.to(self.device), x_1.to(
-            self.device), op_emb_1.to(self.device), op_inds_1.to(self.device)
-        for tst in range(self.num_time_steps):
-            y_1 = self._forward_pass(x_1, adjs_1, op_emb_1)
-            if tst == self.num_time_steps - 1:
-                break
-            b_y_1 = self._backward_pass(y_1, adjs_1, op_emb_1)
-            op_emb_1 = self._update_op_emb(y_1, b_y_1, op_emb_1)
-        y_1 = self._final_process(y_1, op_inds_1)
-        if self.dual_gcn:
-            archs_2 = [[np.asarray(x.cpu()) for x in x_adj_2],
-                       [np.asarray(x.cpu()) for x in x_ops_2]]
-            adjs_2, x_2, op_emb_2, op_inds_2 = self.embed_and_transform_arch(
-                archs_2)
-            adjs_2, x_2, op_emb_2, op_inds_2 = adjs_2.to(self.device), x_2.to(
-                self.device), op_emb_2.to(self.device), op_inds_2.to(
-                    self.device)
-            for tst in range(self.num_time_steps):
-                y_2 = self._forward_pass(x_2, adjs_2, op_emb_2)
-                if tst == self.num_time_steps - 1:
-                    break
-                b_y_2 = self._backward_pass(y_2, adjs_2, op_emb_2)
-                op_emb_2 = self._update_op_emb(y_2, b_y_2, op_emb_2)
-            y_2 = self._final_process(y_2, op_inds_2)
-            # y_1 += y_2
-            y_1 = self.y_combiner(torch.cat((y_1, y_2), dim=-1))
-        y_1 = y_1.squeeze()
-        if self.input_zcp:
-            zcp = self.zcp_embedder(zcp)
-            if len(zcp.shape) == 1:
-                zcp = zcp.unsqueeze(0)
-            if len(y_1.shape) == 1:
-                y_1 = y_1.unsqueeze(0)
-            y_1 = torch.cat((y_1, zcp), dim=-1)
-        if self.dual_gcn:
-            norm_w_d = norm_w_d.to(self.device)
-            norm_w_d = self.norm_wd_embedder(norm_w_d)
-            if len(y_1.shape) == 1:
-                y_1 = y_1.unsqueeze(0)
-            if len(norm_w_d.shape) == 1:
-                norm_w_d = norm_w_d.unsqueeze(0)
-            y_1 = torch.cat((y_1, norm_w_d), dim=-1)
-        y_1 = self.mlp(y_1)
-        return y_1
+    dataset = CustomDataset(representations, accs)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=args.batch_size
+        if mode == 'train' else args.test_batch_size,
+        shuffle=True if mode == 'train' else False)
+    return dataloader, sample_indexes
+
+
+representation = args.representation
+sample_counts = sample_tests[args.space]
+samp_eff = {}
+across_trials = {sample_count: [] for sample_count in sample_counts}
+
+for tr_ in range(args.num_trials):
+    for sample_count in sample_counts:
+        # if sample_count > 32:
+        #     args.batch_size = int(sample_count//4)
+        train_dataloader, train_indexes = get_dataloader(
+            args,
+            embedding_gen,
+            args.space,
+            sample_count,
+            representation,
+            mode='train')
+        test_dataloader, test_indexes = get_dataloader(
+            args,
+            embedding_gen,
+            args.space,
+            sample_count=None,
+            representation=representation,
+            mode='test',
+            train_indexes=train_indexes,
+            test_size=args.test_size)
+        test_dataloader_lowbs, test_indexes = get_dataloader(
+            args,
+            embedding_gen,
+            args.space,
+            sample_count=None,
+            representation=representation,
+            mode='test',
+            train_indexes=train_indexes,
+            test_size=80)
+
+        if representation == 'adj_gin':
+            input_dim = next(iter(train_dataloader))[0][1].shape[1]
+            none_op_ind = 130  # placeholder
+            if args.space in ['nb101', 'nb201', 'nb301', 'tb101']:
+                model = GIN_Model(
+                    device=args.device,
+                    gtype=args.gnn_type,
+                    back_dense=args.back_dense,
+                    dual_gcn=False,
+                    num_time_steps=args.timesteps,
+                    vertices=input_dim,
+                    none_op_ind=none_op_ind,
+                    input_zcp=False,
+                    residual=args.residual,
+                    unique_attention_projection=args.
+                    unique_attention_projection,
+                    opattention=args.opattention,
+                    leakyrelu=args.leakyrelu,
+                    attention_rescale=args.attention_rescale)
+            else:
+                model = GIN_Model(
+                    device=args.device,
+                    gtype=args.gnn_type,
+                    back_dense=args.back_dense,
+                    dual_gcn=True,
+                    num_time_steps=args.timesteps,
+                    vertices=input_dim,
+                    none_op_ind=none_op_ind,
+                    input_zcp=False,
+                    residual=args.residual,
+                    unique_attention_projection=args.
+                    unique_attention_projection,
+                    opattention=args.opattention,
+                    leakyrelu=args.leakyrelu,
+                    attention_rescale=args.attention_rescale)
+        elif representation in [
+                'adj_gin_zcp', 'adj_gin_arch2vec', 'adj_gin_cate',
+                'adj_gin_a2vcatezcp'
+        ]:
+            input_dim = next(iter(train_dataloader))[0][1].shape[1]
+            num_zcps = next(iter(train_dataloader))[0][-2].shape[1]
+            none_op_ind = 130  # placeholder
+            if args.space in ['nb101', 'nb201', 'nb301', 'tb101']:
+                model = GIN_Model(
+                    device=args.device,
+                    gtype=args.gnn_type,
+                    back_dense=args.back_dense,
+                    dual_gcn=False,
+                    num_time_steps=args.timesteps,
+                    num_zcps=num_zcps,
+                    vertices=input_dim,
+                    none_op_ind=none_op_ind,
+                    input_zcp=True,
+                    residual=args.residual,
+                    unique_attention_projection=args.
+                    unique_attention_projection,
+                    opattention=args.opattention,
+                    leakyrelu=args.leakyrelu,
+                    attention_rescale=args.attention_rescale)
+            else:
+                model = GIN_Model(
+                    device=args.device,
+                    gtype=args.gnn_type,
+                    back_dense=args.back_dense,
+                    dual_gcn=True,
+                    num_time_steps=args.timesteps,
+                    num_zcps=num_zcps,
+                    vertices=input_dim,
+                    none_op_ind=none_op_ind,
+                    input_zcp=True,
+                    residual=args.residual,
+                    unique_attention_projection=args.
+                    unique_attention_projection,
+                    opattention=args.opattention,
+                    leakyrelu=args.leakyrelu,
+                    attention_rescale=args.attention_rescale)
+        elif representation in ['adj_mlp', 'zcp', 'arch2vec', 'cate']:
+            representation_size = next(iter(train_dataloader))[0].shape[1]
+            model = FullyConnectedNN(layer_sizes=[representation_size] +
+                                     [128] * 3 + [1]).to(device)
+
+        model.to(device)
+        criterion = torch.nn.MSELoss()
+        params_optimize = list(model.parameters())
+        optimizer = torch.optim.AdamW(
+            params_optimize, lr=args.lr, weight_decay=args.weight_decay)
+        scheduler = CosineAnnealingLR(
+            optimizer, T_max=args.epochs, eta_min=args.eta_min)
+        kdt_l5, spr_l5 = [], []
+        for epoch in range(args.epochs):
+            start_time = time.time()
+            if args.loss_type == 'mse':
+                raise NotImplementedError
+                # model, mse_loss, spr, kdt = train(args, model, train_dataloader, criterion, optimizer, scheduler, test_dataloader, epoch)
+            elif args.loss_type == 'pwl':
+                if epoch > args.epochs - 5:
+                    model, num_test_items, mse_loss, spr, kdt = pwl_train(
+                        args, model, train_dataloader, criterion, optimizer,
+                        scheduler, test_dataloader, epoch)
+                else:
+                    model, num_test_items, mse_loss, spr, kdt = pwl_train(
+                        args, model, train_dataloader, criterion, optimizer,
+                        scheduler, test_dataloader_lowbs, epoch)
+            else:
+                raise NotImplementedError
+            # test_loss, num_test_items, test_spearmanr, test_kendalltau = test(args, model, test_dataloader, criterion)
+            end_time = time.time()
+            if epoch > args.epochs - 5:
+                kdt_l5.append(kdt)
+                spr_l5.append(spr)
+                print(
+                    f'Epoch {epoch + 1}/{args.epochs} | Train Loss: {mse_loss:.4f} | Epoch Time: {end_time - start_time:.2f}s | Spearman@{num_test_items}: {spr:.4f} | Kendall@{num_test_items}: {kdt:.4f}'
+                )
+            else:
+                print(
+                    f'Epoch {epoch + 1}/{args.epochs} | Train Loss: {mse_loss:.4f} | Epoch Time: {end_time - start_time:.2f}s | Spearman@{num_test_items}: {spr:.4f} | Kendall@{num_test_items}: {kdt:.4f}'
+                )
+        samp_eff[sample_count] = (sum(spr_l5) / len(spr_l5),
+                                  sum(kdt_l5) / len(kdt_l5))
+        print('Sample Count: {}, Spearman: {}, Kendall: {}'.format(
+            sample_count,
+            sum(spr_l5) / len(spr_l5),
+            sum(kdt_l5) / len(kdt_l5)))
+        pprint(samp_eff)
+        across_trials[sample_count].append(samp_eff[sample_count])
+
+# print average across trials for each sample count
+for sample_count in sample_counts:
+    print(
+        'Average KDT: ',
+        sum([
+            across_trials[sample_count][i][1]
+            for i in range(len(across_trials[sample_count]))
+        ]) / len(across_trials[sample_count]))
+    # Print variance of KDT across tests
+    print(
+        'Variance KDT: ',
+        np.var([
+            across_trials[sample_count][i][1]
+            for i in range(len(across_trials[sample_count]))
+        ]))
+    # print SPR
+    print(
+        'Average SPR: ',
+        sum([
+            across_trials[sample_count][i][0]
+            for i in range(len(across_trials[sample_count]))
+        ]) / len(across_trials[sample_count]))
+    # Print variance of SPR across tests
+    print(
+        'Variance SPR: ',
+        np.var([
+            across_trials[sample_count][i][0]
+            for i in range(len(across_trials[sample_count]))
+        ]))
+
+# sample_count = sample_counts[-1]
+record_ = {}
+for sample_count in sample_counts:
+    avkdt = str(
+        sum([
+            across_trials[sample_count][i][1]
+            for i in range(len(across_trials[sample_count]))
+        ]) / len(across_trials[sample_count]))
+    kdt_std = str(
+        np.var([
+            across_trials[sample_count][i][1]
+            for i in range(len(across_trials[sample_count]))
+        ]))
+    avspr = str(
+        sum([
+            across_trials[sample_count][i][0]
+            for i in range(len(across_trials[sample_count]))
+        ]) / len(across_trials[sample_count]))
+    spr_std = str(
+        np.var([
+            across_trials[sample_count][i][0]
+            for i in range(len(across_trials[sample_count]))
+        ]))
+    record_[sample_count] = [avkdt, kdt_std, avspr, spr_std]
+
+if not os.path.exists('correlation_results/{}'.format(args.name_desc)):
+    os.makedirs('correlation_results/{}'.format(args.name_desc))
+
+filename = f'correlation_results/{args.name_desc}/{args.space}_samp_eff.csv'
+header = 'name_desc,seed,batch_size,epochs,space,task,representation,timesteps,pwl_mse,test_tagates,gnn_type,back_dense,key,spr,kdt,spr_std,kdt_std'
+if not os.path.isfile(filename):
+    with open(filename, 'w') as f:
+        f.write(header + '\n')
+
+with open(filename, 'a') as f:
+    for key in samp_eff.keys():
+        f.write(
+            '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n'
+            % (str(args.name_desc), str(args.seed), str(args.batch_size),
+               str(args.epochs), str(args.space), str(
+                   args.task), str(args.representation), str(args.timesteps),
+               str(args.loss_type), str(args.test_tagates), str(args.gnn_type),
+               str(args.back_dense), str(key), str(args.residual),
+               str(args.leakyrelu), str(args.unique_attention_projection),
+               str(args.opattention), str(args.attention_rescale),
+               str(record_[key][2]), str(record_[key][0]), str(
+                   record_[key][3]), str(record_[key][1])))

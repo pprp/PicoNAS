@@ -12,13 +12,12 @@ from pprint import pprint
 
 import numpy as np
 import torch
+from new_models import FullyConnectedNN, GIN_Model
 from scipy.stats import kendalltau, spearmanr
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from utils import CustomDataset, get_tagates_sample_indices
-
-from piconas.predictor.flan.flan_model2 import FullyConnectedNN, GIN_Model
 
 sys.path.append(os.environ['PROJ_BPATH'] + '/' + 'nas_embedding_suite')
 

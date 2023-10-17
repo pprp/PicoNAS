@@ -423,11 +423,6 @@ class GIN_Model(nn.Module):
         y = x
         for i_layer, gcn in enumerate(self.gcns):
             y = gcn(y, adjs, auged_op_emb)
-            # if self.use_bn:
-            #     shape_y = y.shape
-            #     y = self.bns[i_layer](y.reshape(shape_y[0], -1, shape_y[-1])).reshape(
-            #         shape_y
-            #     )
             if i_layer != self.num_gcn_layers - 1:
                 y = F.relu(y)
             y = F.dropout(y, self.dropout, training=self.training)
