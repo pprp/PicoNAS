@@ -10,9 +10,8 @@ from torch.utils.data import DataLoader, Dataset
 
 def get_tagates_sample_indices(args):
     import os
-    BASE_PATH = os.environ[
-        'PROJ_BPATH'] + '/' + 'nas_embedding_suite/embedding_datasets/'
-    BASE_PATH2 = '/home/XXXX-1/projects/iclr_nas_embedding/correlation_trainer/'
+    BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
+    BASE_PATH2 = '/data2/dongpeijie/share/bench/predictor_embeddings/correlation_trainer'
     if args.space == 'nb101' and args.test_tagates:
         print('Explicit TAGATES comparision')
         # Check if nb101_train_tagates.npy and nb101_test_tagates.npy exist
@@ -23,7 +22,9 @@ def get_tagates_sample_indices(args):
             import pickle
 
             from nasbench import api as NB1API
-            from nb123.nas_bench_101.cell_101 import Cell101
+
+            from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.cell_101 import \
+                Cell101
             BASE_PATH = os.environ[
                 'PROJ_BPATH'] + '/' + 'nas_embedding_suite/embedding_datasets/'
             nb1_api = NB1API.NASBench(BASE_PATH +

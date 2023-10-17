@@ -1,7 +1,3 @@
-import os
-
-BASE_PATH = os.environ[
-    'PROJ_BPATH'] + '/' + 'nas_embedding_suite/embedding_datasets/'
 import argparse
 import os
 import random
@@ -19,7 +15,7 @@ from utils import CustomDataset, get_tagates_sample_indices
 
 from piconas.predictor.flan.flan_model1 import FullyConnectedNN, GIN_Model
 
-sys.path.append(os.environ['PROJ_BPATH'] + '/' + 'nas_embedding_suite')
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
 
 # python -i new_main.py --space nb101 --representation adj_gin_zcp --test_tagates --loss_type pwl --sample_sizes 72 --batch_size 8
 # python -i new_main.py --space nb201 --representation adj_gin_zcp --test_tagates --loss_type pwl --sample_sizes 40 --batch_size 8
@@ -103,7 +99,8 @@ if args.seed is not None:
     seed_everything(args.seed)
 
 nb101_train_tagates_sample_indices, \
-    nb101_tagates_sample_indices = get_tagates_sample_indices(args)
+    nb101_tagates_sample_indices = [0,1,2,3,4], [5,6,7,8,9]
+# get_tagates_sample_indices(args)
 
 
 def flatten_mixed_list(pred_scores):
@@ -441,8 +438,9 @@ if args.space in [
 ]:
     from nas_embedding_suite.nds_ss import NDS as EmbGenClass
 elif args.space in ['nb101', 'nb201', 'nb301']:
-    exec('from nas_embedding_suite.nb{}_ss import NASBench{} as EmbGenClass'.
-         format(args.space[-3:], args.space[-3:]))
+    exec(
+        'from piconas.predictor.nas_embedding_suite.nb{}_ss import NASBench{} as EmbGenClass'
+        .format(args.space[-3:], args.space[-3:]))
 elif args.space in ['tb101']:
     from nas_embedding_suite.tb101_micro_ss import \
         TransNASBench101Micro as EmbGenClass
