@@ -34,7 +34,6 @@ class ScaledDotProductAttention(nn.Module):
 
         attn = self.dropout(F.softmax(attn, dim=-1))
         output = torch.matmul(attn, v)
-
         return output, attn
 
 
@@ -57,6 +56,7 @@ class MultiHeadAttention(nn.Module):
         self.d_k = d_k
         self.d_v = d_v
 
+        # standard multihead attention
         self.w_qs = nn.Linear(d_model, sa_heads * d_k, bias=False)
         self.w_ks = nn.Linear(d_model, sa_heads * d_k, bias=False)
         self.w_vs = nn.Linear(d_model, sa_heads * d_v, bias=False)
@@ -86,7 +86,6 @@ class MultiHeadAttention(nn.Module):
 
     def to_pyg_batch(self, xs, edge_index_list, num_nodes):
         assert xs.shape[0] == len(edge_index_list)
-        # assert xs.shape[0] == num_nodes.shape[0]
         assert xs.shape[0] == len(num_nodes)
         data_list = []
         for x, e, n in zip(xs, edge_index_list, num_nodes):
@@ -123,7 +122,7 @@ class MultiHeadAttention(nn.Module):
         q, attn = self.attention(q, k, v, mask=mask)
         q = q.transpose(1, 2).contiguous().view(sz_b, len_q, -1)
 
-        # other layers
+        # self-attention + PISA
         q = torch.cat((x, q), dim=-1)
         q = self.dropout(self.fc(q))
         q += residual
@@ -221,7 +220,8 @@ class Encoder(nn.Module):
             n_src_vocab, d_word_vec, padding_idx=pad_idx)
         self.bench = bench
         if self.bench == '101':
-            self.embedding_lap_pos_enc = nn.Linear(pos_enc_dim, d_word_vec)
+            self.embedding_lap_pos_enc = nn.Linear(
+                pos_enc_dim, d_word_vec)  # position embedding
         elif self.bench == '201':
             self.pos_map = nn.Linear(pos_enc_dim, n_src_vocab + 1)
             self.embedding_lap_pos_enc = nn.Linear(pos_enc_dim, d_word_vec)
@@ -271,7 +271,8 @@ class Encoder(nn.Module):
         # op emb and pos emb
         enc_output = self.src_word_emb(src_seq)
         if self.bench == '101':
-            pos_output = self.embedding_lap_pos_enc(pos_seq)
+            pos_output = self.embedding_lap_pos_enc(
+                pos_seq)  # positional embedding
             enc_output += pos_output
             # enc_output = pos_output
             enc_output = self.dropout(enc_output)
@@ -300,7 +301,7 @@ class Encoder(nn.Module):
         enc_output += self.dropout(x)
         enc_output = self.layer_norm(enc_output)
 
-        # backone forward
+        # backone forward for n_layers (3)
         for enc_layer in self.layer_stack:
             enc_output, enc_slf_attn = enc_layer(
                 enc_output, edge_index_list, num_nodes, slf_attn_mask=src_mask)

@@ -419,10 +419,16 @@ def log_args(args):
         logger.info(arg + '.' * (50 - len(arg) - len(str(val))) + str(val))
 
 
+import torch.nn.functional as F
+
+
 def accuracy_mse(predict, target, dataset, scale=100.):
     predict = dataset.denormalize(predict.detach()) * scale
     target = dataset.denormalize(target) * scale
     return F.mse_loss(predict, target)
+
+
+from torch.backends import cudnn
 
 
 def set_seed(seed):
@@ -470,6 +476,9 @@ class AverageMeter(object):
         self.sum += val * n
         self.cnt += n
         self.avg = self.sum / self.cnt
+
+
+from collections import OrderedDict
 
 
 class AverageMeterGroup:
