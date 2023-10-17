@@ -1,11 +1,16 @@
+import json
 from copy import deepcopy
 
 import dgl
 import h5py
 import numpy as np
+import pandas as pd
 import torch
+from nasbench import api as NB1API
 from scipy import sparse as sp
 from torch.utils.data import Dataset
+
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
 
 
 def laplacian_positional_encoding(adj, pos_enc_dim, number_nodes=7):
@@ -93,6 +98,9 @@ class Nb101DatasetPINAT(Dataset):
                  pos_enc_dim=2,
                  data_type='train'):
         self.hash2id = dict()
+        self.nb1_api = NB1API.NASBench(BASE_PATH +
+                                       'nasbench_only108_caterec.tfrecord')
+        self.hash_iterator_list = list(self.nb1_api.hash_iterator())
         with h5py.File(
                 '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/nasbench.hdf5',
                 mode='r') as f:
@@ -122,7 +130,15 @@ class Nb101DatasetPINAT(Dataset):
         self.lapla_nor = np.load(
             '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/lapla_nor_matrix.npy'
         )
+        # load from '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/zc_nasbench101.json'
+        self.zc_score = json.load(
+            open(
+                '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/zc_nasbench101.json',
+                'r'))['cifar10']
+        self.zcp_nb101 = json.load(
+            open(BASE_PATH + 'zc_nasbench101_full.json', 'r'))
 
+        self.normalize_and_process_zcp(True, True)
         self.data_type = data_type
 
         # all
@@ -150,6 +166,66 @@ class Nb101DatasetPINAT(Dataset):
 
     def __len__(self):
         return len(self.sample_range)
+
+    def min_max_scaling(self, data):
+        return (data - np.min(data)) / (np.max(data) - np.min(data))
+
+    def log_transform(self, data):
+        return np.log1p(data)
+
+    def standard_scaling(self, data):
+        return (data - np.mean(data)) / np.std(data)
+
+    def normalize_and_process_zcp(self, normalize_zcp, log_synflow=True):
+        if normalize_zcp:
+            print('Normalizing ZCP dict')
+            try:
+                self.norm_zcp = pd.DataFrame({
+                    k0: {
+                        k1: v1['score']
+                        for k1, v1 in v0.items() if v1.__class__() == {}
+                    }
+                    for k0, v0 in self.zcp_nb101['cifar10'].items()
+                }).T
+            except KeyError:
+                import pdb
+                pdb.set_trace()
+
+            # Add normalization code here
+            self.norm_zcp['epe_nas'] = self.min_max_scaling(
+                self.norm_zcp['epe_nas'])
+            self.norm_zcp['fisher'] = self.min_max_scaling(
+                self.log_transform(self.norm_zcp['fisher']))
+            self.norm_zcp['flops'] = self.min_max_scaling(
+                self.log_transform(self.norm_zcp['flops']))
+            self.norm_zcp['grad_norm'] = self.min_max_scaling(
+                self.log_transform(self.norm_zcp['grad_norm']))
+            self.norm_zcp['grasp'] = self.standard_scaling(
+                self.norm_zcp['grasp'])
+            self.norm_zcp['jacov'] = self.min_max_scaling(
+                self.norm_zcp['jacov'])
+            self.norm_zcp['l2_norm'] = self.min_max_scaling(
+                self.norm_zcp['l2_norm'])
+            self.norm_zcp['nwot'] = self.min_max_scaling(self.norm_zcp['nwot'])
+            self.norm_zcp['params'] = self.min_max_scaling(
+                self.log_transform(self.norm_zcp['params']))
+            self.norm_zcp['plain'] = self.min_max_scaling(
+                self.norm_zcp['plain'])
+            self.norm_zcp['snip'] = self.min_max_scaling(
+                self.log_transform(self.norm_zcp['snip']))
+
+            if log_synflow:
+                self.norm_zcp['synflow'] = self.min_max_scaling(
+                    self.log_transform(self.norm_zcp['synflow']))
+            else:
+                self.norm_zcp['synflow'] = self.min_max_scaling(
+                    self.norm_zcp['synflow'])
+
+            self.norm_zcp['zen'] = self.min_max_scaling(self.norm_zcp['zen'])
+            self.norm_zcp['val_accuracy'] = self.min_max_scaling(
+                self.norm_zcp['val_accuracy'])
+
+            self.zcp_nb101 = {'cifar10': self.norm_zcp.T.to_dict()}
 
     def _check(self, item):
         n = item['num_vertices']
@@ -266,6 +342,15 @@ class Nb101DatasetPINAT(Dataset):
         edge_index = torch.tensor(edge_index, dtype=torch.int64)
         edge_index = edge_index.transpose(1, 0)
 
+        # load normalized zc
+        hash = self.hash_iterator_list[index]
+        metrics = self.nb1_api.get_metrics_from_hash(hash)
+        mat_adj = np.asarray(metrics[0]['module_adjacency']).flatten().tolist()
+        mat_op = [self.nb1_op_idx[x] for x in metrics[0]['module_operations']]
+        mat = mat_adj + mat_op
+        mat_repr = str(tuple(mat))
+        zcp = [self.zcp_nb101['cifar10'][mat_repr][nn] for nn in self.zcps]
+
         result = {
             'num_vertices': 7,
             'edge_num': edge_num,
@@ -278,6 +363,7 @@ class Nb101DatasetPINAT(Dataset):
             'val_acc': float(self.normalize(val_acc)),
             'test_acc': float(self.normalize(test_acc)),
             'edge_index_list': edge_index,
+            'zcp': zcp,
         }
         if self.debug:
             self._check(result)

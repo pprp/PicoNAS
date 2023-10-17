@@ -13,7 +13,8 @@ class Nb201DatasetPINAT(Dataset):
                  data_type='train',
                  data_set='cifar10'):
         self.nasbench201_dict = np.load(
-            'data/nasbench201/nasbench201_dict.npy', allow_pickle=True).item()
+            '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench201/nasbench201_dict.npy',
+            allow_pickle=True).item()
         self.sample_range = list()
         self.candidate_ops = candidate_ops
         if data_type == 'train':

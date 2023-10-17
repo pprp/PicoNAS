@@ -4,17 +4,20 @@ import os
 import random
 import sys
 import time
+from collections import OrderedDict
 from pathlib import Path
 from typing import List, Optional
 
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from fvcore.common.checkpoint import Checkpointer as fvCheckpointer
 from fvcore.common.config import CfgNode
 from fvcore.common.file_io import PathManager
 from scipy import stats
 from sklearn import metrics
+from torch.backends import cudnn
 
 logger = logging.getLogger(__name__)
 
@@ -419,16 +422,10 @@ def log_args(args):
         logger.info(arg + '.' * (50 - len(arg) - len(str(val))) + str(val))
 
 
-import torch.nn.functional as F
-
-
 def accuracy_mse(predict, target, dataset, scale=100.):
     predict = dataset.denormalize(predict.detach()) * scale
     target = dataset.denormalize(target) * scale
     return F.mse_loss(predict, target)
-
-
-from torch.backends import cudnn
 
 
 def set_seed(seed):
@@ -476,9 +473,6 @@ class AverageMeter(object):
         self.sum += val * n
         self.cnt += n
         self.avg = self.sum / self.cnt
-
-
-from collections import OrderedDict
 
 
 class AverageMeterGroup:
