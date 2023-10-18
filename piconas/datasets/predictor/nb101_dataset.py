@@ -154,23 +154,6 @@ class Nb101DatasetPINAT(Dataset):
             'conv1x1-bn-relu': 3,
             'maxpool3x3': 4
         }
-        # # get max_edge_num
-        # max_edge_num = 0
-        # for k, adjacency in enumerate(self.adjacency):
-        #     edge_index = []
-        #     for i in range(adjacency.shape[0]):
-        #         idx_list = np.where(adjacency[i])[0].tolist()
-        #         for j in idx_list:
-        #             edge_index.append([i, j])
-        #     if np.sum(edge_index) == 0:
-        #         edge_index = []
-        #         for i in range(adjacency.shape[0]):
-        #             for j in range(adjacency.shape[0] - 1, i, -1):
-        #                 edge_index.append([i, j])
-        #     if len(edge_index) > max_edge_num:
-        #         max_edge_num = len(edge_index)
-        #     if k % 1000 == 0:
-        #         print(k, max_edge_num)
 
     def __len__(self):
         return len(self.sample_range)
