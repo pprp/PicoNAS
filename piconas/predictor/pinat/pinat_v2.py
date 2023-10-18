@@ -232,8 +232,10 @@ class Encoder(nn.Module):
         # pine structure
         self.conv1 = GATConv(in_features, pine_hidden, heads=heads)
         self.lin1 = torch.nn.Linear(in_features, heads * pine_hidden)
+
         self.conv2 = GATConv(heads * pine_hidden, pine_hidden, heads=heads)
         self.lin2 = torch.nn.Linear(heads * pine_hidden, heads * pine_hidden)
+
         self.conv3 = GATConv(
             heads * pine_hidden, linear_input, heads=6, concat=False)
         self.lin3 = torch.nn.Linear(heads * pine_hidden, linear_input)
@@ -268,7 +270,6 @@ class Encoder(nn.Module):
             operations,  # operations: bs, 7, 5 -> bs, 35
             edge_index_list,  # list with different length tensor
             num_nodes,  # num of node: bs
-            zc_encoding,  # zc encoding: bs, 13
             src_mask=None):
         # op emb and pos emb
         enc_output = self.src_word_emb(src_seq)
@@ -287,11 +288,11 @@ class Encoder(nn.Module):
             raise ValueError('No defined NAS bench.')
 
         # PITE
-        x = operations
-        bs = operations.shape[0]
-        import pdb
-        pdb.set_trace()
+        x = operations  # bs, 7, 5
+        bs = operations.shape[0]  # bs=10 for test
         pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
+        # pyg_batch.x.shape=[70,5]
+        # pyg_batch.edge_index.shape=[2, 84]
         x = F.elu(
             self.conv1(pyg_batch.x, pyg_batch.edge_index) +
             self.lin1(pyg_batch.x))
@@ -332,7 +333,9 @@ class PINATModel(nn.Module):
                  pos_enc_dim=7,
                  linear_hidden=80,
                  pine_hidden=256,
-                 bench='101'):
+                 bench='101',
+                 dropout=0.1,
+                 zcp_embedder_dims=[128, 128]):
         super(PINATModel, self).__init__()
 
         # backone
@@ -358,6 +361,19 @@ class PINATModel(nn.Module):
         self.fc1 = nn.Linear(d_word_vec, linear_hidden, bias=False)
         self.fc2 = nn.Linear(linear_hidden, 1, bias=False)
 
+        # zcp embedder
+        self.zcp_embedder_dims = zcp_embedder_dims
+        self.zcp_embedder = []
+        mid_zcp_dim = 13
+        for zcp_emb_dim in self.zcp_embedder_dims:
+            self.zcp_embedder.append(
+                nn.Sequential(
+                    nn.Linear(mid_zcp_dim, zcp_emb_dim),
+                    nn.ReLU(inplace=False), nn.Dropout(p=dropout)))
+            mid_zcp_dim = zcp_emb_dim
+        self.zcp_embedder.append(nn.Linear(mid_zcp_dim, d_word_vec))
+        self.zcp_embedder = nn.Sequential(*self.zcp_embedder)
+
     def forward(self, inputs):
         # get arch topology
         numv = inputs['num_vertices']
@@ -375,11 +391,18 @@ class PINATModel(nn.Module):
             pos_seq=adj_matrix.float(),  # bs, 7, 7
             operations=inputs['operations'].squeeze(0),  # bs, 7, 5
             num_nodes=numv,
-            edge_index_list=edge_index_list,
-            zc_encoding=inputs['zcp'])
+            edge_index_list=edge_index_list)
 
         # regressor forward
+        # import pdb; pdb.set_trace()
+
         out = graph_pooling(out, numv)
+
+        # zc embedder
+        if hasattr(inputs, 'zcp') and inputs['zcp'] is not None:
+            zc_embed = self.zcp_embedder(inputs['zcp'])
+            enc_output += zc_embed
+
         out = self.fc1(out)
         out = self.dropout(out)
         out = self.fc2(out).view(-1)

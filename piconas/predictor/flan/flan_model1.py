@@ -485,6 +485,7 @@ class GIN_Model(nn.Module):
             archs_1)
         adjs_1, x_1, op_emb_1, op_inds_1 = adjs_1.to(self.device), x_1.to(
             self.device), op_emb_1.to(self.device), op_inds_1.to(self.device)
+
         for tst in range(self.num_time_steps):
             y_1 = self._forward_pass(x_1, adjs_1, op_emb_1)
             if tst == self.num_time_steps - 1:
@@ -492,6 +493,7 @@ class GIN_Model(nn.Module):
             b_y_1 = self._backward_pass(y_1, adjs_1, op_emb_1)
             op_emb_1 = self._update_op_emb(y_1, b_y_1, op_emb_1)
         y_1 = self._final_process(y_1, op_inds_1)
+
         if self.dual_gcn:
             archs_2 = [[np.asarray(x.cpu()) for x in x_adj_2],
                        [np.asarray(x.cpu()) for x in x_ops_2]]
@@ -510,6 +512,7 @@ class GIN_Model(nn.Module):
             # y_1 += y_2
             y_1 = self.y_combiner(torch.cat((y_1, y_2), dim=-1))
         y_1 = y_1.squeeze()
+
         if self.input_zcp:
             zcp = self.zcp_embedder(zcp)
             if len(zcp.shape) == 1:
@@ -517,6 +520,7 @@ class GIN_Model(nn.Module):
             if len(y_1.shape) == 1:
                 y_1 = y_1.unsqueeze(0)
             y_1 = torch.cat((y_1, zcp), dim=-1)
+
         if self.dual_gcn:
             norm_w_d = norm_w_d.to(self.device)
             norm_w_d = self.norm_wd_embedder(norm_w_d)
