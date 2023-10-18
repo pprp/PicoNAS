@@ -1,4 +1,4 @@
-from piconas.predictor.pinat.pinat import PINATModel
+from piconas.predictor.pinat.pinat_v2 import PINATModel
 
 
 def create_model(args):

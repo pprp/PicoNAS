@@ -268,9 +268,8 @@ class Encoder(nn.Module):
             operations,  # operations: bs, 7, 5 -> bs, 35
             edge_index_list,  # list with different length tensor
             num_nodes,  # num of node: bs
+            zc_encoding,  # zc encoding: bs, 13
             src_mask=None):
-        import pdb
-        pdb.set_trace()
         # op emb and pos emb
         enc_output = self.src_word_emb(src_seq)
         if self.bench == '101':
@@ -290,6 +289,8 @@ class Encoder(nn.Module):
         # PITE
         x = operations
         bs = operations.shape[0]
+        import pdb
+        pdb.set_trace()
         pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
         x = F.elu(
             self.conv1(pyg_batch.x, pyg_batch.edge_index) +
@@ -374,7 +375,8 @@ class PINATModel(nn.Module):
             pos_seq=adj_matrix.float(),  # bs, 7, 7
             operations=inputs['operations'].squeeze(0),  # bs, 7, 5
             num_nodes=numv,
-            edge_index_list=edge_index_list)
+            edge_index_list=edge_index_list,
+            zc_encoding=inputs['zcp'])
 
         # regressor forward
         out = graph_pooling(out, numv)

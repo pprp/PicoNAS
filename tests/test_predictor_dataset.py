@@ -36,6 +36,10 @@ class TestPredictorDataset(TestCase):
         """Test something."""
         for step, batch in enumerate(self.test_loader):
             print(type(batch))
+            print(batch['zcp'])
+            if step > 3:
+                import pdb
+                pdb.set_trace()
 
 
 if __name__ == '__main__':

@@ -230,8 +230,8 @@ class Nb101DatasetPINAT(Dataset):
                     self.norm_zcp['synflow'])
 
             self.norm_zcp['zen'] = self.min_max_scaling(self.norm_zcp['zen'])
-            self.norm_zcp['val_accuracy'] = self.min_max_scaling(
-                self.norm_zcp['val_accuracy'])
+            # self.norm_zcp['val_accuracy'] = self.min_max_scaling(
+            #     self.norm_zcp['val_accuracy'])
 
             self.zcp_nb101 = {'cifar10': self.norm_zcp.T.to_dict()}
 
@@ -352,24 +352,18 @@ class Nb101DatasetPINAT(Dataset):
 
         # load normalized zc
         hash = self.hash_iterator_list[index]
-
-        import pdb; pdb.set_trace()
         metrics = self.nb1_api.get_metrics_from_hash(hash)
         mat_adj = np.asarray(metrics[0]['module_adjacency']).flatten().tolist()
         mat_op = [self.nb1_op_idx[x] for x in metrics[0]['module_operations']]
         mat = mat_adj + mat_op
         mat_repr = str(tuple(mat))
         zcp = [self.zcp_nb101['cifar10'][mat_repr][nn] for nn in self.zcps]
+        zcp = torch.tensor(zcp, dtype=torch.float32)
+        # self.temp_zcp_for_debug = zcp
+        # print(type(zcp), len(zcp))
+        # print(zcp)
 
-        print(type(zcp))
-        print(type(zcp[0]))
-        print(zcp[0])
-        print(zcp[-1])
-
-        # # index the zcp
-        # zcp = torch.stack(zcp) # conver to one tensor
-        # t_zcp = zcp.T # transpose
-
+        # in getitem function, we only select the index corresponding data rather than the whole data
         result = {
             'num_vertices': 7,
             'edge_num': edge_num,
