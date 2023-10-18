@@ -63,7 +63,7 @@ PicoNAS is a modularized NAS Framework designed for One-Shot NAS. It contains th
 ## Quick Start
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python tools/train.py \
+CUDA_VISIBLE_DEVICES=0 python exps/train.py \
   \
  --model_name OneShotNASBench201Network \
  --trainer_name NB201_Balance_Trainer \

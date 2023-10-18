@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # SPOS
-# CUDA_VISIBLE_DEVICES=1 python ../../tools/train.py \
-#     --config ../../configs/spos/spos_cifar10.py \
+# CUDA_VISIBLE_DEVICES=1 python ../../exps/train.py \
+#      \
 #     --model_name OneShotNASBench201Network \
 #     --trainer_name NB201Trainer \
 #     --log_name evaluate_cpr_spos \
@@ -11,8 +11,8 @@
 
 
 # # FairNAS
-# CUDA_VISIBLE_DEVICES=1 python ../../tools/train.py \
-#     --config ../../configs/spos/spos_cifar10.py \
+# CUDA_VISIBLE_DEVICES=1 python ../../exps/train.py \
+#      \
 #     --model_name OneShotNASBench201Network \
 #     --trainer_name NB201Trainer \
 #     --log_name evaluate_cpr_fairnas \
@@ -21,8 +21,8 @@
 
 
 # PGONAS
-CUDA_VISIBLE_DEVICES=1 python ../../tools/train.py \
-    --config ../../configs/spos/spos_cifar10.py \
+CUDA_VISIBLE_DEVICES=1 python ../../exps/train.py \
+     \
     --model_name OneShotNASBench201Network \
     --trainer_name NB201Trainer \
     --crit ce --lr 0.025 \

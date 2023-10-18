@@ -11,18 +11,10 @@ from piconas.core import build_criterion, build_optimizer, build_scheduler
 from piconas.models import build_model
 from piconas.trainer import build_trainer
 from piconas.utils import set_random_seed
-from piconas.utils.config import Config
 
 
 def get_args():
     parser = argparse.ArgumentParser('train macro benchmark')
-    parser.add_argument(
-        '--config',
-        type=str,
-        default='configs/spos/spos_cifar10.py',
-        required=False,
-        help='user settings config',
-    )
     parser.add_argument(
         '--work_dir', type=str, default='./work_dir', help='experiment name')
     parser.add_argument(
@@ -109,14 +101,7 @@ def get_args():
 
 
 def main():
-    args = get_args()
-
-    # merge argparse and config file
-    if args.config is not None:
-        cfg = Config.fromfile(args.config)
-        cfg.merge_from_dict(vars(args))
-    else:
-        cfg = Config(args)
+    cfg = get_args()
 
     # set envirs
     set_random_seed(cfg.seed, deterministic=True)
@@ -127,8 +112,8 @@ def main():
     cfg.work_dir = os.path.join(cfg.work_dir, cfg.trainer_name)
     if not os.path.exists(cfg.work_dir):
         os.makedirs(cfg.work_dir)
-    current_exp_name = f'{cfg.model_name}-{cfg.trainer_name}-{cfg.log_name}.yaml'
-    cfg.dump(os.path.join(cfg.work_dir, current_exp_name))
+    # current_exp_name = f'{cfg.model_name}-{cfg.trainer_name}-{cfg.log_name}.yaml'
+    # cfg.dump(os.path.join(cfg.work_dir, current_exp_name))
 
     if torch.cuda.is_available():
         print('Train on GPU!')

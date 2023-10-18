@@ -1,2 +1,5 @@
-EXP:201_cifar10_PINAT_mse_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.640139
 EXP:201_cifar10_PINAT_mse_t78_vall_e300_bs10	lr: 0.0001	train: 78	test: all	kendall_tau: 0.571586
+EXP:201_cifar10_PINAT_mse_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.640139
+EXP:201_cifar10_PINAT_mse_t469_vall_e300_bs10	lr: 0.0001	train: 469	test: all	kendall_tau: 0.698778
+EXP:201_cifar10_PINAT_mse_t781_vall_e300_bs10	lr: 0.0001	train: 781	test: all	kendall_tau: 0.757744
+EXP:201_cifar10_PINAT_mse_t1563_vall_e300_bs10	lr: 0.0001	train: 1563	test: all	kendall_tau: 0.793506

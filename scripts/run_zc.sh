@@ -22,14 +22,14 @@ start=`date +%s`
 
 seed=$(($start_seed + $seed))
 
-# CUDA_VISIBLE_DEVICES=2 python -u tools/naslib/runner_cal_rc.py --config-file configs/${experiment}/${predictor}/${searchspace}-${start_seed}/${dataset}/config_${seed}.yaml
+# CUDA_VISIBLE_DEVICES=2 python -u exps/naslib/runner_cal_rc.py --config-file configs/${experiment}/${predictor}/${searchspace}-${start_seed}/${dataset}/config_${seed}.yaml
 
-# CUDA_VISIBLE_DEVICES=2 python tools/naslib/runner_zc_ensemble.py --config-file configs/${experiment}/${optimizer}/${searchspace}-${start_seed}/${dataset}/config_${seed}.yaml
+# CUDA_VISIBLE_DEVICES=2 python exps/naslib/runner_zc_ensemble.py --config-file configs/${experiment}/${optimizer}/${searchspace}-${start_seed}/${dataset}/config_${seed}.yaml
 
 # benchmarks
-# CUDA_VISIBLE_DEVICES=1 python tools/runner/runner_benchmark.py --config-file configs/${experiment}/${optimizer}/${searchspace}-${start_seed}/${dataset}/config_${start_seed}.yaml start_idx 0 n_models $N_MODELS predictor $predictor
+# CUDA_VISIBLE_DEVICES=1 python exps/runner/runner_benchmark.py --config-file configs/${experiment}/${optimizer}/${searchspace}-${start_seed}/${dataset}/config_${start_seed}.yaml start_idx 0 n_models $N_MODELS predictor $predictor
 
-CUDA_VISIBLE_DEVICES=1 python tools/ranker/zerocost_ranker.py  --model_name OneShotNASBench301Network --trainer_name NB301Trainer --log_name nb301_spos_test_x1 --dataset cifar10 --crit ce --lr 0.025
+CUDA_VISIBLE_DEVICES=1 python exps/ranker/zerocost_ranker.py  --model_name OneShotNASBench301Network --trainer_name NB301Trainer --log_name nb301_spos_test_x1 --dataset cifar10 --crit ce --lr 0.025
 
 end=`date +%s`
 runtime=$((end-start))

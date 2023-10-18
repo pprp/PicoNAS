@@ -7,7 +7,7 @@ LOGNAME="eval_100e_type_test_acc_50sample.log"
 
 
 echo $LOGNAME > logdir/${LOGNAME}
-python tools/eval_rank.py --ckpt-path $CKPT_PATH --type $TYPE --num-sample $NUM_SAMPLE > logdir/${LOGNAME} 2>&1 &
+python exps/eval_rank.py --ckpt-path $CKPT_PATH --type $TYPE --num-sample $NUM_SAMPLE > logdir/${LOGNAME} 2>&1 &
 
 sleep 3s
 
