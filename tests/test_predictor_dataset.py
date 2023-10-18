@@ -1,7 +1,8 @@
-import unittest 
-from unittest import TestCase 
-from piconas.datasets.predictor.data_factory import create_dataloader
+import unittest
 from argparse import ArgumentParser
+from unittest import TestCase
+
+from piconas.datasets.predictor.data_factory import create_dataloader
 
 
 class TestPredictorDataset(TestCase):
@@ -26,15 +27,18 @@ class TestPredictorDataset(TestCase):
         parser.add_argument('--train_print_freq', default=1e6, type=int)
         parser.add_argument('--eval_print_freq', default=10, type=int)
         args = parser.parse_args()
-        train_loader, test_loader, train_set, test_set = create_dataloader(args)
+        train_loader, test_loader, train_set, test_set = create_dataloader(
+            args)
 
-        self.test_loader = test_loader 
+        self.test_loader = test_loader
 
     def test_predictor_dataset(self):
         """Test something."""
         for step, batch in enumerate(self.test_loader):
-            import pdb; pdb.set_trace() 
+            import pdb
+            pdb.set_trace()
             print(type(batch))
+
 
 if __name__ == '__main__':
     unittest.main()

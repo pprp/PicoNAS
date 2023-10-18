@@ -121,9 +121,6 @@ class Nb101DatasetPINAT(Dataset):
         self.debug = debug
         self.seed = 0
         self.candidate_ops = candidate_ops
-        # self.lap_pos_enc = laplacian_positional_encoding(self.adjacency, pos_enc_dim=pos_enc_dim)
-        # self.lap_pos_enc = np.load('/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/bench101_pos_enc.npy')
-        # generate_lapla_matrix(self.adjacency)
         self.lapla = np.load(
             '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/lapla_matrix.npy'
         )
@@ -146,6 +143,18 @@ class Nb101DatasetPINAT(Dataset):
         self.test_mean_mean, self.test_mean_std = 0.8967984, 0.05799569  # all test mean/std
 
         self.max_edge_num = 9
+        self.zcps = [
+            'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
+            'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen'
+        ]
+
+        self.nb1_op_idx = {
+            'input': 0,
+            'output': 1,
+            'conv3x3-bn-relu': 2,
+            'conv1x1-bn-relu': 3,
+            'maxpool3x3': 4
+        }
         # # get max_edge_num
         # max_edge_num = 0
         # for k, adjacency in enumerate(self.adjacency):

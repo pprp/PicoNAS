@@ -261,13 +261,16 @@ class Encoder(nn.Module):
         batch = torch_geometric.data.Batch.from_data_list(data_list)
         return batch
 
-    def forward(self,
-                src_seq,
-                pos_seq,
-                operations,
-                edge_index_list,
-                num_nodes,
-                src_mask=None):
+    def forward(
+            self,
+            src_seq,  # features: 10240, 7
+            pos_seq,  # lapla: 10240, 7, 7
+            operations,  # operations: 10240, 7, 5 -> 10240, 35
+            edge_index_list,  #
+            num_nodes,
+            src_mask=None):
+        import pdb
+        pdb.set_trace()
         # op emb and pos emb
         enc_output = self.src_word_emb(src_seq)
         if self.bench == '101':
@@ -358,17 +361,18 @@ class PINATModel(nn.Module):
         # get arch topology
         numv = inputs['num_vertices']
         assert self.adj_type == 'adj_lapla'
-        adj_matrix = inputs['lapla'].float()
+        adj_matrix = inputs['lapla'].float()  # 10240, 7, 7
         edge_index_list = []
-        for edge_num, edge_index in zip(inputs['edge_num'],
-                                        inputs['edge_index_list']):
+        for edge_num, edge_index in zip(
+                inputs['edge_num'],  # 10240
+                inputs['edge_index_list']):  # 10240, 2, 9
             edge_index_list.append(edge_index[:, :edge_num])
 
         # backone feature
         out = self.encoder(
-            src_seq=inputs['features'],
-            pos_seq=adj_matrix.float(),
-            operations=inputs['operations'].squeeze(0),
+            src_seq=inputs['features'],  # 10240, 7
+            pos_seq=adj_matrix.float(),  # 10240, 7, 7
+            operations=inputs['operations'].squeeze(0),  # 10240, 7, 5
             num_nodes=numv,
             edge_index_list=edge_index_list)
 
