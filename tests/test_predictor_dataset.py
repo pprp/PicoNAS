@@ -35,8 +35,6 @@ class TestPredictorDataset(TestCase):
     def test_predictor_dataset(self):
         """Test something."""
         for step, batch in enumerate(self.test_loader):
-            import pdb
-            pdb.set_trace()
             print(type(batch))
 
 

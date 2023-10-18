@@ -127,13 +127,12 @@ class Nb101DatasetPINAT(Dataset):
         self.lapla_nor = np.load(
             '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/lapla_nor_matrix.npy'
         )
-        # load from '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/zc_nasbench101.json'
-        self.zc_score = json.load(
-            open(
-                '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/zc_nasbench101.json',
-                'r'))['cifar10']
-        self.zcp_nb101 = json.load(
-            open(BASE_PATH + 'zc_nasbench101_full.json', 'r'))
+
+        with open(BASE_PATH + 'zc_nasbench101.json', 'r') as f:
+            self.zc_score = json.load(f)['cifar10']
+
+        with open(BASE_PATH + 'zc_nasbench101_full.json', 'r') as f:
+            self.zcp_nb101 = json.load(f)
 
         self.normalize_and_process_zcp(True, True)
         self.data_type = data_type
@@ -353,12 +352,23 @@ class Nb101DatasetPINAT(Dataset):
 
         # load normalized zc
         hash = self.hash_iterator_list[index]
+
+        import pdb; pdb.set_trace()
         metrics = self.nb1_api.get_metrics_from_hash(hash)
         mat_adj = np.asarray(metrics[0]['module_adjacency']).flatten().tolist()
         mat_op = [self.nb1_op_idx[x] for x in metrics[0]['module_operations']]
         mat = mat_adj + mat_op
         mat_repr = str(tuple(mat))
         zcp = [self.zcp_nb101['cifar10'][mat_repr][nn] for nn in self.zcps]
+
+        print(type(zcp))
+        print(type(zcp[0]))
+        print(zcp[0])
+        print(zcp[-1])
+
+        # # index the zcp
+        # zcp = torch.stack(zcp) # conver to one tensor
+        # t_zcp = zcp.T # transpose
 
         result = {
             'num_vertices': 7,

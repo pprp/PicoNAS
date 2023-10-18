@@ -263,11 +263,12 @@ class Encoder(nn.Module):
 
     def forward(
             self,
-            src_seq,  # features: 10240, 7
-            pos_seq,  # lapla: 10240, 7, 7
-            operations,  # operations: 10240, 7, 5 -> 10240, 35
-            edge_index_list,  #
-            num_nodes,
+            src_seq,  # features: bs, 7
+            pos_seq,  # lapla: bs, 7, 7
+            operations,  # operations: bs, 7, 5 -> bs, 35
+            edge_index_list,  # list with different length tensor
+            num_nodes,  # num of node: bs
+            zc_encoding,  # zc encoding: bs, 13
             src_mask=None):
         import pdb
         pdb.set_trace()
@@ -276,7 +277,7 @@ class Encoder(nn.Module):
         if self.bench == '101':
             pos_output = self.embedding_lap_pos_enc(
                 pos_seq)  # positional embedding
-            enc_output += pos_output
+            enc_output += pos_output  # bs, 7, 80
             # enc_output = pos_output
             enc_output = self.dropout(enc_output)
         elif self.bench == '201':
@@ -361,20 +362,21 @@ class PINATModel(nn.Module):
         # get arch topology
         numv = inputs['num_vertices']
         assert self.adj_type == 'adj_lapla'
-        adj_matrix = inputs['lapla'].float()  # 10240, 7, 7
+        adj_matrix = inputs['lapla'].float()  # bs, 7, 7
         edge_index_list = []
         for edge_num, edge_index in zip(
-                inputs['edge_num'],  # 10240
-                inputs['edge_index_list']):  # 10240, 2, 9
+                inputs['edge_num'],  # bs
+                inputs['edge_index_list']):  # bs, 2, 9
             edge_index_list.append(edge_index[:, :edge_num])
 
         # backone feature
         out = self.encoder(
-            src_seq=inputs['features'],  # 10240, 7
-            pos_seq=adj_matrix.float(),  # 10240, 7, 7
-            operations=inputs['operations'].squeeze(0),  # 10240, 7, 5
+            src_seq=inputs['features'],  # bs, 7
+            pos_seq=adj_matrix.float(),  # bs, 7, 7
+            operations=inputs['operations'].squeeze(0),  # bs, 7, 5
             num_nodes=numv,
-            edge_index_list=edge_index_list)
+            edge_index_list=edge_index_list,
+            zc_encoding=inputs['zcp'])
 
         # regressor forward
         out = graph_pooling(out, numv)

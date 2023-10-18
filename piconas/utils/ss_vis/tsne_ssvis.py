@@ -159,7 +159,7 @@ if not skip_adj:
     hash_iterator = list(nb101.nb1_api.hash_iterator())
     # if subsample_adj==None:
     #     for i in tqdm(range(len(nb101.nb1_api.hash_iterator()))):
-    if subsample_adj == None:
+    if subsample_adj is None:
         for i in tqdm(range(len(nb101.nb1_api.hash_iterator()))):
 
             nb1_adj[str(i)] = nb101.get_adj(i)
@@ -189,7 +189,7 @@ if not skip_adj:
     acc_list = []
     # if subsample_adj==None:
     #     for i in tqdm(range(len(nb201.nb2_api))):
-    if subsample_adj == None:
+    if subsample_adj is None:
         for i in tqdm(range(len(nb201.nb2_api))):
 
             nb2_adj[str(i)] = nb201.get_adj(i)
@@ -214,7 +214,7 @@ if not skip_adj:
     acc_list = []
     # if subsample_adj==None:
     #     for i in tqdm(range(1000000)):
-    if subsample_adj == None:
+    if subsample_adj is None:
         for i in tqdm(range(1000000)):
 
             nb3_adj[str(i)] = nb301.get_adj(i)
