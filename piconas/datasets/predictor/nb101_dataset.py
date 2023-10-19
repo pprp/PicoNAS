@@ -39,22 +39,6 @@ def laplacian_positional_encoding(adj, pos_enc_dim, number_nodes=7):
         # lap_pos_enc.append(torch.from_numpy(EigVec[:, 1:pos_enc_dim + 1].real).float())
         lap_pos_enc.append(EigVec[:, 1:pos_enc_dim + 1].real)
 
-    #     if (i+1) % 10000 == 0:
-    #         print(i)
-    # np.save('pos_enc.npy', np.array(lap_pos_enc))
-    # import sys
-    # sys.exit()
-
-    # Laplacian
-    # A = g.adjacency_matrix_scipy(return_edge_ids=False).astype(float)
-    # N = sp.diags(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5, dtype=float)
-    # L = sp.eye(g.number_of_nodes()) - N * A * N
-    # # Eigenvectors with scipy
-    # #EigVal, EigVec = sp.linalg.eigs(L, k=pos_enc_dim+1, which='SR')
-    # EigVal, EigVec = sp.linalg.eigs(L, k=pos_enc_dim+1, which='SR', tol=1e-2) # for 40 PEs
-    # EigVec = EigVec[:, EigVal.argsort()] # increasing order
-    # g.ndata['lap_pos_enc'] = torch.from_numpy(EigVec[:,1:pos_enc_dim+1]).float()
-    # return g
     return lap_pos_enc
 
 

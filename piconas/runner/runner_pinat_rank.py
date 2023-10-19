@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.optim as optim
 from scipy.stats import kendalltau
 
+from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
 from piconas.predictor.pinat.model_factory import create_model
 from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, run_func,
@@ -77,30 +78,59 @@ def check_arguments():
     assert args.eval_split in test_splits
 
 
-def train(train_set, train_loader, model, optimizer, lr_scheduler, criterion):
+def pair_loss(outputs, labels):
+    output = outputs.unsqueeze(1)
+    output1 = output.repeat(1, outputs.shape[0])
+    label = labels.unsqueeze(1)
+    label1 = label.repeat(1, labels.shape[0])
+    tmp = (output1 - output1.t()) * torch.sign(label1 - label1.t())
+    tmp = torch.log(1 + torch.exp(-tmp))
+    eye_tmp = tmp * torch.eye(len(tmp)).cuda()
+    new_tmp = tmp - eye_tmp
+    loss = torch.sum(new_tmp) / (outputs.shape[0] * (outputs.shape[0] - 1))
+    return loss
+
+
+def train(train_set, train_loader, model, optimizer, lr_scheduler,
+          criterion1: nn.MSELoss, criterion2: PairwiseRankLoss):
     model.train()
     for epoch in range(args.epochs):
         lr = optimizer.param_groups[0]['lr']
         meters = AverageMeterGroup()
+
         for step, batch in enumerate(train_loader):
             batch = to_cuda(batch, device)
             target = batch['val_acc']
-            optimizer.zero_grad()
             predict = model(batch)
-            loss = criterion(predict, target.float())
+
+            # Compute the losses
+            loss_mse = criterion1(predict, target.float())
+
+            # loss_weight_1 = 0.95  # adjust as necessary
+            # loss_weight_2 = 0.05  # adjust as necessary
+
+            term1 = pair_loss(predict, target.float())
+            term2 = loss_mse
+
+            loss = term1 / term1.detach() + term2 / term2.detach()
+
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
+            # For logging, we can compute MSE or other metrics if desired.
             mse = accuracy_mse(predict.squeeze(), target.squeeze(), train_set)
             meters.update({
                 'loss': loss.item(),
                 'mse': mse.item()
             },
                           n=target.size(0))
-            if (step + 1) % args.train_print_freq == 0 or step + 1 == len(
-                    train_loader):
+
+            if step % args.train_print_freq == 0:
                 logging.info('Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
                              epoch + 1, args.epochs, step + 1,
                              len(train_loader), lr, meters)
+
         lr_scheduler.step()
     return model
 
@@ -149,16 +179,17 @@ def main():
                  (args.bench, args.train_split, args.eval_split))
 
     # define loss, optimizer, and lr_scheduler
-    criterion = nn.MSELoss()
+    criterion1 = nn.MSELoss()
+    criterion2 = PairwiseRankLoss()
     optimizer = optim.Adam(
         model.parameters(), lr=args.lr, weight_decay=args.wd)
     lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     # train and evaluate predictor
     model = train(train_set, train_loader, model, optimizer, lr_scheduler,
-                  criterion)
+                  criterion1, criterion2)
     kendall_tau, predict_all, target_all = evaluate(test_set, test_loader,
-                                                    model, criterion)
+                                                    model, criterion1)
     logging.info('Kendalltau: %.6f', kendall_tau)
 
     # save checkpoint
