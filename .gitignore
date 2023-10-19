@@ -21,3 +21,4 @@ lib/*
 log*
 *.th
 *.pdf
+results/*
