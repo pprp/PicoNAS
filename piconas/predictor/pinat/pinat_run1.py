@@ -1,12 +1,8 @@
-import math
-
-import dgl
-import numpy as np
+# Run1: pinat + zcp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric.data
-from scipy import sparse as sp
 
 from piconas.predictor.pinat.gatset_conv import GATSetConv_v5 as GATConv
 
@@ -314,9 +310,9 @@ class Encoder(nn.Module):
         return enc_output
 
 
-class PINATModel(nn.Module):
+class PINATModel1(nn.Module):
     """
-        PINATModel: Concat(2 self-attention heads, 2 pine heads)
+        PINATModel + zcp embedding (naive embedder)
     """
 
     def __init__(self,
@@ -336,7 +332,7 @@ class PINATModel(nn.Module):
                  bench='101',
                  dropout=0.1,
                  zcp_embedder_dims=[128, 128]):
-        super(PINATModel, self).__init__()
+        super(PINATModel1, self).__init__()
 
         # backone
         self.bench = bench
@@ -401,7 +397,7 @@ class PINATModel(nn.Module):
         # zc embedder
         if hasattr(inputs, 'zcp') and inputs['zcp'] is not None:
             zc_embed = self.zcp_embedder(inputs['zcp'])
-            enc_output += zc_embed
+            out += zc_embed
 
         out = self.fc1(out)
         out = self.dropout(out)

@@ -14,12 +14,12 @@ IDX=4
 Loss=mse
 Bench=201
 Epochs=300
-Model=PINAT
+Model=PINAT_v2
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=10240
 #Train_Split_List=(78 156 469 781 1563)
-Train_Split_List=(1563 781 469 156 78)
+Train_Split_List=(156 78)
 Eval_Split_List=(all all all all all)
 Script=./piconas/runner/runner_pinat.py
 

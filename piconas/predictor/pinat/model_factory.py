@@ -1,9 +1,10 @@
-from piconas.predictor.pinat.pinat_v2 import PINATModel
+from piconas.predictor.pinat.pinat_run1 import PINATModel1
+from piconas.predictor.pinat.pinat_run2 import PINATModel2
 
 
 def create_model(args):
     pos_enc_dim_dict = {'101': 7, '201': 4}
-    net = PINATModel(
+    net = PINATModel1(
         bench=args.bench,
         pos_enc_dim=pos_enc_dim_dict[args.bench],
         adj_type='adj_lapla',
