@@ -1,17 +1,30 @@
+import json
+import os
+import pickle
 import random
 
 import numpy as np
+import pandas as pd
 import torch
+from nas_201_api import NASBench201API as NB2API
 from torch.utils.data import Dataset
+
+from piconas.predictor.nas_embedding_suite.nb123.nas_bench_201.cell_201 import \
+    Cell201
+
+BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
 
 
 class Nb201DatasetPINAT(Dataset):
+    CACHE_FILE_PATH = BASE_PATH + '/nb201_cellobj_cache.pkl'
 
     def __init__(self,
                  split,
                  candidate_ops=5,
                  data_type='train',
                  data_set='cifar10'):
+        self.nb2_api = NB2API(
+            BASE_PATH + 'NAS-Bench-201-v1_1-096897.pth', verbose=False)
         self.nasbench201_dict = np.load(
             '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench201/nasbench201_dict.npy',
             allow_pickle=True).item()
@@ -43,6 +56,43 @@ class Nb201DatasetPINAT(Dataset):
             raise ValueError('Wrong data_set!')
         self.max_edge_num = 6
 
+        self.zcp_nb201 = json.load(
+            open(BASE_PATH + 'zc_nasbench201.json', 'r'))
+        self._opname_to_index = {
+            'none': 0,
+            'skip_connect': 1,
+            'nor_conv_1x1': 2,
+            'nor_conv_3x3': 3,
+            'avg_pool_3x3': 4,
+            'input': 5,
+            'output': 6,
+            'global': 7
+        }
+        self.zcps = [
+            'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
+            'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen'
+        ]
+        self.normalize_and_process_zcp(normalize_zcp=True, log_synflow=True)
+
+        # self.zready = False
+        # self.zcp_cache = {}
+        # if os.path.exists(
+        #         Nb201DatasetPINAT.CACHE_FILE_PATH.replace('cellobj', 'zcp')):
+        #     print('Loading cache for NASBench-201 speedup!!...')
+        #     self.zready = True
+        #     with open(
+        #             Nb201DatasetPINAT.CACHE_FILE_PATH.replace('cellobj', 'zcp'),
+        #             'rb') as cache_file:
+        #         self.zcp_cache = pickle.load(cache_file)
+        # if not self.zready:
+        #     for idx in range(15625):
+        #         self.zcp_cache[idx] = self.get_zcp(idx)
+        #     with open(
+        #             Nb201DatasetPINAT.CACHE_FILE_PATH.replace('cellobj', 'zcp'),
+        #             'wb') as cache_file:
+        #         pickle.dump(self.zcp_cache, cache_file)
+        #     self.zready = True
+
         # # Compute mean and std of acc
         # dataset = 'cifar100'
         # val_acc_list = []
@@ -58,6 +108,50 @@ class Nb201DatasetPINAT(Dataset):
         # print('self.val_mean, self.val_std = %f, %f' % (np.mean(val_acc_list), np.std(val_acc_list)))
         # print('self.test_mean, self.test_std = %f, %f' % (np.mean(test_acc_list), np.std(test_acc_list)))
         # exit()
+
+    def normalize_and_process_zcp(self, normalize_zcp, log_synflow):
+        if normalize_zcp:
+            print('Normalizing ZCP dict')
+            self.norm_zcp = pd.DataFrame({
+                k0: {
+                    k1: v1['score']
+                    for k1, v1 in v0.items() if v1.__class__() == {}
+                }
+                for k0, v0 in self.zcp_nb201['cifar10'].items()
+            }).T
+
+            # Add normalization code here
+            self.norm_zcp['epe_nas'] = self.min_max_scaling(
+                self.norm_zcp['epe_nas'])
+            self.norm_zcp['fisher'] = self.min_max_scaling(
+                self.log_transform(self.norm_zcp['fisher']))
+            self.norm_zcp['flops'] = self.min_max_scaling(
+                self.log_transform(self.norm_zcp['flops']))
+            self.norm_zcp['grad_norm'] = self.min_max_scaling(
+                self.log_transform(self.norm_zcp['grad_norm']))
+            self.norm_zcp['grasp'] = self.standard_scaling(
+                self.norm_zcp['grasp'])
+            self.norm_zcp['jacov'] = self.min_max_scaling(
+                self.norm_zcp['jacov'])
+            self.norm_zcp['l2_norm'] = self.min_max_scaling(
+                self.norm_zcp['l2_norm'])
+            self.norm_zcp['nwot'] = self.min_max_scaling(self.norm_zcp['nwot'])
+            self.norm_zcp['params'] = self.min_max_scaling(
+                self.log_transform(self.norm_zcp['params']))
+            self.norm_zcp['plain'] = self.min_max_scaling(
+                self.norm_zcp['plain'])
+            self.norm_zcp['snip'] = self.min_max_scaling(
+                self.log_transform(self.norm_zcp['snip']))
+            if log_synflow:
+                self.norm_zcp['synflow'] = self.min_max_scaling(
+                    self.log_transform(self.norm_zcp['synflow']))
+            else:
+                self.norm_zcp['synflow'] = self.min_max_scaling(
+                    self.norm_zcp['synflow'])
+            self.norm_zcp['zen'] = self.min_max_scaling(self.norm_zcp['zen'])
+            # self.norm_zcp['val_accuracy'] = self.min_max_scaling(self.norm_zcp['val_accuracy'])
+
+            self.zcp_nb201 = {'cifar10': self.norm_zcp.T.to_dict()}
 
     def __len__(self):
         return len(self.sample_range)
@@ -125,6 +219,15 @@ class Nb201DatasetPINAT(Dataset):
                         seq.append(7)
         return seq
 
+    def min_max_scaling(self, data):
+        return (data - np.min(data)) / (np.max(data) - np.min(data))
+
+    def log_transform(self, data):
+        return np.log1p(data)
+
+    def standard_scaling(self, data):
+        return (data - np.mean(data)) / np.std(data)
+
     def __getitem__(self, index):
         index = self.sample_range[index]
         # val_acc, test_acc = self.metrics[index, -1, self.seed, -1, 2:]
@@ -165,6 +268,16 @@ class Nb201DatasetPINAT(Dataset):
         edge_index = torch.tensor(edge_index, dtype=torch.int64)
         edge_index = edge_index.transpose(1, 0)
 
+        # zcp
+        # if self.zready:
+        #     zcp = self.zcp_cache[index]
+        # else:
+        arch_str = self.nb2_api.query_by_index(index).arch_str
+        cellobj = Cell201(arch_str)
+        zcp_key = str(tuple(cellobj.encode(predictor_encoding='adj')))
+        zcp = [self.zcp_nb201['cifar10'][zcp_key][nn] for nn in self.zcps]
+        zcp = torch.tensor(zcp, dtype=torch.float32)
+
         result = {
             # "num_vertices": n,
             'num_vertices':
@@ -199,5 +312,7 @@ class Nb201DatasetPINAT(Dataset):
             torch.LongTensor(encoder_input),
             'edge_index_list':
             edge_index,
+            'zcp':
+            zcp
         }
         return result

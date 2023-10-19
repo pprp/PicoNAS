@@ -342,9 +342,6 @@ class Nb101DatasetPINAT(Dataset):
         mat_repr = str(tuple(mat))
         zcp = [self.zcp_nb101['cifar10'][mat_repr][nn] for nn in self.zcps]
         zcp = torch.tensor(zcp, dtype=torch.float32)
-        # self.temp_zcp_for_debug = zcp
-        # print(type(zcp), len(zcp))
-        # print(zcp)
 
         # in getitem function, we only select the index corresponding data rather than the whole data
         result = {

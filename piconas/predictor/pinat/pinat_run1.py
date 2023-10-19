@@ -395,9 +395,8 @@ class PINATModel1(nn.Module):
         out = graph_pooling(out, numv)
 
         # zc embedder
-        if hasattr(inputs, 'zcp') and inputs['zcp'] is not None:
-            zc_embed = self.zcp_embedder(inputs['zcp'])
-            out += zc_embed
+        zc_embed = self.zcp_embedder(inputs['zcp'])
+        out += zc_embed
 
         out = self.fc1(out)
         out = self.dropout(out)

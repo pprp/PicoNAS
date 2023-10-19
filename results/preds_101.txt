@@ -1,1 +1,4 @@
 EXP:101_cifar10_PINAT_mse_t100_vall_e300_bs10	lr: 0.0001	train: 100	test: all	kendall_tau: 0.667442
+
+EXP:101_cifar10_PINAT_run2_mse_t100_vall_e300_bs10	lr: 0.0001	train: 100	test: all	kendall_tau: 0.535409
+EXP:101_cifar10_PINAT_run2_mse_t172_vall_e300_bs10	lr: 0.0001	train: 172	test: all	kendall_tau: 0.574029

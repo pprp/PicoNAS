@@ -12,7 +12,7 @@ class TestPredictorDataset(TestCase):
         parser = ArgumentParser()
         # exp and dataset
         parser.add_argument('--exp_name', type=str, default='PINAT')
-        parser.add_argument('--bench', type=str, default='101')
+        parser.add_argument('--bench', type=str, default='201')
         parser.add_argument('--train_split', type=str, default='100')
         parser.add_argument('--eval_split', type=str, default='all')
         parser.add_argument('--dataset', type=str, default='cifar10')
@@ -35,8 +35,9 @@ class TestPredictorDataset(TestCase):
     def test_predictor_dataset(self):
         """Test something."""
         for step, batch in enumerate(self.test_loader):
-            print(type(batch))
+            print('====================')
             print(batch['zcp'])
+            print(batch['zcp'].shape)
             if step > 3:
                 import pdb
                 pdb.set_trace()
