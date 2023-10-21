@@ -16,6 +16,7 @@
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
+import torch.nn.functional as F
 
 from ..p_utils import get_layer_metric_array
 from . import measure
@@ -46,7 +47,7 @@ def compute_grasp_per_weight(net,
         st = sp * N // split_data
         en = (sp + 1) * N // split_data
 
-        # forward/grad pass # 1
+        # forward/grad pass #1
         grad_w = None
         for _ in range(num_iters):
             # TODO get new data, otherwise num_iters is useless!
@@ -63,7 +64,7 @@ def compute_grasp_per_weight(net,
         st = sp * N // split_data
         en = (sp + 1) * N // split_data
 
-        # forward/grad pass # 2
+        # forward/grad pass #2
         outputs = net.forward(inputs[st:en]) / T
         loss = loss_fn(outputs, targets[st:en])
         grad_f = autograd.grad(
@@ -84,8 +85,7 @@ def compute_grasp_per_weight(net,
             return -layer.weight.data * layer.weight.grad  # -theta_q Hg
             # NOTE in the grasp code they take the *bottom* (1-p)% of values
             # but we take the *top* (1-p)%, therefore we remove the -ve sign
-            # EDIT accuracy seems to be negatively correlated with this metric,
-            #  so we add -ve sign here!
+            # EDIT accuracy seems to be negatively correlated with this metric, so we add -ve sign here!
         else:
             return torch.zeros_like(layer.weight)
 

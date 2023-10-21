@@ -26,8 +26,7 @@ from . import measure
 def fisher_forward_conv2d(self, x):
     x = F.conv2d(x, self.weight, self.bias, self.stride, self.padding,
                  self.dilation, self.groups)
-    # intercept and store the activations after passing through
-    # 'hooked' identity op
+    # intercept and store the activations after passing through 'hooked' identity op
     self.act = self.dummy(x)
     return self.act
 
@@ -52,7 +51,7 @@ def compute_fisher_per_weight(net,
         raise ValueError('Fisher pruning does not support parameter pruning.')
 
     net.train()
-    # all_hooks = []
+    all_hooks = []
     for layer in net.modules():
         if isinstance(layer, nn.Conv2d) or isinstance(layer, nn.Linear):
             # variables/op needed for fisher computation
@@ -66,8 +65,7 @@ def compute_fisher_per_weight(net,
             if isinstance(layer, nn.Linear):
                 layer.forward = types.MethodType(fisher_forward_linear, layer)
 
-            # function to call during backward pass
-            # (hooked on identity op at output of layer)
+            # function to call during backward pass (hooked on identity op at output of layer)
             def hook_factory(layer):
 
                 def hook(module, grad_input, grad_output):
@@ -83,9 +81,9 @@ def compute_fisher_per_weight(net,
                         layer.fisher = del_k
                     else:
                         layer.fisher += del_k
-                    del layer.act
-                    # without deleting this, a nasty memory leak occurs!
-                    # related: https://discuss.pytorch.org/t/memory-leak-when-using-forward-hook-and-backward-hook-simultaneously/27555 # noqa: E501
+                    del (
+                        layer.act
+                    )  # without deleting this, a nasty memory leak occurs! related: https://discuss.pytorch.org/t/memory-leak-when-using-forward-hook-and-backward-hook-simultaneously/27555
 
                 return hook
 
@@ -112,8 +110,7 @@ def compute_fisher_per_weight(net,
     grads_abs_ch = get_layer_metric_array(net, fisher, mode)
 
     # broadcast channel value here to all parameters in that channel
-    # to be compatible with stuff downstream
-    # (which expects per-parameter metrics)
+    # to be compatible with stuff downstream (which expects per-parameter metrics)
     # TODO cleanup on the selectors/apply_prune_mask side (?)
     shapes = get_layer_metric_array(net, lambda l: l.weight.shape[1:], mode)
 

@@ -49,7 +49,7 @@ def eval_score(jacob, labels=None):
 
 
 @measure('jacov', bn=True)
-def compute_jacob_cov(net, inputs, targets, split_data=1, loss_fn=None):
+def compute_jacob_cov(net, inputs, targets, loss_fn=None, split_data=1):
     try:
         # Compute gradients (but don't apply them)
         jacobs, labels = get_batch_jacobian(net, inputs, targets)
