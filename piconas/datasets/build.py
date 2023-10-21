@@ -133,7 +133,7 @@ def build_dataloader(dataset='cifar10',
         nw = getattr(config, 'nw', 4)
         fast = getattr(config, 'fast', False)
     else:
-        batch_size = 1
+        batch_size = 8
         nw = 0
         fast = False
 
