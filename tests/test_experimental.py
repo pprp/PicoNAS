@@ -109,13 +109,13 @@ class Graph(nx.DiGraph):
         """Visualizes the graph using the NetworkX library."""
         nx.draw(
             self,
-            pos=nx.spring_layout(self),
+            pos=nx.shell_layout(self),
             with_labels=True,
             node_size=2000,
             node_color='skyblue',
             font_size=15,
             width=2,
-            alpha=0.6)
+            alpha=0.8)
         plt.title('Graph Visualization')
         # plt.show()
         plt.savefig('./visualize_graph.png')
@@ -130,25 +130,12 @@ class Graph(nx.DiGraph):
         return '\n'.join(
             [' '.join([str(cell) for cell in row]) for row in matrix])
 
-
-    def find_path(self, start_nodes, end_node):
-        """Finds a path from one of the start nodes to the end node in the given graph.
-
-        Args:
-            graph: A networkx graph.
-            start_nodes: A list of start nodes.
-            end_node: The end node.
-
-        Returns:
-            A list of nodes in the path, or None if no path is found.
-        """
-
+    def find_path(self, start_node, end_node):
         visited = set()
-        stack = [(start_node, []) for start_node in start_nodes]
+        stack = [(start_node, [])]
 
         while stack:
             current_node, path = stack.pop()
-
             if current_node not in visited:
                 visited.add(current_node)
                 path.append(current_node)
@@ -157,8 +144,11 @@ class Graph(nx.DiGraph):
                 return path
 
             for neighbor in self.neighbors(current_node):
-                stack.append((neighbor, path.copy()))
+                if neighbor not in visited:
+                    stack.append((neighbor, path.copy()))
+
         return None
+
 
 def create_dag_graph(input_combination):
     print('Selected input combination: ', input_combination)
@@ -173,9 +163,10 @@ def create_dag_graph(input_combination):
         graph.add_node(operation)
     graph.add_node(output_node)
 
-    # Ensure the graph is a DAG using topological sort
+    print('Before Searching')
     while True:
         graph = Graph()
+
         # Add nodes for inputs, operations, and output
         for inp in input_combination:
             graph.add_node(inp)
@@ -183,21 +174,63 @@ def create_dag_graph(input_combination):
             graph.add_node(operation)
         graph.add_node(output_node)
 
+        # record the target nodes
+        target_node_hash = {}
+
         for _ in range(3):
             # Randomly connect inputs to operations
             for inp in input_combination:
                 chosen_op_for_input = random.choice(operations)
+                if graph.has_edge(inp, chosen_op_for_input):
+                    continue
+                if graph.has_edge(inp, inp):
+                    continue
+                if graph.has_edge(chosen_op_for_input, chosen_op_for_input):
+                    continue
+
                 graph.add_edge(inp, chosen_op_for_input)
+                if chosen_op_for_input in target_node_hash:
+                    target_node_hash[chosen_op_for_input] += 1
+                else:
+                    target_node_hash[chosen_op_for_input] = 1
+
+        for _ in range(3):
+            for operation in operations:
+                # Randomly connect operations to other operations
+                chosen_op_for_op = random.choice(operations)
+                if graph.has_edge(operation, chosen_op_for_op):
+                    continue
+                if graph.has_edge(operation, operation):
+                    continue
+                if graph.has_edge(chosen_op_for_op, chosen_op_for_op):
+                    continue
+                graph.add_edge(operation, chosen_op_for_op)
+                if chosen_op_for_op in target_node_hash:
+                    target_node_hash[chosen_op_for_op] += 1
+                else:
+                    target_node_hash[chosen_op_for_op] = 1
 
         # Randomly connect one operation to the output
-        chosen_op_for_output = random.choice(operations)
-        graph.add_edge(chosen_op_for_output, output_node)
+        # sample key based on the value as probability
+        target_node_hash = {
+            k: v / sum(target_node_hash.values())
+            for k, v in target_node_hash.items()
+        }
+        sampled_target_node = random.choices(
+            list(target_node_hash.keys()),
+            weights=list(target_node_hash.values()),
+            k=1)[0]
+        graph.add_edge(sampled_target_node, output_node)
 
-        # Ensure the graph is a DAG using topological sort
-        is_dag = nx.is_directed_acyclic_graph(graph)
-        if is_dag:
+        for inp in input_combination:
+            print('input: ', inp)
+            path = graph.find_path(inp, 'Output')
+            print('path: ', path)
+
+        if path is not None:
             break
 
+    print('After Searching')
     # Print the graph structure
     print(graph)
 
@@ -217,6 +250,7 @@ for row in matrix:
     print(row)
 
 # find path from input_combination to output
-path = dag_graph.find_path(input_combination, 'Output')
-print('Path: ', path)
-
+for inp in input_combination:
+    print('input: ', inp)
+    path = dag_graph.find_path(inp, 'Output')
+    print('path: ', path)
