@@ -1,5 +1,4 @@
 import random
-from collections import defaultdict, deque
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -18,13 +17,13 @@ def sample_combination_bitwise():
     idx = random.randint(0, 6)
     bit_combination = combinations[idx]
     result = []
-    if bit_combination & 0b001: result.append('G')
-    if bit_combination & 0b010: result.append('W')
-    if bit_combination & 0b100: result.append('X')
+    if bit_combination & 0b001:
+        result.append('G')
+    if bit_combination & 0b010:
+        result.append('W')
+    if bit_combination & 0b100:
+        result.append('X')
     return result
-
-
-import networkx as nx
 
 
 class Graph(nx.DiGraph):
@@ -146,7 +145,6 @@ class Graph(nx.DiGraph):
             for neighbor in self.neighbors(current_node):
                 if neighbor not in visited:
                     stack.append((neighbor, path.copy()))
-
         return None
 
 
@@ -254,3 +252,9 @@ for inp in input_combination:
     print('input: ', inp)
     path = dag_graph.find_path(inp, 'Output')
     print('path: ', path)
+
+# Test crossover
+parent1 = create_dag_graph(sample_combination_bitwise())
+parent2 = create_dag_graph(sample_combination_bitwise())
+child = Graph.crossover(parent1, parent2)
+child.visualize()

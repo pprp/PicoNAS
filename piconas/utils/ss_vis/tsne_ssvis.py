@@ -83,7 +83,7 @@ if True:
     arch2vec_nb101 = pd.DataFrame.from_dict(nb101.arch2vec_nb101).T
     cate_nb101 = pd.DataFrame.from_dict(nb101.cate_nb101)
     zcp_nb101 = pd.DataFrame.from_dict(nb101.zcp_nb101['cifar10']).T
-    if subsample_others != None:
+    if subsample_others is not None:
         arch2vec_nb101 = arch2vec_nb101.sample(n=subsample_others)
         cate_nb101 = cate_nb101.sample(n=subsample_others)
         zcp_nb101 = zcp_nb101.sample(n=subsample_others)
@@ -109,7 +109,7 @@ if True:
     zcp_nb201 = pd.DataFrame.from_dict(nb201.zcp_nb201['cifar10']).T
     zcp_nb201_valacc = pd.DataFrame.from_dict(
         nb201.zcp_nb201_valacc['cifar10']).T
-    if subsample_others != None:
+    if subsample_others is not None:
         arch2vec_nb201 = arch2vec_nb201.sample(n=subsample_others)
         cate_nb201 = cate_nb201.sample(n=subsample_others)
         zcp_nb201 = zcp_nb201.sample(n=subsample_others)
@@ -133,7 +133,7 @@ if True:
 
     arch2vec_nb301 = pd.DataFrame.from_dict(nb301.arch2vec_nb301).T
     cate_nb301 = pd.DataFrame.from_dict(nb301.cate_nb301)
-    if subsample_others != None:
+    if subsample_others is not None:
         arch2vec_nb301 = arch2vec_nb301.sample(n=subsample_others)
         cate_nb301 = cate_nb301.sample(n=subsample_others)
     x1 = np.asarray(cate_nb301['predicted_accs'])
@@ -234,7 +234,7 @@ if not skip_adj:
     acc_list = []
     # if subsample_adj!=None:
     #     for i in tqdm(range(1000000, 1000000+11221, 1)):
-    if subsample_adj != None:
+    if subsample_adj is not None:
         for i in tqdm(range(1000000, 1000000 + 11221, 1)):
 
             nb3_zcp_adj[str(i)] = nb301.get_adj(i)
