@@ -71,9 +71,7 @@ def generate_lapla_matrix(adjacency, note):
 
 
 class Nb101DatasetPINAT(Dataset):
-    """
-        Generate nasbench101 data stream for PINAT.
-    """
+    """Generate nasbench101 data stream for PINAT."""
 
     def __init__(self,
                  split=None,

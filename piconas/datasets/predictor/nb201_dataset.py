@@ -58,6 +58,9 @@ class Nb201DatasetPINAT(Dataset):
 
         self.zcp_nb201 = json.load(
             open(BASE_PATH + 'zc_nasbench201.json', 'r'))
+        self.lw_zcp_nb201 = json.load(
+            open(BASE_PATH + 'zc_nasbench201_layerwise.json', 'r'))
+
         self._opname_to_index = {
             'none': 0,
             'skip_connect': 1,
@@ -73,6 +76,7 @@ class Nb201DatasetPINAT(Dataset):
             'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen'
         ]
         self.normalize_and_process_zcp(normalize_zcp=True, log_synflow=True)
+        self.norm_lw_zcp()
 
         # self.zready = False
         # self.zcp_cache = {}
@@ -152,6 +156,35 @@ class Nb201DatasetPINAT(Dataset):
             # self.norm_zcp['val_accuracy'] = self.min_max_scaling(self.norm_zcp['val_accuracy'])
 
             self.zcp_nb201 = {'cifar10': self.norm_zcp.T.to_dict()}
+
+    def norm_lw_zcp(self):
+        print('Normalizing layerwise ZCP dict')
+        import pdb; pdb.set_trace()
+        self.norm_lw_zcp = pd.DataFrame({
+                k0: {
+                    k1: v1['score']
+                    for k1, v1 in v0.items() if v1.__class__() == {}
+                }
+                for k0, v0 in self.lw_zcp_nb201['cifar10'].items()
+            }).T
+        self.norm_lw_zcp['fisher_layerwise'] = self.min_max_scaling(
+            self.norm_lw_zcp['fisher_layerwise'])
+        self.norm_lw_zcp['grad_norm_layerwise'] = self.min_max_scaling(
+            self.norm_lw_zcp['grad_norm_layerwise'])
+        self.norm_lw_zcp['grasp_layerwise'] = self.min_max_scaling(
+            self.norm_lw_zcp['grasp_layerwise'])
+        self.norm_lw_zcp['l2_norm_layerwise'] = self.min_max_scaling(
+            self.norm_lw_zcp['l2_norm_layerwise'])
+        self.norm_lw_zcp['snip_layerwise'] = self.min_max_scaling(
+            self.norm_lw_zcp['snip_layerwise'])
+        self.norm_lw_zcp['plain'] = self.min_max_scaling(
+            self.norm_lw_zcp['plain'])
+        self.norm_lw_zcp['synflow_layerwise'] = self.min_max_scaling(
+            self.norm_lw_zcp['synflow_layerwise'])
+    
+        self.lw_zcp_nb201 = {'cifar10': self.norm_lw_zcp.T.to_dict()}
+
+
 
     def __len__(self):
         return len(self.sample_range)

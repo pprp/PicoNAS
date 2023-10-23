@@ -157,8 +157,7 @@ def generate_model(index, NUM_CLASSES=10):
     return model
 
 
-dataset_candidates = ['ImageNet16-120']
-# ['cifar10', 'cifar100']
+dataset_candidates = ['cifar10', 'cifar100']
 
 for data_cand in dataset_candidates:
     if data_cand == 'cifar10':
