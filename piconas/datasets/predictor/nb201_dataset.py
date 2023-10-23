@@ -23,6 +23,8 @@ class Nb201DatasetPINAT(Dataset):
                  candidate_ops=5,
                  data_type='train',
                  data_set='cifar10'):
+        assert data_set in ['cifar10', 'cifar100', 'ImageNet16-120', 'imagenet16']
+
         self.nb2_api = NB2API(
             BASE_PATH + 'NAS-Bench-201-v1_1-096897.pth', verbose=False)
         self.nasbench201_dict = np.load(
@@ -49,6 +51,9 @@ class Nb201DatasetPINAT(Dataset):
         elif self.data_set == 'cifar100':
             self.val_mean, self.val_std = 0.612818, 0.121428
             self.test_mean, self.test_std = 0.613878, 0.121719
+        elif self.data_set == 'ImageNet16-120':
+            self.val_mean, self.val_std = 0.337928, 0.092423
+            self.test_mean, self.test_std = 0.335682, 0.095140
         elif self.data_set == 'imagenet16':
             self.val_mean, self.val_std = 0.337928, 0.092423
             self.test_mean, self.test_std = 0.335682, 0.095140
@@ -75,8 +80,10 @@ class Nb201DatasetPINAT(Dataset):
             'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
             'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen'
         ]
+        self.lw_zcps = ['fisher_layerwise', 'grad_norm_layerwise', 'grasp_layerwise', 'l2_norm_layerwise', 
+                        'snip_layerwise', 'synflow_layerwise', 'plain_layerwise']
         self.normalize_and_process_zcp(normalize_zcp=True, log_synflow=True)
-        self.norm_lw_zcp()
+        self.preprocess_lw_zcp()
 
         # self.zready = False
         # self.zcp_cache = {}
@@ -121,7 +128,7 @@ class Nb201DatasetPINAT(Dataset):
                     k1: v1['score']
                     for k1, v1 in v0.items() if v1.__class__() == {}
                 }
-                for k0, v0 in self.zcp_nb201['cifar10'].items()
+                for k0, v0 in self.zcp_nb201[self.data_set].items()
             }).T
 
             # Add normalization code here
@@ -155,36 +162,36 @@ class Nb201DatasetPINAT(Dataset):
             self.norm_zcp['zen'] = self.min_max_scaling(self.norm_zcp['zen'])
             # self.norm_zcp['val_accuracy'] = self.min_max_scaling(self.norm_zcp['val_accuracy'])
 
-            self.zcp_nb201 = {'cifar10': self.norm_zcp.T.to_dict()}
+            self.zcp_nb201 = {self.data_set: self.norm_zcp.T.to_dict()}
 
-    def norm_lw_zcp(self):
-        print('Normalizing layerwise ZCP dict')
-        import pdb; pdb.set_trace()
-        self.norm_lw_zcp = pd.DataFrame({
-                k0: {
-                    k1: v1['score']
-                    for k1, v1 in v0.items() if v1.__class__() == {}
-                }
-                for k0, v0 in self.lw_zcp_nb201['cifar10'].items()
-            }).T
-        self.norm_lw_zcp['fisher_layerwise'] = self.min_max_scaling(
-            self.norm_lw_zcp['fisher_layerwise'])
-        self.norm_lw_zcp['grad_norm_layerwise'] = self.min_max_scaling(
-            self.norm_lw_zcp['grad_norm_layerwise'])
-        self.norm_lw_zcp['grasp_layerwise'] = self.min_max_scaling(
-            self.norm_lw_zcp['grasp_layerwise'])
-        self.norm_lw_zcp['l2_norm_layerwise'] = self.min_max_scaling(
-            self.norm_lw_zcp['l2_norm_layerwise'])
-        self.norm_lw_zcp['snip_layerwise'] = self.min_max_scaling(
-            self.norm_lw_zcp['snip_layerwise'])
-        self.norm_lw_zcp['plain'] = self.min_max_scaling(
-            self.norm_lw_zcp['plain'])
-        self.norm_lw_zcp['synflow_layerwise'] = self.min_max_scaling(
-            self.norm_lw_zcp['synflow_layerwise'])
-    
-        self.lw_zcp_nb201 = {'cifar10': self.norm_lw_zcp.T.to_dict()}
+    def preprocess_lw_zcp(self):
+        # there is some nan in the layerwise zcp dict
+        print('Exception Handling for layerwise ZCP dict')
+        
+        # find the maximum length for xx_layerwise function 
+        # then we can padding zero for those one with length < max_length
+        max_length = 0 
+        for k0, v0 in self.lw_zcp_nb201[self.data_set].items():
+            for k1, v1 in v0.items():
+                if v1.__class__() == list:
+                    if len(v1) > max_length:
+                        max_length = len(v1)
 
+        # padding zero for those one with length < max_length
+        for k0, v0 in self.lw_zcp_nb201[self.data_set].items():
+            for k1, v1 in v0.items():
+                if v1.__class__() == list:
+                    if len(v1) < max_length:
+                        v0[k1] = v1 + [0 for i in range(max_length - len(v1))]
 
+        # filter those one with nan in the list and replace it with zero 
+        for k0, v0 in self.lw_zcp_nb201[self.data_set].items():
+            # k0 denotes id in nasbench201 
+            for k1, v1 in v0.items():
+                # k1 denotes xx_layerwise in nasbench201
+                # filter v1 which is a list that contains nan
+                assert type(v1) == list, 'v1 is not a list'
+                v0[k1] = [0 if np.isnan(i) else i for i in v1]
 
     def __len__(self):
         return len(self.sample_range)
@@ -264,8 +271,15 @@ class Nb201DatasetPINAT(Dataset):
     def __getitem__(self, index):
         index = self.sample_range[index]
         # val_acc, test_acc = self.metrics[index, -1, self.seed, -1, 2:]
-        val_acc = self.nasbench201_dict[str(index)]['%s_valid' % self.data_set]
-        test_acc = self.nasbench201_dict[str(index)]['%s_test' % self.data_set]
+        if self.data_set == 'ImageNet16-120':
+            idx_data_set = 'imagenet16'
+        else:
+            idx_data_set = self.data_set
+        
+        print(self.nasbench201_dict[str(index)].keys())
+        print('=========================')
+        val_acc = self.nasbench201_dict[str(index)]['%s_valid' % idx_data_set]
+        test_acc = self.nasbench201_dict[str(index)]['%s_test' % idx_data_set]
         adjacency = self.nasbench201_dict[str(index)]['adj_matrix']
         lapla = self._generate_lapla_matrix(adj_matrix=adjacency)
         operation = np.array(
@@ -302,14 +316,18 @@ class Nb201DatasetPINAT(Dataset):
         edge_index = edge_index.transpose(1, 0)
 
         # zcp
-        # if self.zready:
-        #     zcp = self.zcp_cache[index]
-        # else:
         arch_str = self.nb2_api.query_by_index(index).arch_str
         cellobj = Cell201(arch_str)
         zcp_key = str(tuple(cellobj.encode(predictor_encoding='adj')))
-        zcp = [self.zcp_nb201['cifar10'][zcp_key][nn] for nn in self.zcps]
+        zcp = [self.zcp_nb201[self.data_set][zcp_key][nn] for nn in self.zcps]
         zcp = torch.tensor(zcp, dtype=torch.float32)
+        
+        # zcp layerwise 
+        key = str(index)
+        zcp_lw = [self.lw_zcp_nb201[self.data_set][key][nn] for nn in self.lw_zcps]
+        zcp_lw = torch.tensor(zcp_lw, dtype=torch.float32)
+
+        import pdb; pdb.set_trace()
 
         result = {
             # "num_vertices": n,
@@ -346,6 +364,8 @@ class Nb201DatasetPINAT(Dataset):
             'edge_index_list':
             edge_index,
             'zcp':
-            zcp
+            zcp,
+            'zcp_lw':
+            zcp_lw,
         }
         return result

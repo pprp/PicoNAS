@@ -15,7 +15,7 @@ class TestPredictorDataset(TestCase):
         parser.add_argument('--bench', type=str, default='201')
         parser.add_argument('--train_split', type=str, default='100')
         parser.add_argument('--eval_split', type=str, default='all')
-        parser.add_argument('--dataset', type=str, default='cifar10')
+        parser.add_argument('--dataset', type=str, default='ImageNet16-120')
         # training settings
         parser.add_argument('--seed', type=int, default=0)
         parser.add_argument('--gpu_id', type=int, default=0)
