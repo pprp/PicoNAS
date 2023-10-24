@@ -14,13 +14,13 @@ IDX=4
 Loss=mse
 Bench=101
 Epochs=300
-Model=PINATModel3
+Model=PINATModel4
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=10240
 Train_Split_List=(100 172)
 Eval_Split_List=(all all)
-Script=./piconas/runner/runner_pinat.py
+Script=./piconas/runner/runner_pinat_rank.py
 
 for((t=0; t<${#Train_Split_List[*]}; t++)); do
   # set gpu and data splits

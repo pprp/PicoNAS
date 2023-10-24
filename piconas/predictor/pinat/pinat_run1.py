@@ -390,8 +390,6 @@ class PINATModel1(nn.Module):
             edge_index_list=edge_index_list)
 
         # regressor forward
-        # import pdb; pdb.set_trace()
-
         out = graph_pooling(out, numv)
 
         # zc embedder

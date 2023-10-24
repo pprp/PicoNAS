@@ -116,7 +116,9 @@ class Nb101DatasetPINAT(Dataset):
         with open(BASE_PATH + 'zc_nasbench101_full.json', 'r') as f:
             self.zcp_nb101 = json.load(f)
 
-        self.normalize_and_process_zcp(True, True)
+        with open(BASE_PATH + 'zc_nasbench101_layerwise.json', 'r') as f:
+            self.zcp_nb101_layerwise = json.load(f)
+
         self.data_type = data_type
 
         # all
@@ -128,6 +130,12 @@ class Nb101DatasetPINAT(Dataset):
             'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
             'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen'
         ]
+        self.lw_zcps = [
+            'fisher_layerwise', 'grad_norm_layerwise', 'grasp_layerwise',
+            'l2_norm_layerwise', 'snip_layerwise', 'synflow_layerwise',
+            'plain_layerwise'
+        ]
+        self.lw_zcps_selected = 'synflow_layerwise'
 
         self.nb1_op_idx = {
             'input': 0,
@@ -136,6 +144,9 @@ class Nb101DatasetPINAT(Dataset):
             'conv1x1-bn-relu': 3,
             'maxpool3x3': 4
         }
+
+        self.normalize_and_process_zcp(normalize_zcp=True, log_synflow=True)
+        self.preprocess_zcp()
 
     def __len__(self):
         return len(self.sample_range)
@@ -199,6 +210,30 @@ class Nb101DatasetPINAT(Dataset):
             #     self.norm_zcp['val_accuracy'])
 
             self.zcp_nb101 = {'cifar10': self.norm_zcp.T.to_dict()}
+
+    def preprocess_zcp(self):
+        print('Preprocessing ZCP dict')
+
+        # find the max length
+        max_length = 0
+        for k0, v0 in self.zcp_nb101_layerwise['cifar10'].items():
+            for k1, v1 in v0.items():
+                assert type(v1) == list, 'v1 is not a list'
+                if len(v1) > max_length:
+                    max_length = len(v1)
+
+        # pad the list
+        for k0, v0 in self.zcp_nb101_layerwise['cifar10'].items():
+            for k1, v1 in v0.items():
+                assert type(v1) == list, 'v1 is not a list'
+                if len(v1) < max_length:
+                    v0[k1] = v1 + [0] * (max_length - len(v1))
+
+                # filter nan in the list and replace it with zero
+                v0[k1] = [0 if np.isnan(x) else x for x in v0[k1]]
+
+        print(f'Max length of ZCP list: {max_length}')
+        print('Preprocess layerwise ZCP dict done')
 
     def _check(self, item):
         n = item['num_vertices']
@@ -325,6 +360,11 @@ class Nb101DatasetPINAT(Dataset):
         zcp = [self.zcp_nb101['cifar10'][mat_repr][nn] for nn in self.zcps]
         zcp = torch.tensor(zcp, dtype=torch.float32)
 
+        # laod layerwise zcp
+        zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][hash][
+            self.lw_zcps_selected]
+        zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
+
         # in getitem function, we only select the index corresponding data rather than the whole data
         result = {
             'num_vertices': 7,
@@ -339,6 +379,7 @@ class Nb101DatasetPINAT(Dataset):
             'test_acc': float(self.normalize(test_acc)),
             'edge_index_list': edge_index,
             'zcp': zcp,
+            'zcp_layerwise': zcp_layerwise,
         }
         if self.debug:
             self._check(result)

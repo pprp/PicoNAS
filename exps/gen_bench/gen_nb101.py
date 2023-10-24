@@ -35,6 +35,19 @@ BASE = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'
 # key is dict_keys(['id', 'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
 #      'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen', 'val_accuracy'])
 target_json_path = os.path.join(BASE, 'zc_nasbench101_layerwise.json')
+# 'cifar10'
+#     #sample [100]
+#         _hash
+#              'fisher_layerwise': [0.1, 0.2, 0.3, 0.4, 0.5, ...]
+to_be_merged_json_path = os.path.join(BASE,
+                                      'zc_nasbench101_layerwise_5000.json')
+to_be_merged_json = json.load(open(to_be_merged_json_path, 'r'))
+
+train_split_list = [100, 172, 424, 424, 4236]
+
+sample_range = np.load(
+    '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz'
+)
 
 
 def get_cifar10_dataloader(batch_size, data_dir, train=True):
@@ -63,6 +76,9 @@ loader = get_cifar10_dataloader(
 
 # get one batch from loader
 inputs, targets = next(iter(loader))
+if torch.cuda.is_available():
+    inputs, targets = inputs.cuda(), targets.cuda()
+
 loss_fn = torch.nn.CrossEntropyLoss()
 
 # zc name candidates
@@ -99,13 +115,15 @@ def convert_type(s_list):
     return tmp_list
 
 
-sampled_net_hash = random.sample(list(itertools.islice(net_hash, 5000)), 5000)
+sampled_net_hash = net_hash
+# random.sample(list(itertools.islice(net_hash, 5000)), 5000)
 
 # main iteration
-for _hash in tqdm(
-        sampled_net_hash
-):  # this list is 423624 require a long time. How to parallel?
+for _hash in tqdm(sampled_net_hash):
     target_json['cifar10'][_hash] = dict()
+    if _hash in to_be_merged_json['cifar10']:
+        target_json['cifar10'][_hash] = to_be_merged_json['cifar10'][_hash]
+        continue
 
     m = nb.get_metrics_from_hash(_hash)
     ops = m[0]['module_operations']
@@ -148,8 +166,10 @@ for _hash in tqdm(
     }
 
     for method in methods:
-        # print(method, '===========', _hash)
         net = NBNetwork((adjacency, ops))
+        if torch.cuda.is_available():
+            net = net.cuda()
+
         s_list = methods[method]()
         tmp_list = convert_type(s_list)
         tmp_list = min_max_scaling(tmp_list)

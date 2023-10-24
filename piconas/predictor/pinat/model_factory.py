@@ -1,10 +1,12 @@
 from piconas.predictor.pinat.pinat_run1 import PINATModel1
-from piconas.predictor.pinat.pinat_run2 import PINATModel2, PINATModel3
+from piconas.predictor.pinat.pinat_run2 import (PINATModel2, PINATModel3,
+                                                PINATModel4)
 
 _name2model = {
     'PINATModel1': PINATModel1,  # PINAT + ZCP
     'PINATModel2': PINATModel2,  # ZCP only
     'PINATModel3': PINATModel3,  # PINAT + ZCP + BN
+    'PINATModel4': PINATModel4,  # PINAT + ZCP Layerwise + Gating
 }
 
 

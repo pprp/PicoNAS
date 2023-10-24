@@ -65,7 +65,7 @@ class Nb201DatasetPINAT(Dataset):
 
         self.zcp_nb201 = json.load(
             open(BASE_PATH + 'zc_nasbench201.json', 'r'))
-        self.lw_zcp_nb201 = json.load(
+        self.zcp_nb201_layerwise = json.load(
             open(BASE_PATH + 'zc_nasbench201_layerwise.json', 'r'))
 
         self._opname_to_index = {
@@ -179,24 +179,22 @@ class Nb201DatasetPINAT(Dataset):
         # find the maximum length for xx_layerwise function
         # then we can padding zero for those one with length < max_length
         max_length = 0
-        length_list = []
 
-        for k0, v0 in self.lw_zcp_nb201[self.data_set].items():
+        for k0, v0 in self.zcp_nb201_layerwise[self.data_set].items():
             for k1, v1 in v0.items():
                 assert type(v1) == list, 'v1 is not a list'
-                length_list.append(len(v1))
                 if len(v1) > max_length:
                     max_length = len(v1)
 
         # padding zero for those one with length < max_length
-        for k0, v0 in self.lw_zcp_nb201[self.data_set].items():
+        for k0, v0 in self.zcp_nb201_layerwise[self.data_set].items():
             for k1, v1 in v0.items():
                 assert type(v1) == list, 'v1 is not a list'
                 if len(v1) < max_length:
                     v0[k1] = v1 + [0 for i in range(max_length - len(v1))]
 
         # filter those one with nan in the list and replace it with zero
-        for k0, v0 in self.lw_zcp_nb201[self.data_set].items():
+        for k0, v0 in self.zcp_nb201_layerwise[self.data_set].items():
             # k0 denotes id in nasbench201
             for k1, v1 in v0.items():
                 # k1 denotes xx_layerwise in nasbench201
@@ -204,7 +202,6 @@ class Nb201DatasetPINAT(Dataset):
                 assert type(v1) == list, 'v1 is not a list'
                 v0[k1] = [0 if np.isnan(i) else i for i in v1]
 
-        print(f'Length of layerwise zcp: {length_list}')
         print(f'Max length of layerwise zcp: {max_length}')
         print('Preprocess layerwise ZCP dict done')
 
@@ -337,15 +334,15 @@ class Nb201DatasetPINAT(Dataset):
 
         # zcp layerwise
         key = str(index)
-        # zcp_lw = self.lw_zcp_nb201[self.data_set][key][self.lw_zcps_selected]
+        # zcp_layerwise = self.zcp_nb201_layerwise[self.data_set][key][self.lw_zcps_selected]
         # Use combination of grad_norm, snip, synflow:
         combinations = [
             'grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise'
         ]
-        zcp_lw = self.lw_zcp_nb201[self.data_set][key][combinations[0]] + \
-                 self.lw_zcp_nb201[self.data_set][key][combinations[1]] + \
-                    self.lw_zcp_nb201[self.data_set][key][combinations[2]]
-        zcp_lw = torch.tensor(zcp_lw, dtype=torch.float32)
+        zcp_layerwise = self.zcp_nb201_layerwise[self.data_set][key][combinations[0]] + \
+                 self.zcp_nb201_layerwise[self.data_set][key][combinations[1]] + \
+                    self.zcp_nb201_layerwise[self.data_set][key][combinations[2]]
+        zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
 
         result = {
             # "num_vertices": n,
@@ -357,14 +354,10 @@ class Nb201DatasetPINAT(Dataset):
             np.array(adjacency, dtype=np.float32),
             'lapla':
             lapla,
-            # "lapla_nor": self.lapla_nor[index],
             'operations':
             ops_onehot,
             'features':
             torch.from_numpy(operation).long(),
-            # "lap_pos_enc": self._rand_flip(self.lap_pos_enc[index]),
-            # "lap_pos_enc": self.lap_pos_enc[index],
-            # "mask": np.array([i < n for i in range(7)], dtype=np.float32),
             'val_acc':
             torch.tensor(self.normalize(val_acc / 100), dtype=torch.float32),
             'test_acc':
@@ -383,7 +376,7 @@ class Nb201DatasetPINAT(Dataset):
             edge_index,
             'zcp':
             zcp,
-            'zcp_lw':
-            zcp_lw,
+            'zcp_layerwise':
+            zcp_layerwise,
         }
         return result

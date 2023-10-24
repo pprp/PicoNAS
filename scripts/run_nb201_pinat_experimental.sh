@@ -7,14 +7,13 @@ fi
 if [ ! -d "./results" ]; then
   mkdir ./results
 fi
-CUDA_VISIBLE_DEVICES=0
 
 # arguments
-IDX=4
+IDX=6
 Loss=mse
 Bench=201
 Epochs=300
-Model=PINATModel3
+Model=PINATModel4
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=10240
