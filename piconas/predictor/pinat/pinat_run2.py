@@ -200,7 +200,7 @@ class PINATModel3(nn.Module):
         #     mid_zcp_dim = 98
         # else:
         #     mid_zcp_dim = 13 # default settings.
-        mid_zcp_dim = 98
+        mid_zcp_dim = 98 * 3
 
         for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
             self.zcp_embedder.append(

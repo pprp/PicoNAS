@@ -88,7 +88,7 @@ class Nb201DatasetPINAT(Dataset):
             'l2_norm_layerwise', 'snip_layerwise', 'synflow_layerwise',
             'plain_layerwise'
         ]
-        self.lw_zcps_selected = 'grad_norm_layerwise'
+        self.lw_zcps_selected = 'synflow_layerwise'
 
         self.normalize_and_process_zcp(normalize_zcp=True, log_synflow=True)
         self.preprocess_lw_zcp()
@@ -179,9 +179,12 @@ class Nb201DatasetPINAT(Dataset):
         # find the maximum length for xx_layerwise function
         # then we can padding zero for those one with length < max_length
         max_length = 0
+        length_list = []
+
         for k0, v0 in self.lw_zcp_nb201[self.data_set].items():
             for k1, v1 in v0.items():
                 assert type(v1) == list, 'v1 is not a list'
+                length_list.append(len(v1))
                 if len(v1) > max_length:
                     max_length = len(v1)
 
@@ -201,6 +204,7 @@ class Nb201DatasetPINAT(Dataset):
                 assert type(v1) == list, 'v1 is not a list'
                 v0[k1] = [0 if np.isnan(i) else i for i in v1]
 
+        print(f'Length of layerwise zcp: {length_list}')
         print(f'Max length of layerwise zcp: {max_length}')
         print('Preprocess layerwise ZCP dict done')
 
@@ -333,7 +337,14 @@ class Nb201DatasetPINAT(Dataset):
 
         # zcp layerwise
         key = str(index)
-        zcp_lw = self.lw_zcp_nb201[self.data_set][key][self.lw_zcps_selected]
+        # zcp_lw = self.lw_zcp_nb201[self.data_set][key][self.lw_zcps_selected]
+        # Use combination of grad_norm, snip, synflow:
+        combinations = [
+            'grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise'
+        ]
+        zcp_lw = self.lw_zcp_nb201[self.data_set][key][combinations[0]] + \
+                 self.lw_zcp_nb201[self.data_set][key][combinations[1]] + \
+                    self.lw_zcp_nb201[self.data_set][key][combinations[2]]
         zcp_lw = torch.tensor(zcp_lw, dtype=torch.float32)
 
         result = {
