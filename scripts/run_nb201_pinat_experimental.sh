@@ -19,8 +19,8 @@ Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=10240
 #Train_Split_List=(78 156 469 781 1563)
-Train_Split_List=(156 78)
-Eval_Split_List=(all all)
+Train_Split_List=(78)
+Eval_Split_List=(all)
 # Script=./piconas/runner/runner_pinat.py
 Script=./piconas/runner/runner_pinat_rank.py
 

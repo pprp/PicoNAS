@@ -43,7 +43,8 @@ class PINATModel2(nn.Module):
         # zcp embedder
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
-        mid_zcp_dim = 13
+        mid_zcp_dim = 38
+        # 13 zcs
         for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
             self.zcp_embedder.append(
                 nn.Sequential(
@@ -192,7 +193,15 @@ class PINATModel3(nn.Module):
         # zcp embedder
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
-        mid_zcp_dim = 13
+        # self.lw_zcps_selected = 'l2_norm_layerwise'
+        # if self.lw_zcps_selected == 'l2_norm_layerwise':
+        #     mid_zcp_dim = 98
+        # elif self.lw_zcps_selected == 'fisher_layerwise':
+        #     mid_zcp_dim = 98
+        # else:
+        #     mid_zcp_dim = 13 # default settings.
+        mid_zcp_dim = 98
+
         for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
             self.zcp_embedder.append(
                 nn.Sequential(
@@ -221,7 +230,7 @@ class PINATModel3(nn.Module):
 
     def forward(self, inputs):
         # zc embedder
-        zc_embed = self.zcp_embedder(inputs['zcp'])
+        zc_embed = self.zcp_embedder(inputs['zcp_lw'])
 
         # attention machenism
         # if self.gating is not None:
