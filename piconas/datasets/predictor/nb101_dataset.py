@@ -216,21 +216,25 @@ class Nb101DatasetPINAT(Dataset):
 
         # find the max length
         max_length = 0
-        for k0, v0 in self.zcp_nb101_layerwise['cifar10'].items():
-            for k1, v1 in v0.items():
-                assert type(v1) == list, 'v1 is not a list'
-                if len(v1) > max_length:
-                    max_length = len(v1)
+        for k0, sample_num in self.zcp_nb101_layerwise['cifar10'].items():
+            for k1, lw_zcps in sample_num.items():
+                for k2, v1 in lw_zcps.items():
+                    assert type(v1) == list, 'v1 is not a list'
+                    if len(v1) > max_length:
+                        max_length = len(v1)
 
         # pad the list
-        for k0, v0 in self.zcp_nb101_layerwise['cifar10'].items():
-            for k1, v1 in v0.items():
-                assert type(v1) == list, 'v1 is not a list'
-                if len(v1) < max_length:
-                    v0[k1] = v1 + [0] * (max_length - len(v1))
-
-                # filter nan in the list and replace it with zero
-                v0[k1] = [0 if np.isnan(x) else x for x in v0[k1]]
+        for k0, sample_num in self.zcp_nb101_layerwise['cifar10'].items():
+            for k1, lw_zcps in sample_num.items():
+                for k2, v1 in lw_zcps.items():
+                    if len(v1) < max_length:
+                        lw_zcps[k2] = v1 + [0] * (max_length - len(v1))
+        
+        # filter nan in the list and replace it with zero
+        for k0, sample_num in self.zcp_nb101_layerwise['cifar10'].items():
+            for k1, lw_zcps in sample_num.items():
+                for k2, v1 in lw_zcps.items():
+                    lw_zcps[k2] = [0 if np.isnan(x) else x for x in v1]
 
         print(f'Max length of ZCP list: {max_length}')
         print('Preprocess layerwise ZCP dict done')
