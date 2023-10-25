@@ -1,9 +1,7 @@
-# archai
 torch
 torchvision
 fvcore
 pytest
-# pytorch-msssim==0.2.1
 pandas
 tensorwatch
 scikit-learn
@@ -11,7 +9,6 @@ tqdm
 ConfigSpace
 einops
 timm
-# nasbench
 networkx
 xgboost
 nasbench301
