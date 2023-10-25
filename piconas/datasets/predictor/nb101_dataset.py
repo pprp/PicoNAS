@@ -95,7 +95,7 @@ class Nb101DatasetPINAT(Dataset):
             self.metrics = f['metrics'][()]
         self.random_state = np.random.RandomState(0)
 
-        self.split_num = None 
+        self.split_num = None
         if split is not None and split != 'all':
             self.split_num = split
             self.sample_range = np.load(
@@ -232,7 +232,7 @@ class Nb101DatasetPINAT(Dataset):
                 for k2, v1 in lw_zcps.items():
                     if len(v1) < max_length:
                         lw_zcps[k2] = v1 + [0] * (max_length - len(v1))
-        
+
         # filter nan in the list and replace it with zero
         for k0, sample_num in self.zcp_nb101_layerwise['cifar10'].items():
             for k1, lw_zcps in sample_num.items():
@@ -368,7 +368,8 @@ class Nb101DatasetPINAT(Dataset):
         zcp = torch.tensor(zcp, dtype=torch.float32)
 
         # laod layerwise zcp
-        zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][str(self.split_num)][str(index)][self.lw_zcps_selected]
+        zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][str(
+            self.split_num)][str(index)][self.lw_zcps_selected]
         zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
 
         # in getitem function, we only select the index corresponding data rather than the whole data

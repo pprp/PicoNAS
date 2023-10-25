@@ -39,12 +39,16 @@ target_json_path = os.path.join(BASE, 'zc_nasbench101_layerwise.json')
 #     #sample '100'
 #         index (not hash)
 #              'fisher_layerwise': [0.1, 0.2, 0.3, 0.4, 0.5, ...]
-to_be_merged_json_path = os.path.join(BASE, 'zc_nasbench101_layerwise_5000.json')
+to_be_merged_json_path = os.path.join(BASE,
+                                      'zc_nasbench101_layerwise_5000.json')
 to_be_merged_json = json.load(open(to_be_merged_json_path, 'r'))
 
-train_split_list = [100, 172] #, 424, 424, 4236]
+train_split_list = [100, 172]  #, 424, 424, 4236]
 
-sample_range = np.load('/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz')
+sample_range = np.load(
+    '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz'
+)
+
 
 def get_cifar10_dataloader(batch_size, data_dir, train=True):
     # Define data transformations
@@ -118,7 +122,7 @@ for split_num in train_split_list:
     # main iteration
     target_json['cifar10'][str(split_num)] = dict()
     for _idx in tqdm(index_list):
-        # convert _idx to _hash 
+        # convert _idx to _hash
         _hash = hash_iterator_list[_idx]
 
         target_json['cifar10'][str(split_num)][str(_idx)] = dict()
@@ -154,16 +158,36 @@ for split_num in train_split_list:
                 T=1),
             'l2_norm_layerwise':
             lambda: compute_l2_norm(
-                net, inputs, targets, loss_fn=loss_fn, split_data=1, mode='param'),
+                net,
+                inputs,
+                targets,
+                loss_fn=loss_fn,
+                split_data=1,
+                mode='param'),
             'plain_layerwise':
             lambda: compute_plain(
-                net, inputs, targets, loss_fn=loss_fn, split_data=1, mode='param'),
+                net,
+                inputs,
+                targets,
+                loss_fn=loss_fn,
+                split_data=1,
+                mode='param'),
             'snip_layerwise':
             lambda: compute_snip(
-                net, inputs, targets, loss_fn=loss_fn, split_data=1, mode='param'),
+                net,
+                inputs,
+                targets,
+                loss_fn=loss_fn,
+                split_data=1,
+                mode='param'),
             'synflow_layerwise':
             lambda: compute_synflow(
-                net, inputs, targets, loss_fn=loss_fn, split_data=1, mode='param')
+                net,
+                inputs,
+                targets,
+                loss_fn=loss_fn,
+                split_data=1,
+                mode='param')
         }
 
         for method in methods:
@@ -173,11 +197,12 @@ for split_num in train_split_list:
             s_list = methods[method]()
             tmp_list = convert_type(s_list)
             tmp_list = min_max_scaling(tmp_list)
-            target_json['cifar10'][str(split_num)][str(_idx)][method] = tmp_list.tolist()
-            del net # release memory
-        
+            target_json['cifar10'][str(split_num)][str(
+                _idx)][method] = tmp_list.tolist()
+            del net  # release memory
+
         print(target_json['cifar10'][str(split_num)].keys())
-    
+
     print(target_json['cifar10'][str(split_num)].keys())
 
 # save target_json

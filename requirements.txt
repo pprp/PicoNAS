@@ -1,4 +1,4 @@
-torch
+qqtorch
 torchvision
 fvcore
 pytest
