@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # ------------------------ train pgonas with train-valid
-CUDA_VISIBLE_DEVICES=0 python train_rdnas.py \
-     \
+CUDA_VISIBLE_DEVICES=1 python train_rdnas.py \
     --model_name OneShotNASBench201Network \
     --trainer_name PGONASTrainer \
     --crit ce --lr 0.025 \

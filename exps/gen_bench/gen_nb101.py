@@ -201,7 +201,7 @@ for split_num in train_split_list:
                 _idx)][method] = tmp_list.tolist()
             del net  # release memory
 
-        print(target_json['cifar10'][str(split_num)].keys())
+        # print(target_json['cifar10'][str(split_num)].keys())
 
     print(target_json['cifar10'][str(split_num)].keys())
 

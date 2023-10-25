@@ -1,5 +1,3 @@
-#!/bin/bash 
-
 if [ ! -d "./logdir" ]; then
   mkdir ./logdir
 fi
@@ -13,15 +11,17 @@ fi
 # arguments
 IDX=1
 Loss=mse
-Bench=101
+Bench=201
 Epochs=300
 Model=PINATModel4
 Dataset=cifar10
 Train_batch_size=10
-Eval_batch_size=512
-Train_Split_List=(100)
+Eval_batch_size=10240
+#Train_Split_List=(78 156 469 781 1563)
+Train_Split_List=(156)
 Eval_Split_List=(all)
-Script=./piconas/runner/runner_pinat_rank.py
+# Script=./piconas/runner/runner_pinat.py
+Script=./exps/eval_predictor.py 
 
 for((t=0; t<${#Train_Split_List[*]}; t++)); do
   # set gpu and data splits

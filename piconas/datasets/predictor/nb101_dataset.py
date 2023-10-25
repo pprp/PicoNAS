@@ -368,6 +368,8 @@ class Nb101DatasetPINAT(Dataset):
         zcp = torch.tensor(zcp, dtype=torch.float32)
 
         # laod layerwise zcp
+        print('Loading layerwise zcp')
+        print(self.zcp_nb101_layerwise['cifar10'][str(self.split_num)].keys())
         zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][str(
             self.split_num)][str(index)][self.lw_zcps_selected]
         zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
