@@ -1,6 +1,5 @@
-from piconas.predictor.pinat.pinat_run1 import PINATModel1
-from piconas.predictor.pinat.pinat_run2 import (PINATModel2, PINATModel3,
-                                                PINATModel4)
+from piconas.predictor.pinat.pinat_model import (PINATModel1, PINATModel2,
+                                                 PINATModel3, PINATModel4)
 
 _name2model = {
     'PINATModel1': PINATModel1,  # PINAT + ZCP
@@ -31,10 +30,10 @@ def create_model(args):
 
     return net
 
+
 def create_nb201_model():
     pos_enc_dim_dict = {'101': 7, '201': 4}
-    MODEL = _name2model['PINATModel4']
-    net = MODEL(
+    net = PINATModel4(
         bench='201',
         pos_enc_dim=pos_enc_dim_dict['201'],
         adj_type='adj_lapla',

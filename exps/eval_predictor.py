@@ -130,7 +130,8 @@ def main():
 
     # load model
     ckpt_dir = './checkpoints/nasbench_201/201_cifar10_PINATModel4_mse_t156_vall_e600_bs10_tau0.711652_ckpt.pt'
-    model.load_state_dict(torch.load(ckpt_dir, map_location=torch.device('cpu')))
+    model.load_state_dict(
+        torch.load(ckpt_dir, map_location=torch.device('cpu')))
 
     model = model.to(device)
     print(model)

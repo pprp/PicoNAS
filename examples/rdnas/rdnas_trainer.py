@@ -8,6 +8,8 @@ import torch.nn.functional as F
 
 import piconas.utils.utils as utils
 from piconas.core.losses import KLDivergence, PairwiseRankLoss
+from piconas.datasets.predictor.nb201_dataset import \
+    Nb201DatasetPINAT  # noqa: E501
 from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models.nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
@@ -120,6 +122,8 @@ class PGONASTrainer(BaseTrainer):
         p_model.load_state_dict(
             torch.load(ckpt_dir, map_location=torch.device('cpu')))
         self.predictor = p_model
+        self.predictor_datasets = Nb201DatasetPINAT(
+            split=78, data_type='test', data_set='cifar10')
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample, dataset)
@@ -235,7 +239,7 @@ class PGONASTrainer(BaseTrainer):
                     loss, outputs = self._forward_fairnas(batch_inputs)
                 elif self.type == 'sandwich':
                     loss, outputs = self._forward_sandwich(batch_inputs)
-            else:
+            else:  # adaptive, hamming, random
                 loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
             # clear grad
@@ -397,11 +401,15 @@ class PGONASTrainer(BaseTrainer):
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
-            if epoch % 50 == 0:
+            if (epoch + 1) % 50 == 0 or epoch % 50 == 0:
                 assert self.evaluator is not None
                 # BWR@K, P@tbk
                 kt, ps, sp, rd, minn_at_ks, patks, cpr = self.evaluator.compute_rank_consistency(
                     val_loader, self.mutator)
+
+                self.logger.info(
+                    f'Kendall tau: {kt} Pearson: {ps} Spearman: {sp} CPR: {cpr}'
+                )
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch)
                 self.writer.add_scalar(
@@ -542,6 +550,40 @@ class PGONASTrainer(BaseTrainer):
             subnet_flops += choice_flops
         return subnet_flops
 
+    def get_subnet_predictor(self, subnet_dict) -> float:
+        assert isinstance(self.evaluator,
+                          NB201Evaluator), f'evaluator is not NB201Evaluator'
+        _genotype = self.evaluator.generate_genotype(subnet_dict, self.mutator)
+        _idx = self.evaluator.query_index(_genotype)
+        samples = self.predictor_datasets[_idx]
+        # keys = num_vertices, lapla, edge_numm, edge_index_list, features, operations, zcp_layerwise
+        # convert samples with keys to batch_inputs
+        key_list = [
+            'num_vertices', 'lapla', 'edge_num', 'edge_index_list', 'features',
+            'operations', 'zcp_layerwise'
+        ]
+        # convert to batch-like
+        for _key in key_list:
+            if isinstance(samples[_key], (list, float, int)):
+                samples[_key] = torch.tensor(samples[_key])
+                samples[_key] = torch.unsqueeze(
+                    samples[_key], dim=0).to(self.device)
+            elif isinstance(samples[_key], np.ndarray):
+                samples[_key] = torch.from_numpy(samples[_key])
+                samples[_key] = torch.unsqueeze(samples[_key], dim=0)
+            elif isinstance(samples[_key], torch.Tensor):
+                samples[_key] = torch.unsqueeze(samples[_key], dim=0)
+            else:
+                raise NotImplementedError(
+                    f'key: {_key} is not list, is a {type(samples[_key])}')
+            samples[_key] = samples[_key].to(self.device)
+        self.predictor.eval()
+        self.predictor.to(self.device)
+        out = self.predictor.forward(samples)
+        import pdb
+        pdb.set_trace()
+        return out[0]  # to verify
+
     def get_subnet_predictive(self,
                               subnet_dict,
                               dataloader,
@@ -668,6 +710,8 @@ class PGONASTrainer(BaseTrainer):
         loss1.backward()
         flops1 = self.get_subnet_flops(subnet1)
         # nwot1 = self.get_subnet_nwot(subnet1)
+        # import pdb; pdb.set_trace()
+        predictor_score = self.get_subnet_predictor(subnet1)
 
         # sample the second subnet
         self.mutator.set_subnet(subnet2)

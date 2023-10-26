@@ -99,6 +99,10 @@ class NB201Evaluator(Evaluator):
         # TODO
         return xinfo['valid-accuracy']
 
+    def query_index(self, genotype: str):
+        """query the index by genotype."""
+        return self.api.query_index_by_arch(genotype)
+
     def compute_rank_consistency(self, dataloader,
                                  mutator: OneShotMutator) -> List:
         """compute rank consistency of different types of indicators."""

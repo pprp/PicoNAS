@@ -21,7 +21,7 @@ Eval_batch_size=10240
 Train_Split_List=(156)
 Eval_Split_List=(all)
 # Script=./piconas/runner/runner_pinat.py
-Script=./exps/eval_predictor.py 
+Script=./exps/eval_predictor.py
 
 for((t=0; t<${#Train_Split_List[*]}; t++)); do
   # set gpu and data splits
