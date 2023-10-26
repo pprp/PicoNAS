@@ -34,20 +34,13 @@ BASE = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'
 # key is (0, 1, 0, 0, ....  0, 0, 3, 4, 3, 4, 4, 1)
 # key is dict_keys(['id', 'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
 #      'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen', 'val_accuracy'])
-target_json_path = os.path.join(BASE, 'zc_nasbench101_layerwise.json')
+target_json_path = os.path.join(BASE, 'zc_nasbench101_layerwise_all.json')
 # 'cifar10'
-#     #sample '100'
 #         index (not hash)
 #              'fisher_layerwise': [0.1, 0.2, 0.3, 0.4, 0.5, ...]
 to_be_merged_json_path = os.path.join(BASE,
                                       'zc_nasbench101_layerwise_5000.json')
 to_be_merged_json = json.load(open(to_be_merged_json_path, 'r'))
-
-train_split_list = [100, 172, 424, 424, 4236]
-
-sample_range = np.load(
-    '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz'
-)
 
 
 def get_cifar10_dataloader(batch_size, data_dir, train=True):
@@ -72,7 +65,7 @@ def get_cifar10_dataloader(batch_size, data_dir, train=True):
 
 
 loader = get_cifar10_dataloader(
-    128, '/data2/dongpeijie/share/dataset/', train=True)
+    32, '/data2/dongpeijie/share/dataset/', train=True)
 
 # get one batch from loader
 inputs, targets = next(iter(loader))
@@ -116,94 +109,72 @@ def convert_type(s_list):
 
 hash_iterator_list = list(nb.hash_iterator())
 
-for split_num in train_split_list:
-    index_list = sample_range[str(split_num)].tolist()
-    # import pdb; pdb.set_trace()
-    # main iteration
-    target_json['cifar10'][str(split_num)] = dict()
-    for _idx in tqdm(index_list):
-        # convert _idx to _hash
-        _hash = hash_iterator_list[_idx]
+# index_list = sample_range.tolist()
+# import pdb; pdb.set_trace()
+# main iteration
+target_json['cifar10'] = dict()
+for _idx in tqdm(range(len(hash_iterator_list))):
+    # convert _idx to _hash
+    _hash = hash_iterator_list[_idx]
 
-        target_json['cifar10'][str(split_num)][str(_idx)] = dict()
-        # if _hash in to_be_merged_json['cifar10']:
-        #     target_json['cifar10'][str(split_num)] = to_be_merged_json['cifar10'][_hash]
-        #     continue
+    target_json['cifar10'][str(_idx)] = dict()
+    # if _hash in to_be_merged_json['cifar10']:
+    #     target_json['cifar10'] = to_be_merged_json['cifar10'][_hash]
+    #     continue
 
-        m = nb.get_metrics_from_hash(_hash)
-        ops = m[0]['module_operations']
-        adjacency = m[0]['module_adjacency']
+    m = nb.get_metrics_from_hash(_hash)
+    ops = m[0]['module_operations']
+    adjacency = m[0]['module_adjacency']
 
-        methods = {
-            'fisher_layerwise':
-            lambda: compute_fisher(
-                net,
-                inputs,
-                targets,
-                loss_fn=loss_fn,
-                split_data=1,
-                mode='channel'),
-            'grad_norm_layerwise':
-            lambda: compute_grad_norm(
-                net, inputs, targets, loss_fn=loss_fn, split_data=1),
-            'grasp_layerwise':
-            lambda: compute_grasp(
-                net,
-                inputs,
-                targets,
-                loss_fn=loss_fn,
-                split_data=1,
-                mode='param',
-                num_iters=1,
-                T=1),
-            'l2_norm_layerwise':
-            lambda: compute_l2_norm(
-                net,
-                inputs,
-                targets,
-                loss_fn=loss_fn,
-                split_data=1,
-                mode='param'),
-            'plain_layerwise':
-            lambda: compute_plain(
-                net,
-                inputs,
-                targets,
-                loss_fn=loss_fn,
-                split_data=1,
-                mode='param'),
-            'snip_layerwise':
-            lambda: compute_snip(
-                net,
-                inputs,
-                targets,
-                loss_fn=loss_fn,
-                split_data=1,
-                mode='param'),
-            'synflow_layerwise':
-            lambda: compute_synflow(
-                net,
-                inputs,
-                targets,
-                loss_fn=loss_fn,
-                split_data=1,
-                mode='param')
-        }
+    methods = {
+        'fisher_layerwise':
+        lambda: compute_fisher(
+            net,
+            inputs,
+            targets,
+            loss_fn=loss_fn,
+            split_data=1,
+            mode='channel'),
+        'grad_norm_layerwise':
+        lambda: compute_grad_norm(
+            net, inputs, targets, loss_fn=loss_fn, split_data=1),
+        'grasp_layerwise':
+        lambda: compute_grasp(
+            net,
+            inputs,
+            targets,
+            loss_fn=loss_fn,
+            split_data=1,
+            mode='param',
+            num_iters=1,
+            T=1),
+        'l2_norm_layerwise':
+        lambda: compute_l2_norm(
+            net, inputs, targets, loss_fn=loss_fn, split_data=1, mode='param'),
+        'plain_layerwise':
+        lambda: compute_plain(
+            net, inputs, targets, loss_fn=loss_fn, split_data=1, mode='param'),
+        'snip_layerwise':
+        lambda: compute_snip(
+            net, inputs, targets, loss_fn=loss_fn, split_data=1, mode='param'),
+        'synflow_layerwise':
+        lambda: compute_synflow(
+            net, inputs, targets, loss_fn=loss_fn, split_data=1, mode='param')
+    }
 
-        for method in methods:
-            net = NBNetwork((adjacency, ops))
-            if torch.cuda.is_available():
-                net = net.cuda()
-            s_list = methods[method]()
-            tmp_list = convert_type(s_list)
-            tmp_list = min_max_scaling(tmp_list)
-            target_json['cifar10'][str(split_num)][str(
-                _idx)][method] = tmp_list.tolist()
-            del net  # release memory
+    for method in methods:
+        net = NBNetwork((adjacency, ops))
+        if torch.cuda.is_available():
+            net = net.cuda()
+        s_list = methods[method]()
+        tmp_list = convert_type(s_list)
+        tmp_list = min_max_scaling(tmp_list)
+        target_json['cifar10'][str(_idx)][method] = tmp_list.tolist()
+        del net  # release memory
 
-        # print(target_json['cifar10'][str(split_num)].keys())
+    # print(target_json['cifar10'].keys())
 
-    # print(target_json['cifar10'][str(split_num)].keys())
+# print(target_json['cifar10'].keys())
 
 # save target_json
 with open(target_json_path, 'w') as f:

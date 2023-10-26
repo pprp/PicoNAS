@@ -112,7 +112,7 @@ class NB201Evaluator(Evaluator):
         self.trainer.logger.info('Begin to compute rank consistency...')
         num_sample = 50 if self.num_sample is None else self.num_sample
 
-        for _ in range(num_sample):
+        for _ in tqdm(range(num_sample)):
             # sample random subnet by mutator
             random_subnet_dict_ = mutator.random_subnet
 

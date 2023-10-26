@@ -95,9 +95,8 @@ class Nb101DatasetPINAT(Dataset):
             self.metrics = f['metrics'][()]
         self.random_state = np.random.RandomState(0)
 
-        self.split_num = None
-        if split is not None and split != 'all':
-            self.split_num = split
+        self.split_num = split
+        if self.split_num != 'all':
             self.sample_range = np.load(
                 '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz'
             )[str(split)]
@@ -368,9 +367,8 @@ class Nb101DatasetPINAT(Dataset):
         zcp = torch.tensor(zcp, dtype=torch.float32)
 
         # laod layerwise zcp
-        print('Loading layerwise zcp')
-        print(f'split_num: {self.split_num}')
-        print(self.zcp_nb101_layerwise['cifar10'][str(self.split_num)].keys())
+        # print(f'split_num: {self.split_num}')
+        # print(self.zcp_nb101_layerwise['cifar10'][str(self.split_num)].keys())
         zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][str(
             self.split_num)][str(index)][self.lw_zcps_selected]
         zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)

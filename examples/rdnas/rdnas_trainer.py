@@ -11,12 +11,12 @@ from piconas.core.losses import KLDivergence, PairwiseRankLoss
 from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models.nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
+from piconas.predictor.pinat.model_factory import create_nb201_model
 from piconas.predictor.pruners.predictive import find_measures
 from piconas.trainer.base import BaseTrainer
 from piconas.trainer.registry import register_trainer
 from piconas.utils.flops_counter import get_model_complexity_info
 from piconas.utils.utils import AvgrageMeter, accuracy
-from piconas.predictor.pinat.model_factory import create_nb201_model
 
 
 @register_trainer
@@ -71,7 +71,7 @@ class PGONASTrainer(BaseTrainer):
 
         # evaluate the rank consistency
         self.evaluator = self._build_evaluator(
-            num_sample=50, dataset=self.dataset)
+            num_sample=20, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -114,11 +114,12 @@ class PGONASTrainer(BaseTrainer):
 
         self.kl_loss = KLDivergence(loss_weight=1)
 
-        # load model for predictor 
+        # load model for predictor
         p_model = create_nb201_model()
-        ckpt_dir = './checkpoints/nasbench_201/201_cifar10_PINATModel4_mse_t156_vall_e600_bs10_tau0.711652_ckpt.pt'
-        p_model.load_state_dict(torch.load(ckpt_dir, map_location=torch.device('cpu')))
-        self.predictor = p_model 
+        ckpt_dir = '/home/dongpeijie/workspace/PicoNAS/checkpoints/nasbench_201/201_cifar10_PINATModel4_mse_t156_vall_e600_bs10_tau0.711652_ckpt.pt'
+        p_model.load_state_dict(
+            torch.load(ckpt_dir, map_location=torch.device('cpu')))
+        self.predictor = p_model
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample, dataset)
