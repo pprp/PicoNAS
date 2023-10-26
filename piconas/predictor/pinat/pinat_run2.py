@@ -272,7 +272,10 @@ class PINATModel4(nn.Module):
         # zcp embedder
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
-        mid_zcp_dim = 98 * 3 # for nb201
+        if bench == '101':
+            mid_zcp_dim = 83
+        elif bench == '201':
+            mid_zcp_dim = 98 * 3 # for nb201
 
         for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
             self.zcp_embedder.append(

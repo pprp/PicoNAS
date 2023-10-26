@@ -369,6 +369,7 @@ class Nb101DatasetPINAT(Dataset):
 
         # laod layerwise zcp
         print('Loading layerwise zcp')
+        print(f'split_num: {self.split_num}')
         print(self.zcp_nb101_layerwise['cifar10'][str(self.split_num)].keys())
         zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][str(
             self.split_num)][str(index)][self.lw_zcps_selected]

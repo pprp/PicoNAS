@@ -43,7 +43,7 @@ to_be_merged_json_path = os.path.join(BASE,
                                       'zc_nasbench101_layerwise_5000.json')
 to_be_merged_json = json.load(open(to_be_merged_json_path, 'r'))
 
-train_split_list = [100, 172]  #, 424, 424, 4236]
+train_split_list = [100, 172, 424, 424, 4236]
 
 sample_range = np.load(
     '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz'
