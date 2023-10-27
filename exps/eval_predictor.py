@@ -11,7 +11,7 @@ from scipy.stats import kendalltau
 
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
-from piconas.predictor.pinat.model_factory import create_model
+from piconas.predictor.pinat.model_factory import create_model, create_nb201_model
 from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, run_func,
                                  set_seed, to_cuda)
 
@@ -126,7 +126,8 @@ def main():
 
     # create dataloader and model
     train_loader, test_loader, train_set, test_set = create_dataloader(args)
-    model = create_model(args)
+    # model = create_model(args)
+    model = create_nb201_model()
 
     # load model
     ckpt_dir = './checkpoints/nasbench_201/201_cifar10_PINATModel4_mse_t156_vall_e600_bs10_tau0.711652_ckpt.pt'

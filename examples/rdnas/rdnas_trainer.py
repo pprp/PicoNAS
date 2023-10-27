@@ -559,10 +559,12 @@ class PGONASTrainer(BaseTrainer):
         # keys = num_vertices, lapla, edge_numm, edge_index_list, features, operations, zcp_layerwise
         # convert samples with keys to batch_inputs
         key_list = [
-            'num_vertices', 'lapla', 'edge_num', 'edge_index_list', 'features',
-            'operations', 'zcp_layerwise'
+            'num_vertices', 'lapla', 'edge_num', 'features',
+            'zcp_layerwise'
         ]
         # convert to batch-like
+        samples['edge_index_list'] = [samples['edge_index_list'].to(self.device)]
+        samples['operations'] = torch.tensor(samples['operations']).unsqueeze(dim=0).unsqueeze(0).to(self.device)
         for _key in key_list:
             if isinstance(samples[_key], (list, float, int)):
                 samples[_key] = torch.tensor(samples[_key])
@@ -570,9 +572,9 @@ class PGONASTrainer(BaseTrainer):
                     samples[_key], dim=0).to(self.device)
             elif isinstance(samples[_key], np.ndarray):
                 samples[_key] = torch.from_numpy(samples[_key])
-                samples[_key] = torch.unsqueeze(samples[_key], dim=0)
+                samples[_key] = torch.unsqueeze(samples[_key], dim=0).to(self.device)
             elif isinstance(samples[_key], torch.Tensor):
-                samples[_key] = torch.unsqueeze(samples[_key], dim=0)
+                samples[_key] = torch.unsqueeze(samples[_key], dim=0).to(self.device)
             else:
                 raise NotImplementedError(
                     f'key: {_key} is not list, is a {type(samples[_key])}')
@@ -580,9 +582,7 @@ class PGONASTrainer(BaseTrainer):
         self.predictor.eval()
         self.predictor.to(self.device)
         out = self.predictor.forward(samples)
-        import pdb
-        pdb.set_trace()
-        return out[0]  # to verify
+        return out.item()  # to verify
 
     def get_subnet_predictive(self,
                               subnet_dict,
@@ -708,18 +708,19 @@ class PGONASTrainer(BaseTrainer):
         outputs = self.model(inputs)
         loss1 = self._compute_loss(outputs, labels)
         loss1.backward()
-        flops1 = self.get_subnet_flops(subnet1)
+        # flops1 = self.get_subnet_flops(subnet1)
         # nwot1 = self.get_subnet_nwot(subnet1)
         # import pdb; pdb.set_trace()
-        predictor_score = self.get_subnet_predictor(subnet1)
+        predictor_score1 = self.get_subnet_predictor(subnet1)
 
         # sample the second subnet
         self.mutator.set_subnet(subnet2)
         outputs = self.model(inputs)
         loss2 = self._compute_loss(outputs, labels)
         loss2.backward(retain_graph=True)
-        flops2 = self.get_subnet_flops(subnet2)
+        # flops2 = self.get_subnet_flops(subnet2)
         # nwot2 = self.get_subnet_nwot(subnet2)
+        predictor_score2 = self.get_subnet_predictor(subnet2)
 
         # pairwise rank loss
         # lambda settings:
@@ -728,7 +729,7 @@ class PGONASTrainer(BaseTrainer):
 
         loss3 = (2 *
                  np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
+                 self.pairwise_rankloss(predictor_score1, predictor_score2, loss1, loss2))
         loss3.backward()
 
         return loss2, outputs

@@ -1,4 +1,4 @@
-qqtorch
+torch
 torchvision
 fvcore
 pytest
@@ -19,7 +19,7 @@ urllib3==1.26.18
 tornado
 tensorboard==1.15
 protobuf==3.20.2
-seaboarn
+seaborn
 torch_geometric
 pathvalidate
 torch_scatter

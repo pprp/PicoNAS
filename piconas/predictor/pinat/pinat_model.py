@@ -252,7 +252,8 @@ class Encoder(nn.Module):
         ])
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
 
-    def to_pyg_batch(self, xs, edge_index_list, num_nodes):
+    def to_pyg_batch(self, xs, edge_index_list, num_nodes): 
+        # import pdb; pdb.set_trace()
         assert xs.shape[0] == len(edge_index_list), f'{xs.shape[0]}, {len(edge_index_list)}'
         assert xs.shape[0] == len(num_nodes), f'{xs.shape[0]}, {len(num_nodes)}'
         data_list = []
@@ -288,6 +289,7 @@ class Encoder(nn.Module):
         # PITE
         x = operations  # bs, 7, 5
         bs = operations.shape[0]  # bs=10 for test
+        # import pdb; pdb.set_trace()
         pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
         # pyg_batch.x.shape=[70,5]
         # pyg_batch.edge_index.shape=[2, 84]
@@ -642,7 +644,7 @@ class PINATModel4(nn.Module):
                  pine_hidden=256,
                  bench='101',
                  dropout=0.1,
-                 zcp_embedder_dims=[256, 512, 1024, 2048]):
+                 zcp_embedder_dims=[128, 128]):
         super(PINATModel4, self).__init__()
 
         # backone
