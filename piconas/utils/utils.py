@@ -571,12 +571,12 @@ def time_record(start):
 #         return True
 
 
-def run_func(args, main):
-    import time
+# def run_func(args, main):
+    # import time
     # if torch.cuda.is_available():
     #     while gpu_monitor(args.gpu_id, sec=60, used=5000):
     #         pass
-    start_time = time.time()
-    result = main()
-    time_record(start_time)
+    # start_time = time.time()
+    # result = main()
+    # time_record(start_time)
     # email_sender(result=result, config=args)

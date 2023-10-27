@@ -714,7 +714,6 @@ class PGONASTrainer(BaseTrainer):
         loss1.backward()
         # flops1 = self.get_subnet_flops(subnet1)
         # nwot1 = self.get_subnet_nwot(subnet1)
-        # import pdb; pdb.set_trace()
         predictor_score1 = self.get_subnet_predictor(subnet1)
 
         # sample the second subnet

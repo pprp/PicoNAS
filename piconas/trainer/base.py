@@ -7,7 +7,7 @@ from typing import List, Tuple
 import torch
 import torch.nn as nn
 from torch import Tensor
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 import piconas.utils.utils as utils
 from piconas.utils.flops_counter import get_model_complexity_info
@@ -68,8 +68,8 @@ class BaseTrainer(nn.Module):
         self.logger = get_logger(
             self.log_name, log_file=os.path.join(log_path, log_file_name))
 
-        writer_path = os.path.join('./logdirs', self.log_name)
-        self.writer = SummaryWriter(writer_path)
+        # writer_path = os.path.join('./logdirs', self.log_name)
+        # self.writer = SummaryWriter(writer_path)
 
         # evaluator is to eval the rank consistency
         self.evaluator = None
@@ -123,14 +123,14 @@ class BaseTrainer(nn.Module):
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
-            self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
-            self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+            # self.writer.add_scalar(
+            #     'EPOCH_LOSS/train_epoch_loss',
+            #     tr_loss,
+            #     global_step=self.current_epoch)
+            # self.writer.add_scalar(
+            #     'EPOCH_LOSS/valid_epoch_loss',
+            #     val_loss,
+            #     global_step=self.current_epoch)
 
             self.scheduler.step()
 
@@ -223,21 +223,21 @@ class BaseTrainer(nn.Module):
                 self.logger.info(
                     f'Step: {step} \t Train loss: {loss.item()} Top1 acc: {top1_tacc.avg} Top5 acc: {top5_tacc.avg}'
                 )
-                self.writer.add_scalar(
-                    'STEP_LOSS/train_step_loss',
-                    loss.item(),
-                    global_step=step + self.current_epoch * len(loader),
-                )
-                self.writer.add_scalar(
-                    'TRAIN_ACC/top1_train_acc',
-                    top1_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader),
-                )
-                self.writer.add_scalar(
-                    'TRAIN_ACC/top5_train_acc',
-                    top5_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader),
-                )
+                # self.writer.add_scalar(
+                #     'STEP_LOSS/train_step_loss',
+                #     loss.item(),
+                #     global_step=step + self.current_epoch * len(loader),
+                # )
+                # self.writer.add_scalar(
+                #     'TRAIN_ACC/top1_train_acc',
+                #     top1_tacc.avg,
+                #     global_step=step + self.current_epoch * len(loader),
+                # )
+                # self.writer.add_scalar(
+                #     'TRAIN_ACC/top5_train_acc',
+                #     top5_tacc.avg,
+                #     global_step=step + self.current_epoch * len(loader),
+                # )
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
@@ -266,22 +266,22 @@ class BaseTrainer(nn.Module):
                 val_loss += loss.item()
 
                 # print every 20 iter
-                if step % self.print_freq == 0:
-                    self.writer.add_scalar(
-                        'STEP_LOSS/valid_step_loss',
-                        loss.item(),
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-                    self.writer.add_scalar(
-                        'VAL_ACC/top1_val_acc',
-                        top1_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-                    self.writer.add_scalar(
-                        'VAL_ACC/top5_val_acc',
-                        top5_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
-                    )
+                # if step % self.print_freq == 0:
+                #     self.writer.add_scalar(
+                #         'STEP_LOSS/valid_step_loss',
+                #         loss.item(),
+                #         global_step=step + self.current_epoch * len(loader),
+                #     )
+                #     self.writer.add_scalar(
+                #         'VAL_ACC/top1_val_acc',
+                #         top1_vacc.avg,
+                #         global_step=step + self.current_epoch * len(loader),
+                #     )
+                #     self.writer.add_scalar(
+                #         'VAL_ACC/top5_val_acc',
+                #         top5_vacc.avg,
+                #         global_step=step + self.current_epoch * len(loader),
+                #     )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}'
             )

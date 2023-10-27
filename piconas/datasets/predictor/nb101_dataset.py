@@ -95,13 +95,7 @@ class Nb101DatasetPINAT(Dataset):
             self.metrics = f['metrics'][()]
         self.random_state = np.random.RandomState(0)
 
-        self.split_num = split
-        if self.split_num != 'all':
-            self.sample_range = np.load(
-                '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz'
-            )[str(split)]
-        else:
-            self.sample_range = list(range(len(self.hash2id)))
+
         self.debug = debug
         self.seed = 0
         self.candidate_ops = candidate_ops
@@ -111,6 +105,7 @@ class Nb101DatasetPINAT(Dataset):
         self.lapla_nor = np.load(
             '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/lapla_nor_matrix.npy'
         )
+        self.data_type = data_type
 
         with open(BASE_PATH + 'zc_nasbench101.json', 'r') as f:
             self.zc_score = json.load(f)['cifar10']
@@ -121,7 +116,21 @@ class Nb101DatasetPINAT(Dataset):
         with open(BASE_PATH + 'zc_nasbench101_layerwise.json', 'r') as f:
             self.zcp_nb101_layerwise = json.load(f)
 
-        self.data_type = data_type
+        with open(BASE_PATH + 'zc_nasbench101_layerwise_5000.json', 'r') as f: 
+            self.zcp_nb101_layerwise_test = json.load(f)
+
+        self.split_num = split
+        if self.split_num != 'all' and self.data_type == 'train':
+            self.sample_range = np.load(
+                '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz'
+            )[str(split)]
+        elif self.data_type == 'test':
+            # test 
+            if self.split_num == 'all':
+                self.sample_range = list(range(len(self.zcp_nb101_layerwise_test['cifar10'].keys())))
+            elif self.split_num == '100':
+                self.sample_range = list(range(100))
+
 
         # all
         self.val_mean_mean, self.val_mean_std = 0.908192, 0.023961  # all val mean/std (from SemiNAS)
@@ -148,7 +157,8 @@ class Nb101DatasetPINAT(Dataset):
         }
 
         self.normalize_and_process_zcp(normalize_zcp=True, log_synflow=True)
-        self.preprocess_zcp()
+        _max_length = self.preprocess_zcp()
+        self.preprocess_zcp_test(_max_length)
 
     def __len__(self):
         return len(self.sample_range)
@@ -237,6 +247,25 @@ class Nb101DatasetPINAT(Dataset):
             for k1, lw_zcps in sample_num.items():
                 for k2, v1 in lw_zcps.items():
                     lw_zcps[k2] = [0 if np.isnan(x) else x for x in v1]
+
+        print(f'Max length of ZCP list: {max_length}')
+        print('Preprocess layerwise ZCP dict done')
+        return max_length
+
+    def preprocess_zcp_test(self, max_length=5000):
+        print('Preprocessing ZCP dict')
+        # pad the list
+        for k0, sample_num in self.zcp_nb101_layerwise_test['cifar10'].items():
+            for k1, v1 in sample_num.items():
+                if len(v1) < max_length:
+                    sample_num[k1] = v1 + [0] * (max_length - len(v1))
+                else:
+                    sample_num[k1] = v1[:max_length]
+
+        # filter nan in the list and replace it with zero
+        for k0, sample_num in self.zcp_nb101_layerwise_test['cifar10'].items():
+            for k1, v1 in sample_num.items():
+                sample_num[k1] = [0 if np.isnan(x) else x for x in v1]
 
         print(f'Max length of ZCP list: {max_length}')
         print('Preprocess layerwise ZCP dict done')
@@ -367,11 +396,13 @@ class Nb101DatasetPINAT(Dataset):
         zcp = torch.tensor(zcp, dtype=torch.float32)
 
         # laod layerwise zcp
-        # print(f'split_num: {self.split_num}')
-        # print(self.zcp_nb101_layerwise['cifar10'][str(self.split_num)].keys())
-        zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][str(
-            self.split_num)][str(index)][self.lw_zcps_selected]
-        zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
+        if self.split_num == 'all' or (self.data_type == 'test' and self.split_num == '100'):
+            zcp_layerwise = self.zcp_nb101_layerwise_test['cifar10'][hash][str(self.lw_zcps_selected)]
+            zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
+        else:    
+            zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][str(
+                self.split_num)][str(index)][self.lw_zcps_selected]
+            zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
 
         # in getitem function, we only select the index corresponding data rather than the whole data
         result = {

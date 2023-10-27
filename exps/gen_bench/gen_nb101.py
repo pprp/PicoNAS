@@ -118,7 +118,6 @@ hash_iterator_list = list(nb.hash_iterator())
 
 for split_num in train_split_list:
     index_list = sample_range[str(split_num)].tolist()
-    # import pdb; pdb.set_trace()
     # main iteration
     target_json['cifar10'][str(split_num)] = dict()
     for _idx in tqdm(index_list):

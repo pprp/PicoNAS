@@ -103,14 +103,12 @@ def convert_type(s_list):
             tmp_list.append(s)
         else:
             print(f'type is: {type(s)}')
-            pdb.set_trace()
     return tmp_list
 
 
 hash_iterator_list = list(nb.hash_iterator())
 
 # index_list = sample_range.tolist()
-# import pdb; pdb.set_trace()
 # main iteration
 target_json['cifar10'] = dict()
 for _idx in tqdm(range(len(hash_iterator_list))):

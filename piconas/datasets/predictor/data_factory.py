@@ -31,6 +31,6 @@ def create_dataloader(args):
         test_set,
         batch_size=args.eval_batch_size,
         shuffle=False,
-        num_workers=2 if args.eval_split == '100' else 16,
+        num_workers=0 if args.eval_split == '100' else 16,
         drop_last=True)
     return train_loader, test_loader, train_set, test_set

@@ -29,7 +29,7 @@ parser.add_argument('--epochs', default=300, type=int)
 parser.add_argument('--lr', default=1e-4, type=float)
 parser.add_argument('--wd', default=1e-3, type=float)
 parser.add_argument('--train_batch_size', default=10, type=int)
-parser.add_argument('--eval_batch_size', default=10240, type=int)
+parser.add_argument('--eval_batch_size', default=50, type=int)
 parser.add_argument('--train_print_freq', default=1e5, type=int)
 parser.add_argument('--eval_print_freq', default=10, type=int)
 parser.add_argument('--model_name', type=str, default='PINATModel1')
@@ -159,6 +159,7 @@ def evaluate(test_set, test_loader, model, criterion):
                     test_loader):
                 logging.info('Evaluation Step [%d/%d]  %s', step + 1,
                              len(test_loader), meters)
+
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
     kendall_tau = kendalltau(predicts, targets)[0]
@@ -207,4 +208,5 @@ def main():
 
 
 if __name__ == '__main__':
-    run_func(args, main)
+    # run_func(args, main)
+    main()

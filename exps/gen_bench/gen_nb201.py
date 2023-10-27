@@ -173,7 +173,6 @@ for data_cand in dataset_candidates:
             16, '/data2/dongpeijie/share/dataset/ImageNet16', train=True)
         NUM_CLASSES = 120
     inputs, targets = next(iter(loader))
-    # import pdb; pdb.set_trace()
 
     # main iteration
     for _index in tqdm(range(15625)):
