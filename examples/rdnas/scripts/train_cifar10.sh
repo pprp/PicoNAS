@@ -8,7 +8,7 @@ CUDA_VISIBLE_DEVICES=1 python train_rdnas.py \
     --data_dir /data2/dongpeijie/share/dataset --dataset cifar10 \
     --type adaptive  \
     --seed 6 \
-    --log_name spos_train_valid_c10_before_predictor_seed6_run0
+    --log_name spos_train_valid_c10_after_predictor_seed6_run0_50samples > ./work_dir/spos_train_valid_c10_after_predictor_seed6_run0_50samples.log 2>&1 &
 
 # ------------------------ train pgonas with train-valid
 # CUDA_VISIBLE_DEVICES=1 python train_rdnas.py \

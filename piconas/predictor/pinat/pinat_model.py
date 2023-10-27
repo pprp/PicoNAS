@@ -728,3 +728,113 @@ class PINATModel4(nn.Module):
         out = self.dropout(out)
         out = self.fc2(out).view(-1)
         return out
+
+
+
+class PINATModel5(nn.Module):
+    """
+        PINATModel5 + zcp embedding (naive embedder)
+        PINATModel4 is a small size model with [128,128]
+        Here We use large Model 
+    """
+
+    def __init__(self,
+                 adj_type,
+                 n_src_vocab,
+                 d_word_vec,
+                 n_layers,
+                 n_head,
+                 d_k,
+                 d_v,
+                 d_model,
+                 d_inner,
+                 pad_idx=None,
+                 pos_enc_dim=7,
+                 linear_hidden=80,
+                 pine_hidden=256,
+                 bench='101',
+                 dropout=0.1,
+                 zcp_embedder_dims=[256, 512, 1024, 2048]):
+        super(PINATModel5, self).__init__()
+
+        # backone
+        self.bench = bench
+        self.adj_type = adj_type
+        self.encoder = Encoder(
+            n_src_vocab,
+            d_word_vec,
+            n_layers,
+            n_head,
+            d_k,
+            d_v,
+            d_model,
+            d_inner,
+            pad_idx,
+            pos_enc_dim=pos_enc_dim,
+            dropout=0.1,
+            pine_hidden=pine_hidden,
+            bench=bench)
+
+        # regressor
+        self.dropout = nn.Dropout(0.1)
+        self.fc1 = nn.Linear(d_word_vec, linear_hidden, bias=False)
+        self.fc2 = nn.Linear(linear_hidden, 1, bias=False)
+
+        # zcp embedder
+        self.zcp_embedder_dims = zcp_embedder_dims
+        self.zcp_embedder = []
+        if bench == '101':
+            mid_zcp_dim = 83
+        elif bench == '201':
+            mid_zcp_dim = 98 * 3 # for nb201
+
+        for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
+            self.zcp_embedder.append(
+                nn.Sequential(
+                    nn.Linear(mid_zcp_dim, zcp_emb_dim),
+                    nn.ReLU(inplace=False),
+                    nn.Dropout(p=dropout),
+                ))
+            mid_zcp_dim = zcp_emb_dim
+        self.zcp_embedder.append(nn.Linear(mid_zcp_dim, d_word_vec))
+        self.zcp_embedder = nn.Sequential(*self.zcp_embedder)
+
+        self.gate_block = MixerGateBlock(
+            d_word_vec,
+            mlp_ratio=(0.5, 4.0),
+            mlp_layer=Mlp,
+            norm_layer=partial(nn.LayerNorm, eps=1e-6),
+            act_layer=nn.GELU,
+            drop=0.1)
+
+    def forward(self, inputs):
+        # get arch topology
+        numv = inputs['num_vertices']
+        assert self.adj_type == 'adj_lapla', f'only support adj_lapla but got {self.adj_type}'
+        adj_matrix = inputs['lapla'].float()  # bs, 7, 7
+        edge_index_list = []
+        for edge_num, edge_index in zip(
+                inputs['edge_num'],  # bs
+                inputs['edge_index_list']):  # bs, 2, 9
+            edge_index_list.append(edge_index[:, :edge_num])
+
+        # backone feature
+        out = self.encoder(
+            src_seq=inputs['features'],  # bs, 7
+            pos_seq=adj_matrix.float(),  # bs, 7, 7
+            operations=inputs['operations'].squeeze(0),  # bs, 7, 5
+            num_nodes=numv,
+            edge_index_list=edge_index_list)
+
+        # regressor forward
+        out = graph_pooling(out, numv)
+
+        # zc embedder
+        zc_embed = self.zcp_embedder(inputs['zcp_layerwise'])
+        zc_embed = self.gate_block(zc_embed)
+        out += zc_embed
+
+        out = self.fc1(out)
+        out = self.dropout(out)
+        out = self.fc2(out).view(-1)
+        return out

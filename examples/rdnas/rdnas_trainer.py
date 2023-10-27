@@ -73,7 +73,7 @@ class PGONASTrainer(BaseTrainer):
 
         # evaluate the rank consistency
         self.evaluator = self._build_evaluator(
-            num_sample=20, dataset=self.dataset)
+            num_sample=50, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -401,7 +401,7 @@ class PGONASTrainer(BaseTrainer):
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
-            if (epoch + 1) % 50 == 0 or epoch % 50 == 0:
+            if (epoch + 1) % 25 == 0:
                 assert self.evaluator is not None
                 # BWR@K, P@tbk
                 kt, ps, sp, rd, minn_at_ks, patks, cpr = self.evaluator.compute_rank_consistency(
