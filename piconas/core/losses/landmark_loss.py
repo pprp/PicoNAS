@@ -99,6 +99,32 @@ class PairwiseRankLoss(nn.Module):
                 F.relu(loss1.detach() - loss2))
 
 
+class BatchPairwiseRankLoss(nn.Module):
+    def forward(self, prior, loss, coeff=1.0):
+        """
+        Args:
+            prior (torch.Tensor): a tensor of size [batch_size, 2]
+                                  where each row has the prior values of two architectures.
+            loss (torch.Tensor): a tensor of size [batch_size, 2]
+                                 where each row has the loss values of two architectures.
+            coeff (float): coefficient value
+        Returns:
+            batch_rank_loss (torch.Tensor): a tensor of size [batch_size]
+                                           where each entry is the pairwise rank loss for the respective pair.
+        """
+
+        # Split the priors and losses
+        prior1, prior2 = prior[:, 0], prior[:, 1]
+        loss1, loss2 = loss[:, 0], loss[:, 1]
+        
+        # Compute the rank loss for each pair in the batch
+        rank_loss = torch.where(prior1 < prior2, 
+                                coeff * F.relu(loss2 - loss1.detach()), 
+                                coeff * F.relu(loss1.detach() - loss2))
+        
+        return rank_loss
+
+
 _loss_fn = {
     'mae_relu':
     lambda l1, l2: F.relu(l1 - l2),
