@@ -549,34 +549,33 @@ def time_record(start):
     logging.info('Elapsed Time: %dh %dmin %ds' % (hour, minute, second))
 
 
-def gpu_monitor(gpu, sec, used=100):
-    import logging
-    import time
+# def gpu_monitor(gpu, sec, used=100):
+#     import logging
+#     import time
+#     import pynvml
 
-    import pynvml
-
-    wait_min = sec // 60
-    divisor = 1024 * 1024
-    pynvml.nvmlInit()
-    handle = pynvml.nvmlDeviceGetHandleByIndex(gpu)
-    meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
-    if meminfo.used / divisor < used:
-        logging.info('GPU-{} is free, start runing!'.format(gpu))
-        return False
-    else:
-        logging.info(
-            'GPU-{}, Memory: total={}MB used={}MB free={}MB, waiting {}min...'.
-            format(gpu, meminfo.total / divisor, meminfo.used / divisor,
-                   meminfo.free / divisor, wait_min))
-        time.sleep(sec)
-        return True
+#     wait_min = sec // 60
+#     divisor = 1024 * 1024
+#     pynvml.nvmlInit()
+#     handle = pynvml.nvmlDeviceGetHandleByIndex(gpu)
+#     meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
+#     if meminfo.used / divisor < used:
+#         logging.info('GPU-{} is free, start runing!'.format(gpu))
+#         return False
+#     else:
+#         logging.info(
+#             'GPU-{}, Memory: total={}MB used={}MB free={}MB, waiting {}min...'.
+#             format(gpu, meminfo.total / divisor, meminfo.used / divisor,
+#                    meminfo.free / divisor, wait_min))
+#         time.sleep(sec)
+#         return True
 
 
 def run_func(args, main):
     import time
-    if torch.cuda.is_available():
-        while gpu_monitor(args.gpu_id, sec=60, used=5000):
-            pass
+    # if torch.cuda.is_available():
+    #     while gpu_monitor(args.gpu_id, sec=60, used=5000):
+    #         pass
     start_time = time.time()
     result = main()
     time_record(start_time)

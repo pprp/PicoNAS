@@ -11,7 +11,7 @@ if [ ! -d "./results" ]; then
 fi
 
 # arguments
-IDX=0
+IDX=4
 Loss=mse
 Bench=101
 Epochs=300

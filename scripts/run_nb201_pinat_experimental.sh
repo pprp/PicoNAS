@@ -9,7 +9,7 @@ if [ ! -d "./results" ]; then
 fi
 
 # arguments
-IDX=4
+IDX=5
 Loss=mse
 Bench=201
 Epochs=300
@@ -17,10 +17,13 @@ Model=PINATModel5
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=10240
-Train_Split_List=(1563 781 469 156 78)
-Eval_Split_List=(all all all all all)
+# Train_Split_List=(1563 781 469 156 78)
+# Eval_Split_List=(all all all all all)
+Train_Split_List=(78)
+Eval_Split_List=(all)
 # Script=./piconas/runner/runner_pinat.py
 Script=./piconas/runner/runner_pinat_rank.py
+CUDA_VISIBLE_DEVICES=4
 
 for((t=0; t<${#Train_Split_List[*]}; t++)); do
   # set gpu and data splits
