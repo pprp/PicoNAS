@@ -9,7 +9,7 @@ if [ ! -d "./results" ]; then
 fi
 
 # arguments
-IDX=6
+IDX=4
 Loss=mse
 Bench=201
 Epochs=300
@@ -17,9 +17,8 @@ Model=PINATModel5
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=10240
-#Train_Split_List=(78 156 469 781 1563)
-Train_Split_List=(156)
-Eval_Split_List=(all)
+Train_Split_List=(1563 781 469 156 78)
+Eval_Split_List=(all all all all all)
 # Script=./piconas/runner/runner_pinat.py
 Script=./piconas/runner/runner_pinat_rank.py
 
@@ -29,7 +28,7 @@ for((t=0; t<${#Train_Split_List[*]}; t++)); do
   let IDX+=1
   Train_Split=${Train_Split_List[t]}
   Eval_Split=${Eval_Split_List[t]}
-  EXP_Name=${Bench}_${Dataset}_${Model}_${Loss}_t${Train_Split}_v${Eval_Split}_e${Epochs}_bs${Train_batch_size}
+  EXP_Name=${Bench}_${Dataset}_${Model}_${Loss}_t${Train_Split}_v${Eval_Split}_e${Epochs}_bs${Train_batch_size}_final
 
   # run
   nohup python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \

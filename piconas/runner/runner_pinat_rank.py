@@ -46,7 +46,7 @@ logging.info(args)
 
 # set cpu/gpu device
 if torch.cuda.is_available():
-    # torch.cuda.set_device(args.gpu_id)
+    torch.cuda.set_device(args.gpu_id)
     device = torch.device('cuda')
 else:
     device = torch.device('cpu')

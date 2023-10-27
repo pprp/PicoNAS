@@ -10,7 +10,7 @@ fi
 
 CUDA_VISIBLE_DEVICES=0
 # arguments
-IDX=0
+IDX=4
 Loss=mse
 Bench=101
 Epochs=300
