@@ -1,11 +1,13 @@
 # Run1: pinat + zcp
+import collections.abc
+from functools import partial
+from itertools import repeat
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric.data
-import collections.abc
-from functools import partial
-from itertools import repeat
+
 from piconas.predictor.pinat.gatset_conv import GATSetConv_v5 as GATConv
 
 
@@ -252,10 +254,12 @@ class Encoder(nn.Module):
         ])
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
 
-    def to_pyg_batch(self, xs, edge_index_list, num_nodes): 
+    def to_pyg_batch(self, xs, edge_index_list, num_nodes):
         # import pdb; pdb.set_trace()
-        assert xs.shape[0] == len(edge_index_list), f'{xs.shape[0]}, {len(edge_index_list)}'
-        assert xs.shape[0] == len(num_nodes), f'{xs.shape[0]}, {len(num_nodes)}'
+        assert xs.shape[0] == len(
+            edge_index_list), f'{xs.shape[0]}, {len(edge_index_list)}'
+        assert xs.shape[0] == len(
+            num_nodes), f'{xs.shape[0]}, {len(num_nodes)}'
         data_list = []
         for x, e, n in zip(xs, edge_index_list, num_nodes):
             data_list.append(torch_geometric.data.Data(x=x[:n], edge_index=e))
@@ -404,7 +408,6 @@ class PINATModel1(nn.Module):
         out = self.dropout(out)
         out = self.fc2(out).view(-1)
         return out
-
 
 
 from .pinat_model import Encoder, graph_pooling
@@ -676,7 +679,7 @@ class PINATModel4(nn.Module):
         if bench == '101':
             mid_zcp_dim = 83
         elif bench == '201':
-            mid_zcp_dim = 98 * 3 # for nb201
+            mid_zcp_dim = 98 * 3  # for nb201
 
         for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
             self.zcp_embedder.append(
@@ -730,12 +733,11 @@ class PINATModel4(nn.Module):
         return out
 
 
-
 class PINATModel5(nn.Module):
     """
         PINATModel5 + zcp embedding (naive embedder)
         PINATModel4 is a small size model with [128,128]
-        Here We use large Model 
+        Here We use large Model
     """
 
     def __init__(self,
@@ -786,7 +788,7 @@ class PINATModel5(nn.Module):
         if bench == '101':
             mid_zcp_dim = 83
         elif bench == '201':
-            mid_zcp_dim = 98 * 3 # for nb201
+            mid_zcp_dim = 98 * 3  # for nb201
 
         for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
             self.zcp_embedder.append(

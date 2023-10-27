@@ -100,6 +100,7 @@ class PairwiseRankLoss(nn.Module):
 
 
 class BatchPairwiseRankLoss(nn.Module):
+
     def forward(self, prior, loss, coeff=1.0):
         """
         Args:
@@ -116,12 +117,12 @@ class BatchPairwiseRankLoss(nn.Module):
         # Split the priors and losses
         prior1, prior2 = prior[:, 0], prior[:, 1]
         loss1, loss2 = loss[:, 0], loss[:, 1]
-        
+
         # Compute the rank loss for each pair in the batch
-        rank_loss = torch.where(prior1 < prior2, 
-                                coeff * F.relu(loss2 - loss1.detach()), 
+        rank_loss = torch.where(prior1 < prior2,
+                                coeff * F.relu(loss2 - loss1.detach()),
                                 coeff * F.relu(loss1.detach() - loss2))
-        
+
         return rank_loss
 
 
