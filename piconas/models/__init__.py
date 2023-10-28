@@ -3,7 +3,7 @@ from .build import build_model  # noqa: F401
 from .cnn import resnet20, resnet56  # noqa: F401
 from .macro import MacroBenchmarkSuperNet  # noqa: F401
 from .mae import MAE_ViT, ViT_Classifier  # noqa: F401
-from .nasbench101 import NASBench101
+from .nasbench101 import OneShotNASBench101Network  # noqa: F401
 from .nasbench201 import DiffNASBench201Network  # noqa: F401
 from .nasbench201 import OneShotNASBench201Network  # noqa: F401
 from .nasbench301 import DiffNASBench301Network  # noqa: F401
@@ -17,7 +17,7 @@ __all__ = [
     'MAE_ViT', 'ViT_Classifier', 'MacroBenchmarkSuperNet',
     'SearchableShuffleNetV2', 'DiffNASBench201Network',
     'OneShotNASBench201Network', 'SearchableMobileNet', 'SearchableMAE',
-    'BNNAS', 'NASBench101', 'SupernetNATS', 'MAESupernetNATS', 'build_model',
+    'BNNAS', 'OneShotNASBench101Network', 'SupernetNATS', 'MAESupernetNATS', 'build_model',
     'OneShotNASBench301Network', 'DiffNASBench301Network', 'AnyNet',
     'NetworkCIFAR', 'NetworkImageNet', 'resnet20', 'resnet56'
 ]

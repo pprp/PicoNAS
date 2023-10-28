@@ -62,6 +62,7 @@ class OneShotMutator(ArchitectureMutator[OneShotMutable]):
         Args:
             subnet_dict (Dict[int, Any]): Subnet dict.
         """
+        # import pdb; pdb.set_trace()
         for group_id, modules in self.search_group.items():
             choice = subnet_dict[group_id]
             for module in modules:

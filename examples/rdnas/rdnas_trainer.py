@@ -65,7 +65,7 @@ class PGONASTrainer(BaseTrainer):
             **kwargs)
 
         # init flops
-        self._init_flops()
+        # self._init_flops()
 
         if self.mutator is None:
             # Note: use alias to build search group
@@ -525,16 +525,16 @@ class PGONASTrainer(BaseTrainer):
 
         return top1_vacc.avg
 
-    def _init_flops(self):
-        """generate flops."""
-        self.model.eval()
-        # Note 1: after this process, each module in self.model
-        #       would have the __flops__ attribute.
-        # Note 2: this function should be called before
-        #       mutator.prepare_from_supernet()
-        flops, params = get_model_complexity_info(self.model, self.input_shape)
-        self.model.train()
-        return flops, params
+    # def _init_flops(self):
+    #     """generate flops."""
+    #     self.model.eval()
+    #     # Note 1: after this process, each module in self.model
+    #     #       would have the __flops__ attribute.
+    #     # Note 2: this function should be called before
+    #     #       mutator.prepare_from_supernet()
+    #     flops, params = get_model_complexity_info(self.model, self.input_shape)
+    #     self.model.train()
+    #     return flops, params
 
     def get_subnet_flops(self, subnet_dict) -> float:
         """Calculate current subnet flops based on config."""
@@ -748,6 +748,8 @@ class PGONASTrainer(BaseTrainer):
         inputs, labels, _, _ = batch_inputs
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
+
+        # import pdb; pdb.set_trace()
 
         loss_list, prior_list = [], []
         for subnet in subnet_list:

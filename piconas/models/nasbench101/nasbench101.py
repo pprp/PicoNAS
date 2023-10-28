@@ -7,11 +7,13 @@ import torch.nn as nn
 
 from piconas.models.nasbench101.nb101_blocks import ConvBnRelu, MaxPool
 from piconas.nas.mutables import OneShotPathOP
+from piconas.models.registry import register_model
+
 
 
 class Cell(nn.Module):
 
-    def __init__(self, inplanes, outplanes, shadow_bn):
+    def __init__(self, inplanes, outplanes, shadow_bn, layer_idx=0):
         super(Cell, self).__init__()
         self.inplanes = inplanes
         self.outplanes = outplanes
@@ -25,7 +27,7 @@ class Cell(nn.Module):
             nodes.append(ConvBnRelu(self.inplanes, self.outplanes, 3))
             nodes.append(MaxPool(self.inplanes, self.outplanes))
         nodes.append(nn.Conv2d(outplanes, outplanes, kernel_size=1, stride=1))
-        self.edges = OneShotPathOP(candidate_ops=nodes)
+        self.edges = OneShotPathOP(candidate_ops=nodes, alias=f'layer-{layer_idx}')
 
         self.bn_list = nn.ModuleList([])
         if self.shadow_bn:
@@ -37,11 +39,11 @@ class Cell(nn.Module):
     def forward(self, x):
         return self.edges(x)
 
+@register_model
+class OneShotNASBench101Network(nn.Module):
 
-class NASBench101(nn.Module):
-
-    def __init__(self, init_channels, classes=10, shadow_bn=True):
-        super(NASBench101, self).__init__()
+    def __init__(self, init_channels=128, num_classes=10, shadow_bn=True):
+        super(OneShotNASBench101Network, self).__init__()
         self.init_channels = init_channels
 
         self.stem = nn.Sequential(
@@ -64,17 +66,19 @@ class NASBench101(nn.Module):
                     Cell(
                         self.init_channels,
                         self.init_channels * 2,
-                        shadow_bn=shadow_bn))
+                        shadow_bn=shadow_bn,
+                        layer_idx=i))
                 self.init_channels *= 2
             else:
                 self.cell_list.append(
                     Cell(
                         self.init_channels,
                         self.init_channels,
-                        shadow_bn=shadow_bn))
+                        shadow_bn=shadow_bn,
+                        layer_idx=i))
 
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
-        self.classifier = nn.Linear(self.init_channels, classes)
+        self.classifier = nn.Linear(self.init_channels, num_classes)
         self._initialize_weights()
 
     def _initialize_weights(self):
@@ -134,11 +138,12 @@ if __name__ == '__main__':
     choice = random_choice(3)
     print(choice)
 
-    model = NASBench101(init_channels=128)
-    mutator = OneShotMutator()
+    model = OneShotNASBench101Network(init_channels=128)
+    mutator = OneShotMutator(with_alias=True)
     mutator.prepare_from_supernet(model)
 
     rand_subnet = mutator.random_subnet
+    print(rand_subnet)
     mutator.set_subnet(rand_subnet)
 
     input = torch.randn((1, 3, 32, 32))

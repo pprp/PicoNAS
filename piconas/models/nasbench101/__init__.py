@@ -1,1 +1,1 @@
-from .nasbench101 import NASBench101  # noqa: F401
+from .nasbench101 import OneShotNASBench101Network  # noqa: F401
