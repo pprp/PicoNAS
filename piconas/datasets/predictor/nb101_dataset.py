@@ -10,7 +10,7 @@ from nasbench import api as NB1API
 from scipy import sparse as sp
 from torch.utils.data import Dataset
 
-BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
+BASE_PATH = '/data/lujunl/pprp/bench/'
 
 
 def laplacian_positional_encoding(adj, pos_enc_dim, number_nodes=7):

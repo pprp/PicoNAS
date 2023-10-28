@@ -16,7 +16,7 @@ from utils import CustomDataset, get_tagates_sample_indices
 
 from piconas.predictor.flan.flan_model2 import FullyConnectedNN, GIN_Model
 
-BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
+BASE_PATH = '/data/lujunl/pprp/bench/'
 
 # python -i universal_main.py --space nb101 --transfer_space nb201 --representation adj_gin_zcp --test_tagates --loss_type pwl --sample_size 1024 \
 #                    --batch_size 128 --transfer_sample_sizes 4 8 16 32 --batch_size 8 --transfer_epochs 30 --transfer_lr 5e-5 --test_size 500

@@ -16,7 +16,7 @@ if True:
     # legend size
     plt.rcParams['legend.fontsize'] = 8
 
-BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
+BASE_PATH = '/data/lujunl/pprp/bench/'
 
 ranges = {
     0: 'nb101',

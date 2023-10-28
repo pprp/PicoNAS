@@ -5,8 +5,8 @@ import pandas as pd
 import torch
 from sklearn import preprocessing
 
-BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
-NDS_DPATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/nds_adj_encoding/'
+BASE_PATH = '/data/lujunl/pprp/bench/'
+NDS_DPATH = '/data/lujunl/pprp/bench/nds_adj_encoding/'
 
 
 class NDS:

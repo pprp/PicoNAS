@@ -10,7 +10,7 @@ from piconas.predictor.nas_embedding_suite.nb123.nas_bench_301.cell_301 import \
 from piconas.predictor.nas_embedding_suite.nb123.nb301_arch_tuple_to_nb101 import \
     convert_arch_tuple_to_idx
 
-BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
+BASE_PATH = '/data/lujunl/pprp/bench/'
 
 
 class NASBench301:
