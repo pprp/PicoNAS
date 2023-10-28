@@ -19,6 +19,7 @@ from piconas.trainer.base import BaseTrainer
 from piconas.trainer.registry import register_trainer
 from piconas.utils.flops_counter import get_model_complexity_info
 from piconas.utils.utils import AvgrageMeter, accuracy
+from piconas.core.losses import pair_loss
 
 
 @register_trainer
@@ -264,21 +265,21 @@ class PGONASTrainer(BaseTrainer):
                 self.logger.info(
                     f'Step: {step:03} Train loss: {loss.item():.4f} Top1 acc: {top1_tacc.avg:.3f} Top5 acc: {top5_tacc.avg:.3f}'
                 )
-                self.writer.add_scalar(
-                    'STEP_LOSS/train_step_loss',
-                    loss.item(),
-                    global_step=step + self.current_epoch * len(loader),
-                )
-                self.writer.add_scalar(
-                    'TRAIN_ACC/top1_train_acc',
-                    top1_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader),
-                )
-                self.writer.add_scalar(
-                    'TRAIN_ACC/top5_train_acc',
-                    top5_tacc.avg,
-                    global_step=step + self.current_epoch * len(loader),
-                )
+                # self.writer.add_scalar(
+                #     'STEP_LOSS/train_step_loss',
+                #     loss.item(),
+                #     global_step=step + self.current_epoch * len(loader),
+                # )
+                # self.writer.add_scalar(
+                #     'TRAIN_ACC/top1_train_acc',
+                #     top1_tacc.avg,
+                #     global_step=step + self.current_epoch * len(loader),
+                # )
+                # self.writer.add_scalar(
+                #     'TRAIN_ACC/top5_train_acc',
+                #     top5_tacc.avg,
+                #     global_step=step + self.current_epoch * len(loader),
+                # )
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
@@ -339,22 +340,22 @@ class PGONASTrainer(BaseTrainer):
                 val_loss += loss.item()
 
                 # print every 20 iter
-                if step % self.print_freq == 0:
-                    self.writer.add_scalar(
-                        'STEP_LOSS/valid_step_loss',
-                        loss.item(),
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-                    self.writer.add_scalar(
-                        'VAL_ACC/top1_val_acc',
-                        top1_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-                    self.writer.add_scalar(
-                        'VAL_ACC/top5_val_acc',
-                        top5_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
-                    )
+                # if step % self.print_freq == 0:
+                #     self.writer.add_scalar(
+                #         'STEP_LOSS/valid_step_loss',
+                #         loss.item(),
+                #         global_step=step + self.current_epoch * len(loader),
+                #     )
+                #     self.writer.add_scalar(
+                #         'VAL_ACC/top1_val_acc',
+                #         top1_vacc.avg,
+                #         global_step=step + self.current_epoch * len(loader),
+                #     )
+                #     self.writer.add_scalar(
+                #         'VAL_ACC/top5_val_acc',
+                #         top5_vacc.avg,
+                #         global_step=step + self.current_epoch * len(loader),
+                #     )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg}'
                 f' Top5 acc: {top5_vacc.avg}')
@@ -410,63 +411,63 @@ class PGONASTrainer(BaseTrainer):
                 self.logger.info(
                     f'Kendall tau: {kt} Pearson: {ps} Spearman: {sp} CPR: {cpr}'
                 )
-                self.writer.add_scalar(
-                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/pearson', ps, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/spearman', sp, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/cpr', cpr, global_step=self.current_epoch)
+                # self.writer.add_scalar(
+                #     'RANK/kendall_tau', kt, global_step=self.current_epoch)
+                # self.writer.add_scalar(
+                #     'RANK/pearson', ps, global_step=self.current_epoch)
+                # self.writer.add_scalar(
+                #     'RANK/spearman', sp, global_step=self.current_epoch)
+                # self.writer.add_scalar(
+                #     'RANK/cpr', cpr, global_step=self.current_epoch)
 
-                if isinstance(rd, list):
-                    for i, r in enumerate(rd):
-                        self.writer.add_scalar(
-                            f'ANALYSE/rank_diff_{(i+1)*20}%',
-                            r,
-                            global_step=self.current_epoch)
-                else:
-                    self.writer.add_scalar(
-                        'ANALYSE/rank_diff',
-                        rd,
-                        global_step=self.current_epoch)
+                # if isinstance(rd, list):
+                #     for i, r in enumerate(rd):
+                #         self.writer.add_scalar(
+                #             f'ANALYSE/rank_diff_{(i+1)*20}%',
+                #             r,
+                #             global_step=self.current_epoch)
+                # else:
+                #     self.writer.add_scalar(
+                #         'ANALYSE/rank_diff',
+                #         rd,
+                #         global_step=self.current_epoch)
 
-                for k, minn, brk, maxn, wrk in minn_at_ks:
-                    self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{k}_BR@K',
-                        brk,
-                        global_step=self.current_epoch)
-                    self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{k}_WR@K',
-                        wrk,
-                        global_step=self.current_epoch)
+                # for k, minn, brk, maxn, wrk in minn_at_ks:
+                #     self.writer.add_scalar(
+                #         f'ANALYSE/oneshot_{k}_BR@K',
+                #         brk,
+                #         global_step=self.current_epoch)
+                #     self.writer.add_scalar(
+                #         f'ANALYSE/oneshot_{k}_WR@K',
+                #         wrk,
+                #         global_step=self.current_epoch)
 
-                for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
-                    self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{ratio}_P@topK',
-                        p_at_topk,
-                        global_step=self.current_epoch)
-                    self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{ratio}_P@bottomK',
-                        p_at_bk,
-                        global_step=self.current_epoch)
-                    self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{ratio}_KD@topK',
-                        kd_at_topk,
-                        global_step=self.current_epoch)
-                    self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{ratio}_KD@bottomK',
-                        kd_at_bk,
-                        global_step=self.current_epoch)
+                # for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
+                #     self.writer.add_scalar(
+                #         f'ANALYSE/oneshot_{ratio}_P@topK',
+                #         p_at_topk,
+                #         global_step=self.current_epoch)
+                #     self.writer.add_scalar(
+                #         f'ANALYSE/oneshot_{ratio}_P@bottomK',
+                #         p_at_bk,
+                #         global_step=self.current_epoch)
+                #     self.writer.add_scalar(
+                #         f'ANALYSE/oneshot_{ratio}_KD@topK',
+                #         kd_at_topk,
+                #         global_step=self.current_epoch)
+                #     self.writer.add_scalar(
+                #         f'ANALYSE/oneshot_{ratio}_KD@bottomK',
+                #         kd_at_bk,
+                #         global_step=self.current_epoch)
 
-            self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
-            self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+            # self.writer.add_scalar(
+            #     'EPOCH_LOSS/train_epoch_loss',
+            #     tr_loss,
+            #     global_step=self.current_epoch)
+            # self.writer.add_scalar(
+            #     'EPOCH_LOSS/valid_epoch_loss',
+            #     val_loss,
+            #     global_step=self.current_epoch)
 
             self.scheduler.step()
 
@@ -502,22 +503,22 @@ class PGONASTrainer(BaseTrainer):
                 val_loss += loss.item()
 
                 # print every 50 iter
-                if step % 50 == 0:
-                    self.writer.add_scalar(
-                        'STEP_LOSS/valid_step_loss',
-                        loss.item(),
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-                    self.writer.add_scalar(
-                        'VAL_ACC/top1_val_acc',
-                        top1_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
-                    )
-                    self.writer.add_scalar(
-                        'VAL_ACC/top5_val_acc',
-                        top5_vacc.avg,
-                        global_step=step + self.current_epoch * len(loader),
-                    )
+                # if step % 50 == 0:
+                #     self.writer.add_scalar(
+                #         'STEP_LOSS/valid_step_loss',
+                #         loss.item(),
+                #         global_step=step + self.current_epoch * len(loader),
+                #     )
+                #     self.writer.add_scalar(
+                #         'VAL_ACC/top1_val_acc',
+                #         top1_vacc.avg,
+                #         global_step=step + self.current_epoch * len(loader),
+                #     )
+                #     self.writer.add_scalar(
+                #         'VAL_ACC/top5_val_acc',
+                #         top5_vacc.avg,
+                #         global_step=step + self.current_epoch * len(loader),
+                #     )
             # self.logger.info(
             #     f'Val loss: {loss.item()}'
             #     f'Top1 acc: {top1_vacc.avg} Top5 acc: {top5_vacc.avg}')
@@ -696,7 +697,7 @@ class PGONASTrainer(BaseTrainer):
         sum_loss.backward()
         return sum_loss, outputs
 
-    def _forward_pairwise_loss(self, batch_inputs):
+    def _forward_pairwise_loss_bk(self, batch_inputs):
         inputs, labels, _, _ = batch_inputs
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
@@ -713,7 +714,6 @@ class PGONASTrainer(BaseTrainer):
         loss1 = self._compute_loss(outputs, labels)
         loss1.backward()
         # flops1 = self.get_subnet_flops(subnet1)
-        # nwot1 = self.get_subnet_nwot(subnet1)
         predictor_score1 = self.get_subnet_predictor(subnet1)
 
         # sample the second subnet
@@ -722,7 +722,6 @@ class PGONASTrainer(BaseTrainer):
         loss2 = self._compute_loss(outputs, labels)
         loss2.backward(retain_graph=True)
         # flops2 = self.get_subnet_flops(subnet2)
-        # nwot2 = self.get_subnet_nwot(subnet2)
         predictor_score2 = self.get_subnet_predictor(subnet2)
 
         # pairwise rank loss
@@ -737,6 +736,42 @@ class PGONASTrainer(BaseTrainer):
         loss3.backward()
 
         return loss2, outputs
+    
+    def _forward_pairwise_loss(self, batch_inputs):
+        # generate batch subnet
+        subnet_list = []
+        batch_size = 2
+        for _ in range(batch_size):
+            subnet_list.append(self.mutator.random_subnet)
+        
+        # forward batch subnet
+        inputs, labels, _, _ = batch_inputs
+        inputs = self._to_device(inputs, self.device)
+        labels = self._to_device(labels, self.device)
+
+        loss_list, prior_list = [], []
+        for subnet in subnet_list:
+            self.mutator.set_subnet(subnet)
+            outputs = self.model(inputs)
+            loss = self._compute_loss(outputs, labels)
+            loss.backward(retain_graph=True)
+            # prior = self.get_subnet_predictor(subnet)
+            prior = torch.tensor([self.get_subnet_predictor(subnet)]).to(self.device)
+
+            loss_list.append(loss)
+            prior_list.append(prior)
+        
+        # loss_tensor, prior_tensor = torch.tensor(loss_list), torch.tensor(prior_list) 
+        # loss_tensor, prior_tensor = loss_tensor.to(self.device), prior_tensor.to(self.device)
+        loss_tensor = torch.stack(loss_list).to(self.device).requires_grad_()
+        prior_tensor = torch.stack(prior_list).to(self.device).requires_grad_()
+
+
+        rank_loss = pair_loss(loss_tensor, prior_tensor)
+        rank_loss.backward()
+        return rank_loss, outputs
+        
+
 
     def _forward_pairwise_loss_with_distill(self, batch_inputs):
         """

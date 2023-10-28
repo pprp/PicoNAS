@@ -12,7 +12,7 @@ from scipy.stats import kendalltau
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
 from piconas.predictor.pinat.model_factory import create_model
-from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, run_func,
+from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, 
                                  set_seed, to_cuda)
 
 parser = ArgumentParser()
@@ -209,4 +209,5 @@ def main():
 
 if __name__ == '__main__':
     # run_func(args, main)
+    print('hello')
     main()
