@@ -396,12 +396,17 @@ class Nb101DatasetPINAT(Dataset):
         zcp = torch.tensor(zcp, dtype=torch.float32)
 
         # laod layerwise zcp
+        combinations = [
+            'grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise'
+        ]
         if self.split_num == 'all' or (self.data_type == 'test' and self.split_num == '100'):
-            zcp_layerwise = self.zcp_nb101_layerwise_test['cifar10'][hash][str(self.lw_zcps_selected)]
+            zcp_layerwise = self.zcp_nb101_layerwise_test['cifar10'][hash][combinations[0]] + self.zcp_nb101_layerwise_test['cifar10'][hash][combinations[1]] + self.zcp_nb101_layerwise_test['cifar10'][hash][combinations[2]]
             zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
         else:    
             zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][str(
-                self.split_num)][str(index)][self.lw_zcps_selected]
+                self.split_num)][str(index)][combinations[0]] + \
+                    self.zcp_nb101_layerwise['cifar10'][str(self.split_num)][str(index)][combinations[1]] + \
+                    self.zcp_nb101_layerwise['cifar10'][str(self.split_num)][str(index)][combinations[2]]
             zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
 
         # in getitem function, we only select the index corresponding data rather than the whole data

@@ -9,17 +9,18 @@ if [ ! -d "./results" ]; then
 fi
 
 # arguments
-IDX=1
+IDX=4
 Loss=mse
 Bench=201
 Epochs=300
-Model=PINATModel4
+Model=PINATModel3
 Dataset=cifar10
 Train_batch_size=10
-Eval_batch_size=10240
-#Train_Split_List=(78 156 469 781 1563)
-Train_Split_List=(156)
-Eval_Split_List=(all)
+Eval_batch_size=50
+Train_Split_List=(78 156 469 781 1563)
+Eval_Split_List=(all all all all all)
+# Train_Split_List=(156)
+# Eval_Split_List=(all)
 # Script=./piconas/runner/runner_pinat.py
 Script=./exps/eval_predictor.py
 
