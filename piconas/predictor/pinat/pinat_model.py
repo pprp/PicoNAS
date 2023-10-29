@@ -867,8 +867,8 @@ class Encoder6(nn.Module):
                  in_features=5,
                  pine_hidden=256,
                  heads=6,
-                 linear_input=80, 
-                 zcp_embedder_dims=[256, 512, 1024, 2048]):
+                 linear_input=512, #80, 
+                 zcp_embedder_dims=[256, 512, 1024, 2048, 4096]):
         super().__init__()
 
         self.src_word_emb = nn.Embedding(
@@ -1002,7 +1002,7 @@ class Encoder6(nn.Module):
             zc_embed = zc_embed.view(bs, 7, -1)
         elif self.bench == '201':
             zc_embed = zc_embed.view(bs, 4, -1)
-
+        
         enc_output += zc_embed
 
         # backone forward for n_layers (3)
@@ -1034,11 +1034,9 @@ class PINATModel6(nn.Module):
                  d_inner,
                  pad_idx=None,
                  pos_enc_dim=7,
-                 linear_hidden=80,
+                 linear_hidden=512,#80,#80,
                  pine_hidden=256,
-                 bench='101',
-                 dropout=0.1,
-                 zcp_embedder_dims=[256, 512, 1024, 2048]):
+                 bench='101'):
         super(PINATModel6, self).__init__()
 
         # backone
