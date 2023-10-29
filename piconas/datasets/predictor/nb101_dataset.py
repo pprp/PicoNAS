@@ -84,7 +84,7 @@ class Nb101DatasetPINAT(Dataset):
                                        'nasbench_only108_caterec.tfrecord')
         self.hash_iterator_list = list(self.nb1_api.hash_iterator())
         with h5py.File(
-                '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/nasbench.hdf5',
+                '/data/lujunl/pprp/bench/nasbench101/nasbench.hdf5',
                 mode='r') as f:
             for i, h in enumerate(f['hash'][()]):
                 self.hash2id[h.decode()] = i
@@ -100,10 +100,10 @@ class Nb101DatasetPINAT(Dataset):
         self.seed = 0
         self.candidate_ops = candidate_ops
         self.lapla = np.load(
-            '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/lapla_matrix.npy'
+            '/data/lujunl/pprp/bench/nasbench101/lapla_matrix.npy'
         )
         self.lapla_nor = np.load(
-            '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/lapla_nor_matrix.npy'
+            '/data/lujunl/pprp/bench/nasbench101/lapla_nor_matrix.npy'
         )
         self.data_type = data_type
 
@@ -122,7 +122,7 @@ class Nb101DatasetPINAT(Dataset):
         self.split_num = split
         if self.split_num != 'all' and self.data_type == 'train':
             self.sample_range = np.load(
-                '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz'
+                '/data/lujunl/pprp/bench/nasbench101/train_samples.npz'
             )[str(split)]
         elif self.data_type == 'test':
             # test 
