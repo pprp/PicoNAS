@@ -1,6 +1,6 @@
 from piconas.predictor.pinat.pinat_model import (PINATModel1, PINATModel2,
                                                  PINATModel3, PINATModel4,
-                                                 PINATModel5)
+                                                 PINATModel5, PINATModel6)
 
 _name2model = {
     'PINATModel1': PINATModel1,  # PINAT + ZCP
@@ -9,6 +9,7 @@ _name2model = {
     'PINATModel4': PINATModel4,  # PINAT + ZCP Layerwise + Gating
     'PINATModel5':
     PINATModel5,  # PINAT + ZCP Layerwise + Gating + Larger Model
+    'PINATModel6': PINATModel6,  # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder 
 }
 
 
@@ -24,10 +25,10 @@ def create_model(args):
         pine_hidden=16,
         linear_hidden=96,
         n_src_vocab=5,
-        d_word_vec=80,
+        d_word_vec=512, # 80
         d_k=64,
         d_v=64,
-        d_model=80,
+        d_model=512, # 80
         d_inner=512,
     )
 

@@ -13,8 +13,7 @@ from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
 from piconas.predictor.pinat.model_factory import (create_model,
                                                    create_nb201_model)
-from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, run_func,
-                                 set_seed, to_cuda)
+from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed, to_cuda)
 
 parser = ArgumentParser()
 # exp and dataset
@@ -167,4 +166,5 @@ def main():
 
 
 if __name__ == '__main__':
-    run_func(args, main)
+    # run_func(args, main)
+    main()

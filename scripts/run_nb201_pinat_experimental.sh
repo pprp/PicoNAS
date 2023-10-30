@@ -9,18 +9,18 @@ if [ ! -d "./results" ]; then
 fi
 
 # arguments
-IDX=5
+IDX=4
 Loss=mse
 Bench=201
 Epochs=300
-Model=PINATModel5
+Model=PINATModel6
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=10240
-# Train_Split_List=(1563 781 469 156 78)
-# Eval_Split_List=(all all all all all)
-Train_Split_List=(78)
-Eval_Split_List=(all)
+Train_Split_List=(1563 781 469 156 78)
+Eval_Split_List=(all all all all all)
+# Train_Split_List=(78)
+# Eval_Split_List=(all)
 # Script=./piconas/runner/runner_pinat.py
 Script=./piconas/runner/runner_pinat_rank.py
 CUDA_VISIBLE_DEVICES=4
