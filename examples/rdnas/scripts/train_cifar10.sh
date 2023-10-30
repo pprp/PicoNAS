@@ -5,7 +5,7 @@
 #     --trainer_name PGONASTrainer \
 #     --crit ce --lr 0.025 \
 #     --epochs 250 --batch_size 4 \
-#     --data_dir /data2/dongpeijie/share/dataset --dataset cifar10 \
+#     --data_dir /data/lujunl/pprp/bench/cifar --dataset cifar10 \
 #     --type adaptive  \
 #     --seed 6 \
 #     --log_name spos_train_valid_c10_after_predictor_seed6_run0_50samples 
@@ -16,7 +16,7 @@ CUDA_VISIBLE_DEVICES=2 python train_rdnas.py \
     --trainer_name PGONASTrainer \
     --crit ce --lr 0.025 \
     --epochs 250 --batch_size 4 \
-    --data_dir /data2/dongpeijie/share/dataset --dataset cifar10 \
+    --data_dir /data/lujunl/pprp/bench/cifar --dataset cifar10 \
     --type adaptive  \
     --seed 6 \
     --log_name spos_train_valid_c10_after_predictor_seed6_run0_50samples

@@ -58,7 +58,7 @@ class NB201Evaluator(Evaluator):
                          eval_acc1es, cost_info
         """
         self.api = API(
-            '/data2/dongpeijie/share/bench/NAS-Bench-201-v1_0-e61699.pth',
+            '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth',
             verbose=False)
 
     def generate_genotype(self, subnet_dict: dict,

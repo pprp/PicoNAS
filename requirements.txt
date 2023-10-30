@@ -26,3 +26,4 @@ torch_scatter
 torch_cluster
 lightgbm
 dgl
+nasbench_pytorch 
