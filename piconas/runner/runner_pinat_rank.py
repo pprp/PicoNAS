@@ -115,9 +115,9 @@ def train(train_set, train_loader, model, optimizer, lr_scheduler,
             term3 = diffkendall(predict, target)
 
             # term2 / term2.detach()
-            loss = term3 # + 0.01 * term2 
+            loss = term3  # + 0.01 * term2
             # / term3.detach() + term2 / term2.detach()
-            # term1 
+            # term1
             # / term1.detach()
             # + 0.001 * term3 / term3.detach()
 

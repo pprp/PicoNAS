@@ -917,7 +917,7 @@ class Encoder6(nn.Module):
             emb_out_dim = 7 * linear_input  # pos_enc_dim
         elif bench == '201':
             mid_zcp_dim = 98 * 3  # for nb201
-            emb_out_dim = 6 * linear_input # pos_enc_dim
+            emb_out_dim = 6 * linear_input  # pos_enc_dim
 
         for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
             self.zcp_embedder.append(
@@ -997,7 +997,7 @@ class Encoder6(nn.Module):
         # zc embedder
         zc_embed = self.zcp_embedder(zcp_layerwise)
         zc_embed = self.gate_block(zc_embed)
-        # reshape 
+        # reshape
         if self.bench == '101':
             zc_embed = zc_embed.view(bs, 7, -1)
         elif self.bench == '201':

@@ -35,7 +35,6 @@ def diffkendall_2d(x, y, alpha=0.5):
     return diffkendall
 
 
-
 def diffkendall(x, y, alpha=0.5, beta=1.0):
     """
     Differentiable approximation of Kendall's rank correlation.
@@ -52,7 +51,7 @@ def diffkendall(x, y, alpha=0.5, beta=1.0):
 
     # Ensure x and y are 1D tensors
     if len(x.shape) != 1 or len(y.shape) != 1:
-        raise ValueError("x and y should be 1-dimensional tensors")
+        raise ValueError('x and y should be 1-dimensional tensors')
 
     N = x.shape[0]
 
