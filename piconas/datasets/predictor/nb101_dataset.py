@@ -95,16 +95,13 @@ class Nb101DatasetPINAT(Dataset):
             self.metrics = f['metrics'][()]
         self.random_state = np.random.RandomState(0)
 
-
         self.debug = debug
         self.seed = 0
         self.candidate_ops = candidate_ops
         self.lapla = np.load(
-            '/data/lujunl/pprp/bench/nasbench101/lapla_matrix.npy'
-        )
+            '/data/lujunl/pprp/bench/nasbench101/lapla_matrix.npy')
         self.lapla_nor = np.load(
-            '/data/lujunl/pprp/bench/nasbench101/lapla_nor_matrix.npy'
-        )
+            '/data/lujunl/pprp/bench/nasbench101/lapla_nor_matrix.npy')
         self.data_type = data_type
 
         with open(BASE_PATH + 'zc_nasbench101.json', 'r') as f:
@@ -116,21 +113,22 @@ class Nb101DatasetPINAT(Dataset):
         with open(BASE_PATH + 'zc_nasbench101_layerwise.json', 'r') as f:
             self.zcp_nb101_layerwise = json.load(f)
 
-        with open(BASE_PATH + 'zc_nasbench101_layerwise_5000.json', 'r') as f: 
+        with open(BASE_PATH + 'zc_nasbench101_layerwise_5000.json', 'r') as f:
             self.zcp_nb101_layerwise_test = json.load(f)
 
         self.split_num = split
         if self.split_num != 'all' and self.data_type == 'train':
             self.sample_range = np.load(
-                '/data/lujunl/pprp/bench/nasbench101/train_samples.npz'
-            )[str(split)]
+                '/data/lujunl/pprp/bench/nasbench101/train_samples.npz')[str(
+                    split)]
         elif self.data_type == 'test':
-            # test 
+            # test
             if self.split_num == 'all':
-                self.sample_range = list(range(len(self.zcp_nb101_layerwise_test['cifar10'].keys())))
+                self.sample_range = list(
+                    range(
+                        len(self.zcp_nb101_layerwise_test['cifar10'].keys())))
             elif self.split_num == '100':
                 self.sample_range = list(range(100))
-
 
         # all
         self.val_mean_mean, self.val_mean_std = 0.908192, 0.023961  # all val mean/std (from SemiNAS)
@@ -399,10 +397,14 @@ class Nb101DatasetPINAT(Dataset):
         combinations = [
             'grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise'
         ]
-        if self.split_num == 'all' or (self.data_type == 'test' and self.split_num == '100'):
-            zcp_layerwise = self.zcp_nb101_layerwise_test['cifar10'][hash][combinations[0]] + self.zcp_nb101_layerwise_test['cifar10'][hash][combinations[1]] + self.zcp_nb101_layerwise_test['cifar10'][hash][combinations[2]]
+        if self.split_num == 'all' or (self.data_type == 'test'
+                                       and self.split_num == '100'):
+            zcp_layerwise = self.zcp_nb101_layerwise_test['cifar10'][hash][
+                combinations[0]] + self.zcp_nb101_layerwise_test['cifar10'][
+                    hash][combinations[1]] + self.zcp_nb101_layerwise_test[
+                        'cifar10'][hash][combinations[2]]
             zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
-        else:    
+        else:
             zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][str(
                 self.split_num)][str(index)][combinations[0]] + \
                     self.zcp_nb101_layerwise['cifar10'][str(self.split_num)][str(index)][combinations[1]] + \

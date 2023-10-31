@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 
 import piconas.utils.utils as utils
-from piconas.core.losses import KLDivergence, PairwiseRankLoss
+from piconas.core.losses import KLDivergence, PairwiseRankLoss, pair_loss
 from piconas.datasets.predictor.nb201_dataset import \
     Nb201DatasetPINAT  # noqa: E501
 from piconas.evaluator.nb201_evaluator import NB201Evaluator
@@ -19,7 +19,6 @@ from piconas.trainer.base import BaseTrainer
 from piconas.trainer.registry import register_trainer
 from piconas.utils.flops_counter import get_model_complexity_info
 from piconas.utils.utils import AvgrageMeter, accuracy
-from piconas.core.losses import pair_loss
 
 
 @register_trainer
@@ -732,19 +731,18 @@ class PGONASTrainer(BaseTrainer):
 
         loss3 = (2 *
                  np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(flops1, flops2,
-                                        loss1, loss2))
+                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
         loss3.backward()
 
         return loss2, outputs
-    
+
     def _forward_pairwise_loss(self, batch_inputs):
         # generate batch subnet
         subnet_list = []
         batch_size = 2
         for _ in range(batch_size):
             subnet_list.append(self.mutator.random_subnet)
-        
+
         # forward batch subnet
         inputs, labels, _, _ = batch_inputs
         inputs = self._to_device(inputs, self.device)
@@ -759,22 +757,20 @@ class PGONASTrainer(BaseTrainer):
             loss = self._compute_loss(outputs, labels)
             loss.backward(retain_graph=True)
             # prior = torch.tensor([self.get_subnet_predictor(subnet)]).to(self.device)
-            prior = torch.tensor([self.get_subnet_flops(subnet)]).to(self.device)
+            prior = torch.tensor([self.get_subnet_flops(subnet)
+                                  ]).to(self.device)
 
             loss_list.append(loss)
             prior_list.append(prior)
-        
-        # loss_tensor, prior_tensor = torch.tensor(loss_list), torch.tensor(prior_list) 
+
+        # loss_tensor, prior_tensor = torch.tensor(loss_list), torch.tensor(prior_list)
         # loss_tensor, prior_tensor = loss_tensor.to(self.device), prior_tensor.to(self.device)
         loss_tensor = torch.stack(loss_list).to(self.device).requires_grad_()
         prior_tensor = torch.stack(prior_list).to(self.device).requires_grad_()
 
-
         rank_loss = pair_loss(loss_tensor, prior_tensor)
         rank_loss.backward()
         return rank_loss, outputs
-        
-
 
     def _forward_pairwise_loss_with_distill(self, batch_inputs):
         """

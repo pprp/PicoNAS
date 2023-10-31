@@ -8,8 +8,8 @@
 #     --data_dir /data/lujunl/pprp/bench/cifar --dataset cifar10 \
 #     --type adaptive  \
 #     --seed 6 \
-#     --log_name spos_train_valid_c10_after_predictor_seed6_run0_50samples 
-    # > ./work_dir/spos_train_valid_c10_after_predictor_seed6_run0_50samples.log 2>&1 
+#     --log_name spos_train_valid_c10_after_predictor_seed6_run0_50samples
+    # > ./work_dir/spos_train_valid_c10_after_predictor_seed6_run0_50samples.log 2>&1
 
 CUDA_VISIBLE_DEVICES=2 python train_rdnas.py \
     --model_name OneShotNASBench101Network \

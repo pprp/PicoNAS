@@ -2,10 +2,10 @@ import argparse
 import os
 import time
 
-import examples.rdnas.rdnas_trainer  # noqa: F401
 import torch
 from nb201_datasets import get_datasets, get_nas_search_loaders
 
+import examples.rdnas.rdnas_trainer  # noqa: F401
 import piconas.utils.utils as utils
 from piconas.core import build_criterion, build_optimizer, build_scheduler
 from piconas.models import build_model

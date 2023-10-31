@@ -9,11 +9,12 @@ import torch.nn as nn
 import torch.optim as optim
 from scipy.stats import kendalltau
 
+from piconas.core.losses.diffkd import diffkendall
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
 from piconas.predictor.pinat.model_factory import create_model
-from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, 
-                                 set_seed, to_cuda)
+from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
+                                 to_cuda)
 
 parser = ArgumentParser()
 # exp and dataset
@@ -111,8 +112,11 @@ def train(train_set, train_loader, model, optimizer, lr_scheduler,
 
             term1 = pair_loss(predict, target.float())
             term2 = loss_mse
+            term3 = diffkendall(predict, target)
 
-            loss = term1 / term1.detach() + term2 / term2.detach()
+            loss = term1 / term1.detach() + term2 / term2.detach(
+            ) 
+            # + 0.1 * term3 / term3.detach()
 
             optimizer.zero_grad()
             loss.backward()
@@ -209,5 +213,4 @@ def main():
 
 if __name__ == '__main__':
     # run_func(args, main)
-    print('hello')
     main()
