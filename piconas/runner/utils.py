@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader, Dataset
 
 def get_tagates_sample_indices(args):
     import os
-    BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
+    BASE_PATH = '/data/lujunl/pprp/bench/'
     BASE_PATH2 = '/data2/dongpeijie/share/bench/predictor_embeddings/correlation_trainer'
     if args.space == 'nb101' and args.test_tagates:
         print('Explicit TAGATES comparision')

@@ -45,9 +45,7 @@ to_be_merged_json = json.load(open(to_be_merged_json_path, 'r'))
 
 train_split_list = [100, 172, 424, 424, 4236]
 
-sample_range = np.load(
-    '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench101/train_samples.npz'
-)
+sample_range = np.load('/data/lujunl/pprp/bench/nasbench101/train_samples.npz')
 
 
 def get_cifar10_dataloader(batch_size, data_dir, train=True):

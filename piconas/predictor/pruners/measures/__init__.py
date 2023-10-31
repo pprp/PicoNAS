@@ -63,10 +63,10 @@ def load_all():
     from . import nwot  # noqa: F401
     from . import plain  # noqa: F401
     from . import snip  # noqa: F401
+    from . import swap  # noqa: F401
     from . import synflow  # noqa: F401
     from . import te_nas  # noqa: F401
     from . import zen  # noqa: F401
-    from . import swap  # noqa: F401
 
 
 load_all()

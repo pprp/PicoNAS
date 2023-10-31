@@ -7,12 +7,13 @@ from typing import List, Tuple
 import torch
 import torch.nn as nn
 from torch import Tensor
-# from torch.utils.tensorboard import SummaryWriter
 
 import piconas.utils.utils as utils
 from piconas.utils.flops_counter import get_model_complexity_info
 from piconas.utils.pico_logging import get_logger
 from piconas.utils.utils import AvgrageMeter, accuracy
+
+# from torch.utils.tensorboard import SummaryWriter
 
 
 class BaseTrainer(nn.Module):

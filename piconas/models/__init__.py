@@ -17,7 +17,7 @@ __all__ = [
     'MAE_ViT', 'ViT_Classifier', 'MacroBenchmarkSuperNet',
     'SearchableShuffleNetV2', 'DiffNASBench201Network',
     'OneShotNASBench201Network', 'SearchableMobileNet', 'SearchableMAE',
-    'BNNAS', 'OneShotNASBench101Network', 'SupernetNATS', 'MAESupernetNATS', 'build_model',
-    'OneShotNASBench301Network', 'DiffNASBench301Network', 'AnyNet',
-    'NetworkCIFAR', 'NetworkImageNet', 'resnet20', 'resnet56'
+    'BNNAS', 'OneShotNASBench101Network', 'SupernetNATS', 'MAESupernetNATS',
+    'build_model', 'OneShotNASBench301Network', 'DiffNASBench301Network',
+    'AnyNet', 'NetworkCIFAR', 'NetworkImageNet', 'resnet20', 'resnet56'
 ]

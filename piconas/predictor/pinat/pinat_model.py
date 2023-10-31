@@ -213,7 +213,7 @@ class Encoder(nn.Module):
                  in_features=5,
                  pine_hidden=256,
                  heads=6,
-                 linear_input=80):
+                 linear_input=512):
         super().__init__()
 
         self.src_word_emb = nn.Embedding(
@@ -593,7 +593,7 @@ class PINATModel3(nn.Module):
         self.zcp_embedder = []
 
         if bench == '101':
-            mid_zcp_dim = 83 * 3 # for nb101
+            mid_zcp_dim = 83 * 3  # for nb101
         elif bench == '201':
             mid_zcp_dim = 98 * 3  # for nb201
 
@@ -681,7 +681,7 @@ class PINATModel4(nn.Module):
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
         if bench == '101':
-            mid_zcp_dim = 83 * 3 # for nb101 
+            mid_zcp_dim = 83 * 3  # for nb101
         elif bench == '201':
             mid_zcp_dim = 98 * 3  # for nb201
 
@@ -756,7 +756,7 @@ class PINATModel5(nn.Module):
                  d_inner,
                  pad_idx=None,
                  pos_enc_dim=7,
-                 linear_hidden=80,
+                 linear_hidden=512,
                  pine_hidden=256,
                  bench='101',
                  dropout=0.1,
@@ -790,7 +790,7 @@ class PINATModel5(nn.Module):
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
         if bench == '101':
-            mid_zcp_dim = 83 * 3 # for nb101
+            mid_zcp_dim = 83 * 3  # for nb101
         elif bench == '201':
             mid_zcp_dim = 98 * 3  # for nb201
 
@@ -846,29 +846,29 @@ class PINATModel5(nn.Module):
         return out
 
 
-
 class Encoder6(nn.Module):
     """ An encoder model with self attention mechanism. """
 
-    def __init__(self,
-                 n_src_vocab,
-                 d_word_vec,
-                 n_layers,
-                 n_head,
-                 d_k,
-                 d_v,
-                 d_model,
-                 d_inner,
-                 pad_idx,
-                 pos_enc_dim=7,
-                 dropout=0.1,
-                 n_position=200,
-                 bench='101',
-                 in_features=5,
-                 pine_hidden=256,
-                 heads=6,
-                 linear_input=512, #80, 
-                 zcp_embedder_dims=[256, 512, 1024, 2048, 4096]):
+    def __init__(
+            self,
+            n_src_vocab,
+            d_word_vec,
+            n_layers,
+            n_head,
+            d_k,
+            d_v,
+            d_model,
+            d_inner,
+            pad_idx,
+            pos_enc_dim=7,
+            dropout=0.1,
+            n_position=200,
+            bench='101',
+            in_features=5,
+            pine_hidden=256,
+            heads=6,
+            linear_input=512,  #80,
+            zcp_embedder_dims=[256, 512, 1024, 2048, 4096]):
         super().__init__()
 
         self.src_word_emb = nn.Embedding(
@@ -913,11 +913,11 @@ class Encoder6(nn.Module):
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
         if bench == '101':
-            mid_zcp_dim = 83 * 3 # for nb101
-            emb_out_dim = 7 * linear_input # pos_enc_dim
+            mid_zcp_dim = 83 * 3  # for nb101
+            emb_out_dim = 7 * linear_input  # pos_enc_dim
         elif bench == '201':
             mid_zcp_dim = 98 * 3  # for nb201
-            emb_out_dim = 4 * linear_input # pos_enc_dim
+            emb_out_dim = 6 * linear_input # pos_enc_dim
 
         for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
             self.zcp_embedder.append(
@@ -974,7 +974,7 @@ class Encoder6(nn.Module):
             enc_output = self.dropout(enc_output)
         else:
             raise ValueError('No defined NAS bench.')
-        
+
         # PITE
         x = operations  # bs, 7, 5
         bs = operations.shape[0]  # bs=10 for test
@@ -1001,8 +1001,8 @@ class Encoder6(nn.Module):
         if self.bench == '101':
             zc_embed = zc_embed.view(bs, 7, -1)
         elif self.bench == '201':
-            zc_embed = zc_embed.view(bs, 4, -1)
-        
+            zc_embed = zc_embed.view(bs, 6, -1)
+        print(enc_output.shape, zc_embed.shape)
         enc_output += zc_embed
 
         # backone forward for n_layers (3)
@@ -1010,8 +1010,6 @@ class Encoder6(nn.Module):
             enc_output, enc_slf_attn = enc_layer(
                 enc_output, edge_index_list, num_nodes, slf_attn_mask=src_mask)
         return enc_output
-
-
 
 
 class PINATModel6(nn.Module):
@@ -1022,21 +1020,22 @@ class PINATModel6(nn.Module):
         Here We use large Model
     """
 
-    def __init__(self,
-                 adj_type,
-                 n_src_vocab,
-                 d_word_vec,
-                 n_layers,
-                 n_head,
-                 d_k,
-                 d_v,
-                 d_model,
-                 d_inner,
-                 pad_idx=None,
-                 pos_enc_dim=7,
-                 linear_hidden=512,#80,#80,
-                 pine_hidden=256,
-                 bench='101'):
+    def __init__(
+            self,
+            adj_type,
+            n_src_vocab,
+            d_word_vec,
+            n_layers,
+            n_head,
+            d_k,
+            d_v,
+            d_model,
+            d_inner,
+            pad_idx=None,
+            pos_enc_dim=7,
+            linear_hidden=512,  #80,#80,
+            pine_hidden=256,
+            bench='101'):
         super(PINATModel6, self).__init__()
 
         # backone
@@ -1061,7 +1060,6 @@ class PINATModel6(nn.Module):
         self.dropout = nn.Dropout(0.1)
         self.fc1 = nn.Linear(d_word_vec, linear_hidden, bias=False)
         self.fc2 = nn.Linear(linear_hidden, 1, bias=False)
-
 
     def forward(self, inputs):
         # get arch topology

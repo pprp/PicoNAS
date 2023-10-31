@@ -12,7 +12,7 @@ from torch.utils.data import Dataset
 from piconas.predictor.nas_embedding_suite.nb123.nas_bench_201.cell_201 import \
     Cell201
 
-BASE_PATH = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/'
+BASE_PATH = '/data/lujunl/pprp/bench/'
 
 
 class Nb201DatasetPINAT(Dataset):
@@ -30,7 +30,7 @@ class Nb201DatasetPINAT(Dataset):
         self.nb2_api = NB2API(
             BASE_PATH + 'NAS-Bench-201-v1_1-096897.pth', verbose=False)
         self.nasbench201_dict = np.load(
-            '/data2/dongpeijie/share/bench/pinat_bench_files/nasbench201/nasbench201_dict.npy',
+            '/data/lujunl/pprp/bench/nasbench201/nasbench201_dict.npy',
             allow_pickle=True).item()
         self.sample_range = list()
         self.candidate_ops = candidate_ops

@@ -21,7 +21,7 @@ Train_batch_size=10
 Eval_batch_size=50
 Train_Split_List=(100 172 424 424 4236)
 Eval_Split_List=(all all 100 all all)
-# Train_Split_List=(100) 
+# Train_Split_List=(100)
 # Eval_Split_List=(all)
 Script=./piconas/runner/runner_pinat_rank.py
 

@@ -6,11 +6,11 @@ import torch
 
 import piconas.utils.utils as utils
 from piconas.core import build_criterion, build_optimizer, build_scheduler
+from piconas.datasets.build import build_dataloader
 # from piconas.datasets.build import build_dataloader
 from piconas.evaluator import NB201Evaluator
 from piconas.models import build_model
 from piconas.trainer import build_trainer
-from piconas.datasets.build import build_dataloader
 
 
 def get_args():
@@ -141,7 +141,8 @@ def main():
             dataset='cifar10',
             num_sample=num_sample,
         )
-        kt, ps, sp = evaluator.compute_rank_by_predictive(dataloader=train_dataloader, measure_name=['swap'])
+        kt, ps, sp = evaluator.compute_rank_by_predictive(
+            dataloader=train_dataloader, measure_name=['swap'])
         print(f'num_sample: {num_sample}, kt: {kt}, ps: {ps}, sp: {sp}')
 
     utils.time_record(start)
