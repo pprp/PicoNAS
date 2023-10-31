@@ -35,7 +35,8 @@ def diffkendall_2d(x, y, alpha=0.5):
     return diffkendall
 
 
-def diffkendall(x, y, alpha=0.5):
+
+def diffkendall(x, y, alpha=0.5, beta=1.0):
     """
     Differentiable approximation of Kendall's rank correlation.
 
@@ -43,6 +44,7 @@ def diffkendall(x, y, alpha=0.5):
         x: Tensor of shape [N]
         y: Tensor of shape [N]
         alpha: Hyperparameter for sigmoid approximation
+        beta: Scaling factor for the sigmoid function
 
     Returns:
         diffkendall: Scalar value representing the correlation
@@ -59,16 +61,16 @@ def diffkendall(x, y, alpha=0.5):
     y_diff = y[:, None] - y[None, :]  # Shape: (N, N)
 
     # Numerator
-    num = (torch.sigmoid(alpha * x_diff) - torch.sigmoid(-alpha * x_diff)) * \
-          (torch.sigmoid(alpha * y_diff) - torch.sigmoid(-alpha * y_diff))
+    num = (torch.sigmoid(beta * alpha * x_diff) - torch.sigmoid(-beta * alpha * x_diff)) * \
+          (torch.sigmoid(beta * alpha * y_diff) - torch.sigmoid(-beta * alpha * y_diff))
 
     # Exclude diagonal elements from the numerator
     num = num - torch.diag(torch.diag(num))
 
     # Denominator
-    # Number of unique pairs in an N-dimensional vector is N * (N - 1) / 2
+    denom = N * (N - 1) / 2
 
     # DiffKendall
-    diffkendall = num.sum() / (N * (N - 1) / 2)
+    diffkendall = torch.tensor(-1) * num.sum() / denom
 
     return diffkendall

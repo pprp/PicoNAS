@@ -50,3 +50,5 @@ EXP:101_cifar10_PINATModel6_mse_t100_vall_e300_bs10_final	lr: 0.0001	train: 100	
 EXP:101_cifar10_PINATModel6_mse_t100_vall_e300_bs10_final	lr: 0.0001	train: 100	test: all	kendall_tau: 0.616150
 EXP:101_cifar10_PINATModel6_mse_t100_vall_e300_bs10_final	lr: 0.0001	train: 100	test: all	kendall_tau: 0.664971
 EXP:101_cifar10_PINATModel6_mse_t100_vall_e300_bs10_final	lr: 0.0001	train: 100	test: all	kendall_tau: 0.662782
+EXP:101_cifar10_PINATModel6_mse_t100_vall_e300_bs10_final	lr: 0.0001	train: 100	test: all	kendall_tau: 0.642547
+EXP:101_cifar10_PINATModel6_mse_t100_vall_e300_bs10_final	lr: 0.0001	train: 100	test: all	kendall_tau: 0.643792

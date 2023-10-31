@@ -81,7 +81,7 @@ class Nb101DatasetPINAT(Dataset):
                  data_type='train'):
         self.hash2id = dict()
         self.nb1_api = NB1API.NASBench(BASE_PATH +
-                                       'nasbench_only108_caterec.tfrecord')
+                                       'nasbench_only108.tfrecord')
         self.hash_iterator_list = list(self.nb1_api.hash_iterator())
         with h5py.File(
                 '/data/lujunl/pprp/bench/nasbench101/nasbench.hdf5',

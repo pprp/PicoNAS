@@ -11,7 +11,7 @@ if [ ! -d "./results" ]; then
 fi
 
 # arguments
-IDX=4
+IDX=0
 Loss=mse
 Bench=101
 Epochs=300
@@ -19,10 +19,10 @@ Model=PINATModel6
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=50
-Train_Split_List=(100 172 424 424 4236)
-Eval_Split_List=(all all 100 all all)
-# Train_Split_List=(100)
-# Eval_Split_List=(all)
+# Train_Split_List=(100 172 424 424 4236)
+# Eval_Split_List=(all all 100 all all)
+Train_Split_List=(100)
+Eval_Split_List=(all)
 Script=./piconas/runner/runner_pinat_rank.py
 
 for((t=0; t<${#Train_Split_List[*]}; t++)); do

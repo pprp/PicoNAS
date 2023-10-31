@@ -1002,7 +1002,6 @@ class Encoder6(nn.Module):
             zc_embed = zc_embed.view(bs, 7, -1)
         elif self.bench == '201':
             zc_embed = zc_embed.view(bs, 6, -1)
-        print(enc_output.shape, zc_embed.shape)
         enc_output += zc_embed
 
         # backone forward for n_layers (3)
