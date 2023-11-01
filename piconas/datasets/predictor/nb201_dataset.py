@@ -63,6 +63,8 @@ class Nb201DatasetPINAT(Dataset):
             raise ValueError('Wrong data_set!')
         self.max_edge_num = 6
 
+        self.preprocess_sample_range()
+
         self.zcp_nb201 = json.load(
             open(BASE_PATH + 'zc_nasbench201.json', 'r'))
         self.zcp_nb201_layerwise = json.load(
@@ -127,6 +129,24 @@ class Nb201DatasetPINAT(Dataset):
         # print('self.val_mean, self.val_std = %f, %f' % (np.mean(val_acc_list), np.std(val_acc_list)))
         # print('self.test_mean, self.test_std = %f, %f' % (np.mean(test_acc_list), np.std(test_acc_list)))
         # exit()
+
+    def preprocess_sample_range(self):
+        if self.data_set == 'ImageNet16-120':
+            idx_data_set = 'imagenet16'
+        else:
+            idx_data_set = self.data_set
+        # filter the model that can not converge
+        filtered_sample_range = []
+        for index in self.sample_range:
+            val_acc = self.nasbench201_dict[str(index)]['%s_valid' % idx_data_set]
+            test_acc = self.nasbench201_dict[str(index)]['%s_test' % idx_data_set]
+            if val_acc > 12 and test_acc > 12:
+                filtered_sample_range.append(index)
+        #     print('val acc:', val_acc, 'test acc:', test_acc)
+        #     print('index:', index)
+        # print(f'before filtering: {len(self.sample_range)}')
+        self.sample_range = filtered_sample_range
+        # print(f'after filtering: {len(self.sample_range)}')
 
     def normalize_and_process_zcp(self, normalize_zcp, log_synflow):
         if normalize_zcp:

@@ -150,7 +150,6 @@ def evaluate(test_set, test_loader, model, criterion):
     model.eval()
     meters = AverageMeterGroup()
     predicts, targets = [], []
-    adjacency_matrix = []
     with torch.no_grad():
         for step, batch in enumerate(test_loader):
             batch = to_cuda(batch, device)
@@ -174,7 +173,6 @@ def evaluate(test_set, test_loader, model, criterion):
             # make np.array to str 
             adj = batch['adjacency'].cpu().numpy()
             adj_str = np.array2string(adj)
-            adjacency_matrix.append(adj_str)
 
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
@@ -201,7 +199,7 @@ def evaluate(test_set, test_loader, model, criterion):
 
     # save it as csv or json 
     import pandas as pd
-    df = pd.DataFrame({'predicts': predicts, 'targets': targets, 'adjacency': adjacency_matrix})
+    df = pd.DataFrame({'predicts': predicts, 'targets': targets})
     df.to_csv('predicts_targets.csv', index=False)
     
     return kendall_tau, predicts, targets
