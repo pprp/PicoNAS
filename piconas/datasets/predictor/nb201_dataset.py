@@ -63,7 +63,7 @@ class Nb201DatasetPINAT(Dataset):
             raise ValueError('Wrong data_set!')
         self.max_edge_num = 6
 
-        self.preprocess_sample_range()
+        # self.preprocess_sample_range()
 
         self.zcp_nb201 = json.load(
             open(BASE_PATH + 'zc_nasbench201.json', 'r'))

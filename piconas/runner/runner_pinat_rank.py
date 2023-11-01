@@ -180,12 +180,12 @@ def evaluate(test_set, test_loader, model, criterion):
     # plot correlation figure with scatterplot 
     import matplotlib.pyplot as plt
 
-    plt.scatter(predicts, targets, alpha=0.3, s=5)
+    plt.scatter(predicts, targets, alpha=0.3, s=5, label='kendall_tau: %.4f' % kendall_tau)
 
     # Label and title
-    plt.xlabel('Predicted Values')
-    plt.ylabel('Actual Values')
-    plt.title('Correlation between Predicted and Actual Values')
+    plt.xlabel('Predicted Performance')
+    plt.ylabel('Ground Truth Performance')
+    plt.title('Correlation between Predicted and Ground Truth Performance')
 
     # Adjust axis limits
     plt.xlim(min(predicts), max(predicts))
@@ -196,6 +196,8 @@ def evaluate(test_set, test_loader, model, criterion):
 
     # Save the figure
     plt.savefig('scatterplot.png')
+
+
 
     # save it as csv or json 
     import pandas as pd
