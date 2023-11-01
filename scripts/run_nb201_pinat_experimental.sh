@@ -13,7 +13,7 @@ IDX=0
 Loss=mse
 Bench=201
 Epochs=300
-Model=PINATModel6
+Model=PINATModel7
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=10240
@@ -48,4 +48,4 @@ for((t=0; t<${#Train_Split_List[*]}; t++)); do
 
 done
 
-tail -f logdir/$EXP_Name.log
+# tail -f logdir/$EXP_Name.log

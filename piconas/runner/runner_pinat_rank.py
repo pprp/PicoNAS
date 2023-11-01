@@ -110,6 +110,10 @@ def train(train_set, train_loader, model, optimizer, lr_scheduler,
             # loss_weight_1 = 0.95  # adjust as necessary
             # loss_weight_2 = 0.05  # adjust as necessary
 
+            # print(predict.shape, target.shape)
+            if len(predict.shape) > 1:# for test only
+                predict = predict.squeeze(-1)
+            # print(predict.shape, target.shape)
             term1 = pair_loss(predict, target.float())
             term2 = loss_mse
             term3 = diffkendall(predict, target)
@@ -146,6 +150,7 @@ def evaluate(test_set, test_loader, model, criterion):
     model.eval()
     meters = AverageMeterGroup()
     predicts, targets = [], []
+    adjacency_matrix = []
     with torch.no_grad():
         for step, batch in enumerate(test_loader):
             batch = to_cuda(batch, device)
@@ -166,10 +171,39 @@ def evaluate(test_set, test_loader, model, criterion):
                     test_loader):
                 logging.info('Evaluation Step [%d/%d]  %s', step + 1,
                              len(test_loader), meters)
+            # make np.array to str 
+            adj = batch['adjacency'].cpu().numpy()
+            adj_str = np.array2string(adj)
+            adjacency_matrix.append(adj_str)
 
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
     kendall_tau = kendalltau(predicts, targets)[0]
+    # plot correlation figure with scatterplot 
+    import matplotlib.pyplot as plt
+
+    plt.scatter(predicts, targets, alpha=0.3, s=5)
+
+    # Label and title
+    plt.xlabel('Predicted Values')
+    plt.ylabel('Actual Values')
+    plt.title('Correlation between Predicted and Actual Values')
+
+    # Adjust axis limits
+    plt.xlim(min(predicts), max(predicts))
+    plt.ylim(min(targets), max(targets))
+
+    # Add a legend
+    plt.legend()
+
+    # Save the figure
+    plt.savefig('scatterplot.png')
+
+    # save it as csv or json 
+    import pandas as pd
+    df = pd.DataFrame({'predicts': predicts, 'targets': targets, 'adjacency': adjacency_matrix})
+    df.to_csv('predicts_targets.csv', index=False)
+    
     return kendall_tau, predicts, targets
 
 

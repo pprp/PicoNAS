@@ -1087,3 +1087,271 @@ class PINATModel6(nn.Module):
         out = self.dropout(out)
         out = self.fc2(out).view(-1)
         return out
+
+
+
+class Encoder7(nn.Module):
+    """ An encoder model with self attention mechanism. """
+
+    def __init__(
+            self,
+            n_src_vocab,
+            d_word_vec,
+            n_layers,
+            n_head,
+            d_k,
+            d_v,
+            d_model,
+            d_inner,
+            pad_idx,
+            pos_enc_dim=7,
+            dropout=0.1,
+            n_position=200,
+            bench='101',
+            in_features=5,
+            pine_hidden=256,
+            heads=6,
+            linear_input=512,  #80,
+            zcp_embedder_dims=[256, 512, 1024, 2048, 4096], 
+            bn_embedder_dims=[256, 512, 1024, 2048, 4096, 6144]): # 
+        super().__init__()
+
+        self.src_word_emb = nn.Embedding(
+            n_src_vocab, d_word_vec, padding_idx=pad_idx)
+        self.bench = bench
+        if self.bench == '101':
+            self.embedding_lap_pos_enc = nn.Linear(
+                pos_enc_dim, d_word_vec)  # position embedding
+        elif self.bench == '201':
+            self.pos_map = nn.Linear(pos_enc_dim, n_src_vocab + 1)
+            self.embedding_lap_pos_enc = nn.Linear(pos_enc_dim, d_word_vec)
+            self.proj_func = nn.Linear(4, 6)
+        else:
+            raise ValueError('No defined NAS bench.')
+
+        # pine structure
+        self.conv1 = GATConv(in_features, pine_hidden, heads=heads)
+        self.lin1 = torch.nn.Linear(in_features, heads * pine_hidden)
+
+        self.conv2 = GATConv(heads * pine_hidden, pine_hidden, heads=heads)
+        self.lin2 = torch.nn.Linear(heads * pine_hidden, heads * pine_hidden)
+
+        self.conv3 = GATConv(
+            heads * pine_hidden, linear_input, heads=6, concat=False)
+        self.lin3 = torch.nn.Linear(heads * pine_hidden, linear_input)
+
+        self.dropout = nn.Dropout(p=dropout)
+        self.layer_stack = nn.ModuleList([
+            EncoderLayer(
+                d_model,
+                d_inner,
+                n_head,
+                d_k,
+                d_v,
+                dropout=dropout,
+                pine_hidden=pine_hidden,
+                bench=bench) for _ in range(n_layers)
+        ])
+        self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
+
+        # zcp embedder
+        self.zcp_embedder_dims = zcp_embedder_dims
+        self.zcp_embedder = []
+        if bench == '101':
+            mid_zcp_dim = 83 * 3  # for nb101
+            emb_out_dim = 7 * linear_input  # pos_enc_dim
+        elif bench == '201':
+            mid_zcp_dim = 98 * 3  # for nb201
+            emb_out_dim = 6 * linear_input  # pos_enc_dim
+
+        for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
+            self.zcp_embedder.append(
+                nn.Sequential(
+                    nn.Linear(mid_zcp_dim, zcp_emb_dim),
+                    nn.ReLU(inplace=False),
+                    nn.Dropout(p=dropout),
+                ))
+            mid_zcp_dim = zcp_emb_dim
+        self.zcp_embedder.append(nn.Linear(mid_zcp_dim, emb_out_dim))
+        self.zcp_embedder = nn.Sequential(*self.zcp_embedder)
+
+        self.gate_block_zcp = MixerGateBlock(
+            emb_out_dim,
+            mlp_ratio=(0.5, 4.0),
+            mlp_layer=Mlp,
+            norm_layer=partial(nn.LayerNorm, eps=1e-6),
+            act_layer=nn.GELU,
+            drop=0.1)
+        
+        # bayesian network 
+        from piconas.predictor.pinat.BN.bayesian import BayesianNetwork
+        layer_indices = [mid_zcp_dim, *bn_embedder_dims, emb_out_dim]
+        self.bayesian_estimator = BayesianNetwork(layer_sizes=layer_indices)
+
+        self.gate_block_bn = MixerGateBlock(
+            emb_out_dim,
+            mlp_ratio=(0.5, 4.0),
+            mlp_layer=Mlp,
+            norm_layer=partial(nn.LayerNorm, eps=1e-6),
+            act_layer=nn.GELU,
+            drop=0.1)
+
+    def to_pyg_batch(self, xs, edge_index_list, num_nodes):
+        # import pdb; pdb.set_trace()
+        assert xs.shape[0] == len(
+            edge_index_list), f'{xs.shape[0]}, {len(edge_index_list)}'
+        assert xs.shape[0] == len(
+            num_nodes), f'{xs.shape[0]}, {len(num_nodes)}'
+        data_list = []
+        for x, e, n in zip(xs, edge_index_list, num_nodes):
+            data_list.append(torch_geometric.data.Data(x=x[:n], edge_index=e))
+        batch = torch_geometric.data.Batch.from_data_list(data_list)
+        return batch
+
+    def forward(
+            self,
+            src_seq,  # features: bs, 7
+            pos_seq,  # lapla: bs, 7, 7
+            operations,  # operations: bs, 7, 5 -> bs, 35
+            edge_index_list,  # list with different length tensor
+            num_nodes,  # num of node: bs
+            zcp_layerwise,  # zcp: bs, 83
+            src_mask=None):
+        # op emb and pos emb
+        enc_output = self.src_word_emb(src_seq)
+        if self.bench == '101':
+            pos_output = self.embedding_lap_pos_enc(
+                pos_seq)  # positional embedding
+            enc_output += pos_output  # bs, 7, 80
+            # enc_output = pos_output
+            enc_output = self.dropout(enc_output)
+        elif self.bench == '201':
+            pos_output = self.pos_map(pos_seq).transpose(1, 2)
+            pos_output = self.embedding_lap_pos_enc(pos_output)
+            enc_output += pos_output
+            enc_output = self.dropout(enc_output)
+        else:
+            raise ValueError('No defined NAS bench.')
+
+        # PITE
+        x = operations  # bs, 7, 5
+        bs = operations.shape[0]  # bs=10 for test
+        pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
+        # pyg_batch.x.shape=[70, 5]
+        # pyg_batch.edge_index.shape=[2, 84]
+        x = F.elu(
+            self.conv1(pyg_batch.x, pyg_batch.edge_index) +
+            self.lin1(pyg_batch.x))
+        x = F.elu(self.conv2(x, pyg_batch.edge_index) + self.lin2(x))
+        x = self.conv3(x, pyg_batch.edge_index) + self.lin3(x)
+        x = x.view(bs, -1, x.shape[-1])
+        if self.bench == '201':
+            x = x.transpose(1, 2)
+            x = self.proj_func(x)
+            x = x.transpose(1, 2)
+        enc_output += self.dropout(x)
+        enc_output = self.layer_norm(enc_output)
+
+        # zc embedder
+        zc_embed = self.zcp_embedder(zcp_layerwise)
+        zc_embed = self.gate_block_zcp(zc_embed)
+        # reshape
+        if self.bench == '101':
+            zc_embed = zc_embed.view(bs, 7, -1)
+        elif self.bench == '201':
+            zc_embed = zc_embed.view(bs, 6, -1)
+        enc_output += zc_embed
+
+        # bayesian network 
+        bn_embed = self.zcp_embedder(zcp_layerwise)
+        bn_embed = self.gate_block_bn(bn_embed)
+        if self.bench == '101':
+            bn_embed = bn_embed.view(bs, 7, -1)
+        elif self.bench == '201':
+            bn_embed = bn_embed.view(bs, 6, -1)
+        enc_output += bn_embed
+
+        # backone forward for n_layers (3)
+        for enc_layer in self.layer_stack:
+            enc_output, enc_slf_attn = enc_layer(
+                enc_output, edge_index_list, num_nodes, slf_attn_mask=src_mask)
+        return enc_output
+
+
+class PINATModel7(nn.Module):
+    """
+        PINATModel7 is trying to incooperate the bayesian network the estimate the uncertainty of zc. 
+        PINATModel6 is trying to combine zcp into the transformer rather than ensumble.
+        PINATModel5 + zcp embedding (naive embedder)
+        PINATModel4 is a small size model with [128,128]
+        Here We use large Model
+    """
+
+    def __init__(
+            self,
+            adj_type,
+            n_src_vocab,
+            d_word_vec,
+            n_layers,
+            n_head,
+            d_k,
+            d_v,
+            d_model,
+            d_inner,
+            pad_idx=None,
+            pos_enc_dim=7,
+            linear_hidden=512,  #80,#80,
+            pine_hidden=256,
+            bench='101'):
+        super(PINATModel7, self).__init__()
+
+        # backone
+        self.bench = bench
+        self.adj_type = adj_type
+        self.encoder = Encoder7(
+            n_src_vocab,
+            d_word_vec,
+            n_layers,
+            n_head,
+            d_k,
+            d_v,
+            d_model,
+            d_inner,
+            pad_idx,
+            pos_enc_dim=pos_enc_dim,
+            dropout=0.1,
+            pine_hidden=pine_hidden,
+            bench=bench)
+
+        # regressor
+        self.dropout = nn.Dropout(0.1)
+        self.fc1 = nn.Linear(d_word_vec, linear_hidden, bias=False)
+        self.fc2 = nn.Linear(linear_hidden, 1, bias=False)
+
+    def forward(self, inputs):
+        # get arch topology
+        numv = inputs['num_vertices']
+        assert self.adj_type == 'adj_lapla', f'only support adj_lapla but got {self.adj_type}'
+        adj_matrix = inputs['lapla'].float()  # bs, 7, 7
+        edge_index_list = []
+        for edge_num, edge_index in zip(
+                inputs['edge_num'],  # bs
+                inputs['edge_index_list']):  # bs, 2, 9
+            edge_index_list.append(edge_index[:, :edge_num])
+
+        # backone feature
+        out = self.encoder(
+            src_seq=inputs['features'],  # bs, 7
+            pos_seq=adj_matrix.float(),  # bs, 7, 7
+            operations=inputs['operations'].squeeze(0),  # bs, 7, 5
+            num_nodes=numv,
+            edge_index_list=edge_index_list,
+            zcp_layerwise=inputs['zcp_layerwise'])
+
+        # regressor forward
+        out = graph_pooling(out, numv)
+
+        out = self.fc1(out)
+        out = self.dropout(out)
+        out = self.fc2(out).view(-1)
+        return out

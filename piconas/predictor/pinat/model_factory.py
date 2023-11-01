@@ -1,6 +1,8 @@
 from piconas.predictor.pinat.pinat_model import (PINATModel1, PINATModel2,
                                                  PINATModel3, PINATModel4,
-                                                 PINATModel5, PINATModel6)
+                                                 PINATModel5, PINATModel6,
+                                                 PINATModel7)
+from piconas.predictor.pinat.BN.bayesian import BayesianNetwork
 
 _name2model = {
     'PINATModel1': PINATModel1,  # PINAT + ZCP
@@ -11,6 +13,7 @@ _name2model = {
     PINATModel5,  # PINAT + ZCP Layerwise + Gating + Larger Model
     'PINATModel6':
     PINATModel6,  # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder
+    'PINATModel7': PINATModel7, # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder + bayesian network  
 }
 
 
@@ -35,6 +38,14 @@ def create_model(args):
 
     return net
 
+
+# def create_model(args):
+#     if args.bench == '101':
+#         layer_sizes = [83 * 3, 100, 20, 1]
+#     elif args.bench == '201':
+#         layer_sizes = [98 * 3, 1024, 512, 256, 1]
+#     net = BayesianNetwork(layer_sizes=layer_sizes)
+#     return net
 
 def create_nb201_model():
     pos_enc_dim_dict = {'101': 7, '201': 4}

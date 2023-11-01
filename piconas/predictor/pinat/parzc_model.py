@@ -1,9 +1,3 @@
-import argparse
-import math
-import os
-import pickle
-import time
-
 # from dataset_matrix import Dataset_Train, Dataset_Darts
 import numpy as np
 import torch
@@ -11,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from utils import AverageMeterGroup, convert_to_genotype, get_logger, to_cuda
+
 
 
 class DANN(nn.Module):
@@ -28,8 +22,6 @@ class DANN(nn.Module):
         self.domain_classifier.add_module('d_softmax', nn.LogSoftmax(dim=1))
 
     def forward(self, input_feature):
-        # input_feature = input_feature.view(-1, self.input_size)
-        # input_feature = input_feature.view(-1)
         domain_output = self.domain_classifier(input_feature)
 
         return domain_output

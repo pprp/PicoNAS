@@ -345,7 +345,6 @@ class Nb201DatasetPINAT(Dataset):
         zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
 
         result = {
-            # "num_vertices": n,
             'num_vertices':
             4,
             'edge_num':
