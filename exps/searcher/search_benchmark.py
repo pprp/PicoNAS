@@ -1,3 +1,5 @@
+# find the best architecture based on the predictor
+
 import logging
 import os
 import sys
@@ -9,31 +11,31 @@ import torch.nn as nn
 import torch.optim as optim
 from scipy.stats import kendalltau
 
-from piconas.core.losses.diffkd import diffkendall
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
-from piconas.predictor.pinat.model_factory import create_model
+from piconas.predictor.pinat.model_factory import (create_model,
+                                                   create_nb201_model)
 from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
                                  to_cuda)
 
 parser = ArgumentParser()
 # exp and dataset
-parser.add_argument('--exp_name', type=str, default='PINAT')
-parser.add_argument('--bench', type=str, default='101')
-parser.add_argument('--train_split', type=str, default='100')
+parser.add_argument('--exp_name', type=str, default='PINAT7')
+parser.add_argument('--bench', type=str, default='201')
+parser.add_argument('--train_split', type=str, default='78')
 parser.add_argument('--eval_split', type=str, default='all')
 parser.add_argument('--dataset', type=str, default='cifar10')
 # training settings
 parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--gpu_id', type=int, default=0)
+parser.add_argument('--gpu_id', type=int, default=1)
 parser.add_argument('--epochs', default=300, type=int)
 parser.add_argument('--lr', default=1e-4, type=float)
 parser.add_argument('--wd', default=1e-3, type=float)
 parser.add_argument('--train_batch_size', default=10, type=int)
-parser.add_argument('--eval_batch_size', default=50, type=int)
+parser.add_argument('--eval_batch_size', default=10240, type=int)
 parser.add_argument('--train_print_freq', default=1e5, type=int)
 parser.add_argument('--eval_print_freq', default=10, type=int)
-parser.add_argument('--model_name', type=str, default='PINATModel1')
+parser.add_argument('--model_name', type=str, default='PINATModel7')
 args = parser.parse_args()
 
 # initialize log info
@@ -75,8 +77,8 @@ def check_arguments():
         test_splits = ['all']
     else:
         raise ValueError('No defined NAS bench!')
-    assert args.train_split in train_splits
-    assert args.eval_split in test_splits
+    assert args.train_split in train_splits, f'{args.train_split} not in {train_splits}'
+    assert args.eval_split in test_splits, f'{args.eval_split} not in {test_splits}'
 
 
 def pair_loss(outputs, labels):
@@ -90,60 +92,6 @@ def pair_loss(outputs, labels):
     new_tmp = tmp - eye_tmp
     loss = torch.sum(new_tmp) / (outputs.shape[0] * (outputs.shape[0] - 1))
     return loss
-
-
-def train(train_set, train_loader, model, optimizer, lr_scheduler,
-          criterion1: nn.MSELoss, criterion2: PairwiseRankLoss):
-    model.train()
-    for epoch in range(args.epochs):
-        lr = optimizer.param_groups[0]['lr']
-        meters = AverageMeterGroup()
-
-        for step, batch in enumerate(train_loader):
-            batch = to_cuda(batch, device)
-            target = batch['val_acc']
-            predict = model(batch)
-
-            # Compute the losses
-            loss_mse = criterion1(predict, target.float())
-
-            # loss_weight_1 = 0.95  # adjust as necessary
-            # loss_weight_2 = 0.05  # adjust as necessary
-
-            # print(predict.shape, target.shape)
-            if len(predict.shape) > 1:# for test only
-                predict = predict.squeeze(-1)
-            # print(predict.shape, target.shape)
-            # term1 = pair_loss(predict, target.float())
-            # term2 = loss_mse
-            term3 = diffkendall(predict, target)
-
-            # term2 / term2.detach()
-            loss = term3  # + 0.01 * term2
-            # / term3.detach() + term2 / term2.detach()
-            # term1
-            # / term1.detach()
-            # + 0.001 * term3 / term3.detach()
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            # For logging, we can compute MSE or other metrics if desired.
-            mse = accuracy_mse(predict.squeeze(), target.squeeze(), train_set)
-            meters.update({
-                'loss': loss.item(),
-                'mse': mse.item()
-            },
-                          n=target.size(0))
-
-            if step % args.train_print_freq == 0:
-                logging.info('Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
-                             epoch + 1, args.epochs, step + 1,
-                             len(train_loader), lr, meters)
-
-        lr_scheduler.step()
-    return model
 
 
 def evaluate(test_set, test_loader, model, criterion):
@@ -170,41 +118,44 @@ def evaluate(test_set, test_loader, model, criterion):
                     test_loader):
                 logging.info('Evaluation Step [%d/%d]  %s', step + 1,
                              len(test_loader), meters)
-            # make np.array to str 
-            adj = batch['adjacency'].cpu().numpy()
-            adj_str = np.array2string(adj)
-
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
     kendall_tau = kendalltau(predicts, targets)[0]
-    # plot correlation figure with scatterplot 
-    import matplotlib.pyplot as plt
-
-    plt.scatter(predicts, targets, alpha=0.3, s=5, label='kendall_tau: %.4f' % kendall_tau)
-
-    # Label and title
-    plt.xlabel('Predicted Performance')
-    plt.ylabel('Ground Truth Performance')
-    plt.title('Correlation between Predicted and Ground Truth Performance')
-
-    # Adjust axis limits
-    plt.xlim(min(predicts), max(predicts))
-    plt.ylim(min(targets), max(targets))
-
-    # Add a legend
-    plt.legend()
-
-    # Save the figure
-    plt.savefig('scatterplot.png')
-
-
-
-    # save it as csv or json 
-    import pandas as pd
-    df = pd.DataFrame({'predicts': predicts, 'targets': targets})
-    df.to_csv('predicts_targets.csv', index=False)
-    
     return kendall_tau, predicts, targets
+
+def traverse_benchmark(test_set, test_loader, model, topN=10):
+    model.eval()
+    meters = AverageMeterGroup()
+    predicts, targets = [], []
+
+    with torch.no_grad():
+        for step, batch in enumerate(test_loader):
+            batch = to_cuda(batch, device)
+            target = batch['test_acc']
+            predict = model(batch)
+            predicts.append(predict.cpu().numpy())
+            targets.append(target.cpu().numpy())
+    
+    predicts = np.concatenate(predicts)
+    targets = np.concatenate(targets)
+
+    # plot correlation between predicts and targets 
+    import matplotlib.pyplot as plt 
+    plt.scatter(predicts, targets)
+    plt.savefig("correlation-of-predictor.png")
+    plt.clf()
+
+    # find the topN high score's index from predicts and then find the corresponding targest
+    top_indices = np.argsort(predicts)[-topN:]
+    topN_targets = targets[top_indices]
+    best_target = max(topN_targets)
+    
+    plt.scatter(predicts[top_indices], targets[top_indices])
+    plt.savefig('correlation-of-top.png')
+    plt.clf() 
+
+    print('Currently we found that the best acc of search space is:', best_target)
+    return best_target
 
 
 def main():
@@ -212,9 +163,16 @@ def main():
 
     # create dataloader and model
     train_loader, test_loader, train_set, test_set = create_dataloader(args)
-    model = create_model(args)
+
+    model = create_nb201_model()
+
+    # load model
+    ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_PINATModel7_mse_t1563_vall_e300_bs10_final_tau0.792052_ckpt.pt'
+    model.load_state_dict(
+        torch.load(ckpt_dir, map_location=torch.device('cpu')))
+
     model = model.to(device)
-    print(model)
+    # print(model)
     logging.info('PINAT params.: %f M' %
                  (sum(_param.numel() for _param in model.parameters()) / 1e6))
     logging.info('Training on NAS-Bench-%s, train_split: %s, eval_split: %s' %
@@ -222,17 +180,17 @@ def main():
 
     # define loss, optimizer, and lr_scheduler
     criterion1 = nn.MSELoss()
-    criterion2 = PairwiseRankLoss()
     optimizer = optim.Adam(
         model.parameters(), lr=args.lr, weight_decay=args.wd)
-    lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
-    # train and evaluate predictor
-    model = train(train_set, train_loader, model, optimizer, lr_scheduler,
-                  criterion1, criterion2)
+    # train and evaluate predictorß
     kendall_tau, predict_all, target_all = evaluate(test_set, test_loader,
                                                     model, criterion1)
     logging.info('Kendalltau: %.6f', kendall_tau)
+
+    # evaluate the final performance across the whole dataset 
+    best_acc = traverse_benchmark(test_set, test_loader, model, topN=10)
+    logging.info('Best Accuracy is: %.6f', best_acc)
 
     # save checkpoint
     ckpt_dir = './checkpoints/nasbench_%s/' % args.bench
