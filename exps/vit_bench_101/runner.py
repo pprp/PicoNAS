@@ -33,7 +33,7 @@ console_formatter = logging.Formatter(log_format)
 console_handler.setFormatter(console_formatter)
 logging.getLogger().addHandler(console_handler)
 
-json_path = './checkpoints/mq-bench-layerwise-zc.json'
+json_path = './checkpoints/vit-bench-layerwise-zc.json'
 
 # Create an instance of the custom dataset
 dataset = ZcDataset(json_path)
@@ -51,7 +51,7 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 # Create an instance of the MLP model and define the loss function and optimizer
 mlp_model = BaysianMLPMixer(
-    input_dim=18,
+    input_dim=58,
     sequence_length=300 - 300 % 16,
     patch_size=16,
     dim=891,

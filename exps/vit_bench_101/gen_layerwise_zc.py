@@ -98,6 +98,15 @@ if __name__ == '__main__':
 
         print(f'Finish {i + 1} th model')
 
+    # pad to max length
+    max_len = 0
+    for item in data_to_save:
+        max_len = max(max_len, len(item['layerwise_zc']))
+    for item in data_to_save:
+        item['layerwise_zc'] = item['layerwise_zc'] + [0] * (
+            max_len - len(item['layerwise_zc']))
+    print(max_len)
+
     # Save to JSON file
     with open(save_path, 'w') as f:
         json.dump(data_to_save, f)
