@@ -52,7 +52,7 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 # Create an instance of the MLP model and define the loss function and optimizer
 mlp_model = BaysianMLPMixer(
     input_dim=18,
-    sequence_length=300-300%16,
+    sequence_length=300 - 300 % 16,
     patch_size=16,
     dim=891,
     depth=7,
