@@ -1,7 +1,7 @@
 from piconas.predictor.pinat.pinat_model import (PINATModel1, PINATModel2,
                                                  PINATModel3, PINATModel4,
                                                  PINATModel5, PINATModel6,
-                                                 PINATModel7)
+                                                 PINATModel7, ParZCBMM)
 from piconas.predictor.pinat.BN.bayesian import BayesianNetwork
 
 _name2model = {
@@ -14,6 +14,7 @@ _name2model = {
     'PINATModel6':
     PINATModel6,  # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder
     'PINATModel7': PINATModel7, # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder + bayesian network  
+    'ParZCBMM': ParZCBMM,  # ZCP + BMM
 }
 
 
@@ -38,14 +39,26 @@ def create_model(args):
 
     return net
 
+def create_model_hpo(n_layers, n_head, pine_hidden, linear_hidden,
+         n_src_vocab, d_word_model, d_k_v, d_inner):
+    pos_enc_dim_dict = {'101': 7, '201': 4}
+    net = ParZCBMM(
+        bench='201',
+        pos_enc_dim=pos_enc_dim_dict['201'],
+        adj_type='adj_lapla',
+        n_layers=n_layers,
+        n_head=n_head,
+        pine_hidden=pine_hidden,
+        linear_hidden=linear_hidden,
+        n_src_vocab=n_src_vocab,
+        d_word_vec=d_word_model, # 80
+        d_k=d_k_v,
+        d_v=d_k_v,
+        d_model=d_word_model, # 80
+        d_inner=d_inner
+    )
+    return net
 
-# def create_model(args):
-#     if args.bench == '101':
-#         layer_sizes = [83 * 3, 100, 20, 1]
-#     elif args.bench == '201':
-#         layer_sizes = [98 * 3, 1024, 512, 256, 1]
-#     net = BayesianNetwork(layer_sizes=layer_sizes)
-#     return net
 
 def create_nb201_model():
     pos_enc_dim_dict = {'101': 7, '201': 4}
