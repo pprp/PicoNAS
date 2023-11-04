@@ -1,111 +1,122 @@
-import json
+import math
 
-import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, Dataset
+import torch.nn.functional as F
+from einops.layers.torch import Rearrange, Reduce
 
 
-class ZcDataset(Dataset):
+class BayesianLinear(nn.Module):
+    """Bayesian Linear Layer."""
 
-    def __init__(self, input_dict):
-        self.x_train = []
-        self.y_train = []
-        for key, value in input_dict.items():
-            self.x_train.append(value['zc_score'])
-            self.y_train.append(value['gt'])
-        self.x_train = torch.tensor(self.x_train).float()
-        self.y_train = torch.tensor(self.y_train).float()
+    def __init__(self, in_features, out_features):
+        super(BayesianLinear, self).__init__()
+        # Parameters for mean
+        self.mean = nn.Parameter(torch.Tensor(out_features, in_features))
+        # Parameters for variance (rho)
+        self.rho = nn.Parameter(torch.Tensor(out_features, in_features))
+        # Standard deviation (sigma) will be derived from rho
+        self.register_buffer('eps', torch.Tensor(out_features, in_features))
 
-    def __len__(self):
-        return len(self.x_train)
+        self.reset_parameters()
 
-    def __getitem__(self, idx):
-        return self.x_train[idx], self.y_train[idx]
+    def reset_parameters(self):
+        nn.init.kaiming_uniform_(self.mean, a=math.sqrt(5))
+        nn.init.constant_(self.rho, -5)  # It makes initial sigma close to 0
+
+    def forward(self, input):
+        # Reparameterization trick
+        self.eps.data.normal_()
+        sigma = torch.log1p(torch.exp(self.rho))
+        # W = mean + sigma * epsilon
+        W = self.mean + sigma * self.eps
+
+        return F.linear(input, W)
 
 
-# Define the MLP model as a PyTorch module
-class MLP(nn.Module):
+class BayesianMLP(nn.Module):
+    """Multilayer Perceptron with Bayesian Linear Layer."""
 
-    def __init__(self):
-        super(MLP, self).__init__()
-        self.fc1 = nn.Linear(18, 64)
-        self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, 1)
-        self.relu = nn.ReLU()
+    def __init__(self, input_size, hidden_size, output_size):
+        super(BayesianMLP, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.bayesian_fc = BayesianLinear(hidden_size,
+                                          hidden_size)  # Bayesian layer
+        self.fc2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.bayesian_fc(x))  # Pass through the Bayesian layer
+        x = self.fc2(x)
         return x
 
 
-# Define the input dictionary
-with open('./checkpoints/mq-bench-layerwise-zc.json', 'r') as f:
-    input_dict = json.load(f)
+class PreNormResidual(nn.Module):
 
-# Create an instance of the custom dataset
-dataset = ZcDataset(input_dict)
+    def __init__(self, dim, fn):
+        super().__init__()
+        self.fn = fn
+        self.norm = nn.LayerNorm(dim)
 
-# Split the data into training and testing sets
-train_size = int(0.8 * len(dataset))
-test_size = len(dataset) - train_size
-train_dataset, test_dataset = torch.utils.data.random_split(
-    dataset, [train_size, test_size])
+    def forward(self, x):
+        return self.fn(self.norm(x)) + x
 
-# Create data loaders for batch processing
-batch_size = 32
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-# Create an instance of the MLP model and define the loss function and optimizer
-mlp_model = MLP()
-loss_function = nn.MSELoss()
-optimizer = optim.Adam(mlp_model.parameters(), lr=0.002)
+def FeedForward(dim, expansion_factor=4, dropout=0., dense=nn.Linear):
+    inner_dim = int(dim * expansion_factor)
+    return nn.Sequential(
+        dense(dim, inner_dim), nn.GELU(), nn.Dropout(dropout),
+        dense(inner_dim, dim), nn.Dropout(dropout))
 
-# Move the model to GPU if available
-if torch.cuda.is_available():
-    mlp_model.cuda()
 
-# Train the model
-num_epochs = 100000
-print('Start training...')
-for epoch in range(num_epochs):
-    mlp_model.train()
-    for batch_idx, (batch_x, batch_y) in enumerate(train_loader):
-        if torch.cuda.is_available():
-            batch_x = batch_x.cuda()
-            batch_y = batch_y.cuda()
-        optimizer.zero_grad()
-        y_pred = mlp_model(batch_x)
-        loss = loss_function(y_pred, batch_y)
-        loss.backward()
-        optimizer.step()
+class BaysianMLPMixer(nn.Module):
 
-    if (epoch + 1) % 1000 == 0:
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+    def __init__(
+            self,
+            input_dim=83 * 3,  # layerwise zc
+            sequence_length=256,
+            patch_size=16,
+            dim=512,
+            depth=4,
+            emb_out_dim=14,
+            expansion_factor=4,
+            expansion_factor_token=0.5,
+            dropout=0.1):
+        super(BaysianMLPMixer, self).__init__()
+        assert sequence_length % patch_size == 0, 'sequence length must be divisible by patch size'
+        num_patches = sequence_length // patch_size
 
-print('Training completed!')
+        self.project = nn.Linear(input_dim, sequence_length)
 
-# Evaluate the model
-mlp_model.eval()
-y_pred = []
-y_true = []
-print('Start evaluation...')
-for batch_x, batch_y in test_loader:
-    if torch.cuda.is_available():
-        batch_x = batch_x.cuda()
-        batch_y = batch_y.cuda()
-    with torch.no_grad():
-        batch_pred = mlp_model(batch_x)
-        y_pred.extend(batch_pred.cpu().numpy())
-        y_true.extend(batch_y.cpu().numpy())
+        self.patch_rearrange = Rearrange('b (l p) -> b l (p)', p=patch_size)
+        self.patch_to_embedding = BayesianLinear(patch_size, dim)
+        self.mixer_blocks = nn.ModuleList([
+            nn.Sequential(
+                PreNormResidual(dim, FeedForward(dim, expansion_factor,
+                                                 dropout)),
+                PreNormResidual(
+                    dim, FeedForward(dim, expansion_factor_token, dropout)))
+            for _ in range(depth)
+        ])
+        self.layer_norm = nn.LayerNorm(dim)
+        self.reduce = Reduce('b l c -> b c', 'mean')
+        self.head = BayesianLinear(dim, dim)
 
-# Calculate the mean squared error (MSE) loss between the predicted and actual values
-mse_loss = mean_squared_error(y_true, y_pred)
+        # regressor
+        self.dropout = nn.Dropout(0.1)
+        self.fc1 = nn.Linear(dim, dim // 2, bias=False)
+        self.fc2 = nn.Linear(dim // 2, 1, bias=False)
 
-print('MSE Loss:', mse_loss)
+    def forward(self, x):
+        x = self.project(x)
+        x = self.patch_rearrange(x)
+        x = self.patch_to_embedding(x)
+        for mixer_block in self.mixer_blocks:
+            x = mixer_block(x)
+        x = self.layer_norm(x)
+        x = self.reduce(x)
+        x = self.head(x)
+        x = self.fc1(x)
+        x = self.dropout(x)
+        x = self.fc2(x)
+        return x

@@ -1,5 +1,6 @@
 import json
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -62,7 +63,7 @@ if __name__ == '__main__':
 
     data_to_save = []
 
-    for i in range(50):
+    for i in range(len(emqapi)):
         bit_cfg = emqapi.fix_bit_cfg(i)
         gt = emqapi.query_by_cfg(bit_cfg)
 
@@ -73,6 +74,12 @@ if __name__ == '__main__':
         # zip layerwise_zc and bit_cfg
         for j in range(len(layerwise_zc)):
             lw_zc_list.append(torch.mean(layerwise_zc[j]).item() * bit_cfg[j])
+
+        # apply min-max scale to layerwise_zc
+        lw_zc_list = np.array(lw_zc_list)
+        lw_zc_list = (lw_zc_list - min(lw_zc_list)) / (
+            max(lw_zc_list) - min(lw_zc_list))
+        lw_zc_list = lw_zc_list.tolist()
 
         entry = {'id': i + 1, 'layerwise_zc': lw_zc_list, 'gt': gt}
 
