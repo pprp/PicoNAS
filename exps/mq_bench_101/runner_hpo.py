@@ -42,23 +42,23 @@ json_path = './checkpoints/mq-bench-layerwise-zc.json'
 def objective(trial):
     # Sample hyperparameters to optimize
     patch_size = 16
-    max_sequence_length = 512  # Maximum sequence length
+    max_sequence_length = 1024  # Maximum sequence length
     sequence_length = trial.suggest_int('sequence_length', patch_size,
                                         max_sequence_length)
     # Ensure sequence_length is divisible by patch_size
     sequence_length -= sequence_length % patch_size
-    dim = trial.suggest_int('dim', 256, 1024)
+    dim = trial.suggest_int('dim', 256, 2048)
     depth = trial.suggest_int('depth', 2, 8)  # Use a step value of 1
     dropout = trial.suggest_float('dropout', 0.1, 0.5)
-    batch_size = trial.suggest_int('batch_size', 16, 64)
-    num_epochs = trial.suggest_int('num_epochs', 50, 150)
+    batch_size = trial.suggest_int('batch_size', 16, 128)
+    num_epochs = trial.suggest_int('num_epochs', 50, 300)
     learning_rate = trial.suggest_loguniform('learning_rate', 1e-4, 1e-2)
 
     # Create an instance of the custom dataset
     dataset = ZcDataset(json_path)
 
     # Split the data into training and testing sets
-    train_size = int(0.4 * len(dataset))
+    train_size = int(0.9 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = torch.utils.data.random_split(
         dataset, [train_size, test_size])
@@ -81,7 +81,7 @@ def objective(trial):
         expansion_factor_token=0.5,
         dropout=dropout)
 
-    loss_function = diffkendall
+    loss_function = pair_loss
     optimizer = optim.Adam(mlp_model.parameters(), lr=learning_rate)
 
     # Move the model to GPU if available

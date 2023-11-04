@@ -3,7 +3,6 @@ import os  # Added for log directory creation
 import sys
 
 import torch
-import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import mean_squared_error
 from torch.utils.data import DataLoader
@@ -22,7 +21,7 @@ os.makedirs(log_dir, exist_ok=True)
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
     filename=os.path.join(
-        log_dir, 'training_mq_bench_101_run0.log'),  # Save logs to a file
+        log_dir, 'training_mq_bench_101_run1.log'),  # Save logs to a file
     level=logging.INFO,
     format=log_format,
     datefmt='%m/%d %I:%M:%S %p')
@@ -40,37 +39,37 @@ json_path = './checkpoints/mq-bench-layerwise-zc.json'
 dataset = ZcDataset(json_path)
 
 # Split the data into training and testing sets
-train_size = int(0.4 * len(dataset))
+train_size = int(0.9 * len(dataset))
 test_size = len(dataset) - train_size
 train_dataset, test_dataset = torch.utils.data.random_split(
     dataset, [train_size, test_size])
 
 # Create data loaders for batch processing
-batch_size = 32
+batch_size = 35
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 # Create an instance of the MLP model and define the loss function and optimizer
 mlp_model = BaysianMLPMixer(
     input_dim=18,
-    sequence_length=256,
+    sequence_length=300-300%16,
     patch_size=16,
-    dim=512,
-    depth=4,
+    dim=891,
+    depth=7,
     emb_out_dim=1,
     expansion_factor=4,
     expansion_factor_token=0.5,
-    dropout=0.1)
+    dropout=0.3667)
 
 loss_function = diffkendall
-optimizer = optim.Adam(mlp_model.parameters(), lr=0.002)
+optimizer = optim.Adam(mlp_model.parameters(), lr=0.0028924995869062573)
 
 # Move the model to GPU if available
 if torch.cuda.is_available():
     mlp_model.cuda()
 
 # Train the model
-num_epochs = 100
+num_epochs = 115
 logging.info('Start training...')
 for epoch in range(num_epochs):
     mlp_model.train()
@@ -80,7 +79,7 @@ for epoch in range(num_epochs):
             batch_y = batch_y.cuda()
         optimizer.zero_grad()
         y_pred = mlp_model(batch_x)
-        loss = loss_function(y_pred.squeeze(-1), batch_y)
+        loss = pair_loss(y_pred.squeeze(-1), batch_y)
         loss.backward()
         optimizer.step()
 
