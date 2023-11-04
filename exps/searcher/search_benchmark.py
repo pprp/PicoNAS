@@ -123,6 +123,7 @@ def evaluate(test_set, test_loader, model, criterion):
     kendall_tau = kendalltau(predicts, targets)[0]
     return kendall_tau, predicts, targets
 
+
 def traverse_benchmark(test_set, test_loader, model, topN=10):
     model.eval()
     meters = AverageMeterGroup()
@@ -135,26 +136,27 @@ def traverse_benchmark(test_set, test_loader, model, topN=10):
             predict = model(batch)
             predicts.append(predict.cpu().numpy())
             targets.append(target.cpu().numpy())
-    
+
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
 
-    # plot correlation between predicts and targets 
-    import matplotlib.pyplot as plt 
+    # plot correlation between predicts and targets
+    import matplotlib.pyplot as plt
     plt.scatter(predicts, targets)
-    plt.savefig("correlation-of-predictor.png")
+    plt.savefig('correlation-of-predictor.png')
     plt.clf()
 
     # find the topN high score's index from predicts and then find the corresponding targest
     top_indices = np.argsort(predicts)[-topN:]
     topN_targets = targets[top_indices]
     best_target = max(topN_targets)
-    
+
     plt.scatter(predicts[top_indices], targets[top_indices])
     plt.savefig('correlation-of-top.png')
-    plt.clf() 
+    plt.clf()
 
-    print('Currently we found that the best acc of search space is:', best_target)
+    print('Currently we found that the best acc of search space is:',
+          best_target)
     return best_target
 
 
@@ -188,7 +190,7 @@ def main():
                                                     model, criterion1)
     logging.info('Kendalltau: %.6f', kendall_tau)
 
-    # evaluate the final performance across the whole dataset 
+    # evaluate the final performance across the whole dataset
     best_acc = traverse_benchmark(test_set, test_loader, model, topN=10)
     logging.info('Best Accuracy is: %.6f', best_acc)
 

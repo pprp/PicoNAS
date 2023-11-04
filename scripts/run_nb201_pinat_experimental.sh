@@ -24,26 +24,31 @@ Eval_Split_List=(all)
 # Script=./piconas/runner/runner_pinat.py
 Script=./piconas/runner/runner_pinat_rank.py
 
-for((t=0; t<${#Train_Split_List[*]}; t++)); do
-  # set gpu and data splits
-  GPU=$((${IDX} % 8))
-  let IDX+=1
-  Train_Split=${Train_Split_List[t]}
-  Eval_Split=${Eval_Split_List[t]}
-  EXP_Name=${Bench}_${Dataset}_${Model}_${Loss}_t${Train_Split}_v${Eval_Split}_e${Epochs}_bs${Train_batch_size}_final
+python -u ${Script} --exp_name testing --epochs $Epochs --gpu_id $IDX --model_name ${Model} \
+    --train_split 78 --eval_split all --bench ${Bench} --dataset ${Dataset} \
+    --train_batch_size 32 --eval_batch_size 512
 
-  # run
-  nohup python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \
-    --train_split ${Train_Split} --eval_split ${Eval_Split} --bench ${Bench} --dataset ${Dataset} \
-    --train_batch_size ${Train_batch_size} --eval_batch_size ${Eval_batch_size} \
-    > logdir/$EXP_Name.log 2>&1 &
 
-  echo "GPU:$GPU EXP:$EXP_Name"
-  if [ $GPU = 7 ] ; then
-      echo "sleep 30s"
-      sleep 30s
-  fi
+# for((t=0; t<${#Train_Split_List[*]}; t++)); do
+#   # set gpu and data splits
+#   GPU=$((${IDX} % 8))
+#   let IDX+=1
+#   Train_Split=${Train_Split_List[t]}
+#   Eval_Split=${Eval_Split_List[t]}
+#   EXP_Name=${Bench}_${Dataset}_${Model}_${Loss}_t${Train_Split}_v${Eval_Split}_e${Epochs}_bs${Train_batch_size}_final
 
-done
+#   # run
+#   nohup python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \
+#     --train_split ${Train_Split} --eval_split ${Eval_Split} --bench ${Bench} --dataset ${Dataset} \
+#     --train_batch_size ${Train_batch_size} --eval_batch_size ${Eval_batch_size} \
+#     > logdir/$EXP_Name.log 2>&1 &
 
-tail -f logdir/$EXP_Name.log
+#   echo "GPU:$GPU EXP:$EXP_Name"
+#   if [ $GPU = 7 ] ; then
+#       echo "sleep 30s"
+#       sleep 30s
+#   fi
+
+# done
+
+# tail -f logdir/$EXP_Name.log

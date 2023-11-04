@@ -111,7 +111,7 @@ def train(train_set, train_loader, model, optimizer, lr_scheduler,
             # loss_weight_2 = 0.05  # adjust as necessary
 
             # print(predict.shape, target.shape)
-            if len(predict.shape) > 1:# for test only
+            if len(predict.shape) > 1:  # for test only
                 predict = predict.squeeze(-1)
             # print(predict.shape, target.shape)
             # term1 = pair_loss(predict, target.float())
@@ -170,17 +170,22 @@ def evaluate(test_set, test_loader, model, criterion):
                     test_loader):
                 logging.info('Evaluation Step [%d/%d]  %s', step + 1,
                              len(test_loader), meters)
-            # make np.array to str 
+            # make np.array to str
             adj = batch['adjacency'].cpu().numpy()
             adj_str = np.array2string(adj)
 
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
     kendall_tau = kendalltau(predicts, targets)[0]
-    # plot correlation figure with scatterplot 
+    # plot correlation figure with scatterplot
     import matplotlib.pyplot as plt
 
-    plt.scatter(predicts, targets, alpha=0.3, s=5, label='kendall_tau: %.4f' % kendall_tau)
+    plt.scatter(
+        predicts,
+        targets,
+        alpha=0.3,
+        s=5,
+        label='kendall_tau: %.4f' % kendall_tau)
 
     # Label and title
     plt.xlabel('Predicted Performance')
@@ -197,13 +202,11 @@ def evaluate(test_set, test_loader, model, criterion):
     # Save the figure
     plt.savefig('scatterplot.png')
 
-
-
-    # save it as csv or json 
+    # save it as csv or json
     import pandas as pd
     df = pd.DataFrame({'predicts': predicts, 'targets': targets})
     df.to_csv('predicts_targets.csv', index=False)
-    
+
     return kendall_tau, predicts, targets
 
 

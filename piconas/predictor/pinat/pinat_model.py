@@ -1,16 +1,14 @@
 # Run1: pinat + zcp
 import collections.abc
+import math
 from functools import partial
 from itertools import repeat
 
-from functools import partial
-from einops.layers.torch import Rearrange, Reduce
-
-import math 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric.data
+from einops.layers.torch import Rearrange, Reduce
 
 from piconas.predictor.pinat.gatset_conv import GATSetConv_v5 as GATConv
 
@@ -1093,7 +1091,6 @@ class PINATModel6(nn.Module):
         return out
 
 
-
 class Encoder7(nn.Module):
     """ An encoder model with self attention mechanism. """
 
@@ -1116,8 +1113,8 @@ class Encoder7(nn.Module):
             pine_hidden=256,
             heads=6,
             linear_input=512,  #80,
-            zcp_embedder_dims=[256, 512, 1024, 2048, 4096], 
-            bn_embedder_dims=[256, 512, 1024, 2048, 4096, 6144]): # 
+            zcp_embedder_dims=[256, 512, 1024, 2048, 4096],
+            bn_embedder_dims=[256, 512, 1024, 2048, 4096, 6144]):  #
         super().__init__()
 
         self.src_word_emb = nn.Embedding(
@@ -1186,8 +1183,8 @@ class Encoder7(nn.Module):
             norm_layer=partial(nn.LayerNorm, eps=1e-6),
             act_layer=nn.GELU,
             drop=0.1)
-        
-        # bayesian network 
+
+        # bayesian network
         from piconas.predictor.pinat.BN.bayesian import BayesianNetwork
         layer_indices = [mid_zcp_dim, *bn_embedder_dims, emb_out_dim]
         self.bayesian_estimator = BayesianNetwork(layer_sizes=layer_indices)
@@ -1266,7 +1263,7 @@ class Encoder7(nn.Module):
             zc_embed = zc_embed.view(bs, 6, -1)
         enc_output += zc_embed
 
-        # bayesian network 
+        # bayesian network
         bn_embed = self.zcp_embedder(zcp_layerwise)
         bn_embed = self.gate_block_bn(bn_embed)
         if self.bench == '101':
@@ -1284,7 +1281,7 @@ class Encoder7(nn.Module):
 
 class PINATModel7(nn.Module):
     """
-        PINATModel7 is trying to incooperate the bayesian network the estimate the uncertainty of zc. 
+        PINATModel7 is trying to incooperate the bayesian network the estimate the uncertainty of zc.
         PINATModel6 is trying to combine zcp into the transformer rather than ensumble.
         PINATModel5 + zcp embedding (naive embedder)
         PINATModel4 is a small size model with [128,128]
@@ -1361,7 +1358,8 @@ class PINATModel7(nn.Module):
         return out
 
 
-# Final version: BayesianMLPMixer 
+# Final version: BayesianMLPMixer
+
 
 class BayesianLinear(nn.Module):
     """Bayesian Linear Layer."""
@@ -1374,20 +1372,20 @@ class BayesianLinear(nn.Module):
         self.rho = nn.Parameter(torch.Tensor(out_features, in_features))
         # Standard deviation (sigma) will be derived from rho
         self.register_buffer('eps', torch.Tensor(out_features, in_features))
-        
+
         self.reset_parameters()
-    
+
     def reset_parameters(self):
         nn.init.kaiming_uniform_(self.mean, a=math.sqrt(5))
         nn.init.constant_(self.rho, -5)  # It makes initial sigma close to 0
-    
+
     def forward(self, input):
         # Reparameterization trick
         self.eps.data.normal_()
         sigma = torch.log1p(torch.exp(self.rho))
         # W = mean + sigma * epsilon
         W = self.mean + sigma * self.eps
-        
+
         return F.linear(input, W)
 
 
@@ -1397,7 +1395,8 @@ class BayesianMLP(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(BayesianMLP, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-        self.bayesian_fc = BayesianLinear(hidden_size, hidden_size)  # Bayesian layer
+        self.bayesian_fc = BayesianLinear(hidden_size,
+                                          hidden_size)  # Bayesian layer
         self.fc2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
@@ -1408,6 +1407,7 @@ class BayesianMLP(nn.Module):
 
 
 class PreNormResidual(nn.Module):
+
     def __init__(self, dim, fn):
         super().__init__()
         self.fn = fn
@@ -1416,57 +1416,49 @@ class PreNormResidual(nn.Module):
     def forward(self, x):
         return self.fn(self.norm(x)) + x
 
+
 def FeedForward(dim, expansion_factor=4, dropout=0., dense=nn.Linear):
     inner_dim = int(dim * expansion_factor)
     return nn.Sequential(
-        dense(dim, inner_dim),
-        nn.GELU(),
-        nn.Dropout(dropout),
-        dense(inner_dim, dim),
-        nn.Dropout(dropout)
-    )
+        dense(dim, inner_dim), nn.GELU(), nn.Dropout(dropout),
+        dense(inner_dim, dim), nn.Dropout(dropout))
 
-def MLPMixer1D(*, sequence_length, patch_size, dim, depth, emb_out_dim, expansion_factor=4, expansion_factor_token=0.5, dropout=0.):
-    assert sequence_length % patch_size == 0, 'sequence length must be divisible by patch size'
-    num_patches = sequence_length // patch_size
-    chan_first, chan_last = partial(nn.Conv1d, kernel_size=1), nn.Linear
-
-    return nn.Sequential(
-        Rearrange('b (l p) -> b l (p)', p=patch_size),  # We only have one dimension, l, for length
-        nn.Linear(patch_size, dim),
-        *[nn.Sequential(
-            PreNormResidual(dim, FeedForward(num_patches, expansion_factor, dropout, chan_first)),
-            PreNormResidual(dim, FeedForward(dim, expansion_factor_token, dropout, chan_last))
-        ) for _ in range(depth)],
-        nn.LayerNorm(dim),
-        Reduce('b l c -> b c', 'mean'),
-        nn.Linear(dim, emb_out_dim)
-    )
 
 class BaysianMLPMixer(nn.Module):
-    def __init__(self, sequence_length=256, 
-                        patch_size=16, 
-                        dim=512, 
-                        depth=4, 
-                        emb_out_dim=10, 
-                        expansion_factor=4, expansion_factor_token=0.5, dropout=0.):
+
+    def __init__(
+            self,
+            input_dim=83 * 3,  # layerwise zc
+            sequence_length=256,
+            patch_size=16,
+            dim=512,
+            depth=4,
+            emb_out_dim=14,
+            expansion_factor=4,
+            expansion_factor_token=0.5,
+            dropout=0.1):
         super(BaysianMLPMixer, self).__init__()
         assert sequence_length % patch_size == 0, 'sequence length must be divisible by patch size'
         num_patches = sequence_length // patch_size
+
+        self.project = nn.Linear(input_dim, sequence_length)
 
         self.patch_rearrange = Rearrange('b (l p) -> b l (p)', p=patch_size)
         self.patch_to_embedding = BayesianLinear(patch_size, dim)
         self.mixer_blocks = nn.ModuleList([
             nn.Sequential(
-                PreNormResidual(dim, FeedForward(num_patches, expansion_factor, dropout)),
-                PreNormResidual(dim, FeedForward(dim, expansion_factor_token, dropout))
-            ) for _ in range(depth)
+                PreNormResidual(dim, FeedForward(dim, expansion_factor,
+                                                 dropout)),
+                PreNormResidual(
+                    dim, FeedForward(dim, expansion_factor_token, dropout)))
+            for _ in range(depth)
         ])
         self.layer_norm = nn.LayerNorm(dim)
         self.reduce = Reduce('b l c -> b c', 'mean')
         self.head = BayesianLinear(dim, emb_out_dim)
 
     def forward(self, x):
+        x = self.project(x)
         x = self.patch_rearrange(x)
         x = self.patch_to_embedding(x)
         for mixer_block in self.mixer_blocks:
@@ -1499,7 +1491,7 @@ class EncoderBlock(nn.Module):
             pine_hidden=256,
             heads=6,
             linear_input=512,  #80,
-            zcp_embedder_dims=[256, 512, 1024, 2048, 4096]): 
+            zcp_embedder_dims=[256, 512, 1024, 2048, 4096]):
         super().__init__()
 
         self.src_word_emb = nn.Embedding(
@@ -1546,18 +1538,22 @@ class EncoderBlock(nn.Module):
         if bench == '101':
             mid_zcp_dim = 83 * 3  # for nb101
             emb_out_dim = 7 * linear_input  # pos_enc_dim
-            patch_size = 7 
+            patch_size = 7
         elif bench == '201':
             mid_zcp_dim = 98 * 3  # for nb201
             emb_out_dim = 6 * linear_input  # pos_enc_dim
-            patch_size = 6 
+            patch_size = 6
 
-        self.bayesian_mlp_mixer = BaysianMLPMixer(sequence_length=mid_zcp_dim, 
-                        patch_size=patch_size, 
-                        dim=512, 
-                        depth=4, 
-                        emb_out_dim=10, 
-                        expansion_factor=4, expansion_factor_token=0.5, dropout=0.)
+        self.bayesian_mlp_mixer = BaysianMLPMixer(
+            input_dim=mid_zcp_dim,  # layerwise zc dim
+            sequence_length=256,
+            patch_size=16,
+            dim=512,
+            depth=4,
+            emb_out_dim=emb_out_dim,
+            expansion_factor=4,
+            expansion_factor_token=0.5,
+            dropout=0.)
 
     def to_pyg_batch(self, xs, edge_index_list, num_nodes):
         # import pdb; pdb.set_trace()
@@ -1586,11 +1582,11 @@ class EncoderBlock(nn.Module):
             pos_output = self.embedding_lap_pos_enc(
                 pos_seq)  # positional embedding
             enc_output += pos_output  # bs, 7, 80
-            # enc_output = pos_output
             enc_output = self.dropout(enc_output)
         elif self.bench == '201':
             pos_output = self.pos_map(pos_seq).transpose(1, 2)
             pos_output = self.embedding_lap_pos_enc(pos_output)
+            # breakpoint()
             enc_output += pos_output
             enc_output = self.dropout(enc_output)
         else:
@@ -1611,13 +1607,13 @@ class EncoderBlock(nn.Module):
             x = x.transpose(1, 2)
             x = self.proj_func(x)
             x = x.transpose(1, 2)
-        
+
         enc_output += self.dropout(x)
         enc_output = self.layer_norm(enc_output)
 
         # bayesian mlp mixer
         zc_embed = self.bayesian_mlp_mixer(zcp_layerwise)
-        
+
         # reshape
         if self.bench == '101':
             zc_embed = zc_embed.view(bs, 7, -1)
@@ -1635,7 +1631,7 @@ class EncoderBlock(nn.Module):
 class ParZCBMM(nn.Module):
     """
         ParZCBMM = transformer + bayesian mlp mixer
-        PINATModel7 is trying to incooperate the bayesian network the estimate the uncertainty of zc. 
+        PINATModel7 is trying to incooperate the bayesian network the estimate the uncertainty of zc.
         PINATModel6 is trying to combine zcp into the transformer rather than ensumble.
         PINATModel5 + zcp embedding (naive embedder)
         PINATModel4 is a small size model with [128,128]
@@ -1655,7 +1651,7 @@ class ParZCBMM(nn.Module):
             d_inner,
             pad_idx=None,
             pos_enc_dim=7,
-            linear_hidden=512,  #80, 
+            linear_hidden=512,  #80,
             pine_hidden=256,
             bench='101'):
         super(ParZCBMM, self).__init__()
@@ -1676,7 +1672,8 @@ class ParZCBMM(nn.Module):
             pos_enc_dim=pos_enc_dim,
             dropout=0.1,
             pine_hidden=pine_hidden,
-            bench=bench)
+            bench=bench,
+            linear_input=linear_hidden)
 
         # regressor
         self.dropout = nn.Dropout(0.1)

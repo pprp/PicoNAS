@@ -1,18 +1,16 @@
-from exps.mq_bench_101.resnet18 import resnet18 
-import json 
-import torch 
-import torch.nn as nn 
-from piconas.core.api.mq_bench_101 import EMQAPI 
+import json
 
+import torch
+import torch.nn as nn
+
+from exps.mq_bench_101.resnet18 import resnet18
+from piconas.core.api.mq_bench_101 import EMQAPI
 from piconas.predictor.pruners.p_utils import get_layer_metric_array
 
-emqapi = EMQAPI('./checkpoints/MQ-Bench-101-PTQ-GT.pkl', verbose=False) 
+emqapi = EMQAPI('./checkpoints/MQ-Bench-101-PTQ-GT.pkl', verbose=False)
 
 
-def compute_synflow_per_weight(net,
-                               inputs,
-                               targets,
-                               mode='param'):
+def compute_synflow_per_weight(net, inputs, targets, mode='param'):
 
     device = inputs.device
 
@@ -56,8 +54,8 @@ def compute_synflow_per_weight(net,
     return grads_abs
 
 
-if __name__ == "__main__":
-    save_path = "./checkpoints/mq-bench-layerwise-zc.json"
+if __name__ == '__main__':
+    save_path = './checkpoints/mq-bench-layerwise-zc.json'
 
     model = resnet18(num_classes=1000)
     inputs = torch.randn(4, 3, 256, 256)
@@ -65,26 +63,23 @@ if __name__ == "__main__":
     data_to_save = []
 
     for i in range(50):
-        bit_cfg = emqapi.fix_bit_cfg(i) 
+        bit_cfg = emqapi.fix_bit_cfg(i)
         gt = emqapi.query_by_cfg(bit_cfg)
 
-        layerwise_zc = compute_synflow_per_weight(net=model, inputs=inputs, targets=None)[:len(bit_cfg)]
+        layerwise_zc = compute_synflow_per_weight(
+            net=model, inputs=inputs, targets=None)[:len(bit_cfg)]
 
-        lw_zc_list = [] 
+        lw_zc_list = []
         # zip layerwise_zc and bit_cfg
         for j in range(len(layerwise_zc)):
             lw_zc_list.append(torch.mean(layerwise_zc[j]).item() * bit_cfg[j])
-        
-        entry = {
-            "id": i + 1,
-            "layerwise_zc": lw_zc_list,
-            "gt": gt
-        }
+
+        entry = {'id': i + 1, 'layerwise_zc': lw_zc_list, 'gt': gt}
 
         data_to_save.append(entry)
 
-        print(f"Finish {i + 1} th model")
+        print(f'Finish {i + 1} th model')
 
     # Save to JSON file
-    with open(save_path, "w") as f:
+    with open(save_path, 'w') as f:
         json.dump(data_to_save, f)

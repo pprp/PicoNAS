@@ -138,8 +138,10 @@ class Nb201DatasetPINAT(Dataset):
         # filter the model that can not converge
         filtered_sample_range = []
         for index in self.sample_range:
-            val_acc = self.nasbench201_dict[str(index)]['%s_valid' % idx_data_set]
-            test_acc = self.nasbench201_dict[str(index)]['%s_test' % idx_data_set]
+            val_acc = self.nasbench201_dict[str(index)]['%s_valid' %
+                                                        idx_data_set]
+            test_acc = self.nasbench201_dict[str(index)]['%s_test' %
+                                                         idx_data_set]
             if val_acc > 12 and test_acc > 12:
                 filtered_sample_range.append(index)
         #     print('val acc:', val_acc, 'test acc:', test_acc)

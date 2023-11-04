@@ -1,12 +1,14 @@
-import numpy as np
+import argparse
+import collections
 import copy
+
+import numpy as np
 from nasbench import api
 from utils import padding_zeros_darts
-import collections
-import argparse
 
 
 class ArchTinyDarts:
+
     def __init__(self, arch):
         self.arch = arch
 
@@ -14,20 +16,15 @@ class ArchTinyDarts:
     def random_arch(cls, num_internal=3, no_skip_and_none=False):
         NUM_INTERNAL = num_internal
         NUM_VERTICES = 4
-        OPS = ['none',
-               'sep_conv_3x3',
-               'dil_conv_3x3',
-               'sep_conv_5x5',
-               'dil_conv_5x5',
-               'max_pool_3x3',
-               'avg_pool_3x3',
-               'skip_connect'
-               ]
+        OPS = [
+            'none', 'sep_conv_3x3', 'dil_conv_3x3', 'sep_conv_5x5',
+            'dil_conv_5x5', 'max_pool_3x3', 'avg_pool_3x3', 'skip_connect'
+        ]
         normal = []
         reduction = []
         for i in range(NUM_INTERNAL):
             if no_skip_and_none:
-                ops = np.random.choice(range(1, len(OPS)-1), NUM_VERTICES)
+                ops = np.random.choice(range(1, len(OPS) - 1), NUM_VERTICES)
             else:
                 ops = np.random.choice(range(len(OPS)), NUM_VERTICES)
 
@@ -36,27 +33,41 @@ class ArchTinyDarts:
             # input nodes for reduce
             nodes_in_reduce = np.random.choice(range(i + 2), 2, replace=False)
 
-            normal.extend([(nodes_in_normal[0], ops[0]), (nodes_in_normal[1], ops[1])])
-            reduction.extend([(nodes_in_reduce[0], ops[2]), (nodes_in_reduce[1], ops[3])])
+            normal.extend([(nodes_in_normal[0], ops[0]),
+                           (nodes_in_normal[1], ops[1])])
+            reduction.extend([(nodes_in_reduce[0], ops[2]),
+                              (nodes_in_reduce[1], ops[3])])
         return (normal, reduction)
 
+
 class DataSetTinyDarts:
-    def __init__(self, dataset_num=int(1e6), dataset=None, no_skip_and_none=False):
+
+    def __init__(self,
+                 dataset_num=int(1e6),
+                 dataset=None,
+                 no_skip_and_none=False):
         self.dataset = 'tiny_darts'
         self.no_skip_and_none = no_skip_and_none
         self.INPUT_1 = 'c_k-2'  # num 0
         self.INPUT_2 = 'c_k-1'  # num 1
-        self.BASIC_MATRIX = [[0, 1, 1, 1, 0, 0, 0, 0],
-                             [0, 0, 0, 0, 1, 1, 0, 1],
-                             [0, 0, 0, 0, 0, 0, 1, 1],
-                             [0, 0, 0, 0, 0, 0, 0, 1],
-                             [0, 0, 0, 0, 0, 0, 1, 1],
-                             [0, 0, 0, 0, 0, 0, 0, 1],
+        self.BASIC_MATRIX = [[0, 1, 1, 1, 0, 0, 0,
+                              0], [0, 0, 0, 0, 1, 1, 0, 1],
+                             [0, 0, 0, 0, 0, 0, 1,
+                              1], [0, 0, 0, 0, 0, 0, 0, 1],
+                             [0, 0, 0, 0, 0, 0, 1,
+                              1], [0, 0, 0, 0, 0, 0, 0, 1],
                              [0, 0, 0, 0, 0, 0, 0, 1],
                              [0, 0, 0, 0, 0, 0, 0, 0]]
-        self.mapping_intermediate_node_ops = [{'input': 1},
-                                              {'input': 2, 0: 4},
-                                              {'input': 3, 0: 5, 1: 6}]
+        self.mapping_intermediate_node_ops = [{
+            'input': 1
+        }, {
+            'input': 2,
+            0: 4
+        }, {
+            'input': 3,
+            0: 5,
+            1: 6
+        }]
         self.op_integer = {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: -1}
         if dataset is not None:
             self.dataset = dataset
@@ -70,7 +81,8 @@ class DataSetTinyDarts:
         """
         data = []
         while len(data) < num:
-            archtuple = ArchTinyDarts.random_arch(no_skip_and_none=self.no_skip_and_none)
+            archtuple = ArchTinyDarts.random_arch(
+                no_skip_and_none=self.no_skip_and_none)
             data.append(archtuple)
         return data
 
@@ -83,7 +95,8 @@ class DataSetTinyDarts:
             ops = np.zeros(op_len, dtype='int8')
             # 'input' -2, 'output' -3
             input_output_integer = {'input': -2, 'output': -3}
-            ops[0], ops[-1] = input_output_integer['input'], input_output_integer['output']
+            ops[0], ops[-1] = input_output_integer[
+                'input'], input_output_integer['output']
             for position, op in enumerate(cell_tuple):
                 intermediate_node = position // 2
                 prev_node = op[0]
@@ -178,7 +191,7 @@ class DataSetTinyDarts:
                 elif op_value == 0:
                     trans_op[index] = 0
                 else:
-                    raise ValueError("ops value should be from 0 to 6.")
+                    raise ValueError('ops value should be from 0 to 6.')
             trans_ops.append(trans_op)
 
         return trans_ops
@@ -187,33 +200,37 @@ class DataSetTinyDarts:
         DartsArchitectureSet = collections.OrderedDict()
         for index, tuple_arch in enumerate(self.dataset):
             norm_matrixes, norm_ops = self.delete_useless_nodes(tuple_arch[0])
-            reduc_matrixes, reduc_ops = self.delete_useless_nodes(tuple_arch[1])
+            reduc_matrixes, reduc_ops = self.delete_useless_nodes(
+                tuple_arch[1])
 
-            padding_norm_matrixes, padding_norm_ops = padding_zeros_darts(norm_matrixes, norm_ops)
-            padding_reduc_matrixes, padding_reduc_ops = padding_zeros_darts(reduc_matrixes, reduc_ops)
+            padding_norm_matrixes, padding_norm_ops = padding_zeros_darts(
+                norm_matrixes, norm_ops)
+            padding_reduc_matrixes, padding_reduc_ops = padding_zeros_darts(
+                reduc_matrixes, reduc_ops)
 
             if transfer_ops:
                 padding_norm_ops = self.transfer_ops(padding_norm_ops)
                 padding_reduc_ops = self.transfer_ops(padding_reduc_ops)
 
-            tuple_arch_info = {'padding_norm_matrixes': padding_norm_matrixes, 'padding_norm_ops': padding_norm_ops,
-                               'padding_reduc_matrixes': padding_reduc_matrixes, 'padding_reduc_ops': padding_reduc_ops}
+            tuple_arch_info = {
+                'padding_norm_matrixes': padding_norm_matrixes,
+                'padding_norm_ops': padding_norm_ops,
+                'padding_reduc_matrixes': padding_reduc_matrixes,
+                'padding_reduc_ops': padding_reduc_ops
+            }
             DartsArchitectureSet[index] = tuple_arch_info
         return DartsArchitectureSet
 
 
 class DataSetSmallTinyDarts:
+
     def __init__(self, dataset_num=int(1e6), dataset=None):
         self.dataset = 'small_tiny_darts'
         self.INPUT_1 = 'c_k-2'  # num 0
         self.INPUT_2 = 'c_k-1'  # num 1
-        self.BASIC_MATRIX = [[0, 1, 1, 0, 0],
-                             [0, 0, 0, 1, 1],
-                             [0, 0, 0, 0, 1],
-                             [0, 0, 0, 0, 1],
-                             [0, 0, 0, 0, 0]]
-        self.mapping_intermediate_node_ops = [{'input': 1},
-                                              {'input': 2, 0: 3}]
+        self.BASIC_MATRIX = [[0, 1, 1, 0, 0], [0, 0, 0, 1, 1], [0, 0, 0, 0, 1],
+                             [0, 0, 0, 0, 1], [0, 0, 0, 0, 0]]
+        self.mapping_intermediate_node_ops = [{'input': 1}, {'input': 2, 0: 3}]
         self.op_integer = {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: -1}
         if dataset is not None:
             self.dataset = dataset
@@ -240,7 +257,8 @@ class DataSetSmallTinyDarts:
             ops = np.zeros(op_len, dtype='int8')
             # 'input' -2, 'output' -3
             input_output_integer = {'input': -2, 'output': -3}
-            ops[0], ops[-1] = input_output_integer['input'], input_output_integer['output']
+            ops[0], ops[-1] = input_output_integer[
+                'input'], input_output_integer['output']
             for position, op in enumerate(cell_tuple):
                 intermediate_node = position // 2
                 prev_node = op[0]
@@ -335,7 +353,7 @@ class DataSetSmallTinyDarts:
                 elif op_value == 0:
                     trans_op[index] = 0
                 else:
-                    raise ValueError("ops value should be from 0 to 6.")
+                    raise ValueError('ops value should be from 0 to 6.')
             trans_ops.append(trans_op)
 
         return trans_ops
@@ -344,23 +362,35 @@ class DataSetSmallTinyDarts:
         DartsArchitectureSet = collections.OrderedDict()
         for index, tuple_arch in enumerate(self.dataset):
             norm_matrixes, norm_ops = self.delete_useless_nodes(tuple_arch[0])
-            reduc_matrixes, reduc_ops = self.delete_useless_nodes(tuple_arch[1])
+            reduc_matrixes, reduc_ops = self.delete_useless_nodes(
+                tuple_arch[1])
 
-            padding_norm_matrixes, padding_norm_ops = padding_zeros_darts(norm_matrixes, norm_ops)
-            padding_reduc_matrixes, padding_reduc_ops = padding_zeros_darts(reduc_matrixes, reduc_ops)
+            padding_norm_matrixes, padding_norm_ops = padding_zeros_darts(
+                norm_matrixes, norm_ops)
+            padding_reduc_matrixes, padding_reduc_ops = padding_zeros_darts(
+                reduc_matrixes, reduc_ops)
 
             if transfer_ops:
                 padding_norm_ops = self.transfer_ops(padding_norm_ops)
                 padding_reduc_ops = self.transfer_ops(padding_reduc_ops)
 
-            tuple_arch_info = {'padding_norm_matrixes': padding_norm_matrixes, 'padding_norm_ops': padding_norm_ops,
-                               'padding_reduc_matrixes': padding_reduc_matrixes, 'padding_reduc_ops': padding_reduc_ops}
+            tuple_arch_info = {
+                'padding_norm_matrixes': padding_norm_matrixes,
+                'padding_norm_ops': padding_norm_ops,
+                'padding_reduc_matrixes': padding_reduc_matrixes,
+                'padding_reduc_ops': padding_reduc_ops
+            }
             DartsArchitectureSet[index] = tuple_arch_info
         return DartsArchitectureSet
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='NB201 test')
-    parser.add_argument('--integers2one_hot', type=bool, default=True, help='whether to transform integers -> one_hot')
+    parser.add_argument(
+        '--integers2one_hot',
+        type=bool,
+        default=True,
+        help='whether to transform integers -> one_hot')
     args = parser.parse_args()
 
     TinyDarts = DataSetSmallTinyDarts(100)

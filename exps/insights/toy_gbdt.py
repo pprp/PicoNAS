@@ -2,15 +2,15 @@ import json
 
 import matplotlib.pyplot as plt
 import numpy as np
+from nas_201_api import NASBench201API as API
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.tree import plot_tree
-from nas_201_api import NASBench201API as API 
-
-# from emq.utils.rank_consistency import kendalltau, pearson, spearman
 
 from piconas.utils.rank_consistency import kendalltau, pearson, spearman
+
+# from emq.utils.rank_consistency import kendalltau, pearson, spearman
 
 VISUALIZE = True
 
@@ -18,12 +18,12 @@ VISUALIZE = True
 with open('/data/lujunl/pprp/bench/zc_nasbench201_layerwise.json', 'rb') as f:
     input_dict = json.load(f)
 
-nb201_api = API('/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth', verbose=False)
+nb201_api = API(
+    '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth', verbose=False)
 
-ds_target = 'cifar10' # cifar100, ImageNet16-120 
+ds_target = 'cifar10'  # cifar100, ImageNet16-120
 input_dict = input_dict[ds_target]
-zc_target = 'fisher_layerwise' # grad_norm_layerwise, grasp_layerwise, l2_norm_layerwise, plain_layerwise, snip_layerwise, synflow_layerwise 
-
+zc_target = 'fisher_layerwise'  # grad_norm_layerwise, grasp_layerwise, l2_norm_layerwise, plain_layerwise, snip_layerwise, synflow_layerwise
 
 # Convert the dictionary to input features and target labels
 x_train = []
@@ -31,18 +31,19 @@ y_train = []
 for key, value in input_dict.items():
     x_train.append(value[zc_target])
     # y_train.append(value['gt'])
-    # query gt by key 
-    gt = nb201_api.get_more_info(int(key), dataset=ds_target, hp='200')['test-accuracy']
+    # query gt by key
+    gt = nb201_api.get_more_info(
+        int(key), dataset=ds_target, hp='200')['test-accuracy']
     y_train.append(gt)
 
 # breakpoint()
 
-# preprocess to find max length 
+# preprocess to find max length
 max_len = 0
 for i in range(len(x_train)):
     if len(x_train[i]) > max_len:
         max_len = len(x_train[i])
-# padding the list to the max length 
+# padding the list to the max length
 for i in range(len(x_train)):
     x_train[i] = x_train[i] + [0] * (max_len - len(x_train[i]))
 
@@ -54,7 +55,6 @@ y_train = y_train[:int(len(y_train) * ratio)]
 # Split the data into training and testing sets
 x_train, x_test, y_train, y_test = train_test_split(
     x_train, y_train, test_size=0.2, random_state=42)
-
 
 # Create a Gradient Boosting Regressor and fit it to the training data
 gbdt_model = GradientBoostingRegressor(
@@ -82,13 +82,12 @@ test_score = np.zeros((500, 1), dtype=np.float64)
 for i, y_pred in enumerate(gbdt_model.staged_predict(x_test)):
     test_score[i] = gbdt_model.loss_(y_test, y_pred)
 
-plt.figure(figsize=(15, 15)) # Increased the figure size
+plt.figure(figsize=(15, 15))  # Increased the figure size
 
 feature_importance = gbdt_model.feature_importances_
 
 norm = plt.Normalize(feature_importance.min(), feature_importance.max())
-cmap = plt.get_cmap("coolwarm")
-
+cmap = plt.get_cmap('coolwarm')
 
 sorted_idx = np.argsort(feature_importance)
 pos = np.arange(sorted_idx.shape[0]) + 1
@@ -96,6 +95,7 @@ colors = cmap(norm(feature_importance[sorted_idx]))
 
 # save to csv file with pos and feature_importance
 import pandas as pd
+
 df = pd.DataFrame({'pos': pos, 'feature_importance': feature_importance})
 df.to_csv('gbdt.csv', index=False)
 

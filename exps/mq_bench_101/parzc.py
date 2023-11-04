@@ -8,9 +8,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 
-import torch
-from torch.utils.data import Dataset
-
 
 class ZcDataset(Dataset):
 
@@ -28,6 +25,7 @@ class ZcDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.x_train[idx], self.y_train[idx]
+
 
 # Define the MLP model as a PyTorch module
 class MLP(nn.Module):

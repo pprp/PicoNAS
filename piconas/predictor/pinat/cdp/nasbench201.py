@@ -1,23 +1,26 @@
-import pickle
-import os
-import collections
-from nasbench import api
-from nas_201_api import NASBench201API as API201
-import copy
-import numpy as np
-import piconas.predictor.pinat.cdp.utils as utils
 import argparse
+import collections
+import copy
+import os
+import pickle
+
+import numpy as np
+from nas_201_api import NASBench201API as API201
+from nasbench import api
+
+import piconas.predictor.pinat.cdp.utils as utils
 
 
 class NB201():
+
     def __init__(self):
         # basic matrix for nas_bench 201
-        self.BASIC_MATRIX = [[0, 1, 1, 0, 1, 0, 0, 0],
-                             [0, 0, 0, 1, 0, 1, 0, 0],
-                             [0, 0, 0, 0, 0, 0, 1, 0],
-                             [0, 0, 0, 0, 0, 0, 1, 0],
-                             [0, 0, 0, 0, 0, 0, 0, 1],
-                             [0, 0, 0, 0, 0, 0, 0, 1],
+        self.BASIC_MATRIX = [[0, 1, 1, 0, 1, 0, 0,
+                              0], [0, 0, 0, 1, 0, 1, 0, 0],
+                             [0, 0, 0, 0, 0, 0, 1,
+                              0], [0, 0, 0, 0, 0, 0, 1, 0],
+                             [0, 0, 0, 0, 0, 0, 0,
+                              1], [0, 0, 0, 0, 0, 0, 0, 1],
                              [0, 0, 0, 0, 0, 0, 0, 1],
                              [0, 0, 0, 0, 0, 0, 0, 0]]
 
@@ -80,8 +83,13 @@ class NB201():
         return op_list
 
     def operation2integers(self, op_list):
-        dict_oper2int = {self.NULL: 0, self.CONV1X1: 1, self.CONV3X3: 2, self.AP3X3: 3}
-        module_integers = np.array([dict_oper2int[x] for x in op_list[1: -1]])
+        dict_oper2int = {
+            self.NULL: 0,
+            self.CONV1X1: 1,
+            self.CONV3X3: 2,
+            self.AP3X3: 3
+        }
+        module_integers = np.array([dict_oper2int[x] for x in op_list[1:-1]])
         return module_integers
 
     def get_all_metrics(self, ordered_dic, dataset):
@@ -89,16 +97,24 @@ class NB201():
         for index in range(len(ordered_dic)):
             final_valid_acc = ordered_dic[index][dataset]
             epoch12_time = ordered_dic[index]['cifar10_all_time']
-            op_list = self.save_arch_str2op_list(ordered_dic[index]['arch_str'])
+            op_list = self.save_arch_str2op_list(
+                ordered_dic[index]['arch_str'])
             pruned_matrix, pruned_op = self.delete_useless_node(op_list)
             if pruned_matrix is None:
                 continue
-            padding_matrix, padding_op = utils.padding_zeros(pruned_matrix, pruned_op)
+            padding_matrix, padding_op = utils.padding_zeros(
+                pruned_matrix, pruned_op)
             op_integers = self.operation2integers(padding_op)
 
-            metrics[index] = {'final_training_time': epoch12_time, 'final_valid_accuracy': final_valid_acc / 100}
-            metrics[index]['fixed_metrics'] = {'module_adjacency': padding_matrix, 'module_integers': op_integers,
-                                               'trainable_parameters': -1}
+            metrics[index] = {
+                'final_training_time': epoch12_time,
+                'final_valid_accuracy': final_valid_acc / 100
+            }
+            metrics[index]['fixed_metrics'] = {
+                'module_adjacency': padding_matrix,
+                'module_integers': op_integers,
+                'trainable_parameters': -1
+            }
         return metrics
 
     def get_main_data(self):
@@ -110,14 +126,22 @@ class NB201():
             for index in range(len(nasbench201.evaluated_indexes)):
                 info = nasbench201.query_meta_info_by_index(index, '12')
                 arch_str = info.arch_str
-                cifar10_valid = info.get_metrics('cifar10-valid', 'x-valid')['accuracy']
-                cifar10_all_time = info.get_metrics('cifar10-valid', 'x-valid')['all_time']
+                cifar10_valid = info.get_metrics('cifar10-valid',
+                                                 'x-valid')['accuracy']
+                cifar10_all_time = info.get_metrics('cifar10-valid',
+                                                    'x-valid')['all_time']
 
                 info = nasbench201.query_meta_info_by_index(index, '200')
                 cifar10 = info.get_metrics('cifar10', 'ori-test')['accuracy']
-                cifar10_valid200 = info.get_metrics('cifar10-valid', 'x-valid')['accuracy']
-                index_info = {'arch_str': arch_str, 'cifar10': cifar10, 'cifar10_valid': cifar10_valid,
-                              'cifar10_all_time': cifar10_all_time, 'cifar10_valid200': cifar10_valid200}
+                cifar10_valid200 = info.get_metrics('cifar10-valid',
+                                                    'x-valid')['accuracy']
+                index_info = {
+                    'arch_str': arch_str,
+                    'cifar10': cifar10,
+                    'cifar10_valid': cifar10_valid,
+                    'cifar10_all_time': cifar10_all_time,
+                    'cifar10_valid200': cifar10_valid200
+                }
                 ordered_dic[index] = index_info
 
             with open(tidy_file, 'wb') as file:
@@ -138,7 +162,11 @@ class NB201():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='NB201 test')
-    parser.add_argument('--integers2one_hot', type=bool, default=True, help='whether to transform integers -> one_hot')
+    parser.add_argument(
+        '--integers2one_hot',
+        type=bool,
+        default=True,
+        help='whether to transform integers -> one_hot')
     args = parser.parse_args()
 
     dataset = NB201()

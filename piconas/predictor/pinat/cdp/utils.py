@@ -1,14 +1,15 @@
-import numpy as np
-from tensorflow.python.keras.utils import to_categorical
 import copy
-from collections import namedtuple, OrderedDict
-from torch.autograd import Variable
-import torch
-import torchvision.transforms as transforms
+import logging
 import os
 import shutil
-import logging
 import sys
+from collections import OrderedDict, namedtuple
+
+import numpy as np
+import torch
+import torchvision.transforms as transforms
+from tensorflow.python.keras.utils import to_categorical
+from torch.autograd import Variable
 
 PADDING_MAX_LENGTH = 9
 
@@ -26,19 +27,28 @@ def delete_margin(matrix):
 # output: the metrics after padding
 def padding_zero_in_matrix(important_metrics, max_length=PADDING_MAX_LENGTH):
     for i in important_metrics:
-        len_operations = len(important_metrics[i]['fixed_metrics']['module_operations'])
+        len_operations = len(
+            important_metrics[i]['fixed_metrics']['module_operations'])
         if len_operations != max_length:
             # if the operations is less than max_length
             for j in range(len_operations, max_length):
-                important_metrics[i]['fixed_metrics']['module_operations'].insert(-1, 'null')
+                important_metrics[i]['fixed_metrics'][
+                    'module_operations'].insert(-1, 'null')
             # print(important_metrics[i]['fixed_metrics']['module_operations'])
 
-            adjecent_matrix = important_metrics[i]['fixed_metrics']['module_adjacency']
-            padding_matrix = np.insert(adjecent_matrix, len_operations - 1,
-                                       np.zeros([max_length - len_operations, len_operations]), axis=0)
-            padding_matrix = np.insert(padding_matrix, [len_operations - 1],
-                                       np.zeros([max_length, max_length - len_operations]), axis=1)
-            important_metrics[i]['fixed_metrics']['module_adjacency'] = padding_matrix
+            adjecent_matrix = important_metrics[i]['fixed_metrics'][
+                'module_adjacency']
+            padding_matrix = np.insert(
+                adjecent_matrix,
+                len_operations - 1,
+                np.zeros([max_length - len_operations, len_operations]),
+                axis=0)
+            padding_matrix = np.insert(
+                padding_matrix, [len_operations - 1],
+                np.zeros([max_length, max_length - len_operations]),
+                axis=1)
+            important_metrics[i]['fixed_metrics'][
+                'module_adjacency'] = padding_matrix
     return important_metrics
 
 
@@ -50,11 +60,15 @@ def padding_zeros(matrix, op_list, max_length=PADDING_MAX_LENGTH):
         for j in range(len_operations, max_length):
             op_list.insert(j - 1, 'null')
         adjecent_matrix = copy.deepcopy(matrix)
-        padding_matrix = np.insert(adjecent_matrix, len_operations - 1,
-                                   np.zeros([max_length - len_operations, len_operations]),
-                                   axis=0)
-        padding_matrix = np.insert(padding_matrix, [len_operations - 1],
-                                   np.zeros([max_length, max_length - len_operations]), axis=1)
+        padding_matrix = np.insert(
+            adjecent_matrix,
+            len_operations - 1,
+            np.zeros([max_length - len_operations, len_operations]),
+            axis=0)
+        padding_matrix = np.insert(
+            padding_matrix, [len_operations - 1],
+            np.zeros([max_length, max_length - len_operations]),
+            axis=1)
 
     return padding_matrix, op_list
 
@@ -71,7 +85,8 @@ def padding_zeros_darts(matrixes, ops, max_length=PADDING_MAX_LENGTH):
     for matrix, op in zip(matrixes, ops):
         if op is None:
             # matrix is None this case
-            padding_matrix = np.zeros(shape=[max_length, max_length], dtype='int8')
+            padding_matrix = np.zeros(
+                shape=[max_length, max_length], dtype='int8')
             tmp_op = np.zeros(shape=max_length, dtype='int8')
 
             padding_matrixes.append(padding_matrix)
@@ -85,11 +100,15 @@ def padding_zeros_darts(matrixes, ops, max_length=PADDING_MAX_LENGTH):
             for j in range(len_operations, max_length):
                 tmp_op.insert(j - 1, 0)
 
-            padding_matrix = np.insert(padding_matrix, len_operations - 1,
-                                       np.zeros([max_length - len_operations, len_operations]),
-                                       axis=0)
-            padding_matrix = np.insert(padding_matrix, [len_operations - 1],
-                                       np.zeros([max_length, max_length - len_operations]), axis=1)
+            padding_matrix = np.insert(
+                padding_matrix,
+                len_operations - 1,
+                np.zeros([max_length - len_operations, len_operations]),
+                axis=0)
+            padding_matrix = np.insert(
+                padding_matrix, [len_operations - 1],
+                np.zeros([max_length, max_length - len_operations]),
+                axis=1)
         padding_matrixes.append(padding_matrix)
         padding_ops.append(tmp_op)
     return padding_matrixes, padding_ops
@@ -150,6 +169,7 @@ def get_bit_data_darts(important_metrics, integers2one_hot=True):
 
     return X
 
+
 def get_matrix_data_darts(important_metrics):
     m, o = [], []
     for index in important_metrics:
@@ -188,7 +208,11 @@ def convert_to_genotype(arch):
         for n in cell:
             darts_arch[i].append((op_dict[n[1]], n[0]))
         i += 1
-    geno = Genotype(normal=darts_arch[0], normal_concat=[2, 3, 4, 5], reduce=darts_arch[1], reduce_concat=[2, 3, 4, 5])
+    geno = Genotype(
+        normal=darts_arch[0],
+        normal_concat=[2, 3, 4, 5],
+        reduce=darts_arch[1],
+        reduce_concat=[2, 3, 4, 5])
     return geno
 
 
@@ -196,7 +220,8 @@ def convert_to_genotype(arch):
 def drop_path(x, drop_prob):
     if drop_prob > 0.:
         keep_prob = 1. - drop_prob
-        mask = Variable(torch.cuda.FloatTensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob))
+        mask = Variable(
+            torch.cuda.FloatTensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob))
         x.div_(keep_prob)
         x.mul_(mask)
     return x
@@ -255,6 +280,7 @@ class AverageMeter:
         fmtstr = '{name}: {avg' + self.fmt + '}'
         return fmtstr.format(**self.__dict__)
 
+
 class AverageMeterGroup:
     """Average meter group for multiple average meters"""
 
@@ -264,7 +290,7 @@ class AverageMeterGroup:
     def update(self, data, n=1):
         for k, v in data.items():
             if k not in self.meters:
-                self.meters[k] = AverageMeter(k, ":4f")
+                self.meters[k] = AverageMeter(k, ':4f')
             self.meters[k].update(v, n=n)
 
     def __getattr__(self, item):
@@ -274,13 +300,13 @@ class AverageMeterGroup:
         return self.meters[item]
 
     def __str__(self):
-        return "  ".join(str(v) for v in self.meters.values())
+        return '  '.join(str(v) for v in self.meters.values())
 
     def summary(self):
-        return "  ".join(v.summary() for v in self.meters.values())
+        return '  '.join(v.summary() for v in self.meters.values())
 
 
-def accuracy(output, target, topk=(1,)):
+def accuracy(output, target, topk=(1, )):
     maxk = max(topk)
     batch_size = target.size(0)
 
@@ -296,6 +322,7 @@ def accuracy(output, target, topk=(1,)):
 
 
 class Cutout(object):
+
     def __init__(self, length):
         self.length = length
 
@@ -310,7 +337,7 @@ class Cutout(object):
         x1 = np.clip(x - self.length // 2, 0, w)
         x2 = np.clip(x + self.length // 2, 0, w)
 
-        mask[y1: y2, x1: x2] = 0.
+        mask[y1:y2, x1:x2] = 0.
         mask = torch.from_numpy(mask)
         mask = mask.expand_as(img)
         img *= mask
@@ -338,7 +365,9 @@ def _data_transforms_cifar10(args):
 
 
 def count_parameters_in_MB(model):
-    return np.sum(np.prod(v.size()) for name, v in model.named_parameters() if "auxiliary" not in name) / 1e6
+    return np.sum(
+        np.prod(v.size()) for name, v in model.named_parameters()
+        if 'auxiliary' not in name) / 1e6
 
 
 def save_checkpoint(state, is_best, save):
@@ -370,8 +399,8 @@ def load(model, model_path):
 
 
 def get_logger():
-    time_format = "%m/%d %H:%M:%S"
-    fmt = "[%(asctime)s] %(levelname)s (%(name)s) %(message)s"
+    time_format = '%m/%d %H:%M:%S'
+    fmt = '[%(asctime)s] %(levelname)s (%(name)s) %(message)s'
     formatter = logging.Formatter(fmt, time_format)
     logger = logging.getLogger()
     if logger.hasHandlers():
@@ -382,6 +411,7 @@ def get_logger():
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
     return logger
+
 
 def to_cuda(obj):
     if torch.is_tensor(obj):

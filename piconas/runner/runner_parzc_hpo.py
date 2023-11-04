@@ -4,6 +4,7 @@ import sys
 from argparse import ArgumentParser
 
 import numpy as np
+import optuna
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -19,18 +20,18 @@ from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
 parser = ArgumentParser()
 # exp and dataset
 parser.add_argument('--exp_name', type=str, default='ParZCBMM')
-parser.add_argument('--bench', type=str, default='101')
-parser.add_argument('--train_split', type=str, default='100')
+parser.add_argument('--bench', type=str, default='201')
+parser.add_argument('--train_split', type=str, default='78')
 parser.add_argument('--eval_split', type=str, default='all')
 parser.add_argument('--dataset', type=str, default='cifar10')
 # training settings
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
-parser.add_argument('--epochs', default=300, type=int)
+parser.add_argument('--epochs', default=100, type=int)
 parser.add_argument('--lr', default=1e-4, type=float)
 parser.add_argument('--wd', default=1e-3, type=float)
-parser.add_argument('--train_batch_size', default=10, type=int)
-parser.add_argument('--eval_batch_size', default=50, type=int)
+parser.add_argument('--train_batch_size', default=20, type=int)
+parser.add_argument('--eval_batch_size', default=512, type=int)
 parser.add_argument('--train_print_freq', default=1e5, type=int)
 parser.add_argument('--eval_print_freq', default=10, type=int)
 parser.add_argument('--model_name', type=str, default='ParZCBMM')
@@ -51,6 +52,9 @@ if torch.cuda.is_available():
     device = torch.device('cuda')
 else:
     device = torch.device('cpu')
+
+# create dataloader and model
+train_loader, test_loader, train_set, test_set = create_dataloader(args)
 
 
 def check_arguments():
@@ -111,7 +115,7 @@ def train(train_set, train_loader, model, optimizer, lr_scheduler,
             # loss_weight_2 = 0.05  # adjust as necessary
 
             # print(predict.shape, target.shape)
-            if len(predict.shape) > 1:# for test only
+            if len(predict.shape) > 1:  # for test only
                 predict = predict.squeeze(-1)
             # print(predict.shape, target.shape)
             # term1 = pair_loss(predict, target.float())
@@ -170,17 +174,22 @@ def evaluate(test_set, test_loader, model, criterion):
                     test_loader):
                 logging.info('Evaluation Step [%d/%d]  %s', step + 1,
                              len(test_loader), meters)
-            # make np.array to str 
+            # make np.array to str
             adj = batch['adjacency'].cpu().numpy()
             adj_str = np.array2string(adj)
 
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
     kendall_tau = kendalltau(predicts, targets)[0]
-    # plot correlation figure with scatterplot 
+    # plot correlation figure with scatterplot
     import matplotlib.pyplot as plt
 
-    plt.scatter(predicts, targets, alpha=0.3, s=5, label='kendall_tau: %.4f' % kendall_tau)
+    plt.scatter(
+        predicts,
+        targets,
+        alpha=0.3,
+        s=5,
+        label='kendall_tau: %.4f' % kendall_tau)
 
     # Label and title
     plt.xlabel('Predicted Performance')
@@ -197,42 +206,27 @@ def evaluate(test_set, test_loader, model, criterion):
     # Save the figure
     plt.savefig('scatterplot.png')
 
-
-
-    # save it as csv or json 
+    # save it as csv or json
     import pandas as pd
     df = pd.DataFrame({'predicts': predicts, 'targets': targets})
     df.to_csv('predicts_targets.csv', index=False)
-    
+
     return kendall_tau, predicts, targets
 
 
-def main():
-    check_arguments()
+def objective_function(hyperparameters):
+    n_layers = hyperparameters['n_layers']
+    n_head = hyperparameters['n_head']
+    pine_hidden = hyperparameters['pine_hidden']
+    linear_hidden = hyperparameters['d_word_model']
+    d_word_model = hyperparameters['d_word_model']
+    d_k_v = hyperparameters['d_k_v']
+    d_inner = hyperparameters['d_inner']
 
-    # create dataloader and model
-    train_loader, test_loader, train_set, test_set = create_dataloader(args)
-
-    # define the model and hyperparameters 
-    model = create_model_hpo(n_layers=3, n_head=4, pine_hidden=16, 
-        linear_hidden=96, n_src_vocab=5, d_word_model=512, d_k_v=64, d_inner=512)
-    param_grid = {
-        'n_layers': [2, 3, 4, 5],
-        'n_head': [3, 4, 8],
-        'pine_hidden': [8, 16, 32, 64],
-        'linear_hidden': [32, 64, 96, 128],
-        'n_src_vocab': [5, 10, 15],
-        'd_word_model': [256, 512, 1024],
-        'd_k_v': [32, 64, 128],
-        'd_inner': [256, 512, 1024],
-   }
+    model = create_model_hpo(n_layers, n_head, pine_hidden, linear_hidden,
+                             d_word_model, d_k_v, d_inner)
 
     model = model.to(device)
-
-    logging.info('ParZCBMM params.: %f M' %
-                 (sum(_param.numel() for _param in model.parameters()) / 1e6))
-    logging.info('Training on NAS-Bench-%s, train_split: %s, eval_split: %s' %
-                 (args.bench, args.train_split, args.eval_split))
 
     # define loss, optimizer, and lr_scheduler
     criterion1 = nn.MSELoss()
@@ -247,20 +241,50 @@ def main():
                   criterion1, criterion2)
     kendall_tau, predict_all, target_all = evaluate(test_set, test_loader,
                                                     model, criterion1)
-    logging.info('Kendalltau: %.6f', kendall_tau)
 
-    # save checkpoint
-    ckpt_dir = './checkpoints/nasbench_%s/' % args.bench
-    ckpt_path = os.path.join(
-        ckpt_dir, '%s_tau%.6f_ckpt.pt' % (args.exp_name, kendall_tau))
-    torch.save(model.state_dict(), ckpt_path)
-    logging.info('Save model to %s' % ckpt_path)
+    return kendall_tau
 
-    # write results
-    with open('./results/preds_%s.txt' % args.bench, 'a') as f:
-        f.write('EXP:%s\tlr: %s\ttrain: %s\ttest: %s\tkendall_tau: %.6f\n' %
-                (args.exp_name, args.lr, args.train_split, args.eval_split,
-                 kendall_tau))
+
+def objective(trial):
+    # Define the hyperparameters
+    hyperparameters = {
+        'n_layers': trial.suggest_categorical('n_layers', [2, 3, 4, 5]),
+        'n_head': trial.suggest_categorical('n_head', [3, 4, 8]),
+        'pine_hidden': trial.suggest_categorical('pine_hidden',
+                                                 [8, 16, 32, 64]),
+        # 'linear_hidden': trial.suggest_categorical('linear_hidden', [32, 64, 96, 128]),
+        'd_word_model': trial.suggest_categorical('d_word_model',
+                                                  [256, 512, 1024]),
+        'd_k_v': trial.suggest_categorical('d_k_v', [16, 32, 64, 128]),
+        'd_inner': trial.suggest_categorical('d_inner', [256, 512, 1024]),
+    }
+
+    # Use the objective function as you've defined it
+    return objective_function(hyperparameters)
+
+
+def main():
+    check_arguments()
+
+    # define search space
+    search_space = {
+        'n_layers': [2, 3, 4, 5],
+        'n_head': [3, 4, 8],
+        'pine_hidden': [8, 16, 32, 64],
+        # 'linear_hidden': [32, 64, 96, 128],
+        'd_word_model': [256, 512, 1024],
+        'd_k_v': [32, 64, 128],
+        'd_inner': [256, 512, 1024],
+    }
+
+    # Setup the Optuna study, which will conduct the Bayesian optimization
+    study = optuna.create_study(
+        direction='maximize')  # or 'minimize' if you're minimizing a loss
+    study.optimize(objective, n_trials=100)
+
+    # After the study is completed, you can get the best parameters and the best value (e.g., kendall tau)
+    logging.info('Best HP: %s', study.best_params)
+    logging.info('Best Kendalltau: %.6f', study.best_value)
 
 
 if __name__ == '__main__':

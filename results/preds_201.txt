@@ -183,3 +183,4 @@ EXP:201_cifar10_PINATModel7_mse_t1563_vall_e300_bs10_final	lr: 0.0001	train: 156
 EXP:PINAT7	lr: 0.0001	train: 78	test: all	kendall_tau: 0.792052
 EXP:PINAT7	lr: 0.0001	train: 78	test: all	kendall_tau: 0.792052
 EXP:PINAT7	lr: 0.0001	train: 78	test: all	kendall_tau: 0.792052
+EXP:testing	lr: 0.0001	train: 78	test: all	kendall_tau: 0.673103

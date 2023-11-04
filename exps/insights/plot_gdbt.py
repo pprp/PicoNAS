@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Load data from 'gbdt.csv'
 data = np.loadtxt('gbdt.csv', delimiter=',', skiprows=1)
@@ -8,7 +8,7 @@ pos = data[:, 0]
 
 # Create a figure with adjusted colors and styles
 plt.figure(figsize=(9, 6))
-cmap = plt.get_cmap("viridis")
+cmap = plt.get_cmap('viridis')
 
 # Sort the data by feature importance
 sorted_idx = np.argsort(feature_importance)
@@ -30,7 +30,10 @@ plt.xticks(x_ticks, x_ticks, fontsize=14, rotation=45)
 plt.yscale('log')
 
 # Add a colorbar for reference
-sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=min(feature_importance), vmax=max(feature_importance)))
+sm = plt.cm.ScalarMappable(
+    cmap=cmap,
+    norm=plt.Normalize(
+        vmin=min(feature_importance), vmax=max(feature_importance)))
 sm.set_array([])
 cbar = plt.colorbar(sm, orientation='vertical', pad=0.02)
 

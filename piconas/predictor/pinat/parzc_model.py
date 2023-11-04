@@ -7,7 +7,6 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 
-
 class DANN(nn.Module):
 
     def __init__(self, input_size=128):

@@ -1,12 +1,14 @@
+import argparse
+import collections
+import copy
+
 import numpy as np
 from nasbench import api
-import copy
-from utils import padding_zeros_darts, get_bit_data_darts
-import collections
-import argparse
+from utils import get_bit_data_darts, padding_zeros_darts
 
 
 class ArchDarts:
+
     def __init__(self, arch):
         self.arch = arch
 
@@ -16,15 +18,10 @@ class ArchDarts:
         # from the DARTS repository
         # https://github.com/quark0/darts
         NUM_VERTICES = 4
-        OPS = ['none',
-               'sep_conv_3x3',
-               'dil_conv_3x3',
-               'sep_conv_5x5',
-               'dil_conv_5x5',
-               'max_pool_3x3',
-               'avg_pool_3x3',
-               'skip_connect'
-               ]
+        OPS = [
+            'none', 'sep_conv_3x3', 'dil_conv_3x3', 'sep_conv_5x5',
+            'dil_conv_5x5', 'max_pool_3x3', 'avg_pool_3x3', 'skip_connect'
+        ]
         normal = []
         reduction = []
         for i in range(NUM_VERTICES):
@@ -35,12 +32,15 @@ class ArchDarts:
             # input nodes for reduce
             nodes_in_reduce = np.random.choice(range(i + 2), 2, replace=False)
 
-            normal.extend([(nodes_in_normal[0], ops[0]), (nodes_in_normal[1], ops[1])])
-            reduction.extend([(nodes_in_reduce[0], ops[2]), (nodes_in_reduce[1], ops[3])])
+            normal.extend([(nodes_in_normal[0], ops[0]),
+                           (nodes_in_normal[1], ops[1])])
+            reduction.extend([(nodes_in_reduce[0], ops[2]),
+                              (nodes_in_reduce[1], ops[3])])
         return (normal, reduction)
 
 
 class DataSetDarts:
+
     def __init__(self, dataset_num=int(1e6), dataset=None):
         self.dataset = 'darts'
         self.INPUT_1 = 'c_k-2'  # num 0
@@ -58,10 +58,21 @@ class DataSetDarts:
                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
         # a mapping between genotype and op_list
-        self.mapping_intermediate_node_ops = [{'input': 1},
-                                              {'input': 2, 0: 5},
-                                              {'input': 3, 0: 6, 1: 8},
-                                              {'input': 4, 0: 7, 1: 9, 2: 10}]
+        self.mapping_intermediate_node_ops = [{
+            'input': 1
+        }, {
+            'input': 2,
+            0: 5
+        }, {
+            'input': 3,
+            0: 6,
+            1: 8
+        }, {
+            'input': 4,
+            0: 7,
+            1: 9,
+            2: 10
+        }]
         self.op_integer = {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: -1}
         if dataset is not None:
             self.dataset = dataset
@@ -88,7 +99,8 @@ class DataSetDarts:
             ops = np.zeros(12, dtype='int8')
             # 'input' -2, 'output' -3
             input_output_integer = {'input': -2, 'output': -3}
-            ops[0], ops[-1] = input_output_integer['input'], input_output_integer['output']
+            ops[0], ops[-1] = input_output_integer[
+                'input'], input_output_integer['output']
             for position, op in enumerate(cell_tuple):
                 intermediate_node = position // 2
                 prev_node = op[0]
@@ -183,7 +195,7 @@ class DataSetDarts:
                 elif op_value == 0:
                     trans_op[index] = 0
                 else:
-                    raise ValueError("ops value should be from 0 to 6.")
+                    raise ValueError('ops value should be from 0 to 6.')
             trans_ops.append(trans_op)
 
         return trans_ops
@@ -192,24 +204,35 @@ class DataSetDarts:
         DartsArchitectureSet = collections.OrderedDict()
         for index, tuple_arch in enumerate(self.dataset):
             norm_matrixes, norm_ops = self.delete_useless_nodes(tuple_arch[0])
-            reduc_matrixes, reduc_ops = self.delete_useless_nodes(tuple_arch[1])
+            reduc_matrixes, reduc_ops = self.delete_useless_nodes(
+                tuple_arch[1])
 
-            padding_norm_matrixes, padding_norm_ops = padding_zeros_darts(norm_matrixes, norm_ops)
-            padding_reduc_matrixes, padding_reduc_ops = padding_zeros_darts(reduc_matrixes, reduc_ops)
+            padding_norm_matrixes, padding_norm_ops = padding_zeros_darts(
+                norm_matrixes, norm_ops)
+            padding_reduc_matrixes, padding_reduc_ops = padding_zeros_darts(
+                reduc_matrixes, reduc_ops)
 
             if transfer_ops:
                 padding_norm_ops = self.transfer_ops(padding_norm_ops)
                 padding_reduc_ops = self.transfer_ops(padding_reduc_ops)
 
-            tuple_arch_info = {'padding_norm_matrixes': padding_norm_matrixes, 'padding_norm_ops': padding_norm_ops,
-                               'padding_reduc_matrixes': padding_reduc_matrixes, 'padding_reduc_ops': padding_reduc_ops}
+            tuple_arch_info = {
+                'padding_norm_matrixes': padding_norm_matrixes,
+                'padding_norm_ops': padding_norm_ops,
+                'padding_reduc_matrixes': padding_reduc_matrixes,
+                'padding_reduc_ops': padding_reduc_ops
+            }
             DartsArchitectureSet[index] = tuple_arch_info
         return DartsArchitectureSet
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='NB201 test')
-    parser.add_argument('--integers2one_hot', type=bool, default=True, help='whether to transform integers -> one_hot')
+    parser.add_argument(
+        '--integers2one_hot',
+        type=bool,
+        default=True,
+        help='whether to transform integers -> one_hot')
     args = parser.parse_args()
 
     Darts = DataSetDarts(100)
