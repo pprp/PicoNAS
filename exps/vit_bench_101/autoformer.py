@@ -1,12 +1,9 @@
 import math
 from abc import ABCMeta, abstractmethod
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-# from ..build import MODEL
-from pycls.core.config import cfg
 from timm.models.layers import DropPath, trunc_normal_
 
 
@@ -23,19 +20,18 @@ class BaseTransformerModel(nn.Module, metaclass=ABCMeta):
     def __init__(self):
         super(BaseTransformerModel, self).__init__()
         # Base configs for Transformers
-        self.img_size = cfg.MODEL.IMG_SIZE
-        self.patch_size = cfg.TRANSFORMER.PATCH_SIZE
-        self.patch_stride = cfg.TRANSFORMER.PATCH_STRIDE
-        self.patch_padding = cfg.TRANSFORMER.PATCH_PADDING
-        self.in_channels = cfg.MODEL.IN_CHANNELS
-        # self.num_classes = cfg.MODEL.NUM_CLASSES
-        self.hidden_dim = cfg.TRANSFORMER.HIDDEN_DIM
-        self.depth = cfg.TRANSFORMER.DEPTH
-        self.num_heads = cfg.TRANSFORMER.NUM_HEADS
-        self.mlp_ratio = cfg.TRANSFORMER.MLP_RATIO
-        self.drop_rate = cfg.TRANSFORMER.DROP_RATE
-        self.drop_path_rate = cfg.TRANSFORMER.DROP_PATH_RATE
-        self.attn_drop_rate = cfg.TRANSFORMER.ATTENTION_DROP_RATE
+        self.img_size = 224
+        self.patch_size = 16
+        self.patch_stride = 16
+        self.patch_padding = 0
+        self.in_channels = 3
+        self.hidden_dim = [192, 216, 240]
+        self.depth = [12, 13, 14]
+        self.num_heads = [3, 4]
+        self.mlp_ratio = [3.5, 4.0]
+        self.drop_rate = 0
+        self.drop_path_rate = 0.1
+        self.attn_drop_rate = 0
 
         # Calculate the dimension of features in each block
         if isinstance(self.hidden_dim, int):
@@ -70,7 +66,7 @@ class BaseTransformerModel(nn.Module, metaclass=ABCMeta):
 
 
 def layernorm(w_in):
-    return nn.LayerNorm(w_in, eps=cfg.TRANSFORMER.LN_EPS)
+    return nn.LayerNorm(w_in, eps=1e-6)
 
 
 class MultiheadAttention(nn.Module):
@@ -219,7 +215,6 @@ def gelu(x: torch.Tensor) -> torch.Tensor:
         return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
 
 
-@MODEL.register()
 class AutoFormerSub(BaseTransformerModel):
 
     def __init__(self, arch_config=None, num_classes=None):
@@ -233,15 +228,15 @@ class AutoFormerSub(BaseTransformerModel):
             self.depth = arch_config['depth']
 
         else:
-            self.num_heads = cfg.AUTOFORMER_SUBNET.NUM_HEADS
-            self.mlp_ratio = cfg.AUTOFORMER_SUBNET.MLP_RATIO
-            self.hidden_dim = cfg.AUTOFORMER_SUBNET.HIDDEN_DIM
-            self.depth = cfg.AUTOFORMER_SUBNET.DEPTH
+            self.num_heads = [3, 4]
+            self.mlp_ratio = [3.5, 4.0]
+            self.hidden_dim = [192, 216, 240]
+            self.depth = [12, 13, 14]
 
         if num_classes:
             self.num_classes = num_classes
         else:
-            self.num_classes = cfg.MODEL.NUM_CLASSES
+            self.num_classes = 100
 
         # print('hidden dim is:'. self.hidden_dim)
         self.feature_dims = [self.hidden_dim] * self.depth
@@ -252,7 +247,7 @@ class AutoFormerSub(BaseTransformerModel):
             in_channels=self.in_channels,
             out_channels=self.hidden_dim)
         self.num_patches = self.patch_embed.num_patches
-        self.num_tokens = 1 + cfg.DISTILLATION.ENABLE_LOGIT
+        self.num_tokens = 1
 
         self.blocks = nn.ModuleList()
         dpr = [
@@ -293,13 +288,6 @@ class AutoFormerSub(BaseTransformerModel):
 
         self.distill_token = None
         self.distill_head = None
-        if cfg.DISTILLATION.ENABLE_LOGIT:
-            self.distill_token = nn.Parameter(
-                torch.zeros(1, 1, self.hidden_dim))
-            self.distill_head = nn.Linear(self.hidden_dim, self.num_classes)
-            nn.init.zeros_(self.distill_head.weight)
-            nn.init.constant_(self.distill_head.bias, 0)
-            trunc_normal_(self.distill_token, std=.02)
 
     def _feature_hook(self, module, inputs, outputs):
         feat_size = int(self.patch_embed.num_patches**0.5)

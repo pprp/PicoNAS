@@ -1,5 +1,7 @@
 from typing import Dict, List
 
+import torch
+
 
 class ViTBenchAPI:
 
@@ -46,37 +48,42 @@ class ViTBenchAPI:
                 results.append(item)
         return results
 
+    def __len__(self):
+        return len(self.data)
 
-import torch
+    def __getitem__(self, idx: int) -> Dict:
+        return self.query_by_idx(idx)
 
-api = ViTBenchAPI('checkpoints/af_100.pth')
 
-# Query by index
-result = api.query_by_idx(0)
-print(result)
+# import torch
 
-# Query by architecture
-arch = {
-    'hidden_dim': 192,
-    'mlp_ratio': [3.5, 4.0, 3.5, 4.0, 3.5, 3.5, 4.0, 3.5, 4.0, 4.0, 4.0, 3.5],
-    'depth': 12,
-    'num_heads': [4, 4, 3, 4, 3, 3, 4, 4, 3, 3, 3, 4]
-}
-results = api.query_by_arch(arch)
-print(results)
+# api = ViTBenchAPI('checkpoints/af_100.pth')
 
-# Query by CIFAR-100 base accuracy
-base_acc = 68.66
-results = api.query_by_cifar100_base(base_acc)
-print(results)
+# # Query by index
+# result = api.query_by_idx(0)
+# print(result)
 
-# Query by Flowers base accuracy
-base_acc = 53.6835
-results = api.query_by_flowers_base(base_acc)
-print(results)
+# # Query by architecture
+# arch = {
+#     'hidden_dim': 192,
+#     'mlp_ratio': [3.5, 4.0, 3.5, 4.0, 3.5, 3.5, 4.0, 3.5, 4.0, 4.0, 4.0, 3.5],
+#     'depth': 12,
+#     'num_heads': [4, 4, 3, 4, 3, 3, 4, 4, 3, 3, 3, 4]
+# }
+# results = api.query_by_arch(arch)
+# print(results)
 
-# Query by Chaoyang base accuracy
-base_acc = 81.9542
-results = api.query_by_chaoyang_base(base_acc)
-print(results)
-breakpoint()
+# # Query by CIFAR-100 base accuracy
+# base_acc = 68.66
+# results = api.query_by_cifar100_base(base_acc)
+# print(results)
+
+# # Query by Flowers base accuracy
+# base_acc = 53.6835
+# results = api.query_by_flowers_base(base_acc)
+# print(results)
+
+# # Query by Chaoyang base accuracy
+# base_acc = 81.9542
+# results = api.query_by_chaoyang_base(base_acc)
+# print(results)
