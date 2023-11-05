@@ -201,3 +201,4 @@ EXP:201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2	lr: 0.0001	trai
 EXP:201_cifar10_ParZCBMM_mse_t1563_vall_e153_bs10_best_nb201_run2	lr: 0.0001	train: 1563	test: all	kendall_tau: 0.767234
 EXP:201_cifar10_ParZCBMM_mse_t1563_vall_e300_bs10_final	lr: 0.0001	train: 1563	test: all	kendall_tau: 0.745480
 EXP:201_cifar10_ParZCBMM_mse_t1563_vall_e300_bs10_best_nb201	lr: 0.0001	train: 1563	test: all	kendall_tau: 0.752268
+EXP:201_cifar10_ParZCBMM_mse_t1563_vall_e153_bs10_best_nb201_run2	lr: 0.0001	train: 1563	test: all	kendall_tau: 0.775612

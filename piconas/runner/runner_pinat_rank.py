@@ -12,7 +12,9 @@ from scipy.stats import kendalltau
 from piconas.core.losses.diffkd import diffkendall
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
-from piconas.predictor.pinat.model_factory import create_model, create_best_nb201_model, create_best_nb101_model
+from piconas.predictor.pinat.model_factory import (create_best_nb101_model,
+                                                   create_best_nb201_model,
+                                                   create_model)
 from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
                                  to_cuda)
 
@@ -219,7 +221,7 @@ def main():
     if args.bench == '101':
         model = create_best_nb101_model()
     elif args.bench == '201':
-        model = create_best_nb201_model() # for nb201
+        model = create_best_nb201_model()  # for nb201
     model = model.to(device)
     print(model)
     logging.info('PINAT params.: %f M' %

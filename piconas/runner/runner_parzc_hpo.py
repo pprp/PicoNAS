@@ -44,8 +44,7 @@ os.makedirs(log_dir, exist_ok=True)
 # initialize log info
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
-    filename=os.path.join(
-        log_dir, 'training_hpo_parzc_main_4nb101.log'),
+    filename=os.path.join(log_dir, 'training_hpo_parzc_main_4nb101.log'),
     level=logging.INFO,
     format=log_format,
     datefmt='%m/%d %I:%M:%S %p')
@@ -243,8 +242,15 @@ def objective_function(hyperparameters):
     lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     # train and evaluate predictor
-    model = train(train_set, train_loader, model, optimizer, lr_scheduler,
-                  criterion1, criterion2, epoch=epoch)
+    model = train(
+        train_set,
+        train_loader,
+        model,
+        optimizer,
+        lr_scheduler,
+        criterion1,
+        criterion2,
+        epoch=epoch)
     kendall_tau, predict_all, target_all = evaluate(test_set, test_loader,
                                                     model, criterion1)
 
