@@ -184,3 +184,4 @@ EXP:PINAT7	lr: 0.0001	train: 78	test: all	kendall_tau: 0.792052
 EXP:PINAT7	lr: 0.0001	train: 78	test: all	kendall_tau: 0.792052
 EXP:PINAT7	lr: 0.0001	train: 78	test: all	kendall_tau: 0.792052
 EXP:testing	lr: 0.0001	train: 78	test: all	kendall_tau: 0.673103
+EXP:testing	lr: 0.0001	train: 78	test: all	kendall_tau: 0.673854

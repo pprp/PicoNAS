@@ -21,7 +21,7 @@ os.makedirs(log_dir, exist_ok=True)
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
     filename=os.path.join(
-        log_dir, 'training_mq_bench_101_run1.log'),  # Save logs to a file
+        log_dir, 'training_vit_bench_101_run1.log'),  # Save logs to a file
     level=logging.INFO,
     format=log_format,
     datefmt='%m/%d %I:%M:%S %p')
@@ -52,24 +52,24 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 # Create an instance of the MLP model and define the loss function and optimizer
 mlp_model = BaysianMLPMixer(
     input_dim=58,
-    sequence_length=300 - 300 % 16,
+    sequence_length=765 - 765 % 16,
     patch_size=16,
-    dim=891,
-    depth=7,
+    dim=1600,
+    depth=5,
     emb_out_dim=1,
     expansion_factor=4,
     expansion_factor_token=0.5,
-    dropout=0.3667)
+    dropout=0.18)
 
 loss_function = diffkendall
-optimizer = optim.Adam(mlp_model.parameters(), lr=0.0028924995869062573)
+optimizer = optim.Adam(mlp_model.parameters(), lr=0.002)
 
 # Move the model to GPU if available
 if torch.cuda.is_available():
     mlp_model.cuda()
 
 # Train the model
-num_epochs = 115
+num_epochs = 296
 logging.info('Start training...')
 for epoch in range(num_epochs):
     mlp_model.train()

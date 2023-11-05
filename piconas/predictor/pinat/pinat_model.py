@@ -1556,7 +1556,6 @@ class EncoderBlock(nn.Module):
             dropout=0.)
 
     def to_pyg_batch(self, xs, edge_index_list, num_nodes):
-        # import pdb; pdb.set_trace()
         assert xs.shape[0] == len(
             edge_index_list), f'{xs.shape[0]}, {len(edge_index_list)}'
         assert xs.shape[0] == len(
@@ -1673,7 +1672,7 @@ class ParZCBMM(nn.Module):
             dropout=0.1,
             pine_hidden=pine_hidden,
             bench=bench,
-            linear_input=linear_hidden)
+            linear_input=d_word_vec)
 
         # regressor
         self.dropout = nn.Dropout(0.1)

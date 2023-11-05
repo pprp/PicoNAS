@@ -58,7 +58,7 @@ def objective(trial):
     dataset = ZcDataset(json_path)
 
     # Split the data into training and testing sets
-    train_size = int(0.9 * len(dataset))
+    train_size = int(0.5 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = torch.utils.data.random_split(
         dataset, [train_size, test_size])
@@ -134,7 +134,7 @@ def objective(trial):
 study = optuna.create_study(direction='maximize')
 
 # Optimize hyperparameters
-study.optimize(objective, n_trials=20)  # Adjust n_trials as needed
+study.optimize(objective, n_trials=100)  # Adjust n_trials as needed
 
 # Print the best hyperparameters and corresponding loss
 logging.info('Best trial:')
