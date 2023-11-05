@@ -59,6 +59,7 @@ def create_best_nb201_model():
         d_inner=338)
     return net
 
+
 def create_best_nb101_model():
     pos_enc_dim_dict = {'101': 7, '201': 4}
     net = ParZCBMM(
@@ -76,6 +77,7 @@ def create_best_nb101_model():
         d_model=765,  # 80
         d_inner=338)
     return net
+
 
 def create_model_hpo(n_layers, n_head, pine_hidden, linear_hidden,
                      d_word_model, d_k_v, d_inner):
