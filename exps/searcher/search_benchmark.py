@@ -101,7 +101,7 @@ def evaluate(test_set, test_loader, model, criterion):
     with torch.no_grad():
         for step, batch in enumerate(test_loader):
             batch = to_cuda(batch, device)
-            target = batch['test_acc']
+            target = batch['test_acc_wo_normalize']
             predict = model(batch)
             predicts.append(predict.cpu().numpy())
             targets.append(target.cpu().numpy())
@@ -132,7 +132,7 @@ def traverse_benchmark(test_set, test_loader, model, topN=10):
     with torch.no_grad():
         for step, batch in enumerate(test_loader):
             batch = to_cuda(batch, device)
-            target = batch['test_acc']
+            target = batch['test_acc_wo_normalize']
             predict = model(batch)
             predicts.append(predict.cpu().numpy())
             targets.append(target.cpu().numpy())
@@ -157,7 +157,7 @@ def traverse_benchmark(test_set, test_loader, model, topN=10):
 
     print('Currently we found that the best acc of search space is:',
           best_target)
-    return best_target
+    return targets[top_indices[0]]
 
 
 def main():
@@ -191,7 +191,7 @@ def main():
     logging.info('Kendalltau: %.6f', kendall_tau)
 
     # evaluate the final performance across the whole dataset
-    best_acc = traverse_benchmark(test_set, test_loader, model, topN=10)
+    best_acc = traverse_benchmark(test_set, test_loader, model, topN=20)
     logging.info('Best Accuracy is: %.6f', best_acc)
 
     # save checkpoint
