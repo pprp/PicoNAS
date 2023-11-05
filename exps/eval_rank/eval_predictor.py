@@ -11,7 +11,8 @@ from scipy.stats import kendalltau
 
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
-from piconas.predictor.pinat.model_factory import (create_model,
+from piconas.predictor.pinat.model_factory import (create_best_nb201_model,
+                                                   create_model,
                                                    create_nb201_model)
 from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
                                  to_cuda)
@@ -33,7 +34,7 @@ parser.add_argument('--train_batch_size', default=10, type=int)
 parser.add_argument('--eval_batch_size', default=10240, type=int)
 parser.add_argument('--train_print_freq', default=1e5, type=int)
 parser.add_argument('--eval_print_freq', default=10, type=int)
-parser.add_argument('--model_name', type=str, default='PINATModel4')
+parser.add_argument('--model_name', type=str, default='ParZCBMM')
 args = parser.parse_args()
 
 # initialize log info
@@ -128,10 +129,12 @@ def main():
     # create dataloader and model
     train_loader, test_loader, train_set, test_set = create_dataloader(args)
     # model = create_model(args)
-    model = create_nb201_model()
+    # model = create_nb201_model()
+
+    model = create_best_nb201_model()
 
     # load model
-    ckpt_dir = './checkpoints/nasbench_201/201_cifar10_PINATModel4_mse_t156_vall_e600_bs10_tau0.711652_ckpt.pt'
+    ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
     model.load_state_dict(
         torch.load(ckpt_dir, map_location=torch.device('cpu')))
 

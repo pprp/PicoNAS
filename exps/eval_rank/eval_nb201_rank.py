@@ -133,7 +133,7 @@ def main():
 
     start = time.time()
 
-    num_samples = [20, 50, 100]
+    num_samples = [20]
 
     for num_sample in num_samples:
         evaluator = NB201Evaluator(
@@ -142,7 +142,7 @@ def main():
             num_sample=num_sample,
         )
         kt, ps, sp = evaluator.compute_rank_by_predictive(
-            dataloader=train_dataloader, measure_name=['swap'])
+            dataloader=train_dataloader, measure_name=['auto-prox-P'])
         print(f'num_sample: {num_sample}, kt: {kt}, ps: {ps}, sp: {sp}')
 
     utils.time_record(start)

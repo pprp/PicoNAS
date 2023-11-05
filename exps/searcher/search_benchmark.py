@@ -35,7 +35,7 @@ parser.add_argument('--train_batch_size', default=10, type=int)
 parser.add_argument('--eval_batch_size', default=10240, type=int)
 parser.add_argument('--train_print_freq', default=1e5, type=int)
 parser.add_argument('--eval_print_freq', default=10, type=int)
-parser.add_argument('--model_name', type=str, default='PINATModel7')
+parser.add_argument('--model_name', type=str, default='ParZCBMM')
 args = parser.parse_args()
 
 # initialize log info

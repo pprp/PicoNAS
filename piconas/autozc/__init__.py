@@ -43,25 +43,3 @@ def get_zc_candidates(name, net, device, *args, **kwargs):
 
 def get_zc_function(name):
     return _zc_candidates_impls[name]
-
-
-def load_all():
-    # from .zc_inputs import compute_all1_gradient  # noqa: F403
-    # from .zc_inputs import compute_gradient_vector  # noqa: F403
-    # from .zc_inputs import compute_gram_gradient  # noqa: F403
-    # from .zc_inputs import compute_hessian_gradient  # noqa: F403
-    # from .zc_inputs import compute_jacobian_gradient  # noqa: F403
-    # from .zc_inputs import compute_logits_activation  # noqa: F403
-    # from .zc_inputs import compute_ntk  # noqa: F403
-    # from .zc_inputs import compute_number_linear_region  # noqa: F403
-    from .zc_inputs import compute_t1_activation  # noqa: F403
-    from .zc_inputs import compute_t1g_gradient  # noqa: F403
-    from .zc_inputs import compute_t2_activation  # noqa: F403
-    from .zc_inputs import compute_t2g_gradient  # noqa: F403
-    from .zc_inputs import compute_t3_activation  # noqa: F403
-    from .zc_inputs import compute_t3g_gradient  # noqa: F403
-    from .zc_inputs import compute_t4_activation  # noqa: F403
-    from .zc_inputs import compute_t4g_gradient  # noqa: F403
-
-
-load_all()

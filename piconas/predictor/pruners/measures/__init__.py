@@ -53,6 +53,7 @@ def calc_measure(name, net, device, *args, **kwargs):
 
 
 def load_all():
+    from . import auto_prox  # noqa: F401
     from . import epe_nas  # noqa: F401
     from . import fisher  # noqa: F401
     from . import gd_nas  # noqa: F401
