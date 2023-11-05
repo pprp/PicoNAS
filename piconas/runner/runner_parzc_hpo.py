@@ -20,8 +20,8 @@ from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
 parser = ArgumentParser()
 # exp and dataset
 parser.add_argument('--exp_name', type=str, default='ParZCBMM')
-parser.add_argument('--bench', type=str, default='201')
-parser.add_argument('--train_split', type=str, default='78')
+parser.add_argument('--bench', type=str, default='101')
+parser.add_argument('--train_split', type=str, default='100')
 parser.add_argument('--eval_split', type=str, default='all')
 parser.add_argument('--dataset', type=str, default='cifar10')
 # training settings
@@ -37,10 +37,15 @@ parser.add_argument('--eval_print_freq', default=10, type=int)
 parser.add_argument('--model_name', type=str, default='ParZCBMM')
 args = parser.parse_args()
 
+# Create a log directory if it doesn't exist
+log_dir = './logdir'
+os.makedirs(log_dir, exist_ok=True)
+
 # initialize log info
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
-    stream=sys.stdout,
+    filename=os.path.join(
+        log_dir, 'training_hpo_parzc_main_4nb101.log'),
     level=logging.INFO,
     format=log_format,
     datefmt='%m/%d %I:%M:%S %p')
@@ -97,9 +102,9 @@ def pair_loss(outputs, labels):
 
 
 def train(train_set, train_loader, model, optimizer, lr_scheduler,
-          criterion1: nn.MSELoss, criterion2: PairwiseRankLoss):
+          criterion1: nn.MSELoss, criterion2: PairwiseRankLoss, epoch):
     model.train()
-    for epoch in range(args.epochs):
+    for epoch in range(epoch):
         lr = optimizer.param_groups[0]['lr']
         meters = AverageMeterGroup()
 
@@ -109,7 +114,7 @@ def train(train_set, train_loader, model, optimizer, lr_scheduler,
             predict = model(batch)
 
             # Compute the losses
-            loss_mse = criterion1(predict, target.float())
+            # loss_mse = criterion1(predict, target.float())
 
             # loss_weight_1 = 0.95  # adjust as necessary
             # loss_weight_2 = 0.05  # adjust as necessary
@@ -222,6 +227,7 @@ def objective_function(hyperparameters):
     d_word_model = hyperparameters['d_word_model']
     d_k_v = hyperparameters['d_k_v']
     d_inner = hyperparameters['d_inner']
+    epoch = hyperparameters['epoch']
 
     model = create_model_hpo(n_layers, n_head, pine_hidden, linear_hidden,
                              d_word_model, d_k_v, d_inner)
@@ -238,7 +244,7 @@ def objective_function(hyperparameters):
 
     # train and evaluate predictor
     model = train(train_set, train_loader, model, optimizer, lr_scheduler,
-                  criterion1, criterion2)
+                  criterion1, criterion2, epoch=epoch)
     kendall_tau, predict_all, target_all = evaluate(test_set, test_loader,
                                                     model, criterion1)
 
@@ -248,15 +254,13 @@ def objective_function(hyperparameters):
 def objective(trial):
     # Define the hyperparameters
     hyperparameters = {
-        'n_layers': trial.suggest_categorical('n_layers', [2, 3, 4, 5]),
-        'n_head': trial.suggest_categorical('n_head', [3, 4, 8]),
-        'pine_hidden': trial.suggest_categorical('pine_hidden',
-                                                 [8, 16, 32, 64]),
-        # 'linear_hidden': trial.suggest_categorical('linear_hidden', [32, 64, 96, 128]),
-        'd_word_model': trial.suggest_categorical('d_word_model',
-                                                  [256, 512, 1024]),
-        'd_k_v': trial.suggest_categorical('d_k_v', [16, 32, 64, 128]),
-        'd_inner': trial.suggest_categorical('d_inner', [256, 512, 1024]),
+        'n_layers': trial.suggest_int('n_layers', 2, 5),
+        'n_head': trial.suggest_int('n_head', 3, 8),
+        'pine_hidden': trial.suggest_int('pine_hidden', 8, 128),
+        'd_word_model': trial.suggest_int('d_word_model', 256, 1024),
+        'd_k_v': trial.suggest_int('d_k_v', 32, 128),
+        'd_inner': trial.suggest_int('d_inner', 256, 1024),
+        'epoch': trial.suggest_int('epoch', 50, 300),
     }
 
     # Use the objective function as you've defined it
@@ -265,17 +269,6 @@ def objective(trial):
 
 def main():
     check_arguments()
-
-    # define search space
-    search_space = {
-        'n_layers': [2, 3, 4, 5],
-        'n_head': [3, 4, 8],
-        'pine_hidden': [8, 16, 32, 64],
-        # 'linear_hidden': [32, 64, 96, 128],
-        'd_word_model': [256, 512, 1024],
-        'd_k_v': [32, 64, 128],
-        'd_inner': [256, 512, 1024],
-    }
 
     # Setup the Optuna study, which will conduct the Bayesian optimization
     study = optuna.create_study(
