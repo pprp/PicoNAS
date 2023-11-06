@@ -13,8 +13,9 @@ from scipy.stats import kendalltau
 
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
-from piconas.predictor.pinat.model_factory import (create_model,
-                                                   create_nb201_model, create_best_nb101_model)
+from piconas.predictor.pinat.model_factory import (create_best_nb101_model,
+                                                   create_model,
+                                                   create_nb201_model)
 from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
                                  to_cuda)
 

@@ -1707,24 +1707,29 @@ class ParZCBMM(nn.Module):
         out = self.fc2(out).view(-1)
         return out
 
-import torch.nn as nn
+
 from functools import partial
 
+import torch.nn as nn
+
+
 class ZCEmbedder(nn.Module):
+
     def __init__(self, zcp_embedder_dims, emb_out_dim, dropout):
         super(ZCEmbedder, self).__init__()
         self.zcp_embedder_dims = zcp_embedder_dims
-        
+
         # Initialize the ZCP embedder layers
         layers = []
         for zcp_emb_dim in self.zcp_embedder_dims:
-            layers.append(nn.Sequential(
-                nn.Linear(mid_zcp_dim, zcp_emb_dim),
-                nn.ReLU(inplace=False),
-                nn.Dropout(p=dropout),
-            ))
+            layers.append(
+                nn.Sequential(
+                    nn.Linear(mid_zcp_dim, zcp_emb_dim),
+                    nn.ReLU(inplace=False),
+                    nn.Dropout(p=dropout),
+                ))
             mid_zcp_dim = zcp_emb_dim
-        
+
         layers.append(nn.Linear(mid_zcp_dim, emb_out_dim))
         self.zcp_embedder = nn.Sequential(*layers)
 
@@ -1735,8 +1740,7 @@ class ZCEmbedder(nn.Module):
             mlp_layer=Mlp,  # Assuming Mlp is defined elsewhere
             norm_layer=partial(nn.LayerNorm, eps=1e-6),
             act_layer=nn.GELU,
-            drop=0.1
-        )
+            drop=0.1)
 
     def forward(self, x):
         # Assuming you want to pass 'x' through the zcp_embedder and gate_block
@@ -1792,7 +1796,7 @@ class ParZCBMM2(nn.Module):
             bench=bench,
             linear_input=d_word_vec)
 
-        # zc embedder 
+        # zc embedder
         self.zcp_embedder_dims = [256, 512, 1024, 2048, 4096]
         self.zcp_embedder = ZCEmbedder(self.zcp_embedder_dims, d_word_vec, 0.1)
 
@@ -1824,9 +1828,9 @@ class ParZCBMM2(nn.Module):
         # regressor forward
         out = graph_pooling(out, numv)
 
-        # zc embedder 
+        # zc embedder
         zc_embed = self.zcp_embedder(inputs['zcp_layerwise'])
-        out += zc_embed 
+        out += zc_embed
 
         out = self.fc1(out)
         out = self.dropout(out)

@@ -94,8 +94,8 @@ def pair_loss(outputs, labels):
     return loss
 
 
-def train(train_set, train_loader, test_set, test_loader, model, optimizer, lr_scheduler,
-          criterion1: nn.MSELoss, criterion2: PairwiseRankLoss):
+def train(train_set, train_loader, test_set, test_loader, model, optimizer,
+          lr_scheduler, criterion1: nn.MSELoss, criterion2: PairwiseRankLoss):
     model.train()
 
     epoch_list, kd_list = [], []
@@ -135,26 +135,29 @@ def train(train_set, train_loader, test_set, test_loader, model, optimizer, lr_s
 
             # For logging, we can compute MSE or other metrics if desired.
             mse = accuracy_mse(predict.squeeze(), target.squeeze(), train_set)
-            kd_train = kendalltau(predict.squeeze().cpu().detach().numpy(), target.squeeze().cpu().detach().numpy())[0]
-            meters.update({
-                'loss': loss.item(),
-                'mse': mse.item(),
-                'kd_train': kd_train,
-            },
-                          n=target.size(0))
+            kd_train = kendalltau(predict.squeeze().cpu().detach().numpy(),
+                                  target.squeeze().cpu().detach().numpy())[0]
+            meters.update(
+                {
+                    'loss': loss.item(),
+                    'mse': mse.item(),
+                    'kd_train': kd_train,
+                },
+                n=target.size(0))
 
             if step % args.train_print_freq == 0:
                 logging.info('Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
                              epoch + 1, args.epochs, step + 1,
                              len(train_loader), lr, meters)
-        
+
         if epoch > 20 and epoch % 10 == 0:
-            kd_test, _, _ = evaluate(train_set, train_loader, model, criterion1)
+            kd_test, _, _ = evaluate(train_set, train_loader, model,
+                                     criterion1)
             epoch_list.append(epoch)
             kd_list.append(kd_test)
 
         lr_scheduler.step()
-    
+
     # plot kd_list
     import matplotlib.pyplot as plt
     plt.plot(epoch_list, kd_list)
@@ -182,7 +185,9 @@ def evaluate(test_set, test_loader, model, criterion):
                     'mse':
                     accuracy_mse(predict.squeeze(), target.squeeze(),
                                  test_set).item(),
-                    'kd_test': kendalltau(predict.squeeze().cpu().detach().numpy(), target.squeeze().cpu().detach().numpy())[0]                                
+                    'kd_test':
+                    kendalltau(predict.squeeze().cpu().detach().numpy(),
+                               target.squeeze().cpu().detach().numpy())[0]
                 },
                 n=target.size(0))
             if step % args.eval_print_freq == 0 or step + 1 == len(
@@ -254,8 +259,8 @@ def main():
     lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     # train and evaluate predictor
-    model = train(train_set, train_loader, test_set, test_loader, model, optimizer, lr_scheduler,
-                  criterion1, criterion2)
+    model = train(train_set, train_loader, test_set, test_loader, model,
+                  optimizer, lr_scheduler, criterion1, criterion2)
     kendall_tau, predict_all, target_all = evaluate(test_set, test_loader,
                                                     model, criterion1)
     logging.info('Kendalltau: %.6f', kendall_tau)
