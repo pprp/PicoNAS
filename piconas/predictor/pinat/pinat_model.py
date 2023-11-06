@@ -1706,3 +1706,129 @@ class ParZCBMM(nn.Module):
         out = self.dropout(out)
         out = self.fc2(out).view(-1)
         return out
+
+import torch.nn as nn
+from functools import partial
+
+class ZCEmbedder(nn.Module):
+    def __init__(self, zcp_embedder_dims, emb_out_dim, dropout):
+        super(ZCEmbedder, self).__init__()
+        self.zcp_embedder_dims = zcp_embedder_dims
+        
+        # Initialize the ZCP embedder layers
+        layers = []
+        for zcp_emb_dim in self.zcp_embedder_dims:
+            layers.append(nn.Sequential(
+                nn.Linear(mid_zcp_dim, zcp_emb_dim),
+                nn.ReLU(inplace=False),
+                nn.Dropout(p=dropout),
+            ))
+            mid_zcp_dim = zcp_emb_dim
+        
+        layers.append(nn.Linear(mid_zcp_dim, emb_out_dim))
+        self.zcp_embedder = nn.Sequential(*layers)
+
+        # Initialize the gate block
+        self.gate_block = MixerGateBlock(
+            emb_out_dim,
+            mlp_ratio=(0.5, 4.0),
+            mlp_layer=Mlp,  # Assuming Mlp is defined elsewhere
+            norm_layer=partial(nn.LayerNorm, eps=1e-6),
+            act_layer=nn.GELU,
+            drop=0.1
+        )
+
+    def forward(self, x):
+        # Assuming you want to pass 'x' through the zcp_embedder and gate_block
+        x = self.zcp_embedder(x)
+        x = self.gate_block(x)
+        return x
+
+
+class ParZCBMM2(nn.Module):
+    """
+        ParZCBMM = transformer + bayesian mlp mixer
+        PINATModel7 is trying to incooperate the bayesian network the estimate the uncertainty of zc.
+        PINATModel6 is trying to combine zcp into the transformer rather than ensumble.
+        PINATModel5 + zcp embedding (naive embedder)
+        PINATModel4 is a small size model with [128,128]
+        Here We use large Model
+    """
+
+    def __init__(
+            self,
+            adj_type,
+            n_src_vocab,
+            d_word_vec,
+            n_layers,
+            n_head,
+            d_k,
+            d_v,
+            d_model,
+            d_inner,
+            pad_idx=None,
+            pos_enc_dim=7,
+            linear_hidden=512,  #80,
+            pine_hidden=256,
+            bench='101'):
+        super(ParZCBMM2, self).__init__()
+
+        # backone
+        self.bench = bench
+        self.adj_type = adj_type
+        self.encoder = EncoderBlock(
+            n_src_vocab,
+            d_word_vec,
+            n_layers,
+            n_head,
+            d_k,
+            d_v,
+            d_model,
+            d_inner,
+            pad_idx,
+            pos_enc_dim=pos_enc_dim,
+            dropout=0.1,
+            pine_hidden=pine_hidden,
+            bench=bench,
+            linear_input=d_word_vec)
+
+        # zc embedder 
+        self.zcp_embedder_dims = [256, 512, 1024, 2048, 4096]
+        self.zcp_embedder = ZCEmbedder(self.zcp_embedder_dims, d_word_vec, 0.1)
+
+        # regressor
+        self.dropout = nn.Dropout(0.1)
+        self.fc1 = nn.Linear(d_word_vec, linear_hidden, bias=False)
+        self.fc2 = nn.Linear(linear_hidden, 1, bias=False)
+
+    def forward(self, inputs):
+        # get arch topology
+        numv = inputs['num_vertices']
+        assert self.adj_type == 'adj_lapla', f'only support adj_lapla but got {self.adj_type}'
+        adj_matrix = inputs['lapla'].float()  # bs, 7, 7
+        edge_index_list = []
+        for edge_num, edge_index in zip(
+                inputs['edge_num'],  # bs
+                inputs['edge_index_list']):  # bs, 2, 9
+            edge_index_list.append(edge_index[:, :edge_num])
+
+        # backone feature
+        out = self.encoder(
+            src_seq=inputs['features'],  # bs, 7
+            pos_seq=adj_matrix.float(),  # bs, 7, 7
+            operations=inputs['operations'].squeeze(0),  # bs, 7, 5
+            num_nodes=numv,
+            edge_index_list=edge_index_list,
+            zcp_layerwise=inputs['zcp_layerwise'])
+
+        # regressor forward
+        out = graph_pooling(out, numv)
+
+        # zc embedder 
+        zc_embed = self.zcp_embedder(inputs['zcp_layerwise'])
+        out += zc_embed 
+
+        out = self.fc1(out)
+        out = self.dropout(out)
+        out = self.fc2(out).view(-1)
+        return out

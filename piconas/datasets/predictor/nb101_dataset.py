@@ -422,6 +422,7 @@ class Nb101DatasetPINAT(Dataset):
             'mask': np.array([i < n for i in range(7)], dtype=np.float32),
             'val_acc': float(self.normalize(val_acc)),
             'test_acc': float(self.normalize(test_acc)),
+            'test_acc_wo_normalize': float(test_acc),
             'edge_index_list': edge_index,
             'zcp': zcp,
             'zcp_layerwise': zcp_layerwise,

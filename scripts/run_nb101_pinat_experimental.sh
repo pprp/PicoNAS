@@ -14,8 +14,8 @@ fi
 IDX=0
 Loss=mse
 Bench=101
-Epochs=300
-Model=ParZCBMM
+Epochs=150
+Model=ParZCBMM2
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=512
@@ -31,7 +31,7 @@ for((t=0; t<${#Train_Split_List[*]}; t++)); do
   let IDX+=1
   Train_Split=${Train_Split_List[t]}
   Eval_Split=${Eval_Split_List[t]}
-  EXP_Name=${Bench}_${Dataset}_${Model}_${Loss}_t${Train_Split}_v${Eval_Split}_e${Epochs}_bs${Train_batch_size}_best_nb101_run0
+  EXP_Name=${Bench}_${Dataset}_${Model}_${Loss}_t${Train_Split}_v${Eval_Split}_e${Epochs}_bs${Train_batch_size}_test
 
   # run
   # nohup python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \

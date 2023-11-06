@@ -14,15 +14,15 @@ from scipy.stats import kendalltau
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
 from piconas.predictor.pinat.model_factory import (create_model,
-                                                   create_nb201_model)
+                                                   create_nb201_model, create_best_nb101_model)
 from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
                                  to_cuda)
 
 parser = ArgumentParser()
 # exp and dataset
 parser.add_argument('--exp_name', type=str, default='PINAT7')
-parser.add_argument('--bench', type=str, default='201')
-parser.add_argument('--train_split', type=str, default='78')
+parser.add_argument('--bench', type=str, default='101')
+parser.add_argument('--train_split', type=str, default='100')
 parser.add_argument('--eval_split', type=str, default='all')
 parser.add_argument('--dataset', type=str, default='cifar10')
 # training settings
@@ -32,7 +32,7 @@ parser.add_argument('--epochs', default=300, type=int)
 parser.add_argument('--lr', default=1e-4, type=float)
 parser.add_argument('--wd', default=1e-3, type=float)
 parser.add_argument('--train_batch_size', default=10, type=int)
-parser.add_argument('--eval_batch_size', default=10240, type=int)
+parser.add_argument('--eval_batch_size', default=512, type=int)
 parser.add_argument('--train_print_freq', default=1e5, type=int)
 parser.add_argument('--eval_print_freq', default=10, type=int)
 parser.add_argument('--model_name', type=str, default='ParZCBMM')
@@ -118,6 +118,7 @@ def evaluate(test_set, test_loader, model, criterion):
                     test_loader):
                 logging.info('Evaluation Step [%d/%d]  %s', step + 1,
                              len(test_loader), meters)
+
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
     kendall_tau = kendalltau(predicts, targets)[0]
@@ -157,7 +158,7 @@ def traverse_benchmark(test_set, test_loader, model, topN=10):
 
     print('Currently we found that the best acc of search space is:',
           best_target)
-    return targets[top_indices[0]]
+    return best_target
 
 
 def main():
@@ -166,10 +167,13 @@ def main():
     # create dataloader and model
     train_loader, test_loader, train_set, test_set = create_dataloader(args)
 
-    model = create_nb201_model()
+    if args.bench == '201':
+        model = create_nb201_model()
+        ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_PINATModel7_mse_t1563_vall_e300_bs10_final_tau0.792052_ckpt.pt'
+    elif args.bench == '101':
+        model = create_best_nb101_model()
+        ckpt_dir = 'checkpoints/nasbench_101/101_cifar10_ParZCBMM_mse_t100_vall_e300_bs10_best_nb101_run0_tau0.648251_ckpt.pt'
 
-    # load model
-    ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_PINATModel7_mse_t1563_vall_e300_bs10_final_tau0.792052_ckpt.pt'
     model.load_state_dict(
         torch.load(ckpt_dir, map_location=torch.device('cpu')))
 
