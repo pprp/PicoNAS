@@ -6,10 +6,10 @@ from nas_201_api import NASBench201API as API
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
+import pandas as pd
 
 from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 
-# from emq.utils.rank_consistency import kendalltau, pearson, spearman
 
 VISUALIZE = True
 
@@ -22,13 +22,19 @@ nb201_api = API(
 
 ds_target = 'cifar10'  # cifar100, ImageNet16-120
 input_dict = input_dict[ds_target]
-zc_target = 'fisher_layerwise'  # grad_norm_layerwise, grasp_layerwise, l2_norm_layerwise, plain_layerwise, snip_layerwise, synflow_layerwise
+zc_target = 'grad_norm_layerwise'  # plain_layerwise, snip_layerwise, synflow_layerwise grad_norm_layerwise fisher_layerwise l2_norm_layerwise grasp_layerwise
+
+
+print('zc_target: ', zc_target)
 
 # Convert the dictionary to input features and target labels
 x_train = []
 y_train = []
 for key, value in input_dict.items():
-    x_train.append(value[zc_target])
+    v = value[zc_target]
+    # filter the Nan value to 0 
+    v = [0 if np.isnan(x) else x for x in v]
+    x_train.append(v)
     # query gt by key
     gt = nb201_api.get_more_info(
         int(key), dataset=ds_target, hp='200')['test-accuracy']
@@ -39,6 +45,7 @@ max_len = 0
 for i in range(len(x_train)):
     if len(x_train[i]) > max_len:
         max_len = len(x_train[i])
+
 # padding the list to the max length
 for i in range(len(x_train)):
     x_train[i] = x_train[i] + [0] * (max_len - len(x_train[i]))
@@ -90,7 +97,6 @@ pos = np.arange(sorted_idx.shape[0]) + 1
 colors = cmap(norm(feature_importance[sorted_idx]))
 
 # save to csv file with pos and feature_importance
-import pandas as pd
 
 df = pd.DataFrame({'pos': pos, 'feature_importance': feature_importance})
 df.to_csv(f'gbdt_{zc_target}.csv', index=False)
