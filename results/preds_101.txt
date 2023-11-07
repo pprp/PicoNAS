@@ -68,3 +68,4 @@ EXP:101_cifar10_ParZCBMM2_mse_t100_vall_e150_bs10_test	lr: 0.0001	train: 100	tes
 EXP:101_cifar10_ParZCBMM_mse_t100_vall_e150_bs10_test	lr: 0.0001	train: 100	test: all	kendall_tau: 0.658952
 EXP:101_cifar10_ParZCBMM_mse_t172_vall_e150_bs10_test	lr: 0.0001	train: 172	test: all	kendall_tau: 0.667217
 EXP:101_cifar10_ParZCBMM_mse_t424_vall_e150_bs10_test	lr: 0.0001	train: 424	test: all	kendall_tau: 0.740971
+EXP:101_cifar10_ParZCBMM_mse_t4236_vall_e150_bs10_test	lr: 0.0001	train: 4236	test: all	kendall_tau: 0.803595

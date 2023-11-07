@@ -6,7 +6,6 @@ from nas_201_api import NASBench201API as API
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
-from sklearn.tree import plot_tree
 
 from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 
@@ -30,13 +29,10 @@ x_train = []
 y_train = []
 for key, value in input_dict.items():
     x_train.append(value[zc_target])
-    # y_train.append(value['gt'])
     # query gt by key
     gt = nb201_api.get_more_info(
         int(key), dataset=ds_target, hp='200')['test-accuracy']
     y_train.append(gt)
-
-# breakpoint()
 
 # preprocess to find max length
 max_len = 0
@@ -97,7 +93,7 @@ colors = cmap(norm(feature_importance[sorted_idx]))
 import pandas as pd
 
 df = pd.DataFrame({'pos': pos, 'feature_importance': feature_importance})
-df.to_csv('gbdt.csv', index=False)
+df.to_csv(f'gbdt_{zc_target}.csv', index=False)
 
 plt.bar(pos, feature_importance[sorted_idx], align='center', color=colors)
 plt.yticks(pos, np.arange(sorted_idx.shape[0]) + 1, fontsize=12)
@@ -108,42 +104,4 @@ plt.yticks(fontsize=12)
 plt.yscale('log')
 
 plt.tight_layout()
-plt.savefig('gbdt_beautify.png')
-
-# if VISUALIZE:
-#     # Visualize each tree in the GBDT
-#     plot_tree(gbdt_model.estimators_[0, 0],)
-#     plt.show()
-
-#     # compute deviance in test dataset
-#     test_score = np.zeros((500, 1), dtype=np.float64)
-#     # The test error at each iterations can be obtained via the staged_predict method
-#     # which returns a generator that yields the predictions at each stage.
-#     for i, y_pred in enumerate(gbdt_model.staged_predict(x_test)):
-#         test_score[i] = gbdt_model.loss_(y_test, y_pred)
-
-#     plt.figure(figsize=(12, 6))
-#     plt.subplot(1, 2, 1)
-#     plt.title('Deviance')
-#     plt.plot(np.arange(500), gbdt_model.train_score_)
-#     plt.plot(np.arange(500), test_score)
-#     plt.legend(loc='upper right')
-#     plt.xlabel('Boosting Iterations')
-#     plt.ylabel('Deviance')
-
-#     # feature_importance = 100 * (
-#     #     gbdt_model.feature_importances_ / max(gbdt_model.feature_importances_))
-#     feature_importance = gbdt_model.feature_importances_
-#     index = np.argsort(feature_importance)
-#     pos = np.arange(index.shape[0]) + 1
-#     # save to csv file with pos and feature_importance
-#     import pandas as pd
-#     df = pd.DataFrame({'pos': pos, 'feature_importance': feature_importance})
-#     df.to_csv('gbdt.csv', index=False)
-
-#     plt.subplot(1, 2, 2)
-#     plt.barh(pos, feature_importance[index], align='center')
-#     plt.yticks(pos, np.arange(index.shape[0]) + 1)
-#     plt.xlabel('Relative Importance')
-#     plt.title('Variable Importance')
-#     plt.savefig('gbdt.png')
+plt.savefig(f'gbdt_{zc_target}.png')

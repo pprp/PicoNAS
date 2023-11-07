@@ -16,7 +16,7 @@ UNARY_KEYS = ('element_wise_log', 'element_wise_abslog', 'element_wise_abs',
               'element_wise_normalized_sum', 'l1_norm', 'softmax', 'sigmoid',
               'logsoftmax', 'element_wise_sqrt', 'element_wise_revert',
               'element_wise_sign', 'min_max_normalize', 'to_mean_scalar',
-              'to_std_scalar', 'no_op')
+              'to_std_scalar', 'no_op', 'slogdet')
 SCALAR_KEYS = ('to_mean_scalar', 'to_std_scalar')
 
 
@@ -203,6 +203,7 @@ def unary_operation(A, idx=None):
         'element_wise_revert': element_wise_revert,
         'element_wise_sign': element_wise_sign,
         'no_op': no_op,
+        'slogdet': slogdet,
     }
 
     if isinstance(idx, str):
