@@ -58,8 +58,9 @@ with plt.style.context('default'):
     plt.xlabel('Layer Index', fontsize=16)
     plt.ylabel('Relative Importance', fontsize=16)
     plt.xticks(np.arange(min(pos), max(pos) - 1, 20), fontsize=14, rotation=45)
-    plt.yscale('function', functions=(lambda x: x ** (1 / 3), lambda x: x ** 3))
-
+    # plt.yscale('function', functions=(lambda x: x ** (1 / 3), lambda x: x ** 3))
+    plt.yscale('log')
+    
     # Show the legend using collected handles and labels
     plt.legend(handles=legend_handles, labels=zc_name_list, loc='upper right', fontsize=12)
     plt.grid(True, alpha=0.3)
