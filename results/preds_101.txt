@@ -64,3 +64,4 @@ EXP:PINAT7	lr: 0.0001	train: 100	test: all	kendall_tau: 0.647839
 EXP:101_cifar10_ParZCBMM2_mse_t100_vall_e300_bs10_test	lr: 0.0001	train: 100	test: all	kendall_tau: 0.658284
 EXP:101_cifar10_ParZCBMM2_mse_t100_vall_e300_bs10_test	lr: 0.0001	train: 100	test: all	kendall_tau: 0.634780
 EXP:101_cifar10_ParZCBMM2_mse_t100_vall_e150_bs10_test	lr: 0.0001	train: 100	test: all	kendall_tau: 0.666115
+EXP:101_cifar10_ParZCBMM2_mse_t100_vall_e150_bs10_test	lr: 0.0001	train: 100	test: all	kendall_tau: 0.668913

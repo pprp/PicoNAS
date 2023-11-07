@@ -81,9 +81,8 @@ def compute_fisher_per_weight(net,
                         layer.fisher = del_k
                     else:
                         layer.fisher += del_k
-                    del (
-                        layer.act
-                    )  # without deleting this, a nasty memory leak occurs! related: https://discuss.pytorch.org/t/memory-leak-when-using-forward-hook-and-backward-hook-simultaneously/27555
+                    del layer.act
+                    # without deleting this, a nasty memory leak occurs! related: https://discuss.pytorch.org/t/memory-leak-when-using-forward-hook-and-backward-hook-simultaneously/27555
 
                 return hook
 
@@ -97,6 +96,8 @@ def compute_fisher_per_weight(net,
 
         net.zero_grad()
         outputs = net(inputs[st:en])
+        if isinstance(outputs, tuple):
+            outputs = outputs[0]
         loss = loss_fn(outputs, targets[st:en])
         loss.backward()
 

@@ -59,8 +59,9 @@ def compute_snip_per_weight(net, inputs, targets, mode, loss_fn, split_data=1):
     for sp in range(split_data):
         st = sp * N // split_data
         en = (sp + 1) * N // split_data
-
         outputs = net.forward(inputs[st:en])
+        if isinstance(outputs, tuple):
+            outputs = outputs[0]
         loss = loss_fn(outputs, targets[st:en])
         loss.backward()
 

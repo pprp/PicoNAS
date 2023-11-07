@@ -51,7 +51,10 @@ def compute_grasp_per_weight(net,
         grad_w = None
         for _ in range(num_iters):
             # TODO get new data, otherwise num_iters is useless!
-            outputs = net.forward(inputs[st:en]) / T
+            outputs = net.forward(inputs[st:en])
+            if isinstance(outputs, tuple):
+                outputs = outputs[0]
+            outputs /= T
             loss = loss_fn(outputs, targets[st:en])
             grad_w_p = autograd.grad(loss, weights, allow_unused=True)
             if grad_w is None:
@@ -65,7 +68,10 @@ def compute_grasp_per_weight(net,
         en = (sp + 1) * N // split_data
 
         # forward/grad pass #2
-        outputs = net.forward(inputs[st:en]) / T
+        outputs = net.forward(inputs[st:en])
+        if isinstance(outputs, tuple):
+            outputs = outputs[0]
+        outputs /= T
         loss = loss_fn(outputs, targets[st:en])
         grad_f = autograd.grad(
             loss, weights, create_graph=True, allow_unused=True)

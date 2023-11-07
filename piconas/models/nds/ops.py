@@ -70,6 +70,8 @@ OPS = {
         nn.Conv2d(
             C, C, (7, 1), stride=(stride, 1), padding=(3, 0), bias=False),
         nn.BatchNorm2d(C, affine=affine)),
+    'conv_3x3':
+    lambda C, stride, affine: ReLUConvBN(C, C, 3, stride, 1, affine=affine),
 }
 
 

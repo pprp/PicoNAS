@@ -10,11 +10,8 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-from piconas.utils.pico_logging import get_logger
 from .genotypes import GENOTYPES
 from .ops import OPS, FactorizedReduce, Identity, ReLUConvBN
-
-logger = get_logger(__name__)
 
 
 class ASPP(nn.Module):
@@ -113,7 +110,6 @@ class Cell(nn.Module):
     def __init__(self, genotype, C_prev_prev, C_prev, C, reduction,
                  reduction_prev):
         super(Cell, self).__init__()
-        logger.info('{}, {}, {}'.format(C_prev_prev, C_prev, C))
 
         if reduction_prev:
             self.preprocess0 = FactorizedReduce(C_prev_prev, C)

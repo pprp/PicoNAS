@@ -34,6 +34,8 @@ def compute_plain_per_weight(net,
         en = (sp + 1) * N // split_data
 
         outputs = net.forward(inputs[st:en])
+        if isinstance(outputs, tuple):
+            outputs = outputs[0]
         loss = loss_fn(outputs, targets[st:en])
         loss.backward()
 

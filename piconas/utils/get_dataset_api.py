@@ -165,7 +165,7 @@ class NDS:
 
     def __init__(self, searchspace):
         self.searchspace = searchspace
-        data = json.load(open(f'nds_data/{searchspace}.json', 'r'))
+        data = json.load(open(f'data/nds_data/{searchspace}.json', 'r'))
         try:
             data = data['top'] + data['mid']
         except Exception as e:
@@ -196,14 +196,12 @@ class NDS:
                 reduce=gen['reduce'],
                 reduce_concat=gen['reduce_concat'])
             if '_in' in self.searchspace:
-                network = NetworkImageNet(config['width'], 1, config['depth'],
-                                          config['aux'], genotype)
+                network = NetworkImageNet(config['width'], 10, config['depth'],
+                                          False, genotype)
             else:
-                network = NetworkCIFAR(config['width'], 1, config['depth'],
-                                       config['aux'], genotype)
+                network = NetworkCIFAR(config['width'], 10, config['depth'],
+                                       False, genotype)
             network.drop_path_prob = 0.
-            # print(config)
-            # print('genotype')
             L = config['depth']
         else:
             if 'bot_muls' in config and 'bms' not in config:
@@ -230,7 +228,7 @@ class NDS:
         return network
 
     def __getitem__(self, index):
-        return index
+        return self.get_network(index)
 
     def __len__(self):
         return len(self.data)
@@ -238,7 +236,7 @@ class NDS:
     def random_arch(self):
         return random.randint(0, len(self.data) - 1)
 
-    def get_final_accuracy(self, uid, acc_type, trainval):
+    def get_final_accuracy(self, uid):
         return 100. - self.data[uid]['test_ep_top1'][-1]
 
 
