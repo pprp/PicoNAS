@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+import numpy as np
 import optuna
 import torch
 import torch.nn as nn
@@ -13,7 +14,8 @@ from exps.mq_bench_101.dataset import ZcDataset
 from exps.mq_bench_101.parzc import BaysianMLPMixer
 from piconas.core.losses.diffkd import diffkendall
 from piconas.core.losses.pair_loss import pair_loss
-from piconas.utils.rank_consistency import kendalltau, pearson, spearman
+from piconas.utils.rank_consistency import (kendalltau, pearson, spearman,
+                                            spearman_top_k)
 
 # Create a log directory if it doesn't exist
 log_dir = './logdir'
@@ -23,7 +25,8 @@ os.makedirs(log_dir, exist_ok=True)
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
     filename=os.path.join(
-        log_dir, 'training_hpo_mq_bench_101.log'),  # Save logs to a file
+        log_dir,
+        'training_hpo_mq_bench_101_run_1107_13.log'),  # Save logs to a file
     level=logging.INFO,
     format=log_format,
     datefmt='%m/%d %I:%M:%S %p')
@@ -119,15 +122,25 @@ def objective(trial):
             batch_y = batch_y.cuda()
         with torch.no_grad():
             batch_pred = mlp_model(batch_x)
-            y_pred.extend(batch_pred.cpu().numpy())
-            y_true.extend(batch_y.cpu().numpy())
+            y_pred.extend(batch_pred.cpu().numpy().tolist())
+        y_true.extend(batch_y.cpu().numpy().tolist())
+
+    # Convert to numpy array
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred).squeeze(-1)
 
     # Calculate the kendall tau, spearman, pearson correlation coefficients
     logging.info(f'Kendall tau: {kendalltau(y_true, y_pred)}')
     logging.info(f'Spearman: {spearman(y_true, y_pred)}')
     logging.info(f'Pearson: {pearson(y_true, y_pred)[0]}')
 
-    return spearman(y_true, y_pred)
+    # Calculate Spearman topk
+    sp_list = spearman_top_k(y_true, y_pred)
+    logging.info(f'Spearman topk@20%: {sp_list[0]}')
+    logging.info(f'Spearman topk@50%: {sp_list[1]}')
+    logging.info(f'Spearman topk@100%: {sp_list[2]}')
+
+    return mean(sp_list)
 
 
 # Create an Optuna study

@@ -3,7 +3,7 @@ import math
 
 import numpy as np
 import scipy.stats
-from scipy.stats import stats
+from scipy import stats
 
 
 def concordant_pair_ratio(list1, list2):
@@ -132,6 +132,30 @@ def p_at_tb_k(true_scores, predict_scores, ratios=[0.01, 0.05, 0.1, 0.5]):
     return patks
 
 
+def spearman_top_k(true_scores, predict_scores, ratios=[0.2, 0.5, 1]):
+    predict_scores = np.asarray(predict_scores)
+    true_scores = np.asarray(true_scores)
+
+    # Sort the true_scores
+    true_inds = np.argsort(true_scores)[::-1]
+    # Get corresponding predict_score and true_scores
+    predict_scores = predict_scores[true_inds]
+    true_scores = true_scores[true_inds]
+
+    # Get length of the true_scores
+    num_archs = len(true_scores)
+
+    running_spearman = []
+    for ratio in ratios:
+        k = int(num_archs * ratio)
+        if k < 1:
+            continue
+        # Convert to 1-D arrays if needed
+        sp_at_topk = spearman(true_scores[:k], predict_scores[:k])
+        running_spearman.append(sp_at_topk)
+    return running_spearman
+
+
 if __name__ == '__main__':
     a = np.array([np.random.randn() for _ in range(100)])
     b = np.array([np.random.randn() for _ in range(100)])
@@ -139,3 +163,5 @@ if __name__ == '__main__':
     print(rank_difference(a[:20], b[:20]), rank_difference(a[20:40], b[20:40]))
     print(p_at_tb_k(a, b))
     print(minmax_n_at_k(a, b))
+
+    print(spearman_top_k(a, b))

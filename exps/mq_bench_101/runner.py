@@ -2,6 +2,7 @@ import logging
 import os  # Added for log directory creation
 import sys
 
+import numpy as np
 import torch
 import torch.optim as optim
 from sklearn.metrics import mean_squared_error
@@ -11,7 +12,8 @@ from exps.mq_bench_101.dataset import ZcDataset
 from exps.mq_bench_101.parzc import BaysianMLPMixer
 from piconas.core.losses.diffkd import diffkendall
 from piconas.core.losses.pair_loss import pair_loss
-from piconas.utils.rank_consistency import kendalltau, pearson, spearman
+from piconas.utils.rank_consistency import (kendalltau, pearson, spearman,
+                                            spearman_top_k)
 
 # Create a log directory if it doesn't exist
 log_dir = './logdir'
@@ -46,8 +48,10 @@ train_dataset, test_dataset = torch.utils.data.random_split(
 
 # Create data loaders for batch processing
 batch_size = 35
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+train_loader = DataLoader(
+    train_dataset, batch_size=batch_size, shuffle=True, drop_last=False)
+test_loader = DataLoader(
+    test_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
 
 # Create an instance of the MLP model and define the loss function and optimizer
 mlp_model = BaysianMLPMixer(
@@ -104,16 +108,23 @@ for batch_x, batch_y in test_loader:
     if torch.cuda.is_available():
         batch_x = batch_x.cuda()
         batch_y = batch_y.cuda()
+
     with torch.no_grad():
         batch_pred = mlp_model(batch_x)
-        y_pred.extend(batch_pred.cpu().numpy())
-        y_true.extend(batch_y.cpu().numpy())
+        y_pred.extend(batch_pred.cpu().numpy().tolist())
+        y_true.extend(batch_y.cpu().numpy().tolist())
 
-# Calculate the mean squared error (MSE) loss between the predicted and actual values
-mse_loss = mean_squared_error(y_true, y_pred)
-logging.info(f'MSE Loss: {mse_loss:.4f}')
+# Convert to numpy array
+y_true = np.array(y_true)
+y_pred = np.array(y_pred).squeeze(-1)
 
 # Calculate the kendall tau, spearman, pearson correlation coefficients
 logging.info(f'Kendall tau: {kendalltau(y_true, y_pred)}')
 logging.info(f'Spearman: {spearman(y_true, y_pred)}')
-logging.info(f'Pearson: {pearson(y_true, y_pred)[0]}')
+logging.info(f'Pearson: {pearson(y_true, y_pred)}')
+
+# Calculate Spearman topk
+sp_list = spearman_top_k(y_true, y_pred)
+logging.info(f'Spearman topk@20%: {sp_list[0]}')
+logging.info(f'Spearman topk@50%: {sp_list[1]}')
+logging.info(f'Spearman topk@100%: {sp_list[2]}')

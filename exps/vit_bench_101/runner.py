@@ -21,7 +21,8 @@ os.makedirs(log_dir, exist_ok=True)
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
     filename=os.path.join(
-        log_dir, 'training_vit_bench_101_run1.log'),  # Save logs to a file
+        log_dir,
+        'training_vit_bench_101_231107_13.log'),  # Save logs to a file
     level=logging.INFO,
     format=log_format,
     datefmt='%m/%d %I:%M:%S %p')
@@ -46,8 +47,10 @@ train_dataset, test_dataset = torch.utils.data.random_split(
 
 # Create data loaders for batch processing
 batch_size = 35
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+train_loader = DataLoader(
+    train_dataset, batch_size=batch_size, shuffle=True, drop_last=False)
+test_loader = DataLoader(
+    test_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
 
 # Create an instance of the MLP model and define the loss function and optimizer
 mlp_model = BaysianMLPMixer(
@@ -79,7 +82,7 @@ for epoch in range(num_epochs):
             batch_y = batch_y.cuda()
         optimizer.zero_grad()
         y_pred = mlp_model(batch_x)
-        loss = pair_loss(y_pred.squeeze(-1), batch_y)
+        loss = diffkendall(y_pred.squeeze(-1), batch_y)
         loss.backward()
         optimizer.step()
 
