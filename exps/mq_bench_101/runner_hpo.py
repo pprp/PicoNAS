@@ -123,7 +123,7 @@ def objective(trial):
         with torch.no_grad():
             batch_pred = mlp_model(batch_x)
             y_pred.extend(batch_pred.cpu().numpy().tolist())
-        y_true.extend(batch_y.cpu().numpy().tolist())
+            y_true.extend(batch_y.cpu().numpy().tolist())
 
     # Convert to numpy array
     y_true = np.array(y_true)
@@ -132,7 +132,7 @@ def objective(trial):
     # Calculate the kendall tau, spearman, pearson correlation coefficients
     logging.info(f'Kendall tau: {kendalltau(y_true, y_pred)}')
     logging.info(f'Spearman: {spearman(y_true, y_pred)}')
-    logging.info(f'Pearson: {pearson(y_true, y_pred)[0]}')
+    logging.info(f'Pearson: {pearson(y_true, y_pred)}')
 
     # Calculate Spearman topk
     sp_list = spearman_top_k(y_true, y_pred)
@@ -140,7 +140,7 @@ def objective(trial):
     logging.info(f'Spearman topk@50%: {sp_list[1]}')
     logging.info(f'Spearman topk@100%: {sp_list[2]}')
 
-    return mean(sp_list)
+    return np.mean(sp_list)
 
 
 # Create an Optuna study

@@ -3,6 +3,7 @@ import os  # Added for log directory creation
 import sys
 
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import mean_squared_error
 from torch.utils.data import DataLoader
@@ -21,8 +22,7 @@ os.makedirs(log_dir, exist_ok=True)
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
     filename=os.path.join(
-        log_dir,
-        'training_vit_bench_101_231107_13.log'),  # Save logs to a file
+        log_dir, 'training_vit_bench_101_run4.log'),  # Save logs to a file
     level=logging.INFO,
     format=log_format,
     datefmt='%m/%d %I:%M:%S %p')
@@ -64,7 +64,7 @@ mlp_model = BaysianMLPMixer(
     expansion_factor_token=0.5,
     dropout=0.18)
 
-loss_function = diffkendall
+loss_function = nn.MSELoss()
 optimizer = optim.Adam(mlp_model.parameters(), lr=0.002)
 
 # Move the model to GPU if available
@@ -82,7 +82,8 @@ for epoch in range(num_epochs):
             batch_y = batch_y.cuda()
         optimizer.zero_grad()
         y_pred = mlp_model(batch_x)
-        loss = diffkendall(y_pred.squeeze(-1), batch_y)
+        loss = pair_loss(y_pred.squeeze(-1), batch_y) + diffkendall(
+            y_pred.squeeze(-1), batch_y)
         loss.backward()
         optimizer.step()
 

@@ -11,18 +11,18 @@ if [ ! -d "./results" ]; then
 fi
 
 # arguments
-IDX=0
+IDX=1
 Loss=mse
 Bench=101
 Epochs=150
-Model=ParZCBMM2
+Model=ParZCBMM
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=512
-# Train_Split_List=(100 172 424 424 4236)
-# Eval_Split_List=(all all 100 all all)
-Train_Split_List=(100)
-Eval_Split_List=(all)
+Train_Split_List=(100 172 424 424 4236)
+Eval_Split_List=(all all 100 all all)
+# Train_Split_List=(100)
+# Eval_Split_List=(all)
 Script=./piconas/runner/runner_pinat_rank.py
 
 for((t=0; t<${#Train_Split_List[*]}; t++)); do
@@ -34,15 +34,15 @@ for((t=0; t<${#Train_Split_List[*]}; t++)); do
   EXP_Name=${Bench}_${Dataset}_${Model}_${Loss}_t${Train_Split}_v${Eval_Split}_e${Epochs}_bs${Train_batch_size}_test
 
   # run
-  # nohup python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \
-  #   --train_split ${Train_Split} --eval_split ${Eval_Split} --bench ${Bench} --dataset ${Dataset} \
-  #   --train_batch_size ${Train_batch_size} --eval_batch_size ${Eval_batch_size} \
-  #   > logdir/$EXP_Name.log 2>&1 &
-  echo EXP_Name: $EXP_Name
-  # debug
-  python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \
+  nohup python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \
     --train_split ${Train_Split} --eval_split ${Eval_Split} --bench ${Bench} --dataset ${Dataset} \
-    --train_batch_size ${Train_batch_size} --eval_batch_size ${Eval_batch_size}
+    --train_batch_size ${Train_batch_size} --eval_batch_size ${Eval_batch_size} \
+    > logdir/$EXP_Name.log 2>&1 &
+  echo EXP_Name: $EXP_Name
+  # # debug
+  # python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \
+  #   --train_split ${Train_Split} --eval_split ${Eval_Split} --bench ${Bench} --dataset ${Dataset} \
+  #   --train_batch_size ${Train_batch_size} --eval_batch_size ${Eval_batch_size}
 
   echo "GPU:$GPU EXP:$EXP_Name"
   if [ $GPU = 7 ] ; then
@@ -52,4 +52,4 @@ for((t=0; t<${#Train_Split_List[*]}; t++)); do
 
 done
 
-# tail -f logdir/$EXP_Name.log
+tail -f logdir/$EXP_Name.log
