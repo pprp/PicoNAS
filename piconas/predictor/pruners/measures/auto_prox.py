@@ -1,8 +1,3 @@
-# auto_prox A
-# Input=['t3g', 't2'] Op=[[5, 10], [14, 6], 0]
-# auto_prox P
-# Input=['t2', 't1g'] Op=[[8, 6], [10, 1], 1]
-
 from copy import deepcopy
 from typing import List
 

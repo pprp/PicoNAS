@@ -142,7 +142,7 @@ def main():
             num_sample=num_sample,
         )
         kt, ps, sp = evaluator.compute_rank_by_predictive(
-            dataloader=train_dataloader, measure_name=['auto-prox-P'])
+            dataloader=train_dataloader, measure_name=['EZNAS-A'])
         print(f'num_sample: {num_sample}, kt: {kt}, ps: {ps}, sp: {sp}')
 
     utils.time_record(start)

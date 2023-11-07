@@ -1,20 +1,34 @@
+import torch
 import torch.nn as nn
-from autozc.operators import (available_zc_candidates, binary_operation,
-                              get_zc_candidates, sample_binary_key_by_prob,
-                              sample_unary_key_by_prob, unary_operation)
-from autozc.operators.binary_ops import BINARY_KEYS
-from autozc.operators.unary_ops import UNARY_KEYS
-from autozc.structures.utils import convert_to_float
 
+from piconas.autozc import unary_operation
+from piconas.autozc.unary_ops import to_mean_scalar
 from . import measure
 
 
+def convert_to_float(input):
+    if isinstance(input, (list, tuple)):
+        if len(input) == 0:
+            return -1
+        return sum(convert_to_float(x) for x in input) / len(input)
+    elif isinstance(input, torch.Tensor):
+        return to_mean_scalar(input).item()
+    elif isinstance(input, np.ndarray):
+        return input.astype(float)
+    elif isinstance(input, (int, float)):
+        return input
+    else:
+        print(type(input))
+        return float(input)
+
+
 @measure('EZNAS-A')
-def compute_score1(
+def compute_eznas_a(
         net,
         inputs,
         targets,
         loss_fn=nn.CrossEntropyLoss(),
+        split_data=1,
 ):
 
     def compute_t3g_gradient(net, inputs, targets, loss_fn, split_data=1):

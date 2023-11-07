@@ -15,15 +15,9 @@ UNARY_KEYS = ('element_wise_log', 'element_wise_abslog', 'element_wise_abs',
               'element_wise_relu', 'element_wise_invert', 'frobenius_norm',
               'element_wise_normalized_sum', 'l1_norm', 'softmax', 'sigmoid',
               'logsoftmax', 'element_wise_sqrt', 'element_wise_revert',
-              'min_max_normalize', 'to_mean_scalar', 'to_std_scalar', 'no_op')
+              'element_wise_sign', 'min_max_normalize', 'to_mean_scalar',
+              'to_std_scalar', 'no_op')
 SCALAR_KEYS = ('to_mean_scalar', 'to_std_scalar')
-
-# remove `gram_matrix` for now to avoid OOM
-# remove `element_wise_sign`
-# remove `to_sum_scalar` for it is equaivalent to `to_mean_scalar` in the
-#         context of zero-cost proxy
-
-# sample key by probability
 
 
 def sample_unary_key_by_prob(probability=None):
@@ -44,6 +38,10 @@ def no_op(A: ALLTYPE) -> ALLTYPE:
 def element_wise_log(A: ALLTYPE) -> ALLTYPE:
     A[A <= 0] == 1
     return torch.log(A + 1e-9)
+
+
+def element_wise_sign(A: ALLTYPE) -> ALLTYPE:
+    return torch.sign(A)
 
 
 def element_wise_revert(A: ALLTYPE) -> ALLTYPE:
@@ -176,11 +174,6 @@ def unary_operation(A, idx=None):
     if idx is None:
         idx = random.choice(range(len(UNARY_KEYS)))
 
-    if isinstance(idx, str):
-        idx = UNARY_KEYS.index(idx)
-
-    assert idx < len(UNARY_KEYS)
-
     unaries = {
         'element_wise_log': element_wise_log,
         'element_wise_abslog': element_wise_abslog,
@@ -208,6 +201,12 @@ def unary_operation(A, idx=None):
         'element_wise_sqrt': element_wise_sqrt,
         'min_max_normalize': min_max_normalize,
         'element_wise_revert': element_wise_revert,
+        'element_wise_sign': element_wise_sign,
         'no_op': no_op,
     }
-    return unaries[UNARY_KEYS[idx]](A)
+
+    if isinstance(idx, str):
+        return unaries[idx](A)
+    elif isinstance(idx, int):
+        assert idx < len(UNARY_KEYS)
+        return unaries[UNARY_KEYS[idx]](A)

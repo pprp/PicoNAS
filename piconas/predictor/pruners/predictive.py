@@ -162,7 +162,7 @@ def find_measures(
         )
 
     for k, v in measures_arr.items():
-        if k == 'jacov' or k == 'epe_nas' or k == 'nwot' or k == 'zen' or k == 'gdnas' or k == 'swap' or k == 'auto-prox-A' or k == 'auto-prox-P':
+        if k == 'jacov' or k == 'epe_nas' or k == 'nwot' or k == 'zen' or k == 'gdnas' or k == 'swap' or k == 'auto-prox-A' or k == 'auto-prox-P' or k == 'EZNAS-A':
             measure_score = v
         else:
             measure_score = sum_arr(v)
