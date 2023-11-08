@@ -21,7 +21,8 @@ from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
 
 parser = ArgumentParser()
 # exp and dataset
-parser.add_argument('--exp_name', type=str, default='PINAT7')
+parser.add_argument(
+    '--exp_name', type=str, default='Search Benchmark for best accuracy')
 parser.add_argument('--bench', type=str, default='101')
 parser.add_argument('--train_split', type=str, default='100')
 parser.add_argument('--eval_split', type=str, default='all')
