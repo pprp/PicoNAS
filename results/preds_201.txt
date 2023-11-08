@@ -202,3 +202,8 @@ EXP:201_cifar10_ParZCBMM_mse_t156_vall_e153_bs10_best_nb201_run2	lr: 0.0001	trai
 EXP:201_cifar10_ParZCBMM_mse_t469_vall_e153_bs10_best_nb201_run2	lr: 0.0001	train: 469	test: all	kendall_tau: 0.762793
 EXP:201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2	lr: 0.0001	train: 781	test: all	kendall_tau: 0.783145
 EXP:201_cifar10_ParZCBMM_mse_t1563_vall_e153_bs10_best_nb201_run2	lr: 0.0001	train: 1563	test: all	kendall_tau: 0.767234
+EXP:testing	lr: 0.0001	train: 78	test: all	kendall_tau: 0.683118	 spearman_rho: 0.867644	 pearson_rho: 0.632408
+EXP:201_cifar10_ParZCBMM_mse_t156_vall_e40_bs10_best_nb201_run2	lr: 0.0001	train: 156	test: all	kendall_tau: 0.730693	 spearman_rho: 0.903835	 pearson_rho: 0.639608
+EXP:201_cifar100_ParZCBMM_mse_t156_vall_e40_bs10_best_nb201_run2	lr: 0.0001	train: 156	test: all	kendall_tau: 0.743440	 spearman_rho: 0.911893	 pearson_rho: 0.773666
+EXP:201_cifar10_ParZCBMM_mse_t1563_vall_e200_bs10_best_nb201_run2	lr: 0.0001	train: 1563	test: all	kendall_tau: 0.776965
+EXP:201_ImageNet16-120_ParZCBMM_mse_t156_vall_e100_bs10_best_nb201_RUN_NB201KD	lr: 0.0001	train: 156	test: all	kendall_tau: 0.699100	 spearman_rho: 0.878571	 pearson_rho: 0.854768

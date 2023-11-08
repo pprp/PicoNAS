@@ -201,22 +201,23 @@ class Nb201DatasetPINAT(Dataset):
         # find the maximum length for xx_layerwise function
         # then we can padding zero for those one with length < max_length
         max_length = 0
+        idx_dataset = self.data_set if self.data_set != 'ImageNet16-120' else 'cifar10'
 
-        for k0, v0 in self.zcp_nb201_layerwise[self.data_set].items():
+        for k0, v0 in self.zcp_nb201_layerwise[idx_dataset].items():
             for k1, v1 in v0.items():
                 assert type(v1) == list, 'v1 is not a list'
                 if len(v1) > max_length:
                     max_length = len(v1)
 
         # padding zero for those one with length < max_length
-        for k0, v0 in self.zcp_nb201_layerwise[self.data_set].items():
+        for k0, v0 in self.zcp_nb201_layerwise[idx_dataset].items():
             for k1, v1 in v0.items():
                 assert type(v1) == list, 'v1 is not a list'
                 if len(v1) < max_length:
                     v0[k1] = v1 + [0 for i in range(max_length - len(v1))]
 
         # filter those one with nan in the list and replace it with zero
-        for k0, v0 in self.zcp_nb201_layerwise[self.data_set].items():
+        for k0, v0 in self.zcp_nb201_layerwise[idx_dataset].items():
             # k0 denotes id in nasbench201
             for k1, v1 in v0.items():
                 # k1 denotes xx_layerwise in nasbench201
@@ -361,9 +362,12 @@ class Nb201DatasetPINAT(Dataset):
         combinations = [
             'grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise'
         ]
-        zcp_layerwise = self.zcp_nb201_layerwise[self.data_set][key][combinations[0]] + \
-                 self.zcp_nb201_layerwise[self.data_set][key][combinations[1]] + \
-                    self.zcp_nb201_layerwise[self.data_set][key][combinations[2]]
+
+        idx_dataset = self.data_set if self.data_set != 'ImageNet16-120' else 'cifar10'
+
+        zcp_layerwise = self.zcp_nb201_layerwise[idx_dataset][key][combinations[0]] + \
+                 self.zcp_nb201_layerwise[idx_dataset][key][combinations[1]] + \
+                    self.zcp_nb201_layerwise[idx_dataset][key][combinations[2]]
         zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
 
         result = {

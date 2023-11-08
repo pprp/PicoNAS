@@ -69,3 +69,7 @@ EXP:101_cifar10_ParZCBMM_mse_t100_vall_e150_bs10_test	lr: 0.0001	train: 100	test
 EXP:101_cifar10_ParZCBMM_mse_t172_vall_e150_bs10_test	lr: 0.0001	train: 172	test: all	kendall_tau: 0.667217
 EXP:101_cifar10_ParZCBMM_mse_t424_vall_e150_bs10_test	lr: 0.0001	train: 424	test: all	kendall_tau: 0.740971
 EXP:101_cifar10_ParZCBMM_mse_t4236_vall_e150_bs10_test	lr: 0.0001	train: 4236	test: all	kendall_tau: 0.803595
+EXP:101_cifar10_ParZCBMM_mse_t100_vall_e150_bs10_test	lr: 0.0001	train: 100	test: all	kendall_tau: 0.659195	 spearman_rho: 0.848418	 pearson_rho: 0.556586
+EXP:101_cifar10_ParZCBMM_mse_t172_vall_e150_bs10_test	lr: 0.0001	train: 172	test: all	kendall_tau: 0.655671	 spearman_rho: 0.848234	 pearson_rho: 0.529813
+EXP:101_cifar10_ParZCBMM_mse_t424_vall_e150_bs10_test	lr: 0.0001	train: 424	test: all	kendall_tau: 0.733381	 spearman_rho: 0.906738	 pearson_rho: 0.576641
+EXP:101_cifar10_ParZCBMM_mse_t4236_vall_e150_bs10_test	lr: 0.0001	train: 4236	test: all	kendall_tau: 0.803131	 spearman_rho: 0.949561	 pearson_rho: 0.594495

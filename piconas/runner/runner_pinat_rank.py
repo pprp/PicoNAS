@@ -7,7 +7,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from scipy.stats import kendalltau
 
 from piconas.core.losses.diffkd import diffkendall
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
@@ -15,6 +14,7 @@ from piconas.datasets.predictor.data_factory import create_dataloader
 from piconas.predictor.pinat.model_factory import (create_best_nb101_model,
                                                    create_best_nb201_model,
                                                    create_model)
+from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
                                  to_cuda)
 
@@ -74,7 +74,7 @@ def check_arguments():
         test_splits = ['100', 'all']
     elif args.bench == '201':
         train_splits = ['78', '156', '469', '781', '1563']
-        test_splits = ['all']
+        test_splits = ['all', '1000']
     else:
         raise ValueError('No defined NAS bench!')
     assert args.train_split in train_splits
@@ -136,7 +136,10 @@ def train(train_set, train_loader, test_set, test_loader, model, optimizer,
             # For logging, we can compute MSE or other metrics if desired.
             mse = accuracy_mse(predict.squeeze(), target.squeeze(), train_set)
             kd_train = kendalltau(predict.squeeze().cpu().detach().numpy(),
-                                  target.squeeze().cpu().detach().numpy())[0]
+                                  target.squeeze().cpu().detach().numpy())
+            if isinstance(kd_train, tuple):
+                kd_train = kd_train[0]
+
             meters.update(
                 {
                     'loss': loss.item(),
@@ -178,6 +181,11 @@ def evaluate(test_set, test_loader, model, criterion):
             predict = model(batch)
             predicts.append(predict.cpu().numpy())
             targets.append(target.cpu().numpy())
+            kd_test = kendalltau(predict.squeeze().cpu().detach().numpy(),
+                                 target.squeeze().cpu().detach().numpy())
+            if isinstance(kd_test, tuple):
+                kd_test = kd_test[0]
+
             meters.update(
                 {
                     'loss':
@@ -186,8 +194,7 @@ def evaluate(test_set, test_loader, model, criterion):
                     accuracy_mse(predict.squeeze(), target.squeeze(),
                                  test_set).item(),
                     'kd_test':
-                    kendalltau(predict.squeeze().cpu().detach().numpy(),
-                               target.squeeze().cpu().detach().numpy())[0]
+                    kd_test,
                 },
                 n=target.size(0))
             if step % args.eval_print_freq == 0 or step + 1 == len(
@@ -200,7 +207,17 @@ def evaluate(test_set, test_loader, model, criterion):
 
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
-    kendall_tau = kendalltau(predicts, targets)[0]
+    kendall_tau = kendalltau(predicts, targets)
+    spearman_rho = spearman(predicts, targets)
+    pearson_rho = pearson(predicts, targets)
+
+    if isinstance(kendall_tau, tuple):
+        kendall_tau = kendall_tau[0]
+    if isinstance(spearman_rho, tuple):
+        spearman_rho = spearman_rho[0]
+    if isinstance(pearson_rho, tuple):
+        pearson_rho = pearson_rho[0]
+
     # plot correlation figure with scatterplot
     import matplotlib.pyplot as plt
 
@@ -209,7 +226,8 @@ def evaluate(test_set, test_loader, model, criterion):
         targets,
         alpha=0.3,
         s=5,
-        label='kendall_tau: %.4f' % kendall_tau)
+        label='kendall_tau: %.4f spearman_rho: %.4f pearson_rho: %.4f' %
+        (kendall_tau, spearman_rho, pearson_rho))
 
     # Label and title
     plt.xlabel('Predicted Performance')
@@ -231,7 +249,7 @@ def evaluate(test_set, test_loader, model, criterion):
     df = pd.DataFrame({'predicts': predicts, 'targets': targets})
     df.to_csv('predicts_targets.csv', index=False)
 
-    return kendall_tau, predicts, targets
+    return kendall_tau, spearman_rho, pearson_rho
 
 
 def main():
@@ -261,9 +279,11 @@ def main():
     # train and evaluate predictor
     model = train(train_set, train_loader, test_set, test_loader, model,
                   optimizer, lr_scheduler, criterion1, criterion2)
-    kendall_tau, predict_all, target_all = evaluate(test_set, test_loader,
-                                                    model, criterion1)
+    kendall_tau, spearman_rho, pearson_rho = evaluate(test_set, test_loader,
+                                                      model, criterion1)
     logging.info('Kendalltau: %.6f', kendall_tau)
+    logging.info('Spearman: %.6f', spearman_rho)
+    logging.info('Pearson: %.6f', pearson_rho)
 
     # save checkpoint
     ckpt_dir = './checkpoints/nasbench_%s/' % args.bench
@@ -274,9 +294,10 @@ def main():
 
     # write results
     with open('./results/preds_%s.txt' % args.bench, 'a') as f:
-        f.write('EXP:%s\tlr: %s\ttrain: %s\ttest: %s\tkendall_tau: %.6f\n' %
-                (args.exp_name, args.lr, args.train_split, args.eval_split,
-                 kendall_tau))
+        f.write(
+            'EXP:%s\tlr: %s\ttrain: %s\ttest: %s\tkendall_tau: %.6f\t spearman_rho: %.6f\t pearson_rho: %.6f\n'
+            % (args.exp_name, args.lr, args.train_split, args.eval_split,
+               kendall_tau, spearman_rho, pearson_rho))
 
 
 if __name__ == '__main__':

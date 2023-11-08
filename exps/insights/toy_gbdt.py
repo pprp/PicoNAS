@@ -2,14 +2,13 @@ import json
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from nas_201_api import NASBench201API as API
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
-import pandas as pd
 
 from piconas.utils.rank_consistency import kendalltau, pearson, spearman
-
 
 VISUALIZE = True
 
@@ -24,7 +23,6 @@ ds_target = 'cifar10'  # cifar100, ImageNet16-120
 input_dict = input_dict[ds_target]
 zc_target = 'grad_norm_layerwise'  # plain_layerwise, snip_layerwise, synflow_layerwise grad_norm_layerwise fisher_layerwise l2_norm_layerwise grasp_layerwise
 
-
 print('zc_target: ', zc_target)
 
 # Convert the dictionary to input features and target labels
@@ -32,7 +30,7 @@ x_train = []
 y_train = []
 for key, value in input_dict.items():
     v = value[zc_target]
-    # filter the Nan value to 0 
+    # filter the Nan value to 0
     v = [0 if np.isnan(x) else x for x in v]
     x_train.append(v)
     # query gt by key

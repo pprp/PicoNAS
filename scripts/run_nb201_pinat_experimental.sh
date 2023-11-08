@@ -1,5 +1,5 @@
-if [ ! -d "./logdir" ]; then
-  mkdir ./logdir
+if [ ! -d "./logdir/nb201" ]; then
+  mkdir ./logdir/nb201
 fi
 if [ ! -d "./checkpoints" ]; then
   mkdir ./checkpoints
@@ -41,7 +41,7 @@ for((t=0; t<${#Train_Split_List[*]}; t++)); do
   nohup python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \
     --train_split ${Train_Split} --eval_split ${Eval_Split} --bench ${Bench} --dataset ${Dataset} \
     --train_batch_size ${Train_batch_size} --eval_batch_size ${Eval_batch_size} \
-    > logdir/$EXP_Name.log 2>&1 &
+    > logdir/nb201/$EXP_Name.log 2>&1 &
 
   echo "GPU:$GPU EXP:$EXP_Name"
   if [ $GPU = 7 ] ; then
