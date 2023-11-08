@@ -37,7 +37,7 @@ for((t=0; t<${#Train_Split_List[*]}; t++)); do
   nohup python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \
     --train_split ${Train_Split} --eval_split ${Eval_Split} --bench ${Bench} --dataset ${Dataset} \
     --train_batch_size ${Train_batch_size} --eval_batch_size ${Eval_batch_size} \
-    > logdir/nb101/$EXP_Name.log 2>&1 &
+    >> logdir/nb101/$EXP_Name.log 2>&1 &
   echo EXP_Name: $EXP_Name
   # # debug
   # python -u ${Script} --exp_name $EXP_Name --epochs $Epochs --gpu_id $GPU --model_name ${Model} \

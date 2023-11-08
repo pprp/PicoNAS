@@ -1,4 +1,3 @@
-import itertools
 import json
 import os
 import pdb
@@ -159,7 +158,7 @@ for ss in search_space:
         }
 
         target_json[ss][uid] = dict()
-        target_json[ss]['gt'] = nds_api.get_final_accuracy(uid)
+        target_json[ss][uid]['gt'] = nds_api.get_final_accuracy(uid)
 
         for method in methods:
             net = nds_api[uid]
