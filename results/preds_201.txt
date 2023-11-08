@@ -209,3 +209,5 @@ EXP:201_cifar10_ParZCBMM_mse_t1563_vall_e200_bs10_best_nb201_run2	lr: 0.0001	tra
 EXP:201_ImageNet16-120_ParZCBMM_mse_t156_vall_e100_bs10_best_nb201_RUN_NB201KD	lr: 0.0001	train: 156	test: all	kendall_tau: 0.699100	 spearman_rho: 0.878571	 pearson_rho: 0.854768
 EXP:201_ImageNet16-120_ParZCBMM_mse_t156_vall_e100_bs10_best_nb201_RUN_NB201KD	lr: 0.0001	train: 156	test: all	kendall_tau: 0.699626	 spearman_rho: 0.879127	 pearson_rho: 0.856977
 EXP:201_ImageNet16-120_ParZCBMM_mse_t156_vall_e100_bs10_best_nb201_RUN_NB201KD	lr: 0.0001	train: 156	test: all	kendall_tau: 0.699409	 spearman_rho: 0.879573	 pearson_rho: 0.854901
+EXP:Search Benchmark for best accuracy	lr: 0.0001	train: 78	test: all	kendall_tau: 0.792757
+EXP:Search Benchmark for best accuracy	lr: 0.0001	train: 78	test: all	kendall_tau: 0.792757

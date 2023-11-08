@@ -389,10 +389,8 @@ class Nb201DatasetPINAT(Dataset):
             torch.tensor(self.normalize(test_acc / 100), dtype=torch.float32),
             'test_acc_wo_normalize':
             torch.tensor(test_acc / 100, dtype=torch.float32),
-            'val_acc_ori':
-            val_acc,
-            'test_acc_ori':
-            test_acc,
+            'val_acc_wo_normalize':
+            torch.tensor(val_acc / 100, dtype=torch.float32),
             'encoder_input':
             torch.LongTensor(encoder_input),
             'decoder_input':

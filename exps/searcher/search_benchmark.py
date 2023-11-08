@@ -130,37 +130,68 @@ def evaluate(test_set, test_loader, model, criterion):
 def traverse_benchmark(test_set, test_loader, model, topN=10):
     model.eval()
     meters = AverageMeterGroup()
-    predicts, targets = [], []
+    predicts, val_target_list, test_target_list = [], [], []
 
     with torch.no_grad():
         for step, batch in enumerate(test_loader):
             batch = to_cuda(batch, device)
-            target = batch['test_acc_wo_normalize']
+            test_target = batch['test_acc_wo_normalize']
+            val_target = batch['val_acc_wo_normalize']
             predict = model(batch)
             predicts.append(predict.cpu().numpy())
-            targets.append(target.cpu().numpy())
+            test_target_list.append(test_target.cpu().numpy())
+            val_target_list.append(val_target.cpu().numpy())
 
     predicts = np.concatenate(predicts)
-    targets = np.concatenate(targets)
+    val_target_list = np.concatenate(val_target_list)
+    test_target_list = np.concatenate(test_target_list)
 
     # plot correlation between predicts and targets
     import matplotlib.pyplot as plt
-    plt.scatter(predicts, targets)
-    plt.savefig('correlation-of-predictor.png')
+    plt.scatter(predicts, val_target_list)
+    plt.savefig('correlation-w-valacc-vs-parzc.png')
+    plt.clf()
+
+    plt.scatter(predicts, test_target_list)
+    plt.savefig('correlation-w-testacc-vs-parzc.png')
     plt.clf()
 
     # find the topN high score's index from predicts and then find the corresponding targest
     top_indices = np.argsort(predicts)[-topN:]
-    topN_targets = targets[top_indices]
-    best_target = max(topN_targets)
+    topN_val_targets = val_target_list[top_indices]
+    best_val_target = max(topN_val_targets)
 
-    plt.scatter(predicts[top_indices], targets[top_indices])
-    plt.savefig('correlation-of-top.png')
+    plt.scatter(predicts[top_indices], val_target_list[top_indices])
+    plt.savefig('correlation-w-valacc-vs-parzc-top.png')
+
+    topN_test_targets = test_target_list[top_indices]
+    best_test_target = max(topN_test_targets)
     plt.clf()
 
-    print('Currently we found that the best acc of search space is:',
-          best_target)
-    return best_target
+    plt.scatter(predicts[top_indices], test_target_list[top_indices])
+    plt.savefig('correlation-w-testacc-vs-parzc-top.png')
+    plt.clf()
+
+    logging.info(
+        'Currently we found that the best val acc of search space is:',
+        best_val_target)
+    logging.info(
+        'Currently we found that the best test acc of search space is:',
+        best_test_target)
+
+    # find highest idx for predicts
+    highest_idx = np.argmax(predicts)
+    norm_best_val_acc = val_target_list[highest_idx][0]
+    norm_best_test_acc = test_target_list[highest_idx][0]
+
+    logging.info(
+        'Currently we found that the best val acc of search space is:',
+        norm_best_val_acc)
+    logging.info(
+        'Currently we found that the best test acc of search space is:',
+        norm_best_test_acc)
+
+    return best_val_target, best_test_target
 
 
 def main():
@@ -180,7 +211,7 @@ def main():
         torch.load(ckpt_dir, map_location=torch.device('cpu')))
 
     model = model.to(device)
-    # print(model)
+    # logging.info(model)
     logging.info('PINAT params.: %f M' %
                  (sum(_param.numel() for _param in model.parameters()) / 1e6))
     logging.info('Training on NAS-Bench-%s, train_split: %s, eval_split: %s' %
@@ -197,21 +228,8 @@ def main():
     logging.info('Kendalltau: %.6f', kendall_tau)
 
     # evaluate the final performance across the whole dataset
-    best_acc = traverse_benchmark(test_set, test_loader, model, topN=20)
-    logging.info('Best Accuracy is: %.6f', best_acc)
-
-    # save checkpoint
-    ckpt_dir = './checkpoints/nasbench_%s/' % args.bench
-    ckpt_path = os.path.join(
-        ckpt_dir, '%s_tau%.6f_ckpt.pt' % (args.exp_name, kendall_tau))
-    torch.save(model.state_dict(), ckpt_path)
-    logging.info('Save model to %s' % ckpt_path)
-
-    # write results
-    with open('./results/preds_%s.txt' % args.bench, 'a') as f:
-        f.write('EXP:%s\tlr: %s\ttrain: %s\ttest: %s\tkendall_tau: %.6f\n' %
-                (args.exp_name, args.lr, args.train_split, args.eval_split,
-                 kendall_tau))
+    best_val_acc, best_test_acc = traverse_benchmark(
+        test_set, test_loader, model, topN=5)
 
 
 if __name__ == '__main__':

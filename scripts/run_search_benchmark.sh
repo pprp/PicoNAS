@@ -8,8 +8,8 @@ if [ ! -d $LOGDIR ]; then
 fi
 
 # NASBENCH101
-# LOGFILE=$LOGDIR/search_benchmark_nasbench101.log
-# python exps/searcher/search_benchmark.py --gpu_id 4 --train_split 100 --bench 101 > $LOGFILE 2>&1 &
+LOGFILE=$LOGDIR/search_benchmark_nasbench101.log
+python exps/searcher/search_benchmark.py --gpu_id 4 --train_split 100 --bench 101 > $LOGFILE 2>&1 &
 
 # NASBENCH201
 LOGFILE=$LOGDIR/search_benchmark_nasbench201.log
