@@ -120,6 +120,24 @@ def evaluate(test_set, test_loader, model, criterion):
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
     kendall_tau = kendalltau(predicts, targets)[0]
+
+    # 1. plot correlation of predicts and targets 
+    import matplotlib.pyplot as plt
+    plt.scatter(predicts, targets)
+    plt.xlabel('ParZC')
+    plt.ylabel('Test accuracy')
+    plt.savefig('preds_targets.png')
+    plt.close()
+
+    # 2. plot the rank of predicts and targets
+    # predicts_rank = np.argsort(predicts)
+    targets_rank = np.argsort(targets)
+    plt.scatter(predicts, targets_rank)
+    plt.xlabel('ParZC rank')
+    plt.ylabel('Test accuracy rank')
+    plt.savefig('preds_rank_targets_rank.png')
+    plt.close()
+
     return kendall_tau, predicts, targets
 
 
