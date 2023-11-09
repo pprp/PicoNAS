@@ -29,7 +29,8 @@ class EvolutionSearcher(object):
             train_loader=None,
             val_loader=None,
             log_name='evolution-searcher',
-            logger=None):
+            logger=None,
+            predictor=False):
 
         self.max_epochs = max_epochs
         self.select_num = select_num
@@ -55,12 +56,12 @@ class EvolutionSearcher(object):
         else:
             self.logger = logger
 
-        assert model_path is not None
+        if not predictor:
+            assert model_path is not None
+            self.logger.info(f'Loading model weights from {model_path}')
 
-        self.logger.info(f'Loading model weights from {model_path}')
-
-        state_dict = torch.load(model_path)['state_dict']
-        self.model.load_state_dict(state_dict)
+            state_dict = torch.load(model_path)['state_dict']
+            self.model.load_state_dict(state_dict)
 
         self.memory = []
         # visited
@@ -72,8 +73,9 @@ class EvolutionSearcher(object):
         self.candidates = []
 
         # recorder for draw
-        # eg: [[a1,a2,a3], [t1,t2,t3]]
-        self.recorder = []
+        self.recorder_idx = []
+        self.recorder_gt = []
+        self.recorder_pred = []
 
     def is_legal(self, subnet: Dict):
         """Judge whether the subnet is visited."""
@@ -236,29 +238,50 @@ class EvolutionSearcher(object):
             self.keep_top_k[self.select_num].sort(
                 key=lambda x: self.vis_dict[str(x)]['err'], reverse=False)
             top3_subnet = self.keep_top_k[self.select_num][:5]
-            tmp_recorder = []
+
+            tmp_acc = []
+            tmp_pred = []
+
             for i in range(5):
                 genotype = self.trainer.evaluator.generate_genotype(
                     top3_subnet[i], self.trainer.mutator)
-                results = self.trainer.evaluator.query_result(
+                results = self.trainer.evaluator.get_predictor_score(genotype)
+                acc = self.trainer.evaluator.query_result(
                     genotype, cost_key='eval_acc1es')
-                tmp_recorder.append(results)
+
+                tmp_acc.append(acc)
+                tmp_pred.append(results)
+
                 self.logger.info(
-                    f'Best Subnet: {top3_subnet[i]} Search top1 err: {self.vis_dict[str(top3_subnet[i])]["err"]} True Top1 Acc: {results}'
+                    f'Best Subnet: {top3_subnet[i]} Search top1 err: {self.vis_dict[str(top3_subnet[i])]["err"]} True Top1 Acc: {acc}'
                 )
 
-            self.recorder.append(tmp_recorder)
+            self.recorder_idx.append(self.epoch)
+            self.recorder_gt.append(tmp_acc)
+            self.recorder_pred.append(tmp_pred)
 
         self.draw_evalution_process()
 
     def draw_evalution_process(self):
-        splited_recoder = [[
-            self.recorder[j][i] for j in range(len(self.recorder))
-        ] for i in range(3)]
-        import matplotlib.pyplot as plt
-        x = list(range(len(self.recorder)))
-        for i in range(3):
-            plt.scatter(
-                x, splited_recoder[i], marker='o', c='y', cmap='coolwarm')
+        # save recorder to path logdir/evo_search to log_name.csv and log_name.png
+        import csv
+        with open(f'./logdir/evo_search/{self.log_name}.csv', 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(['epoch', 'gt', 'pred'])
+            for i in range(len(self.recorder_idx)):
+                writer.writerow([
+                    self.recorder_idx[i], self.recorder_gt[i],
+                    self.recorder_pred[i]
+                ])
 
-        plt.savefig('./evo_nb201_process.png')
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.title('Evolution Search Process')
+        plt.xlabel('epoch')
+        plt.ylabel('predictor score')
+        plt.plot(self.recorder_idx, self.recorder_gt, label='gt')
+        plt.plot(self.recorder_idx, self.recorder_pred, label='pred')
+        plt.legend()
+        plt.grid()
+
+        plt.savefig(f'./logdir/evo_search/{self.log_name}.png')

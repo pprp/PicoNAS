@@ -299,7 +299,7 @@ class Nb201DatasetPINAT(Dataset):
 
     def standard_scaling(self, data):
         return (data - np.mean(data)) / np.std(data)
-    
+
     def __getitem__(self, index):
         ss_index = self.sample_range[index]
         return self.get_batch(ss_index)
@@ -310,12 +310,15 @@ class Nb201DatasetPINAT(Dataset):
         else:
             idx_data_set = self.data_set
 
-        val_acc = self.nasbench201_dict[str(ss_index)]['%s_valid' % idx_data_set]
-        test_acc = self.nasbench201_dict[str(ss_index)]['%s_test' % idx_data_set]
+        val_acc = self.nasbench201_dict[str(ss_index)]['%s_valid' %
+                                                       idx_data_set]
+        test_acc = self.nasbench201_dict[str(ss_index)]['%s_test' %
+                                                        idx_data_set]
         adjacency = self.nasbench201_dict[str(ss_index)]['adj_matrix']
         lapla = self._generate_lapla_matrix(adj_matrix=adjacency)
         operation = np.array(
-            self.nasbench201_dict[str(ss_index)]['operation'], dtype=np.float32)
+            self.nasbench201_dict[str(ss_index)]['operation'],
+            dtype=np.float32)
         ops_onehot = np.array([[i == k for i in range(self.candidate_ops)]
                                for k in operation],
                               dtype=np.float32)

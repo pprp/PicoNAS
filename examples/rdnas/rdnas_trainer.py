@@ -584,7 +584,7 @@ class PGONASTrainer(BaseTrainer):
                 raise NotImplementedError(
                     f'key: {_key} is not list, is a {type(samples[_key])}')
             samples[_key] = samples[_key].to(self.device)
-        
+
         self.predictor.eval()
         self.predictor.to(self.device)
         out = self.predictor.forward(samples)
@@ -732,7 +732,8 @@ class PGONASTrainer(BaseTrainer):
 
         loss3 = (2 *
                  np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(predictor_score1, predictor_score2, loss1, loss2))
+                 self.pairwise_rankloss(predictor_score1, predictor_score2,
+                                        loss1, loss2))
         loss3.backward()
 
         return loss2, outputs
@@ -764,8 +765,10 @@ class PGONASTrainer(BaseTrainer):
             loss_list.append(loss)
             prior_list.append(prior)
 
-        loss_tensor, prior_tensor = torch.tensor(loss_list), torch.tensor(prior_list)
-        loss_tensor, prior_tensor = loss_tensor.to(self.device), prior_tensor.to(self.device)
+        loss_tensor, prior_tensor = torch.tensor(loss_list), torch.tensor(
+            prior_list)
+        loss_tensor, prior_tensor = loss_tensor.to(
+            self.device), prior_tensor.to(self.device)
         # loss_tensor = torch.stack(loss_list).to(self.device).requires_grad_()
         # prior_tensor = torch.stack(prior_list).to(self.device).requires_grad_()
 

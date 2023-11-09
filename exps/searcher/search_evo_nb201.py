@@ -107,7 +107,7 @@ def main():
     if not os.path.exists(cfg.work_dir):
         os.makedirs(cfg.work_dir)
     current_exp_name = f'{cfg.model_name}-{cfg.trainer_name}-{cfg.log_name}.yaml'
-    cfg.dump(os.path.join(cfg.work_dir, current_exp_name))
+    # cfg.dump(os.path.join(cfg.work_dir, current_exp_name))
 
     if torch.cuda.is_available():
         print('Train on GPU!')
@@ -157,7 +157,7 @@ def main():
 
     # set model path
     searcher = EvolutionSearcher(
-        max_epochs=20,
+        max_epochs=300,
         select_num=10,
         population_num=50,
         crossover_num=25,
@@ -167,7 +167,8 @@ def main():
         val_loader=val_dataloader,
         model_path=cfg.model_path,
         log_name=cfg.log_name,
-        logger=trainer.logger)
+        logger=trainer.logger,
+        predictor=True)
 
     searcher.search()
 

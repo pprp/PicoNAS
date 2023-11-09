@@ -1,20 +1,20 @@
 from typing import List, Union
 
-import torch 
 import numpy as np
+import torch
 import torch.nn.functional as F
 from nas_201_api import NASBench201API as API
 from tqdm import tqdm
 
+from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 from piconas.evaluator.base import Evaluator
 from piconas.nas.mutators import DiffMutator, OneShotMutator
+from piconas.predictor.pinat.model_factory import create_best_nb201_model
 from piconas.predictor.pruners.predictive import find_measures
 from piconas.utils.rank_consistency import (concordant_pair_ratio, kendalltau,
                                             minmax_n_at_k, p_at_tb_k, pearson,
                                             rank_difference, spearman)
 
-from piconas.predictor.pinat.model_factory import create_best_nb201_model
-from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 
 class NB201Evaluator(Evaluator):
     """Evaluate the NB201 Benchmark
@@ -31,8 +31,8 @@ class NB201Evaluator(Evaluator):
                  trainer,
                  num_sample: int = 50,
                  dataset: str = 'cifar10',
-                 type: str = 'eval_acc1es', 
-                 predictor = None, 
+                 type: str = 'eval_acc1es',
+                 predictor=False,
                  **kwargs):
         super().__init__(trainer=trainer, dataset=dataset)
         self.trainer = trainer
@@ -66,41 +66,40 @@ class NB201Evaluator(Evaluator):
             '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth',
             verbose=False)
 
-        if predictor is not None: 
-            # build dataloader for predictor 
+        if predictor is not None:
+            # build dataloader for predictor
 
-            # build predictor model 
-            self.predictor = create_best_nb201_model() 
+            # build predictor model
+            self.predictor = create_best_nb201_model()
             ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
             self.predictor.load_state_dict(
                 torch.load(ckpt_dir, map_location=torch.device('cpu')))
             self.predictor_dataset = Nb201DatasetPINAT(
-                    split='all', data_type='test', data_set='cifar10')
+                split='all', data_type='test', data_set='cifar10')
 
-
-    def get_predictor_score(self, subnet_dict: dict, dataloader):
+    def get_predictor_score(self, genotype):
         """get predictor score for a subnet."""
-        ss_index = self.generate_genotype(subnet_dict, self.trainer.mutator)
+        # subnet_dict = self.generate_subnet(genotype)
+        ss_index = self.query_index(genotype)
+        # ss_index = self.generate_genotype(subnet_dict, self.trainer.mutator)
         input = self.predictor_dataset.get_batch(ss_index)
 
         key_list = [
             'num_vertices', 'lapla', 'edge_num', 'features', 'zcp_layerwise'
         ]
         input['edge_index_list'] = [input['edge_index_list']]
-        input['operations'] = torch.tensor(input['operations']).unsqueeze(0).unsqueeze(0)
+        input['operations'] = torch.tensor(
+            input['operations']).unsqueeze(0).unsqueeze(0)
 
         for _key in key_list:
             if isinstance(input[_key], (list, float, int)):
                 input[_key] = torch.tensor(input[_key])
-                input[_key] = torch.unsqueeze(
-                    input[_key], dim=0)
+                input[_key] = torch.unsqueeze(input[_key], dim=0)
             elif isinstance(input[_key], np.ndarray):
                 input[_key] = torch.from_numpy(input[_key])
-                input[_key] = torch.unsqueeze(
-                    input[_key], dim=0)
+                input[_key] = torch.unsqueeze(input[_key], dim=0)
             elif isinstance(input[_key], torch.Tensor):
-                input[_key] = torch.unsqueeze(
-                    input[_key], dim=0)
+                input[_key] = torch.unsqueeze(input[_key], dim=0)
             else:
                 raise NotImplementedError(
                     f'key: {_key} is not list, is a {type(input[_key])}')

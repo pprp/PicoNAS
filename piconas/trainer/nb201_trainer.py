@@ -114,7 +114,7 @@ class NB201Trainer(BaseTrainer):
         self.kl_loss = KLDivergence(loss_weight=1)
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
-        return NB201Evaluator(self, num_sample, dataset)
+        return NB201Evaluator(self, num_sample, dataset, predictor=True)
 
     def sample_subnet_by_type(self, type: str = 'random') -> List[Dict]:
         """Return two subnets based on ``type``.
