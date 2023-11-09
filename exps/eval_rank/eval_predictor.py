@@ -121,7 +121,7 @@ def evaluate(test_set, test_loader, model, criterion):
     targets = np.concatenate(targets)
     kendall_tau = kendalltau(predicts, targets)[0]
 
-    # 1. plot correlation of predicts and targets 
+    # 1. plot correlation of predicts and targets
     import matplotlib.pyplot as plt
     plt.scatter(predicts, targets)
     plt.xlabel('ParZC')

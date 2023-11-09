@@ -36,7 +36,12 @@ parser.add_argument('--eval_batch_size', default=50, type=int)
 parser.add_argument('--train_print_freq', default=1e5, type=int)
 parser.add_argument('--eval_print_freq', default=10, type=int)
 parser.add_argument('--model_name', type=str, default='PINATModel1')
+parser.add_argument('--loss_type', type=str, default='diffkendall')
 args = parser.parse_args()
+
+assert args.loss_type in {
+    'mse', 'pairwise', 'diffkendall', 'mse+pw', 'mse+dk', 'pw+dk', 'mse+pw+dk'
+}, 'No defined loss type!'
 
 # initialize log info
 log_format = '%(asctime)s %(message)s'
@@ -108,8 +113,29 @@ def train(train_set, train_loader, test_set, test_loader, model, optimizer,
             target = batch['val_acc']
             predict = model(batch)
 
+            if args.loss_type == 'mse':
+                loss = criterion1(predict, target.float())
+            elif args.loss_type == 'pairwise':
+                loss = pair_loss(predict, target.float())
+            elif args.loss_type == 'diffkendall':
+                loss = diffkendall(predict, target)
+            elif args.loss_type == 'mse+pw':
+                loss = criterion1(predict, target.float()) + pair_loss(
+                    predict, target.float())
+            elif args.loss_type == 'mse+dk':
+                loss = criterion1(predict, target.float()) + diffkendall(
+                    predict, target)
+            elif args.loss_type == 'pw+dk':
+                loss = pair_loss(predict, target.float()) + diffkendall(
+                    predict, target)
+            elif args.loss_type == 'mse+pw+dk':
+                loss = criterion1(predict, target.float()) + pair_loss(
+                    predict, target.float()) + diffkendall(predict, target)
+            else:
+                raise ValueError('No defined loss type!')
+
             # Compute the losses
-            loss_mse = criterion1(predict, target.float())
+            # loss_mse = criterion1(predict, target.float())
 
             # loss_weight_1 = 0.95  # adjust as necessary
             # loss_weight_2 = 0.05  # adjust as necessary
@@ -117,17 +143,6 @@ def train(train_set, train_loader, test_set, test_loader, model, optimizer,
             # print(predict.shape, target.shape)
             if len(predict.shape) > 1:  # for test only
                 predict = predict.squeeze(-1)
-            # print(predict.shape, target.shape)
-            # term1 = pair_loss(predict, target.float())
-            # term2 = loss_mse
-            term3 = diffkendall(predict, target)
-
-            # term2 / term2.detach()
-            loss = term3  # + 0.01 * term2
-            # / term3.detach() + term2 / term2.detach()
-            # term1
-            # / term1.detach()
-            # + 0.001 * term3 / term3.detach()
 
             optimizer.zero_grad()
             loss.backward()

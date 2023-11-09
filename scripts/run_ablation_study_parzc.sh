@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 LOGDIR=./logdir/ablation
 if [ ! -d "$LOGDIR" ]; then

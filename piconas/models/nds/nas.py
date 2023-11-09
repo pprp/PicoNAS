@@ -327,7 +327,7 @@ class NetworkImageNet(nn.Module):
         if self._auxiliary and self.training:
             return logits, logits_aux
         return logits
-    
+
     def forward_before_global_avg_pool(self, input):
         logits_aux = None
         s0 = self.stem0(input)

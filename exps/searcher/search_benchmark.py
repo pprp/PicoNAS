@@ -173,22 +173,22 @@ def traverse_benchmark(test_set, test_loader, model, topN=10):
     plt.clf()
 
     logging.info(
-        'Currently we found that the best val acc of search space is:',
-        best_val_target)
+        'Currently we found that the best val acc of Top10 of search space is: %.6f'
+        % best_val_target)
     logging.info(
-        'Currently we found that the best test acc of search space is:',
-        best_test_target)
+        'Currently we found that the best test acc of Top10 of search space is: %.6f'
+        % best_test_target)
 
     # find highest idx for predicts
     highest_idx = np.argmax(predicts)
-    norm_best_val_acc = val_target_list[highest_idx][0]
-    norm_best_test_acc = test_target_list[highest_idx][0]
+    norm_best_val_acc = val_target_list[highest_idx]
+    norm_best_test_acc = test_target_list[highest_idx]
 
     logging.info(
-        'Currently we found that the best val acc of search space is:',
+        'Currently we found that the best val acc of search space is: %.6f' %
         norm_best_val_acc)
     logging.info(
-        'Currently we found that the best test acc of search space is:',
+        'Currently we found that the best test acc of search space is: %.6f' %
         norm_best_test_acc)
 
     return best_val_target, best_test_target

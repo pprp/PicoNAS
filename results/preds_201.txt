@@ -211,3 +211,24 @@ EXP:201_ImageNet16-120_ParZCBMM_mse_t156_vall_e100_bs10_best_nb201_RUN_NB201KD	l
 EXP:201_ImageNet16-120_ParZCBMM_mse_t156_vall_e100_bs10_best_nb201_RUN_NB201KD	lr: 0.0001	train: 156	test: all	kendall_tau: 0.699409	 spearman_rho: 0.879573	 pearson_rho: 0.854901
 EXP:Search Benchmark for best accuracy	lr: 0.0001	train: 78	test: all	kendall_tau: 0.792757
 EXP:Search Benchmark for best accuracy	lr: 0.0001	train: 78	test: all	kendall_tau: 0.792757
+EXP:PINAT	lr: 0.0001	train: 78	test: all	kendall_tau: 0.782402
+EXP:PINAT	lr: 0.0001	train: 78	test: all	kendall_tau: 0.782402
+EXP:cifar10_PINATModel3_pairwise_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.707165	 spearman_rho: 0.885613	 pearson_rho: 0.652827
+EXP:cifar10_PINATModel3_pw+dk_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.712048	 spearman_rho: 0.888792	 pearson_rho: 0.654138
+EXP:cifar10_PINATModel3_mse+dk_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.713004	 spearman_rho: 0.889029	 pearson_rho: 0.650177
+EXP:cifar10_PINATModel3_mse+pw_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.705850	 spearman_rho: 0.884407	 pearson_rho: 0.647934
+EXP:cifar10_PINATModel3_diffkendall_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.705736	 spearman_rho: 0.884315	 pearson_rho: 0.639183
+EXP:cifar10_ParZCBMM_mse+pw+dk_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.705844	 spearman_rho: 0.884039	 pearson_rho: 0.655507
+EXP:cifar10_ParZCBMM_diffkendall_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.699872	 spearman_rho: 0.879846	 pearson_rho: 0.650800
+EXP:cifar10_ParZCBMM_pw+dk_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.711475	 spearman_rho: 0.887963	 pearson_rho: 0.649514
+EXP:cifar10_ParZCBMM_mse+pw_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.712075	 spearman_rho: 0.889045	 pearson_rho: 0.643794
+EXP:cifar10_ParZCBMM_mse+dk_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.722708	 spearman_rho: 0.896611	 pearson_rho: 0.647797
+EXP:cifar10_ParZCBMM_mse_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.711827	 spearman_rho: 0.888553	 pearson_rho: 0.647529
+EXP:cifar10_ParZCBMM_pairwise_t156_vall_e300_bs10	lr: 0.0001	train: 156	test: all	kendall_tau: 0.717557	 spearman_rho: 0.892477	 pearson_rho: 0.646003
+EXP:cifar10_ParZCBMM_mse+pw+dk_t78_vall_e300_bs10	lr: 0.0001	train: 78	test: all	kendall_tau: 0.690808	 spearman_rho: 0.872363	 pearson_rho: 0.630536
+EXP:cifar10_ParZCBMM_mse_t78_vall_e300_bs10	lr: 0.0001	train: 78	test: all	kendall_tau: 0.694698	 spearman_rho: 0.875630	 pearson_rho: 0.623443
+EXP:cifar10_ParZCBMM_mse+pw_t78_vall_e300_bs10	lr: 0.0001	train: 78	test: all	kendall_tau: 0.697851	 spearman_rho: 0.878768	 pearson_rho: 0.633970
+EXP:cifar10_ParZCBMM_diffkendall_t78_vall_e300_bs10	lr: 0.0001	train: 78	test: all	kendall_tau: 0.690045	 spearman_rho: 0.871580	 pearson_rho: 0.624427
+EXP:cifar10_ParZCBMM_pw+dk_t78_vall_e300_bs10	lr: 0.0001	train: 78	test: all	kendall_tau: 0.692082	 spearman_rho: 0.873283	 pearson_rho: 0.629104
+EXP:cifar10_ParZCBMM_mse+dk_t78_vall_e300_bs10	lr: 0.0001	train: 78	test: all	kendall_tau: 0.688685	 spearman_rho: 0.871029	 pearson_rho: 0.634751
+EXP:cifar10_ParZCBMM_pairwise_t78_vall_e300_bs10	lr: 0.0001	train: 78	test: all	kendall_tau: 0.689186	 spearman_rho: 0.871739	 pearson_rho: 0.631877

@@ -1,16 +1,18 @@
 import argparse
 import os
-import torch.nn.functional as F 
+
 import torch
+import torch.nn.functional as F
 from nasbench import api
-
-from piconas.predictor.pruners.predictive import find_measures
-from piconas.datasets.build import build_dataloader
-
-from piconas.evaluator.nb101_evaluator import RANDOM_SAMPLED_HASHES
 from nasbench_pytorch.model import Network as NBNetwork
+from tqdm import tqdm
+
+from piconas.datasets.build import build_dataloader
+from piconas.evaluator.nb101_evaluator import RANDOM_SAMPLED_HASHES
+from piconas.predictor.pruners.measures.zico import getzico
+from piconas.predictor.pruners.predictive import find_measures
 from piconas.utils.rank_consistency import kendalltau, spearman
-from tqdm import tqdm 
+
 
 def get_args():
     parser = argparse.ArgumentParser('train nb101 benchmark')
@@ -95,7 +97,6 @@ def main():
     cfg.work_dir = os.path.join(cfg.work_dir, cfg.trainer_name)
     if not os.path.exists(cfg.work_dir):
         os.makedirs(cfg.work_dir)
-    current_exp_name = f'{cfg.model_name}-{cfg.trainer_name}-{cfg.log_name}.yaml'
     # cfg.dump(os.path.join(cfg.work_dir, current_exp_name))
 
     if torch.cuda.is_available():
@@ -107,38 +108,46 @@ def main():
     train_dataloader = build_dataloader(
         type='train', dataset=cfg.dataset, config=cfg)
 
-    zc_name_list = ['zico', 'eznas-a']
+    zc_name_list = ['eznas-a']
 
     nb101_api = api.NASBench(
         '/data/lujunl/pprp/bench/nasbench_only108.tfrecord')
 
     for zc_name in zc_name_list:
-        p_scores, gt_scors = [], []
-        for _hash in tqdm(RANDOM_SAMPLED_HASHES): 
-            # build network 
-            ops = nb101_api.get_metrics_from_hash(_hash)[0]['module_operations']
+        p_scores, gt_scores = [], []
+        for _hash in tqdm(RANDOM_SAMPLED_HASHES):
+            # build network
+            ops = nb101_api.get_metrics_from_hash(
+                _hash)[0]['module_operations']
             adj = nb101_api.get_metrics_from_hash(_hash)[0]['module_adjacency']
             net = NBNetwork((adj, ops))
 
-            # score 
-            score = find_measures(
-                net,
-                train_dataloader,
-                dataload_info=['random', 3, 10],
-                measure_names=[zc_name],
-                loss_fn=F.cross_entropy,
-                device=device)
-            
-            gt = nb101_api.get_metrics_from_hash(_hash)[1][108][0]['final_test_accuracy']
+            # score
+            if zc_name == 'zico':
+                score = getzico(
+                    net,
+                    train_dataloader,
+                    loss_fn=F.cross_entropy,
+                    split_data=1)
+            else:
+                score = find_measures(
+                    net,
+                    train_dataloader,
+                    dataload_info=['random', 3, 10],
+                    measure_names=[zc_name],
+                    loss_fn=F.cross_entropy,
+                    device=device)
+
+            gt = nb101_api.get_metrics_from_hash(
+                _hash)[1][108][0]['final_test_accuracy']
 
             p_scores.append(score)
-            gt_scors.append(gt)
-        
+            gt_scores.append(gt)
+
         print(f'zc_name: {zc_name}')
-        print(f'kendalltau: {kendalltau(p_scores, gt_scors)}')
-        print(f'spearman: {spearman(p_scores, gt_scors)}')
+        print(f'kendalltau: {kendalltau(p_scores, gt_scores)}')
+        print(f'spearman: {spearman(p_scores, gt_scores)}')
         print('===' * 5)
-        
 
 
 if __name__ == '__main__':
