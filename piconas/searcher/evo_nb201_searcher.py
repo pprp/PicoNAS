@@ -13,30 +13,7 @@ sys.setrecursionlimit(10000)
 
 
 class EvolutionSearcher(object):
-    """_summary_
-
-    Args:
-        max_epochs (int, optional): _description_.
-            Defaults to 20.
-        select_num (int, optional): _description_.
-            Defaults to 10.
-        population_num (int, optional): _description_.
-            Defaults to 50.
-        mutate_prob (float, optional): _description_.
-            Defaults to 0.1.
-        crossover_num (int, optional): _description_.
-            Defaults to 25.
-        mutation_num (int, optional): _description_.
-            Defaults to 25.
-        flops_limit (float, optional): _description_.
-            Defaults to 300.
-        trainer (NB201Trainer, optional): _description_.
-            Defaults to None.
-        train_loader (_type_, optional): _description_.
-            Defaults to None.
-        val_loader (_type_, optional): _description_.
-            Defaults to None.
-    """
+    """Evolution Searcher for NAS-Bench-201."""
 
     def __init__(
             self,
@@ -125,9 +102,6 @@ class EvolutionSearcher(object):
         assert k in self.keep_top_k
         t = self.keep_top_k[k]
         t += candidates
-        # remove duplicates
-        # tmp_list = list(set([str(i) for i in t]))
-        # t = [eval(i) for i in tmp_list]
 
         # sort the list
         t.sort(key=key, reverse=reverse)

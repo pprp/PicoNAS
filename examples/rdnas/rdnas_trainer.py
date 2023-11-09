@@ -13,7 +13,7 @@ from piconas.datasets.predictor.nb201_dataset import \
 from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models.nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
-from piconas.predictor.pinat.model_factory import create_nb201_model
+from piconas.predictor.pinat.model_factory import create_best_nb201_model
 from piconas.predictor.pruners.predictive import find_measures
 from piconas.trainer.base import BaseTrainer
 from piconas.trainer.registry import register_trainer
@@ -118,13 +118,13 @@ class PGONASTrainer(BaseTrainer):
         self.kl_loss = KLDivergence(loss_weight=1)
 
         # load model for predictor
-        # p_model = create_nb201_model()
-        # ckpt_dir = '/home/dongpeijie/workspace/PicoNAS/checkpoints/nasbench_201/201_cifar10_PINATModel4_mse_t156_vall_e600_bs10_tau0.711652_ckpt.pt'
-        # p_model.load_state_dict(
-        #     torch.load(ckpt_dir, map_location=torch.device('cpu')))
-        # self.predictor = p_model
-        # self.predictor_datasets = Nb201DatasetPINAT(
-        #     split=78, data_type='test', data_set='cifar10')
+        p_model = create_best_nb201_model()
+        ckpt_dir = '/data/lujunl/pprp/PicoNAS/checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
+        p_model.load_state_dict(
+            torch.load(ckpt_dir, map_location=torch.device('cpu')))
+        self.predictor = p_model
+        self.predictor_datasets = Nb201DatasetPINAT(
+            split=78, data_type='test', data_set='cifar10')
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample, dataset)
@@ -551,43 +551,44 @@ class PGONASTrainer(BaseTrainer):
             subnet_flops += choice_flops
         return subnet_flops
 
-    # def get_subnet_predictor(self, subnet_dict) -> float:
-    #     assert isinstance(self.evaluator,
-    #                       NB201Evaluator), f'evaluator is not NB201Evaluator'
-    #     _genotype = self.evaluator.generate_genotype(subnet_dict, self.mutator)
-    #     _idx = self.evaluator.query_index(_genotype)
-    #     samples = self.predictor_datasets[_idx]
-    #     # keys = num_vertices, lapla, edge_numm, edge_index_list, features, operations, zcp_layerwise
-    #     # convert samples with keys to batch_inputs
-    #     key_list = [
-    #         'num_vertices', 'lapla', 'edge_num', 'features', 'zcp_layerwise'
-    #     ]
-    #     # convert to batch-like
-    #     samples['edge_index_list'] = [
-    #         samples['edge_index_list'].to(self.device)
-    #     ]
-    #     samples['operations'] = torch.tensor(samples['operations']).unsqueeze(
-    #         dim=0).unsqueeze(0).to(self.device)
-    #     for _key in key_list:
-    #         if isinstance(samples[_key], (list, float, int)):
-    #             samples[_key] = torch.tensor(samples[_key])
-    #             samples[_key] = torch.unsqueeze(
-    #                 samples[_key], dim=0).to(self.device)
-    #         elif isinstance(samples[_key], np.ndarray):
-    #             samples[_key] = torch.from_numpy(samples[_key])
-    #             samples[_key] = torch.unsqueeze(
-    #                 samples[_key], dim=0).to(self.device)
-    #         elif isinstance(samples[_key], torch.Tensor):
-    #             samples[_key] = torch.unsqueeze(
-    #                 samples[_key], dim=0).to(self.device)
-    #         else:
-    #             raise NotImplementedError(
-    #                 f'key: {_key} is not list, is a {type(samples[_key])}')
-    #         samples[_key] = samples[_key].to(self.device)
-    #     self.predictor.eval()
-    #     self.predictor.to(self.device)
-    #     out = self.predictor.forward(samples)
-    #     return out.item()  # to verify
+    def get_subnet_predictor(self, subnet_dict) -> float:
+        assert isinstance(self.evaluator,
+                          NB201Evaluator), f'evaluator is not NB201Evaluator'
+        _genotype = self.evaluator.generate_genotype(subnet_dict, self.mutator)
+        _idx = self.evaluator.query_index(_genotype)
+        samples = self.predictor_datasets.get_batch(_idx)
+        # keys = num_vertices, lapla, edge_numm, edge_index_list, features, operations, zcp_layerwise
+        # convert samples with keys to batch_inputs
+        key_list = [
+            'num_vertices', 'lapla', 'edge_num', 'features', 'zcp_layerwise'
+        ]
+        # convert to batch-like
+        samples['edge_index_list'] = [
+            samples['edge_index_list'].to(self.device)
+        ]
+        samples['operations'] = torch.tensor(samples['operations']).unsqueeze(
+            dim=0).unsqueeze(0).to(self.device)
+        for _key in key_list:
+            if isinstance(samples[_key], (list, float, int)):
+                samples[_key] = torch.tensor(samples[_key])
+                samples[_key] = torch.unsqueeze(
+                    samples[_key], dim=0).to(self.device)
+            elif isinstance(samples[_key], np.ndarray):
+                samples[_key] = torch.from_numpy(samples[_key])
+                samples[_key] = torch.unsqueeze(
+                    samples[_key], dim=0).to(self.device)
+            elif isinstance(samples[_key], torch.Tensor):
+                samples[_key] = torch.unsqueeze(
+                    samples[_key], dim=0).to(self.device)
+            else:
+                raise NotImplementedError(
+                    f'key: {_key} is not list, is a {type(samples[_key])}')
+            samples[_key] = samples[_key].to(self.device)
+        
+        self.predictor.eval()
+        self.predictor.to(self.device)
+        out = self.predictor.forward(samples)
+        return out.item()  # to verify
 
     def get_subnet_predictive(self,
                               subnet_dict,
@@ -697,7 +698,7 @@ class PGONASTrainer(BaseTrainer):
         sum_loss.backward()
         return sum_loss, outputs
 
-    def _forward_pairwise_loss_bk(self, batch_inputs):
+    def _forward_pairwise_loss(self, batch_inputs):
         inputs, labels, _, _ = batch_inputs
         inputs = self._to_device(inputs, self.device)
         labels = self._to_device(labels, self.device)
@@ -713,16 +714,16 @@ class PGONASTrainer(BaseTrainer):
         outputs = self.model(inputs)
         loss1 = self._compute_loss(outputs, labels)
         loss1.backward()
-        flops1 = self.get_subnet_flops(subnet1)
-        # predictor_score1 = self.get_subnet_predictor(subnet1)
+        # flops1 = self.get_subnet_flops(subnet1)
+        predictor_score1 = self.get_subnet_predictor(subnet1)
 
         # sample the second subnet
         self.mutator.set_subnet(subnet2)
         outputs = self.model(inputs)
         loss2 = self._compute_loss(outputs, labels)
         loss2.backward(retain_graph=True)
-        flops2 = self.get_subnet_flops(subnet2)
-        # predictor_score2 = self.get_subnet_predictor(subnet2)
+        # flops2 = self.get_subnet_flops(subnet2)
+        predictor_score2 = self.get_subnet_predictor(subnet2)
 
         # pairwise rank loss
         # lambda settings:
@@ -731,12 +732,12 @@ class PGONASTrainer(BaseTrainer):
 
         loss3 = (2 *
                  np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
+                 self.pairwise_rankloss(predictor_score1, predictor_score2, loss1, loss2))
         loss3.backward()
 
         return loss2, outputs
 
-    def _forward_pairwise_loss(self, batch_inputs):
+    def _forward_pairwise_loss_bk(self, batch_inputs):
         # generate batch subnet
         subnet_list = []
         batch_size = 2
@@ -763,10 +764,10 @@ class PGONASTrainer(BaseTrainer):
             loss_list.append(loss)
             prior_list.append(prior)
 
-        # loss_tensor, prior_tensor = torch.tensor(loss_list), torch.tensor(prior_list)
-        # loss_tensor, prior_tensor = loss_tensor.to(self.device), prior_tensor.to(self.device)
-        loss_tensor = torch.stack(loss_list).to(self.device).requires_grad_()
-        prior_tensor = torch.stack(prior_list).to(self.device).requires_grad_()
+        loss_tensor, prior_tensor = torch.tensor(loss_list), torch.tensor(prior_list)
+        loss_tensor, prior_tensor = loss_tensor.to(self.device), prior_tensor.to(self.device)
+        # loss_tensor = torch.stack(loss_list).to(self.device).requires_grad_()
+        # prior_tensor = torch.stack(prior_list).to(self.device).requires_grad_()
 
         rank_loss = pair_loss(loss_tensor, prior_tensor)
         rank_loss.backward()

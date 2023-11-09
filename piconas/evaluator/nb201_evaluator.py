@@ -1,5 +1,6 @@
 from typing import List, Union
 
+import torch 
 import numpy as np
 import torch.nn.functional as F
 from nas_201_api import NASBench201API as API
@@ -12,6 +13,8 @@ from piconas.utils.rank_consistency import (concordant_pair_ratio, kendalltau,
                                             minmax_n_at_k, p_at_tb_k, pearson,
                                             rank_difference, spearman)
 
+from piconas.predictor.pinat.model_factory import create_best_nb201_model
+from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 
 class NB201Evaluator(Evaluator):
     """Evaluate the NB201 Benchmark
@@ -28,7 +31,9 @@ class NB201Evaluator(Evaluator):
                  trainer,
                  num_sample: int = 50,
                  dataset: str = 'cifar10',
-                 type: str = 'eval_acc1es'):
+                 type: str = 'eval_acc1es', 
+                 predictor = None, 
+                 **kwargs):
         super().__init__(trainer=trainer, dataset=dataset)
         self.trainer = trainer
         self.num_sample = num_sample
@@ -60,6 +65,48 @@ class NB201Evaluator(Evaluator):
         self.api = API(
             '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth',
             verbose=False)
+
+        if predictor is not None: 
+            # build dataloader for predictor 
+
+            # build predictor model 
+            self.predictor = create_best_nb201_model() 
+            ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
+            self.predictor.load_state_dict(
+                torch.load(ckpt_dir, map_location=torch.device('cpu')))
+            self.predictor_dataset = Nb201DatasetPINAT(
+                    split='all', data_type='test', data_set='cifar10')
+
+
+    def get_predictor_score(self, subnet_dict: dict, dataloader):
+        """get predictor score for a subnet."""
+        ss_index = self.generate_genotype(subnet_dict, self.trainer.mutator)
+        input = self.predictor_dataset.get_batch(ss_index)
+
+        key_list = [
+            'num_vertices', 'lapla', 'edge_num', 'features', 'zcp_layerwise'
+        ]
+        input['edge_index_list'] = [input['edge_index_list']]
+        input['operations'] = torch.tensor(input['operations']).unsqueeze(0).unsqueeze(0)
+
+        for _key in key_list:
+            if isinstance(input[_key], (list, float, int)):
+                input[_key] = torch.tensor(input[_key])
+                input[_key] = torch.unsqueeze(
+                    input[_key], dim=0)
+            elif isinstance(input[_key], np.ndarray):
+                input[_key] = torch.from_numpy(input[_key])
+                input[_key] = torch.unsqueeze(
+                    input[_key], dim=0)
+            elif isinstance(input[_key], torch.Tensor):
+                input[_key] = torch.unsqueeze(
+                    input[_key], dim=0)
+            else:
+                raise NotImplementedError(
+                    f'key: {_key} is not list, is a {type(input[_key])}')
+            input[_key] = input[_key]
+        score = self.predictor(input)
+        return score.item()
 
     def generate_genotype(self, subnet_dict: dict,
                           mutator: Union[OneShotMutator, DiffMutator]) -> str:

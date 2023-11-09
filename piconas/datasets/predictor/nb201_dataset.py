@@ -299,21 +299,23 @@ class Nb201DatasetPINAT(Dataset):
 
     def standard_scaling(self, data):
         return (data - np.mean(data)) / np.std(data)
-
+    
     def __getitem__(self, index):
-        index = self.sample_range[index]
-        # val_acc, test_acc = self.metrics[index, -1, self.seed, -1, 2:]
+        ss_index = self.sample_range[index]
+        return self.get_batch(ss_index)
+
+    def get_batch(self, ss_index):
         if self.data_set == 'ImageNet16-120':
             idx_data_set = 'imagenet16'
         else:
             idx_data_set = self.data_set
 
-        val_acc = self.nasbench201_dict[str(index)]['%s_valid' % idx_data_set]
-        test_acc = self.nasbench201_dict[str(index)]['%s_test' % idx_data_set]
-        adjacency = self.nasbench201_dict[str(index)]['adj_matrix']
+        val_acc = self.nasbench201_dict[str(ss_index)]['%s_valid' % idx_data_set]
+        test_acc = self.nasbench201_dict[str(ss_index)]['%s_test' % idx_data_set]
+        adjacency = self.nasbench201_dict[str(ss_index)]['adj_matrix']
         lapla = self._generate_lapla_matrix(adj_matrix=adjacency)
         operation = np.array(
-            self.nasbench201_dict[str(index)]['operation'], dtype=np.float32)
+            self.nasbench201_dict[str(ss_index)]['operation'], dtype=np.float32)
         ops_onehot = np.array([[i == k for i in range(self.candidate_ops)]
                                for k in operation],
                               dtype=np.float32)
@@ -346,14 +348,14 @@ class Nb201DatasetPINAT(Dataset):
         edge_index = edge_index.transpose(1, 0)
 
         # zcp
-        arch_str = self.nb2_api.query_by_index(index).arch_str
+        arch_str = self.nb2_api.query_by_index(ss_index).arch_str
         cellobj = Cell201(arch_str)
         zcp_key = str(tuple(cellobj.encode(predictor_encoding='adj')))
         zcp = [self.zcp_nb201[self.data_set][zcp_key][nn] for nn in self.zcps]
         zcp = torch.tensor(zcp, dtype=torch.float32)
 
         # zcp layerwise
-        key = str(index)
+        key = str(ss_index)
         # zcp_layerwise = self.zcp_nb201_layerwise[self.data_set][key][self.lw_zcps_selected]
         # Use combination of grad_norm, snip, synflow:
         combinations = [
