@@ -32,6 +32,7 @@ class Nb201DatasetPINAT(Dataset):
         self.nasbench201_dict = np.load(
             '/data/lujunl/pprp/bench/nasbench201/nasbench201_dict.npy',
             allow_pickle=True).item()
+
         self.sample_range = list()
         self.candidate_ops = candidate_ops
         if data_type == 'train':
@@ -144,11 +145,7 @@ class Nb201DatasetPINAT(Dataset):
                                                          idx_data_set]
             if val_acc > 12 and test_acc > 12:
                 filtered_sample_range.append(index)
-        #     print('val acc:', val_acc, 'test acc:', test_acc)
-        #     print('index:', index)
-        # print(f'before filtering: {len(self.sample_range)}')
         self.sample_range = filtered_sample_range
-        # print(f'after filtering: {len(self.sample_range)}')
 
     def normalize_and_process_zcp(self, normalize_zcp, log_synflow):
         if normalize_zcp:

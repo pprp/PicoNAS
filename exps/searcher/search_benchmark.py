@@ -3,6 +3,7 @@
 import logging
 import os
 import sys
+import time
 from argparse import ArgumentParser
 
 import numpy as np
@@ -228,8 +229,12 @@ def main():
     logging.info('Kendalltau: %.6f', kendall_tau)
 
     # evaluate the final performance across the whole dataset
+    t1 = time.time()
     best_val_acc, best_test_acc = traverse_benchmark(
         test_set, test_loader, model, topN=5)
+    spent_time = time.time() - t1
+    # spent time is seconds
+    logging.info('Spent time: %.2f seconds' % spent_time)
 
 
 if __name__ == '__main__':

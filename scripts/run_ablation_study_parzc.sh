@@ -9,7 +9,7 @@ fi
 LOSS_TYPE=(mse+pw+dk mse pairwise diffkendall mse+pw mse+dk pw+dk)
 
 IDX=1
-Train_Split=100
+Train_Split=172
 Eval_Split=all
 Epochs=300
 Model=ParZCBMM
