@@ -22,7 +22,7 @@ def convert_to_float(input):
         return float(input)
 
 
-@measure('EZNAS-A')
+@measure('eznas-a')
 def compute_eznas_a(
         net,
         inputs,
@@ -38,19 +38,13 @@ def compute_eznas_a(
             t3g_list.append(grad_input[1].detach())
 
         for name, module in net.named_modules():
-            if 'stem' in name:
-                continue
-            if 'lastact' in name:
-                continue
-            # two downsample layers
-            if 'cells.5' in name:
-                continue
-            if 'cells.11' in name:
-                continue
             if isinstance(module, nn.Conv2d):
                 module.register_backward_hook(hook_bw_t3g_fn)
 
         logits = net(inputs)
+        if isinstance(logits, tuple):
+            logits = logits[0]
+
         loss_fn(logits, targets).backward()
         return t3g_list
 

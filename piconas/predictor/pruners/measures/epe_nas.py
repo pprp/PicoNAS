@@ -36,6 +36,8 @@ def get_batch_jacobian(net, x, target, to, device, args=None):
     x.requires_grad_(True)
 
     y = net(x)
+    if isinstance(y, tuple):
+        y = y[0]
 
     y.backward(torch.ones_like(y))
     jacob = x.grad.detach()
