@@ -35,7 +35,7 @@ parser.add_argument('--train_batch_size', default=10, type=int)
 parser.add_argument('--eval_batch_size', default=50, type=int)
 parser.add_argument('--train_print_freq', default=1e5, type=int)
 parser.add_argument('--eval_print_freq', default=10, type=int)
-parser.add_argument('--model_name', type=str, default='PINATModel1')
+parser.add_argument('--model_name', type=str, default='PINATModel7')
 parser.add_argument('--loss_type', type=str, default='diffkendall')
 args = parser.parse_args()
 
@@ -112,6 +112,9 @@ def train(train_set, train_loader, test_set, test_loader, model, optimizer,
             batch = to_cuda(batch, device)
             target = batch['val_acc']
             predict = model(batch)
+
+            # random permutation to target
+            # target = target[torch.randperm(target.size()[0])]
 
             if args.loss_type == 'mse':
                 loss = criterion1(predict, target.float())

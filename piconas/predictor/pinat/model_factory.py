@@ -1,4 +1,7 @@
+from piconas.predictor.pinat.bayesian import BayesianNetwork
 from piconas.predictor.pinat.BN.bayesian import BayesianNetwork
+from piconas.predictor.pinat.gcn import NeuralPredictorModel
+from piconas.predictor.pinat.mlpmixer import MLPMixer
 from piconas.predictor.pinat.pinat_model import (ParZCBMM, ParZCBMM2,
                                                  PINATModel1, PINATModel2,
                                                  PINATModel3, PINATModel4,
@@ -18,6 +21,10 @@ _name2model = {
     PINATModel7,  # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder + bayesian network
     'ParZCBMM': ParZCBMM,  # ZCP + BMM
     'ParZCBMM2': ParZCBMM2,
+    # ablation study
+    'BayesianNetwork': BayesianNetwork,
+    'MLPMixer': MLPMixer,
+    'NeuralPredictorModel': NeuralPredictorModel
 }
 
 

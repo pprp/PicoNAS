@@ -1,10 +1,8 @@
-# Author: Yang Liu @ Abacus.ai
-# This is an implementation of gcn predictor for NAS from the paper:
-# Wen et al., 2019. Neural Predictor for Neural Architecture Search
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print('device:', device)
@@ -76,23 +74,23 @@ class NeuralPredictorModel(nn.Module):
         self.dropout = nn.Dropout(0.1)
         self.fc1 = nn.Linear(gcn_hidden, linear_hidden, bias=False)
         self.fc2 = nn.Linear(linear_hidden, 1, bias=False)
-        self.proj = nn.Linear(5, 4)
+        self.proj = nn.Linear(5, initial_hidden)  # Adjusted to initial_hidden
 
     def forward(self, inputs):
         numv, adj, out = inputs['num_vertices'], inputs['adjacency'], inputs[
-            'operations']  # 7 6 5
+            'operations']
         adj = adj.to(device)
         numv = numv.to(device)
         out = out.to(device)
-        gs = adj.size(1)  # graph node number
 
-        adj_with_diag = normalize_adj(
-            adj +
-            torch.eye(gs, device=adj.device))  # assuming diagonal is not 1
-        out = self.proj(out)  # 7 6 6
-        breakpoint()
+        # Assuming the first 4 nodes are the relevant ones
+        out = out[:, :4, :]
+
+        gs = adj.size(1)  # graph node number
+        adj_with_diag = normalize_adj(adj + torch.eye(gs, device=adj.device))
+        out = self.proj(out)
         for layer in self.gcn:
-            out = layer(out, adj_with_diag)  # 7 4 4
+            out = layer(out, adj_with_diag)
         out = graph_pooling(out, numv)
         out = self.fc1(out)
         out = self.dropout(out)
@@ -103,16 +101,15 @@ class NeuralPredictorModel(nn.Module):
 if __name__ == '__main__':
     gcn_hidden = 144
     batch_size = 7
-
     ss_type = 'nasbench201'
-    initial_hidden = 4
+    initial_hidden = 4  # This should match the number of features per node after projection
 
     predictor = NeuralPredictorModel(
         initial_hidden=initial_hidden, gcn_hidden=gcn_hidden)
     if torch.cuda.is_available():
         predictor = predictor.cuda()
 
-    from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
+    # Assuming Nb201DatasetPINAT is defined elsewhere
     test_set = Nb201DatasetPINAT(
         split='all', data_type='test', data_set='cifar10')
 
@@ -126,3 +123,4 @@ if __name__ == '__main__':
     for batch in loader:
         input = batch
         score = predictor(input)
+        print(score)

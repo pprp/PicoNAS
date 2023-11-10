@@ -88,3 +88,5 @@ EXP:101_cifar10_ParZCBMM_pairwise_t172_vall_e300_bs10	lr: 0.0001	train: 172	test
 EXP:101_cifar10_ParZCBMM_pw+dk_t172_vall_e300_bs10	lr: 0.0001	train: 172	test: all	kendall_tau: 0.644121	 spearman_rho: 0.838590	 pearson_rho: 0.503794
 EXP:101_cifar10_ParZCBMM_mse+pw+dk_t172_vall_e300_bs10	lr: 0.0001	train: 172	test: all	kendall_tau: 0.663616	 spearman_rho: 0.855183	 pearson_rho: 0.520059
 EXP:101_cifar10_ParZCBMM_mse_t172_vall_e300_bs10	lr: 0.0001	train: 172	test: all	kendall_tau: 0.656955	 spearman_rho: 0.850479	 pearson_rho: 0.517755
+EXP:PINAT	lr: 0.0001	train: 100	test: all	kendall_tau: 0.112392	 spearman_rho: 0.166356	 pearson_rho: 0.064256
+EXP:PINAT	lr: 0.0001	train: 100	test: all	kendall_tau: 0.268077	 spearman_rho: 0.389959	 pearson_rho: 0.399461
