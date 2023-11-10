@@ -5,9 +5,6 @@ import torch.nn.functional as F
 from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 from piconas.predictor.pinat.mlpmixer import PreNormResidual, FeedForward
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-
 
 def normalize_adj(adj):
     # Row-normalize matrix
@@ -102,9 +99,6 @@ class NeuralPredictorMLPMixer(nn.Module):
     def forward(self, inputs):
         numv, adj, out = inputs['num_vertices'], inputs['adjacency'], inputs[
             'operations']
-        adj = adj.to(device)
-        numv = numv.to(device)
-        out = out.to(device)
 
         # Assuming the first 4 nodes are the relevant ones
         out = out[:, :self.initial_hidden, :]
@@ -117,7 +111,7 @@ class NeuralPredictorMLPMixer(nn.Module):
         out = graph_pooling(out, numv)
 
         # MLP-Mixer
-        x = inputs['zcp_layerwise'].to(device)
+        x = inputs['zcp_layerwise']
         x = self.project(x)
         for mixer_block in self.mixer_blocks:
             x = mixer_block(x)
@@ -134,7 +128,7 @@ if __name__ == '__main__':
     model = NeuralPredictorMLPMixer()
 
     if torch.cuda.is_available():
-        model = model.to(device)
+        model = model.cuda()
 
     # Assuming Nb201DatasetPINAT is defined elsewhere
     test_set = Nb201DatasetPINAT(

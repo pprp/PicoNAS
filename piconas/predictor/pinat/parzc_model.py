@@ -6,9 +6,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-
 
 def normalize_adj(adj):
     # Row-normalize matrix
@@ -81,9 +78,6 @@ class NeuralPredictorModel(nn.Module):
     def forward(self, inputs):
         numv, adj, out = inputs['num_vertices'], inputs['adjacency'], inputs[
             'operations']  # 7 6 5
-        adj = adj.to(device)
-        numv = numv.to(device)
-        out = out.to(device)
         gs = adj.size(1)  # graph node number
 
         adj_with_diag = normalize_adj(

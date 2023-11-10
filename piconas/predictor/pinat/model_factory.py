@@ -40,9 +40,9 @@ def create_ablation_model(args):
         input_dim = 294
         initial_hidden = 5
     
-    if args.model_name is 'BayesianNetwork':
+    if args.model_name == 'BayesianNetwork':
         net = BayesianNetwork(layer_sizes=[input_dim, 160, 64, 1])
-    elif args.model_name is 'MLPMixer':
+    elif args.model_name == 'MLPMixer':
         net = MLPMixer(
             input_dim=input_dim,
             dim=512,
@@ -50,15 +50,15 @@ def create_ablation_model(args):
             expansion_factor=4,
             expansion_factor_token=0.5,
             dropout=0.1)
-    elif args.model_name is 'NeuralPredictorModel':
+    elif args.model_name == 'NeuralPredictorModel':
         net = NeuralPredictorModel(
             initial_hidden=initial_hidden,
             gcn_hidden=144,
             gcn_layers=4,
             linear_hidden=128)
-    elif args.model_name is 'MLP':
+    elif args.model_name == 'MLP':
         net = MLP(input_dim=input_dim, hidden_dim=128)
-    elif args.model_name is 'NeuralPredictorMLPMixer':
+    elif args.model_name == 'NeuralPredictorMLPMixer':
         net = NeuralPredictorMLPMixer(
             initial_hidden=initial_hidden,
             gcn_hidden=144,
@@ -70,7 +70,7 @@ def create_ablation_model(args):
             expansion_factor=4,
             expansion_factor_token=0.5,
             dropout=0.1)
-    elif args.model_name is 'NeuralPredictorBayesian':
+    elif args.model_name == 'NeuralPredictorBayesian':
         net = NeuralPredictorBayesian(
             initial_hidden=initial_hidden,
             gcn_hidden=144,

@@ -5,9 +5,6 @@ import torch.nn.functional as F
 from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 from piconas.predictor.pinat.BN.bayesian import BayesianLayer
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-
 
 def normalize_adj(adj):
     # Row-normalize matrix
@@ -89,9 +86,6 @@ class NeuralPredictorBayesian(nn.Module):
     def forward(self, inputs):
         numv, adj, out = inputs['num_vertices'], inputs['adjacency'], inputs[
             'operations']
-        adj = adj.to(device)
-        numv = numv.to(device)
-        out = out.to(device)
 
         # Assuming the first 4 nodes are the relevant ones
         out = out[:, :self.initial_hidden, :]
@@ -104,7 +98,7 @@ class NeuralPredictorBayesian(nn.Module):
         out = graph_pooling(out, numv)  
 
         # Bayesian
-        x = inputs['zcp_layerwise'].to(device)
+        x = inputs['zcp_layerwise']
         for i, layer in enumerate(self.layers):
             x = layer(x)
             if i < len(self.layers) - 1:
@@ -127,7 +121,7 @@ if __name__ == '__main__':
         initial_hidden=initial_hidden, gcn_hidden=gcn_hidden)
     
     if torch.cuda.is_available():
-        predictor = predictor.to(device)
+        predictor = predictor.cuda()
 
     # Assuming Nb201DatasetPINAT is defined elsewhere
     test_set = Nb201DatasetPINAT(

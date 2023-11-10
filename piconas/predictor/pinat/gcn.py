@@ -5,9 +5,6 @@ import torch.nn.functional as F
 from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 from piconas.datasets.predictor.nb101_dataset import Nb101DatasetPINAT
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-
 
 def normalize_adj(adj):
     # Row-normalize matrix
@@ -81,9 +78,6 @@ class NeuralPredictorModel(nn.Module):
     def forward(self, inputs):
         numv, adj, out = inputs['num_vertices'], inputs['adjacency'], inputs[
             'operations']
-        adj = adj.to(device)
-        numv = numv.to(device)
-        out = out.to(device)
 
         # Assuming the first 4 nodes are the relevant ones
         out = out[:, :self.initial_hidden, :]
