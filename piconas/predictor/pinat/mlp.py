@@ -15,7 +15,6 @@ class MLP(nn.Module):
             patch_size=16,
             dim=512,
             depth=4,
-            emb_out_dim=14,
             expansion_factor=4,
             expansion_factor_token=0.5,
             dropout=0.1):
@@ -26,7 +25,7 @@ class MLP(nn.Module):
             nn.Linear(dim, dim) for _ in range(depth)
         ])
         self.layer_norm = nn.LayerNorm(dim)
-        self.fc = nn.Linear(dim, emb_out_dim)
+        self.fc = nn.Linear(dim, 1)
 
     def forward(self, input):
         x = input['zcp_layerwise']
@@ -34,7 +33,7 @@ class MLP(nn.Module):
         for mixer_block in self.mlp_blocks:
             x = mixer_block(x)
         x = self.layer_norm(x)
-        x = self.fc(x)  
+        x = self.fc(x).view(-1)
         return x
 
 

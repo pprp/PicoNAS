@@ -8,12 +8,13 @@ from piconas.predictor.pinat.BN.bayesian import BayesianLayer
 
 class BayesianNetwork(nn.Module):
 
-    def __init__(self, layer_sizes=[294, 160, 64, 1]):
+    def __init__(self, layer_sizes=[294, 160, 64]):
         super(BayesianNetwork, self).__init__()
         self.layers = nn.ModuleList([
             BayesianLayer(layer_sizes[i], layer_sizes[i + 1])
             for i in range(len(layer_sizes) - 1)
         ])
+        self.fc = nn.Linear(layer_sizes[-1], 1, bias=False)
 
     def forward(self, x):
         if isinstance(x, dict):
@@ -22,6 +23,8 @@ class BayesianNetwork(nn.Module):
             x = layer(x)
             if i < len(self.layers) - 1:
                 x = torch.relu(x)
+        
+        x = self.fc(x).view(-1)
         return x
 
 

@@ -43,16 +43,17 @@ fi
 # tail -f $LOGDIR/$EXP_Name.log
 
 # Module ablation study
-MODULE_TYPE=(MLP NeuralPredictorMLPMixer NeuralPredictorBayesian BayesianNetwork MLPMixer NeuralPredictorModel)
+# MODULE_TYPE=(MLP NeuralPredictorMLPMixer NeuralPredictorBayesian BayesianNetwork MLPMixer NeuralPredictorModel)
+MODULE_TYPE=(NeuralPredictorModel NeuralPredictorMLPMixer NeuralPredictorBayesian)
 IDX=1
-Train_Split=100
+Train_Split=78
 Eval_Split=all
 Epochs=300
 Dataset=cifar10
 Train_batch_size=10
 Eval_batch_size=50
 Script=./piconas/runner/runner_pinat_rank.py
-Bench=101
+Bench=201
 
 for((t=0; t<${#MODULE_TYPE[*]}; t++)); do
   # set gpu and data splits

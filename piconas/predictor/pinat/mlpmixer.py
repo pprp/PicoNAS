@@ -32,7 +32,7 @@ class MLPMixer(nn.Module):
             patch_size=16,
             dim=512,
             depth=4,
-            emb_out_dim=14,
+            emb_out_dim=1,
             expansion_factor=4,
             expansion_factor_token=0.5,
             dropout=0.1):
@@ -56,7 +56,7 @@ class MLPMixer(nn.Module):
         for mixer_block in self.mixer_blocks:
             x = mixer_block(x)
         x = self.layer_norm(x)
-        x = self.fc(x)  # Changed from self.head to self.fc
+        x = self.fc(x).view(-1)  # Changed from self.head to self.fc
         return x
 
 
