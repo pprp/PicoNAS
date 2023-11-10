@@ -71,7 +71,7 @@ class NB201Evaluator(Evaluator):
 
             # build predictor model
             self.predictor = create_best_nb201_model()
-            ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
+            ckpt_dir = '/data/lujunl/pprp/PicoNAS/checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
             self.predictor.load_state_dict(
                 torch.load(ckpt_dir, map_location=torch.device('cpu')))
             self.predictor_dataset = Nb201DatasetPINAT(

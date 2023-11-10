@@ -23,21 +23,6 @@ from piconas.utils.utils import AvgrageMeter, accuracy
 
 @register_trainer
 class PGONASTrainer(BaseTrainer):
-    """Trainer for Macro Benchmark.
-
-    Args:
-        model (nn.Module): _description_
-        dataloader (Dict): _description_
-        optimizer (_type_): _description_
-        criterion (_type_): _description_
-        scheduler (_type_): _description_
-        epochs (int): _description_
-        searching (bool, optional): _description_. Defaults to True.
-        num_choices (int, optional): _description_. Defaults to 4.
-        num_layers (int, optional): _description_. Defaults to 20.
-        device (torch.device, optional): _description_. Defaults to None.
-    """
-
     def __init__(
         self,
         model: OneShotNASBench201Network,
@@ -74,7 +59,7 @@ class PGONASTrainer(BaseTrainer):
 
         # evaluate the rank consistency
         self.evaluator = self._build_evaluator(
-            num_sample=50, dataset=self.dataset)
+            num_sample=20, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()

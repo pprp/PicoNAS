@@ -60,8 +60,8 @@ def get_args():
     parser.add_argument(
         '--num_choices', type=int, default=4, help='number choices per layer')
     parser.add_argument(
-        '--batch_size', type=int, default=256, help='batch size')
-    parser.add_argument('--epochs', type=int, default=200, help='batch size')
+        '--batch_size', type=int, default=128, help='batch size')
+    parser.add_argument('--epochs', type=int, default=100, help='batch size')
     parser.add_argument(
         '--lr', type=float, default=0.025, help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')

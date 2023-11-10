@@ -170,7 +170,7 @@ def main():
     corresponding_gt_score = None
 
     # Record the whole process for visualization
-    trial_list, best_zc_score, best_gt_score = [], [], []
+    trial_list, best_zc_score_list, best_gt_score_list = [], [], []
 
     # Directly implement random search
     for i in tqdm(range(1000)):
@@ -202,8 +202,8 @@ def main():
 
         # record the whole process
         trial_list.append(i)
-        best_zc_score.append(best_zc_score)
-        best_gt_score.append(corresponding_gt_score)
+        best_zc_score_list.append(best_zc_score)
+        best_gt_score_list.append(corresponding_gt_score)
 
     # Print the final results
     print('===' * 5)
@@ -216,16 +216,16 @@ def main():
     import pandas as pd
     _dict = {
         'trials': trial_list,
-        'zc_score': best_zc_score,
-        'gt_score': best_gt_score
+        'zc_score': best_zc_score_list,
+        'gt_score': best_gt_score_list
     }
     df = pd.DataFrame(_dict)
     df.to_csv(os.path.join(args.work_dir, f'{args.log_name}.csv'))
 
     # save ploted figure to .png file with path=./logdir/evo_search
     import matplotlib.pyplot as plt
-    plt.plot(trial_list, best_zc_score, label='zc_score')
-    plt.plot(trial_list, best_gt_score, label='gt_score')
+    plt.plot(trial_list, best_zc_score_list, label='zc_score')
+    plt.plot(trial_list, best_gt_score_list, label='gt_score')
     plt.legend()
     plt.xtitle('trials')
     plt.ytitle('ZC Score')
