@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
-from piconas.predictor.pinat.mlpmixer import PreNormResidual, FeedForward
+from piconas.predictor.pinat.mlpmixer import FeedForward, PreNormResidual
 
 
 def normalize_adj(adj):
@@ -95,7 +95,6 @@ class NeuralPredictorMLPMixer(nn.Module):
         self.layer_norm = nn.LayerNorm(dim)
         self.fc = nn.Linear(dim, gcn_hidden)
 
-
     def forward(self, inputs):
         numv, adj, out = inputs['num_vertices'], inputs['adjacency'], inputs[
             'operations']
@@ -118,11 +117,11 @@ class NeuralPredictorMLPMixer(nn.Module):
         x = self.layer_norm(x)
         x = self.fc(x)
 
-
-        out = self.fc1(out+x)
+        out = self.fc1(out + x)
         out = self.dropout(out)
         out = self.fc2(out).view(-1)
         return out
+
 
 if __name__ == '__main__':
     model = NeuralPredictorMLPMixer()

@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 from piconas.datasets.predictor.nb101_dataset import Nb101DatasetPINAT
+from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 from piconas.predictor.pinat.BN.bayesian import BayesianLayer
 
 
@@ -23,7 +23,7 @@ class BayesianNetwork(nn.Module):
             x = layer(x)
             if i < len(self.layers) - 1:
                 x = torch.relu(x)
-        
+
         x = self.fc(x).view(-1)
         return x
 

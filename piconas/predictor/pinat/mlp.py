@@ -4,8 +4,6 @@ import torch.nn as nn
 from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 
 
-
-
 class MLP(nn.Module):
 
     def __init__(
@@ -21,9 +19,8 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.project = nn.Linear(input_dim, dim)
 
-        self.mlp_blocks = nn.ModuleList([
-            nn.Linear(dim, dim) for _ in range(depth)
-        ])
+        self.mlp_blocks = nn.ModuleList(
+            [nn.Linear(dim, dim) for _ in range(depth)])
         self.layer_norm = nn.LayerNorm(dim)
         self.fc = nn.Linear(dim, 1)
 

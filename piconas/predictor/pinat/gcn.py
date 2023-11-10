@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 from piconas.datasets.predictor.nb101_dataset import Nb101DatasetPINAT
+from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 
 
 def normalize_adj(adj):
@@ -109,7 +109,6 @@ if __name__ == '__main__':
     # test_set = Nb201DatasetPINAT(
     #     split='all', data_type='test', data_set='cifar10')
     test_set = Nb101DatasetPINAT(split='100', data_type='test')
-
 
     loader = torch.utils.data.DataLoader(
         test_set,

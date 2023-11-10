@@ -95,7 +95,7 @@ class NeuralPredictorBayesian(nn.Module):
         out = self.proj(out)
         for layer in self.gcn:
             out = layer(out, adj_with_diag)
-        out = graph_pooling(out, numv)  
+        out = graph_pooling(out, numv)
 
         # Bayesian
         x = inputs['zcp_layerwise']
@@ -105,7 +105,7 @@ class NeuralPredictorBayesian(nn.Module):
                 x = torch.relu(x)
         x = self.fc(x)
 
-        out = self.fc1(out+x)
+        out = self.fc1(out + x)
         out = self.dropout(out)
         out = self.fc2(out).view(-1)
         return out
@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
     predictor = NeuralPredictorBayesian(
         initial_hidden=initial_hidden, gcn_hidden=gcn_hidden)
-    
+
     if torch.cuda.is_available():
         predictor = predictor.cuda()
 

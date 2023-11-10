@@ -32,7 +32,7 @@ class NB201Evaluator(Evaluator):
                  num_sample: int = 50,
                  dataset: str = 'cifar10',
                  type: str = 'eval_acc1es',
-                 predictor=False,
+                 is_predictor=False,
                  **kwargs):
         super().__init__(trainer=trainer, dataset=dataset)
         self.trainer = trainer
@@ -66,7 +66,7 @@ class NB201Evaluator(Evaluator):
             '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth',
             verbose=False)
 
-        if predictor is not None:
+        if is_predictor is not None:
             # build dataloader for predictor
 
             # build predictor model

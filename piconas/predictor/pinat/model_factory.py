@@ -1,14 +1,14 @@
 from piconas.predictor.pinat.bayesian import BayesianNetwork
 from piconas.predictor.pinat.gcn import NeuralPredictorModel
+from piconas.predictor.pinat.gcn_bayesian import NeuralPredictorBayesian
+from piconas.predictor.pinat.gcn_mlpmixer import NeuralPredictorMLPMixer
+from piconas.predictor.pinat.mlp import MLP
 from piconas.predictor.pinat.mlpmixer import MLPMixer
 from piconas.predictor.pinat.pinat_model import (ParZCBMM, ParZCBMM2,
                                                  PINATModel1, PINATModel2,
                                                  PINATModel3, PINATModel4,
                                                  PINATModel5, PINATModel6,
                                                  PINATModel7)
-from piconas.predictor.pinat.mlp import MLP
-from piconas.predictor.pinat.gcn_mlpmixer import NeuralPredictorMLPMixer
-from piconas.predictor.pinat.gcn_bayesian import NeuralPredictorBayesian
 
 _name2model = {
     'PINATModel1': PINATModel1,  # PINAT + ZCP
@@ -32,6 +32,7 @@ _name2model = {
     'MLP': MLP,
 }
 
+
 def create_ablation_model(args):
     if args.bench == '101':
         input_dim = 249
@@ -39,7 +40,7 @@ def create_ablation_model(args):
     elif args.bench == '201':
         input_dim = 294
         initial_hidden = 4
-    
+
     if args.model_name == 'BayesianNetwork':
         net = BayesianNetwork(layer_sizes=[input_dim, 160, 64, 1])
     elif args.model_name == 'MLPMixer':
@@ -80,7 +81,7 @@ def create_ablation_model(args):
             layer_sizes=[input_dim, 160, 64])
     else:
         raise NotImplementedError(f'Unknown model name: {args.model_name}')
-    
+
     return net
 
 

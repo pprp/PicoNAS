@@ -96,6 +96,7 @@ class EvolutionSearcher(object):
 
         info['err'] = self.trainer.get_subnet_error(subnet, self.train_loader,
                                                     self.val_loader)
+        # info = self.trainer.
         info['visited'] = True
         return True
 
