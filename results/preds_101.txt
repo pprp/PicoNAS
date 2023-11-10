@@ -90,3 +90,10 @@ EXP:101_cifar10_ParZCBMM_mse+pw+dk_t172_vall_e300_bs10	lr: 0.0001	train: 172	tes
 EXP:101_cifar10_ParZCBMM_mse_t172_vall_e300_bs10	lr: 0.0001	train: 172	test: all	kendall_tau: 0.656955	 spearman_rho: 0.850479	 pearson_rho: 0.517755
 EXP:PINAT	lr: 0.0001	train: 100	test: all	kendall_tau: 0.112392	 spearman_rho: 0.166356	 pearson_rho: 0.064256
 EXP:PINAT	lr: 0.0001	train: 100	test: all	kendall_tau: 0.268077	 spearman_rho: 0.389959	 pearson_rho: 0.399461
+EXP:101_cifar10_NeuralPredictorMLPMixer_t100_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 100	test: all	kendall_tau: 0.650929	 spearman_rho: 0.839872	 pearson_rho: 0.535294
+EXP:101_cifar10_MLPMixer,_t100_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 100	test: all	kendall_tau: 0.672383	 spearman_rho: 0.860567	 pearson_rho: 0.551217
+EXP:101_cifar10_MLP_t100_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 100	test: all	kendall_tau: 0.670334	 spearman_rho: 0.858265	 pearson_rho: 0.545183
+EXP:101_cifar10_NeuralPredictorModel_t100_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 100	test: all	kendall_tau: 0.644721	 spearman_rho: 0.835369	 pearson_rho: 0.537757
+EXP:101_cifar10_BayesianNetwork,_t100_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 100	test: all	kendall_tau: 0.661873	 spearman_rho: 0.850923	 pearson_rho: 0.543784
+EXP:101_cifar10_ParZCBMM_t100_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 100	test: all	kendall_tau: 0.657084	 spearman_rho: 0.846647	 pearson_rho: 0.542421
+EXP:101_cifar10_NeuralPredictorBayesian_t100_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 100	test: all	kendall_tau: 0.647878	 spearman_rho: 0.839985	 pearson_rho: 0.532270

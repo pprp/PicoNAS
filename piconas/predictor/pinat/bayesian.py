@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
+from piconas.datasets.predictor.nb101_dataset import Nb101DatasetPINAT
 from piconas.predictor.pinat.BN.bayesian import BayesianLayer
 
 
@@ -27,8 +28,9 @@ class BayesianNetwork(nn.Module):
 if __name__ == '__main__':
     model = BayesianNetwork()
 
-    test_set = Nb201DatasetPINAT(
-        split='all', data_type='test', data_set='cifar10')
+    # test_set = Nb201DatasetPINAT(
+    #     split='all', data_type='test', data_set='cifar10')
+    test_set = Nb101DatasetPINAT(split='100', data_type='test')
 
     loader = torch.utils.data.DataLoader(
         test_set, batch_size=32, shuffle=False, num_workers=0, drop_last=False)

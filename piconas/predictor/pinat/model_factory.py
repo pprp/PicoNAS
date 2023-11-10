@@ -1,5 +1,4 @@
 from piconas.predictor.pinat.bayesian import BayesianNetwork
-from piconas.predictor.pinat.BN.bayesian import BayesianNetwork
 from piconas.predictor.pinat.gcn import NeuralPredictorModel
 from piconas.predictor.pinat.mlpmixer import MLPMixer
 from piconas.predictor.pinat.pinat_model import (ParZCBMM, ParZCBMM2,
@@ -7,6 +6,9 @@ from piconas.predictor.pinat.pinat_model import (ParZCBMM, ParZCBMM2,
                                                  PINATModel3, PINATModel4,
                                                  PINATModel5, PINATModel6,
                                                  PINATModel7)
+from piconas.predictor.pinat.mlp import MLP
+from piconas.predictor.pinat.gcn_mlpmixer import NeuralPredictorMLPMixer
+from piconas.predictor.pinat.gcn_bayesian import NeuralPredictorBayesian
 
 _name2model = {
     'PINATModel1': PINATModel1,  # PINAT + ZCP
@@ -24,8 +26,61 @@ _name2model = {
     # ablation study
     'BayesianNetwork': BayesianNetwork,
     'MLPMixer': MLPMixer,
-    'NeuralPredictorModel': NeuralPredictorModel
+    'NeuralPredictorModel': NeuralPredictorModel,
+    'NeuralPredictorMLPMixer': NeuralPredictorMLPMixer,
+    'NeuralPredictorBayesian': NeuralPredictorBayesian,
+    'MLP': MLP,
 }
+
+def create_ablation_model(args):
+    if args.bench == '101':
+        input_dim = 249
+        initial_hidden = 7
+    elif args.bench == '201':
+        input_dim = 294
+        initial_hidden = 5
+    
+    if args.model_name is 'BayesianNetwork':
+        net = BayesianNetwork(layer_sizes=[input_dim, 160, 64, 1])
+    elif args.model_name is 'MLPMixer':
+        net = MLPMixer(
+            input_dim=input_dim,
+            dim=512,
+            depth=4,
+            expansion_factor=4,
+            expansion_factor_token=0.5,
+            dropout=0.1)
+    elif args.model_name is 'NeuralPredictorModel':
+        net = NeuralPredictorModel(
+            initial_hidden=initial_hidden,
+            gcn_hidden=144,
+            gcn_layers=4,
+            linear_hidden=128)
+    elif args.model_name is 'MLP':
+        net = MLP(input_dim=input_dim, hidden_dim=128)
+    elif args.model_name is 'NeuralPredictorMLPMixer':
+        net = NeuralPredictorMLPMixer(
+            initial_hidden=initial_hidden,
+            gcn_hidden=144,
+            gcn_layers=4,
+            linear_hidden=128,
+            input_dim=input_dim,
+            dim=512,
+            depth=4,
+            expansion_factor=4,
+            expansion_factor_token=0.5,
+            dropout=0.1)
+    elif args.model_name is 'NeuralPredictorBayesian':
+        net = NeuralPredictorBayesian(
+            initial_hidden=initial_hidden,
+            gcn_hidden=144,
+            gcn_layers=4,
+            linear_hidden=128,
+            layer_sizes=[input_dim, 160, 64])
+    else:
+        raise NotImplementedError(f'Unknown model name: {args.model_name}')
+    
+    return net
 
 
 def create_model(args):

@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
-from piconas.datasets.predictor.nb101_dataset import Nb101DatasetPINAT
+from piconas.predictor.pinat.BN.bayesian import BayesianLayer
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -59,14 +59,15 @@ class DirectedGraphConvolution(nn.Module):
                + str(self.out_features) + ')'
 
 
-class NeuralPredictorModel(nn.Module):
+class NeuralPredictorBayesian(nn.Module):
 
     def __init__(self,
                  initial_hidden=-1,
                  gcn_hidden=144,
                  gcn_layers=4,
-                 linear_hidden=128):
-        super().__init__()
+                 linear_hidden=128,
+                 layer_sizes=[294, 160, 64]):
+        super(NeuralPredictorBayesian, self).__init__()
         self.gcn = [
             DirectedGraphConvolution(initial_hidden if i == 0 else gcn_hidden,
                                      gcn_hidden) for i in range(gcn_layers)
@@ -77,6 +78,13 @@ class NeuralPredictorModel(nn.Module):
         self.fc1 = nn.Linear(gcn_hidden, linear_hidden, bias=False)
         self.fc2 = nn.Linear(linear_hidden, 1, bias=False)
         self.proj = nn.Linear(5, initial_hidden)  # Adjusted to initial_hidden
+
+        # Bayesian
+        self.layers = nn.ModuleList([
+            BayesianLayer(layer_sizes[i], layer_sizes[i + 1])
+            for i in range(len(layer_sizes) - 1)
+        ])
+        self.fc = nn.Linear(layer_sizes[-1], gcn_hidden, bias=False)
 
     def forward(self, inputs):
         numv, adj, out = inputs['num_vertices'], inputs['adjacency'], inputs[
@@ -93,8 +101,17 @@ class NeuralPredictorModel(nn.Module):
         out = self.proj(out)
         for layer in self.gcn:
             out = layer(out, adj_with_diag)
-        out = graph_pooling(out, numv)
-        out = self.fc1(out)
+        out = graph_pooling(out, numv)  
+
+        # Bayesian
+        x = inputs['zcp_layerwise'].to(device)
+        for i, layer in enumerate(self.layers):
+            x = layer(x)
+            if i < len(self.layers) - 1:
+                x = torch.relu(x)
+        x = self.fc(x)
+
+        out = self.fc1(out+x)
         out = self.dropout(out)
         out = self.fc2(out).view(-1)
         return out
@@ -104,18 +121,17 @@ if __name__ == '__main__':
     gcn_hidden = 144
     batch_size = 7
     ss_type = 'nasbench201'
-    initial_hidden = 7  # This should match the number of features per node after projection
+    initial_hidden = 4  # This should match the number of features per node after projection
 
-    predictor = NeuralPredictorModel(
+    predictor = NeuralPredictorBayesian(
         initial_hidden=initial_hidden, gcn_hidden=gcn_hidden)
+    
     if torch.cuda.is_available():
-        predictor = predictor.cuda()
+        predictor = predictor.to(device)
 
     # Assuming Nb201DatasetPINAT is defined elsewhere
-    # test_set = Nb201DatasetPINAT(
-    #     split='all', data_type='test', data_set='cifar10')
-    test_set = Nb101DatasetPINAT(split='100', data_type='test')
-
+    test_set = Nb201DatasetPINAT(
+        split='all', data_type='test', data_set='cifar10')
 
     loader = torch.utils.data.DataLoader(
         test_set,
@@ -126,7 +142,5 @@ if __name__ == '__main__':
 
     for batch in loader:
         input = batch
-        if torch.cuda.is_available():
-            input = {k: v.cuda() for k, v in input.items()}
         score = predictor(input)
         print(score)

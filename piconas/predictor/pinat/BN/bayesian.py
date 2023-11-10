@@ -35,7 +35,6 @@ class BayesianLayer(nn.Module):
 
 
 class BayesianNetwork(nn.Module):
-
     def __init__(self, layer_sizes=[10, 5, 5, 1]):
         super(BayesianNetwork, self).__init__()
         self.layers = nn.ModuleList([
