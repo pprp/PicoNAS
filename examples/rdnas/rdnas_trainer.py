@@ -715,10 +715,8 @@ class PGONASTrainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = (2 *
-                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(predictor_score1, predictor_score2,
-                                        loss1, loss2))
+        loss3 = min(2, self.current_epoch/10.) * self.pairwise_rankloss(predictor_score1, predictor_score2,
+                                        loss1, loss2)
         loss3.backward()
 
         return loss2, outputs

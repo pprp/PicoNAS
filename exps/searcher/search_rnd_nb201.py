@@ -199,6 +199,9 @@ def main():
             best_zc_score = zc_score
             best_subnet = rnd_subnet
             corresponding_gt_score = gt_score
+            print(f'Best Subnet Found: {best_subnet}')
+            print(f'Best Zc Score of {args.measure_name} is {best_zc_score}')
+            print(f'Corresponding gt score is {corresponding_gt_score}')
 
         # record the whole process
         trial_list.append(i)
@@ -227,8 +230,8 @@ def main():
     plt.plot(trial_list, best_zc_score_list, label='zc_score')
     plt.plot(trial_list, best_gt_score_list, label='gt_score')
     plt.legend()
-    plt.xtitle('trials')
-    plt.ytitle('ZC Score')
+    plt.xlabel('trials')
+    plt.ylabel('score')
     plt.savefig(os.path.join(args.work_dir, f'{args.log_name}.png'))
 
 
