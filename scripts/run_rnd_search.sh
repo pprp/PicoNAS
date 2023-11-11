@@ -5,9 +5,9 @@ mkdir -p $LOGDIR
 
 ZC_NAME=eznas-a
 IS_PREDICTOR=False
-TAG=run3
+TAG=rndinput-run4
 LOGFILE=$LOGDIR/$(date +%Y-%m-%d)-${ZC_NAME}-$TAG.log
-CUDA_VISIBLE_DEVICES=2 python exps/searcher/search_rnd_nb201.py \
+CUDA_VISIBLE_DEVICES=3 python exps/searcher/search_rnd_nb201.py \
      --log_name rnd_search_$TAG \
      --is_predictor $IS_PREDICTOR \
      --measure_name $ZC_NAME > $LOGFILE 2>&1 &

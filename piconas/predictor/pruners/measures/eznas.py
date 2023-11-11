@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+import numpy as np 
 from piconas.autozc import unary_operation
 from piconas.autozc.unary_ops import to_mean_scalar
 from . import measure
@@ -47,6 +47,8 @@ def compute_eznas_a(
 
         loss_fn(logits, targets).backward()
         return t3g_list
+
+    inputs = torch.rand_like(inputs)
 
     t3_list = compute_t3g_gradient(net, inputs, targets, nn.CrossEntropyLoss())
 
