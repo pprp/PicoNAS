@@ -54,13 +54,7 @@ def compute_eznas_a(
 
     op_geno = ['element_wise_sign', 'slogdet', 'sigmoid', 'frobenius_norm']
 
-    A = []
-    for i in range(len(op_geno)):
-        assert isinstance(A, (list, tuple))
-        if len(A) == -1:
-            return -1
-        if i == 0:
-            A = [unary_operation(a, op_geno[i]) for a in t3_list]
-        else:
-            A = [unary_operation(a, op_geno[i]) for a in A]
+    A = t3_list
+    for i, op in enumerate(op_geno):
+        A = [unary_operation(a, op) for a in A]
     return convert_to_float(A)

@@ -16,16 +16,19 @@ fi
 #     --log_name spos_train_valid_c10_after_predictor_seed6_run0_50samples
     # > ./work_dir/spos_train_valid_c10_after_predictor_seed6_run0_50samples.log 2>&1
 
-LOGFILE=$LOGDIR/$(date +%Y-%m-%d)-spos_train_valid_c10_after_predictor_seed42_run0_20samples.log
-CUDA_VISIBLE_DEVICES=2 python train_rdnas.py \
+LOGNAME=spos_train_valid_c10_after_predictor_bs64_seed42_epoch250_run3_20samples
+LOGFILE=$LOGDIR/$(date +%Y-%m-%d)-$LOGNAME.log
+CUDA_VISIBLE_DEVICES=6 python train_rdnas.py \
     --model_name OneShotNASBench201Network \
     --trainer_name PGONASTrainer \
     --crit ce --lr 0.025 \
-    --epochs 250 --batch_size 16 \
-    --data_dir /data/lujunl/pprp/bench/cifar --dataset cifar10 \
+    --epochs 250 \
+    --batch_size 16 \
+    --data_dir /data/lujunl/pprp/bench/cifar \
+    --dataset cifar10 \
     --type adaptive  \
     --seed 42 \
-    --log_name spos_train_valid_c10_after_predictor_seed42_run0_20samples > $LOGFILE 2>&1 &
+    --log_name ${LOGNAME}.log > $LOGFILE 2>&1 &
 
 tail -f $LOGFILE
     
