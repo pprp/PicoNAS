@@ -276,11 +276,11 @@ def main():
 
     # create dataloader and model
     train_loader, test_loader, train_set, test_set = create_dataloader(args)
-    model = create_ablation_model(args)
-    # if args.bench == '101':
-    #     model = create_best_nb101_model()
-    # elif args.bench == '201':
-    #     model = create_best_nb201_model()  # for nb201
+    # model = create_ablation_model(args)
+    if args.bench == '101':
+        model = create_best_nb101_model()
+    elif args.bench == '201':
+        model = create_best_nb201_model()  # for nb201
     model = model.to(device)
     print(model)
     logging.info('PINAT params.: %f M' %

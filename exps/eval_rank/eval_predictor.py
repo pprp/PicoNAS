@@ -121,22 +121,61 @@ def evaluate(test_set, test_loader, model, criterion):
     targets = np.concatenate(targets)
     kendall_tau = kendalltau(predicts, targets)[0]
 
-    # 1. plot correlation of predicts and targets
     import matplotlib.pyplot as plt
-    plt.scatter(predicts, targets)
-    plt.xlabel('ParZC')
-    plt.ylabel('Test accuracy')
-    plt.savefig('preds_targets.png')
-    plt.close()
 
-    # 2. plot the rank of predicts and targets
-    # predicts_rank = np.argsort(predicts)
-    targets_rank = np.argsort(targets)
-    plt.scatter(predicts, targets_rank)
-    plt.xlabel('ParZC rank')
-    plt.ylabel('Test accuracy rank')
-    plt.savefig('preds_rank_targets_rank.png')
-    plt.close()
+    # filter out architectures gt < -5 
+    predicts = predicts[targets > -5]
+    targets = targets[targets > -5]
+
+    plt.scatter(
+        predicts,
+        targets,
+        alpha=0.3,
+        s=5,
+        label='kendall_tau: %.4f' % kendall_tau)
+
+    # Label and title
+    plt.xlabel('Predicted Performance')
+    plt.ylabel('Ground Truth Performance')
+    plt.title('Correlation between Predicted and Ground Truth Performance')
+
+    # Adjust axis limits
+    plt.xlim(min(predicts), max(predicts))
+    plt.ylim(min(targets), max(targets))
+
+    # Add a legend
+    plt.legend()
+
+    # Save the figure
+    plt.savefig('scatterplot.png')
+    plt.close() 
+
+    # filter the top 10% architectures
+    top_idx = np.argsort(predicts)[-int(len(predicts) * 0.05):]
+    predicts = predicts[top_idx]
+    targets = targets[top_idx]
+
+    plt.scatter(
+        predicts,
+        targets,
+        alpha=0.3,
+        s=5,
+        label='kendall_tau: %.4f' % kendall_tau)
+    
+    # Label and title
+    plt.xlabel('Predicted Performance')
+    plt.ylabel('Ground Truth Performance')
+    plt.title('Correlation between Predicted and Ground Truth Performance')
+
+    # Adjust axis limits
+    plt.xlim(min(predicts), max(predicts))
+    plt.ylim(min(targets), max(targets))
+
+    # Add a legend
+    plt.legend()
+
+    # Save the figure
+    plt.savefig('scatterplot_top.png')
 
     return kendall_tau, predicts, targets
 
