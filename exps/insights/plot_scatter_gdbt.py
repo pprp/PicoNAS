@@ -9,11 +9,13 @@ zc_name_list = [
     'fisher_layerwise',
     # 'l2_norm_layerwise'
 ]
+zc_name_legend = ['plain', 'gradnorm', 'fisher']
 # grasp_layerwise
 # Define a list of custom colors suitable for scientific figures with higher opacity
 custom_colors = [
     '#e377c2', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'
 ]
+custom_marker = ['o', '*', 'D', '^', 'D', 'P']
 
 # Create a single figure using "ggplot" style
 with plt.style.context('default'):
@@ -60,26 +62,28 @@ with plt.style.context('default'):
             feature_importance_normalized,
             color=custom_colors[i],
             alpha=0.7,
-            s=15)
+            s=50,
+            marker=custom_marker[i],)
         # plt.plot(pos, feature_importance_normalized, color=custom_colors[i], alpha=0.7, linewidth=1.5)
 
         # Collect handles for legend
-        legend_handles.append(
-            plt.Rectangle((0, 0), 1, 1, color=custom_colors[i], alpha=0.5))
+        # legend_handles.append(
+        #     plt.Rectangle((0, 0), 1, 1, color=custom_colors[i], alpha=0.5))
 
-    plt.yticks(fontsize=10 + 5)
-    plt.xlabel('Layer Index', fontsize=12 + 5)
-    plt.ylabel('Relative Importance', fontsize=12 + 5)
-    plt.xticks(np.arange(min(pos), max(pos) - 1, 20), fontsize=9 + 5)
+    plt.xlabel('Layer Index', fontsize=12 + 10)
+    plt.ylabel('Relative Importance', fontsize=12 + 10)
+    plt.yticks(fontsize=10 + 6)
+    plt.xticks(np.arange(min(pos), max(pos) - 1, 20), fontsize=9 + 6)
     # plt.yscale('function', functions=(lambda x: x ** (1 / 3), lambda x: x ** 3))
     plt.yscale('log')
 
     # Show the legend using collected handles and labels
-    plt.legend(
-        handles=legend_handles,
-        labels=zc_name_list,
-        loc='upper left',
-        fontsize=9)
+    # plt.legend(
+    #     handles=legend_handles,
+    #     labels=zc_name_list,
+    #     loc='upper left',
+    #     fontsize=16)
+    plt.legend(zc_name_legend, loc='upper left', fontsize=16)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig('./gbdt_streamgraph_combined.png')

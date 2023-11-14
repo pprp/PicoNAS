@@ -48,7 +48,6 @@ logging.info(args)
 
 # set cpu/gpu device
 if torch.cuda.is_available():
-    torch.cuda.set_device(args.gpu_id)
     device = torch.device('cuda')
 else:
     device = torch.device('cpu')
@@ -120,6 +119,13 @@ def evaluate(test_set, test_loader, model, criterion):
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
     kendall_tau = kendalltau(predicts, targets)[0]
+
+    # save predicts and targets to 'correlation_parzc.csv'
+    file_path = 'correlation_parzc.csv'
+    with open(file_path, 'w') as f:
+        f.write('predicts,targets\n')
+        for i in range(len(predicts)):
+            f.write('{},{}\n'.format(predicts[i], targets[i]))
 
     import matplotlib.pyplot as plt
 
