@@ -250,3 +250,23 @@ EXP:PINAT	lr: 0.0001	train: 78	test: all	kendall_tau: 0.782402
 EXP:PINAT	lr: 0.0001	train: 78	test: all	kendall_tau: 0.782402
 EXP:PINAT	lr: 0.0001	train: 78	test: all	kendall_tau: 0.782402
 EXP:PINAT	lr: 0.0001	train: 78	test: all	kendall_tau: 0.782402
+EXP:201_555_cifar10_NeuralPredictorMLPMixer_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.697296	 spearman_rho: 0.878250	 pearson_rho: 0.598211
+EXP:201_555_cifar10_MLPMixer_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.676133	 spearman_rho: 0.859644	 pearson_rho: 0.669860
+EXP:201_555_cifar10_NeuralPredictorBayesian_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.707187	 spearman_rho: 0.886259	 pearson_rho: 0.597873
+EXP:201_555_cifar10_NeuralPredictorMLPMixer_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.663441	 spearman_rho: 0.849417	 pearson_rho: 0.673965
+EXP:201_555_cifar10_NeuralPredictorModel_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.670541	 spearman_rho: 0.855160	 pearson_rho: 0.664769
+EXP:201_555_cifar10_BayesianNetwork_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.677314	 spearman_rho: 0.861435	 pearson_rho: 0.667441
+EXP:201_555_cifar10_BayesianNetwork_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.694474	 spearman_rho: 0.876077	 pearson_rho: 0.597239
+EXP:201_555_cifar10_MLP_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.697178	 spearman_rho: 0.877275	 pearson_rho: 0.599167
+EXP:201_555_cifar10_NeuralPredictorMLPMixer_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.701216	 spearman_rho: 0.881692	 pearson_rho: 0.623753
+EXP:201_555_cifar10_BayesianNetwork_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.699618	 spearman_rho: 0.880940	 pearson_rho: 0.631360
+EXP:201_555_cifar10_MLP_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.703728	 spearman_rho: 0.883699	 pearson_rho: 0.629387
+EXP:201_555_cifar10_NeuralPredictorBayesian_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.702159	 spearman_rho: 0.882515	 pearson_rho: 0.623201
+EXP:201_555_cifar10_MLPMixer_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.704240	 spearman_rho: 0.884267	 pearson_rho: 0.621631
+EXP:201_555_cifar10_NeuralPredictorModel_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.701218	 spearman_rho: 0.881877	 pearson_rho: 0.625832
+EXP:201_666_cifar10_MLP_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.682433	 spearman_rho: 0.866482	 pearson_rho: 0.664478
+EXP:201_666_cifar10_NeuralPredictorMLPMixer_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.668228	 spearman_rho: 0.853278	 pearson_rho: 0.677047
+EXP:201_666_cifar10_BayesianNetwork_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.669870	 spearman_rho: 0.854237	 pearson_rho: 0.671154
+EXP:201_666_cifar10_NeuralPredictorBayesian_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.675263	 spearman_rho: 0.859496	 pearson_rho: 0.666678
+EXP:201_666_cifar10_MLPMixer_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.683189	 spearman_rho: 0.866144	 pearson_rho: 0.675018
+EXP:201_666_cifar10_NeuralPredictorModel_t78_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 78	test: all	kendall_tau: 0.676894	 spearman_rho: 0.860360	 pearson_rho: 0.668180

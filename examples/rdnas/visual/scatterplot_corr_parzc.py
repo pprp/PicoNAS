@@ -1,14 +1,44 @@
 import matplotlib.pyplot as plt
 import numpy as np 
 import csv 
-from piconas.utils.rank_consistency import kendalltau 
+import scipy 
 from scipy.stats import gaussian_kde
 
-plt.rcParams['figure.figsize'] = (5, 5)
-plt.rcParams['font.size'] = 12
+def kendalltau(true_vector, pred_vector):
+    tau, p_value = scipy.stats.kendalltau(true_vector, pred_vector)
+    return tau
 
-# set dpi 
-plt.rcParams['savefig.dpi'] = 300
+plt.rc('font', family='Times New Roman')
+GLOBAL_DPI = 300
+FIGSIZE = (5, 5)
+PADINCHES = 0.1  #-0.005
+GLOBAL_FONTSIZE = 26
+GLOBAL_LABELSIZE = 21
+GLOBAL_LEGENDSIZE = 11
+
+font1 = {
+    'family': 'Times New Roman',
+    'weight': 'bold',
+    'size': GLOBAL_LABELSIZE
+}
+
+plt.rc('font', **font1)  # controls default text sizes
+plt.rc('axes', titlesize=GLOBAL_LABELSIZE)  # fontsize of the axes title
+plt.rc('axes', labelsize=GLOBAL_LABELSIZE)  # fontsize of the x and y labels
+plt.rc('xtick', labelsize=GLOBAL_LABELSIZE - 10)  # fontsize of the tick labels
+plt.rc('ytick', labelsize=GLOBAL_LABELSIZE - 10)  # fontsize of the tick labels
+plt.rc('legend', fontsize=GLOBAL_LEGENDSIZE)  # legend fontsize
+plt.rc('figure', titlesize=GLOBAL_LABELSIZE)
+
+ax = plt.gca()
+ax.spines['top'].set_color('black')
+ax.spines['right'].set_color('black')
+ax.spines['bottom'].set_color('black')
+ax.spines['left'].set_color('black')
+ax.spines['bottom'].set_linewidth(2)
+ax.spines['left'].set_linewidth(2)
+ax.spines['top'].set_linewidth(2)
+ax.spines['right'].set_linewidth(2)
 
 # read file from correlation_parzc.csv have two columns: predicts and targets
 f = open('correlation_parzc.csv', 'r')
@@ -75,7 +105,7 @@ predicts, targets, z = predicts[idx], targets[idx], z[idx]
 plt.scatter(
     predicts,
     targets,
-    alpha=0.3,
+    alpha=0.5,
     c=z,
     s=5)
 

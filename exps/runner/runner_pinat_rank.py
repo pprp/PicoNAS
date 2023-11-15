@@ -27,7 +27,7 @@ parser.add_argument('--train_split', type=str, default='100')
 parser.add_argument('--eval_split', type=str, default='all')
 parser.add_argument('--dataset', type=str, default='cifar10')
 # training settings
-parser.add_argument('--seed', type=int, default=0)
+parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--gpu_id', type=int, default=0)
 parser.add_argument('--epochs', default=300, type=int)
 parser.add_argument('--lr', default=1e-4, type=float)
@@ -39,6 +39,7 @@ parser.add_argument('--eval_print_freq', default=10, type=int)
 parser.add_argument('--model_name', type=str, default='PINATModel7')
 parser.add_argument('--loss_type', type=str, default='diffkendall')
 args = parser.parse_args()
+
 
 assert args.loss_type in {
     'mse', 'pairwise', 'diffkendall', 'mse+pw', 'mse+dk', 'pw+dk', 'mse+pw+dk'
