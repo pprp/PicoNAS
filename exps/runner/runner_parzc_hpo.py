@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 from argparse import ArgumentParser
 
 import numpy as np
@@ -15,17 +14,19 @@ from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
 from piconas.predictor.pinat.model_factory import create_model_hpo
 from piconas.utils.utils import AverageMeterGroup, accuracy_mse, set_seed, to_cuda
+from piconas.utils.rank_consistency import spearman, pearson
+
 
 parser = ArgumentParser()
 # exp and dataset
-parser.add_argument('--exp_name', type=str, default='ParZCBMM')
+parser.add_argument('--exp_name', type=str, default='ParZCBMM2')
 parser.add_argument('--bench', type=str, default='101')
-parser.add_argument('--train_split', type=str, default='100')
+parser.add_argument('--train_split', type=str, default='172')
 parser.add_argument('--eval_split', type=str, default='all')
 parser.add_argument('--dataset', type=str, default='cifar10')
 # training settings
-parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--gpu_id', type=int, default=0)
+parser.add_argument('--seed', type=int, default=42)
+parser.add_argument('--gpu_id', type=int, default=2)
 parser.add_argument('--epochs', default=100, type=int)
 parser.add_argument('--lr', default=1e-4, type=float)
 parser.add_argument('--wd', default=1e-3, type=float)
@@ -33,7 +34,7 @@ parser.add_argument('--train_batch_size', default=20, type=int)
 parser.add_argument('--eval_batch_size', default=512, type=int)
 parser.add_argument('--train_print_freq', default=1e5, type=int)
 parser.add_argument('--eval_print_freq', default=10, type=int)
-parser.add_argument('--model_name', type=str, default='ParZCBMM')
+parser.add_argument('--model_name', type=str, default='ParZCBMM2q')
 args = parser.parse_args()
 
 # Create a log directory if it doesn't exist
@@ -126,31 +127,21 @@ def train(
             # loss_weight_1 = 0.95  # adjust as necessary
             # loss_weight_2 = 0.05  # adjust as necessary
 
-            # print(predict.shape, target.shape)
             if len(predict.shape) > 1:  # for test only
                 predict = predict.squeeze(-1)
-            # print(predict.shape, target.shape)
-            # term1 = pair_loss(predict, target.float())
-            # term2 = loss_mse
             term3 = diffkendall(predict, target)
-
-            # term2 / term2.detach()
             loss = term3  # + 0.01 * term2
-            # / term3.detach() + term2 / term2.detach()
-            # term1
-            # / term1.detach()
-            # + 0.001 * term3 / term3.detach()
+
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
             # For logging, we can compute MSE or other metrics if desired.
-            mse = accuracy_mse(predict.squeeze(), target.squeeze(), train_set)
             meters.update(
-                {'loss': loss.item(), 'mse': mse.item()}, n=target.size(0))
+                {'loss': loss.item(), }, n=target.size(0))
 
-            if step % args.train_print_freq == 0:
+            if step % args.train_print_freq == 0 and epoch % 10 == 0:
                 logging.info(
                     'Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
                     epoch + 1,
@@ -168,14 +159,14 @@ def train(
 def evaluate(test_set, test_loader, model, criterion):
     model.eval()
     meters = AverageMeterGroup()
-    predicts, targets = [], []
+    predict_list, target_list = [], []
     with torch.no_grad():
         for step, batch in enumerate(test_loader):
             batch = to_cuda(batch, device)
             target = batch['test_acc']
             predict = model(batch)
-            predicts.append(predict.cpu().numpy())
-            targets.append(target.cpu().numpy())
+            predict_list.append(predict.cpu().numpy())
+            target_list.append(target.cpu().numpy())
             meters.update(
                 {
                     'loss': criterion(predict, target).item(),
@@ -194,38 +185,21 @@ def evaluate(test_set, test_loader, model, criterion):
             adj = batch['adjacency'].cpu().numpy()
             adj_str = np.array2string(adj)
 
-    predicts = np.concatenate(predicts)
-    targets = np.concatenate(targets)
-    kendall_tau = kendalltau(predicts, targets)[0]
-    # plot correlation figure with scatterplot
-    import matplotlib.pyplot as plt
+    predict_list = np.concatenate(predict_list)
+    target_list = np.concatenate(target_list)
+    kendall_tau = kendalltau(predict_list, target_list)
+    spearman_rho = spearman(predict_list, target_list)
+    pearson_rho = pearson(predict_list, target_list)
 
-    plt.scatter(
-        predicts, targets, alpha=0.3, s=5, label='kendall_tau: %.4f' % kendall_tau
-    )
+    if isinstance(kendall_tau, tuple):
+        kendall_tau = kendall_tau[0]
+    if isinstance(spearman_rho, tuple):
+        spearman_rho = spearman_rho[0]
+    if isinstance(pearson_rho, tuple):
+        pearson_rho = pearson_rho[0]
 
-    # Label and title
-    plt.xlabel('Predicted Performance')
-    plt.ylabel('Ground Truth Performance')
-    plt.title('Correlation between Predicted and Ground Truth Performance')
 
-    # Adjust axis limits
-    plt.xlim(min(predicts), max(predicts))
-    plt.ylim(min(targets), max(targets))
-
-    # Add a legend
-    plt.legend()
-
-    # Save the figure
-    plt.savefig('scatterplot.png')
-
-    # save it as csv or json
-    import pandas as pd
-
-    df = pd.DataFrame({'predicts': predicts, 'targets': targets})
-    df.to_csv('predicts_targets.csv', index=False)
-
-    return kendall_tau, predicts, targets
+    return kendall_tau, spearman_rho, pearson_rho
 
 
 def objective_function(hyperparameters):
@@ -237,6 +211,7 @@ def objective_function(hyperparameters):
     d_k_v = hyperparameters['d_k_v']
     d_inner = hyperparameters['d_inner']
     epoch = hyperparameters['epoch']
+    dropout = hyperparameters['dropout']
 
     model = create_model_hpo(
         n_layers, n_head, pine_hidden, linear_hidden, d_word_model, d_k_v, d_inner
@@ -263,9 +238,24 @@ def objective_function(hyperparameters):
         criterion2,
         epoch=epoch,
     )
-    kendall_tau, predict_all, target_all = evaluate(
+    kendall_tau, spearman_rho, pearson_rho = evaluate(
         test_set, test_loader, model, criterion1
     )
+
+        # write results
+    with open('./results/preds_%s.txt' % args.bench, 'a') as f:
+        f.write(
+            'EXP:%s\tlr: %s\ttrain: %s\ttest: %s\tkendall_tau: %.6f\t spearman_rho: %.6f\t pearson_rho: %.6f\n'
+            % (
+                args.exp_name,
+                args.lr,
+                args.train_split,
+                args.eval_split,
+                kendall_tau,
+                spearman_rho,
+                pearson_rho,
+            )
+        )
 
     return kendall_tau
 
@@ -279,7 +269,8 @@ def objective(trial):
         'd_word_model': trial.suggest_int('d_word_model', 256, 1024),
         'd_k_v': trial.suggest_int('d_k_v', 32, 128),
         'd_inner': trial.suggest_int('d_inner', 256, 1024),
-        'epoch': trial.suggest_int('epoch', 50, 300),
+        'epoch': trial.suggest_int('epoch', 20, 300),
+        'dropout': trial.suggest_float('dropout', 0.01, 0.5),
     }
 
     # Use the objective function as you've defined it

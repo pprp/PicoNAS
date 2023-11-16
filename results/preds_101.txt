@@ -9,9 +9,6 @@ EXP:101_cifar10_PINATModel3_mse_t172_vall_e300_bs10	lr: 0.0001	train: 172	test: 
 EXP:101_cifar10_PINAT_mse_t172_vall_e300_bs10	lr: 0.0001	train: 172	test: all	kendall_tau: 0.722220
 EXP:101_cifar10_PINAT_mse_t424_v100_e300_bs10	lr: 0.0001	train: 424	test: 100	kendall_tau: 0.797211
 EXP:101_cifar10_PINAT_mse_t424_vall_e300_bs10	lr: 0.0001	train: 424	test: all	kendall_tau: 0.776185
-EXP:PINAT	lr: 0.0001	train: 100	test: all	kendall_tau: 0.395051
-EXP:PINAT	lr: 0.0001	train: 100	test: all	kendall_tau: 0.709866
-EXP:PINAT	lr: 0.0001	train: 100	test: 100	kendall_tau: 0.385937
 EXP:101_cifar10_PINATModel5_mse_t100_vall_e300_bs10_final	lr: 0.0001	train: 100	test: all	kendall_tau: 0.692871
 EXP:101_cifar10_PINATModel5_mse_t172_vall_e300_bs10_final	lr: 0.0001	train: 172	test: all	kendall_tau: 0.697362
 EXP:101_cifar10_PINATModel5_mse_t424_vall_e300_bs10_final	lr: 0.0001	train: 424	test: all	kendall_tau: 0.780219
@@ -112,3 +109,26 @@ EXP:101_cifar10_ParZCBMM_mse_t4236_vall_e150_bs10_seed42	lr: 0.0001	train: 4236	
 EXP:101_cifar10_ParZCBMM_mse_t172_vall_e150_bs10_seed555	lr: 0.0001	train: 172	test: all	kendall_tau: 0.649536	 spearman_rho: 0.842684	 pearson_rho: 0.521872
 EXP:101_cifar10_ParZCBMM_mse_t172_vall_e124_bs10_seed555	lr: 0.0001	train: 172	test: all	kendall_tau: 0.636963	 spearman_rho: 0.832029	 pearson_rho: 0.517797
 EXP:101_cifar10_ParZCBMM_pairwise_t172_vall_e124_bs10_seed555	lr: 0.0001	train: 172	test: all	kendall_tau: 0.652411	 spearman_rho: 0.844631	 pearson_rho: 0.524202
+EXP:101_cifar10_ParZCBMM2_pairwise_t172_vall_e124_bs10_seed555	lr: 0.0001	train: 172	test: all	kendall_tau: 0.660732	 spearman_rho: 0.852617	 pearson_rho: 0.520471
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.608347	 spearman_rho: 0.805838	 pearson_rho: 0.506805
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.634560	 spearman_rho: 0.830020	 pearson_rho: 0.522187
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.592830	 spearman_rho: 0.790639	 pearson_rho: 0.498267
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.635663	 spearman_rho: 0.830613	 pearson_rho: 0.522027
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.586917	 spearman_rho: 0.786219	 pearson_rho: 0.494480
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.621327	 spearman_rho: 0.818125	 pearson_rho: 0.508384
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.643126	 spearman_rho: 0.836280	 pearson_rho: 0.519522
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.660808	 spearman_rho: 0.852928	 pearson_rho: 0.531211
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.593121	 spearman_rho: 0.791713	 pearson_rho: 0.492971
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.625398	 spearman_rho: 0.823553	 pearson_rho: 0.526458
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.662438	 spearman_rho: 0.854734	 pearson_rho: 0.533010
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.661501	 spearman_rho: 0.853588	 pearson_rho: 0.538855
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.656172	 spearman_rho: 0.849811	 pearson_rho: 0.531625
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.676777	 spearman_rho: 0.864217	 pearson_rho: 0.550241
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.653957	 spearman_rho: 0.843614	 pearson_rho: 0.549611
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.661118	 spearman_rho: 0.854553	 pearson_rho: 0.521796
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.656375	 spearman_rho: 0.846774	 pearson_rho: 0.526101
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.651707	 spearman_rho: 0.847669	 pearson_rho: 0.536652
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.644194	 spearman_rho: 0.838141	 pearson_rho: 0.531180
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.606985	 spearman_rho: 0.805137	 pearson_rho: 0.492798
+EXP:ParZCBMM2	lr: 0.0001	train: 172	test: all	kendall_tau: 0.669791	 spearman_rho: 0.858955	 pearson_rho: 0.533538
+EXP:ParZCBMM2	

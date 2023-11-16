@@ -205,7 +205,7 @@ def train(
 
         if epoch > 20 and epoch % 10 == 0:
             kd_test, _, _ = evaluate(
-                train_set, train_loader, model, criterion1)
+                test_set, test_loader, model, criterion1)
             epoch_list.append(epoch)
             kd_list.append(kd_test)
 

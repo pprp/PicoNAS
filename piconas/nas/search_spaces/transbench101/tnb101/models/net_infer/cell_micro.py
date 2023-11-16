@@ -1,4 +1,4 @@
-from models.net_ops.cell_ops import OPS, ReLUConvBN
+from piconas.nas.search_spaces.transbench101.tnb101.models.net_ops.cell_ops import OPS, ReLUConvBN
 import sys
 from pathlib import Path
 

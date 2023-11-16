@@ -1,10 +1,8 @@
 # Run1: pinat + zcp
-from .pinat_model import Encoder, graph_pooling
 import collections.abc
 import math
 from functools import partial
-from itertools import repeat
-
+from piconas.predictor.pinat.utils import to_2tuple 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -456,7 +454,7 @@ class PINATModel2(nn.Module):
         self.zcp_embedder = []
         mid_zcp_dim = 38
         # 13 zcs
-        for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
+        for zcp_emb_dim in self.zcp_embedder_dims:  
             self.zcp_embedder.append(
                 nn.Sequential(
                     nn.Linear(mid_zcp_dim, zcp_emb_dim),
@@ -488,16 +486,7 @@ class PINATModel2(nn.Module):
         return out
 
 
-def _ntuple(n):
-    def parse(x):
-        if isinstance(x, collections.abc.Iterable) and not isinstance(x, str):
-            return tuple(x)
-        return tuple(repeat(x, n))
 
-    return parse
-
-
-to_2tuple = _ntuple(2)
 
 
 class Mlp(nn.Module):
@@ -609,11 +598,11 @@ class PINATModel3(nn.Module):
         self.zcp_embedder = []
 
         if bench == '101':
-            mid_zcp_dim = 83 * 3  # for nb101
+            mid_zcp_dim = 83 * 3  
         elif bench == '201':
-            mid_zcp_dim = 98 * 3  # for nb201
+            mid_zcp_dim = 98 * 3  
 
-        for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
+        for zcp_emb_dim in self.zcp_embedder_dims:  
             self.zcp_embedder.append(
                 nn.Sequential(
                     nn.Linear(mid_zcp_dim, zcp_emb_dim),
@@ -702,11 +691,11 @@ class PINATModel4(nn.Module):
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
         if bench == '101':
-            mid_zcp_dim = 83 * 3  # for nb101
+            mid_zcp_dim = 83 * 3  
         elif bench == '201':
-            mid_zcp_dim = 98 * 3  # for nb201
+            mid_zcp_dim = 98 * 3  
 
-        for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
+        for zcp_emb_dim in self.zcp_embedder_dims:  
             self.zcp_embedder.append(
                 nn.Sequential(
                     nn.Linear(mid_zcp_dim, zcp_emb_dim),
@@ -819,11 +808,11 @@ class PINATModel5(nn.Module):
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
         if bench == '101':
-            mid_zcp_dim = 83 * 3  # for nb101
+            mid_zcp_dim = 83 * 3  
         elif bench == '201':
-            mid_zcp_dim = 98 * 3  # for nb201
+            mid_zcp_dim = 98 * 3
 
-        for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
+        for zcp_emb_dim in self.zcp_embedder_dims:  
             self.zcp_embedder.append(
                 nn.Sequential(
                     nn.Linear(mid_zcp_dim, zcp_emb_dim),
@@ -901,7 +890,7 @@ class Encoder6(nn.Module):
         in_features=5,
         pine_hidden=256,
         heads=6,
-        linear_input=512,  # 80,
+        linear_input=512,  
         zcp_embedder_dims=[256, 512, 1024, 2048, 4096],
     ):
         super().__init__()
@@ -953,13 +942,13 @@ class Encoder6(nn.Module):
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
         if bench == '101':
-            mid_zcp_dim = 83 * 3  # for nb101
+            mid_zcp_dim = 83 * 3  
             emb_out_dim = 7 * linear_input  # pos_enc_dim
         elif bench == '201':
-            mid_zcp_dim = 98 * 3  # for nb201
+            mid_zcp_dim = 98 * 3  
             emb_out_dim = 6 * linear_input  # pos_enc_dim
 
-        for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
+        for zcp_emb_dim in self.zcp_embedder_dims:  
             self.zcp_embedder.append(
                 nn.Sequential(
                     nn.Linear(mid_zcp_dim, zcp_emb_dim),
@@ -1078,7 +1067,7 @@ class PINATModel6(nn.Module):
         d_inner,
         pad_idx=None,
         pos_enc_dim=7,
-        linear_hidden=512,  # 80,#80,
+        linear_hidden=512,  #80,
         pine_hidden=256,
         bench='101',
     ):
@@ -1214,13 +1203,13 @@ class Encoder7(nn.Module):
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
         if bench == '101':
-            mid_zcp_dim = 83 * 3  # for nb101
+            mid_zcp_dim = 83 * 3  
             emb_out_dim = 7 * linear_input  # pos_enc_dim
         elif bench == '201':
-            mid_zcp_dim = 98 * 3  # for nb201
+            mid_zcp_dim = 98 * 3  
             emb_out_dim = 6 * linear_input  # pos_enc_dim
 
-        for zcp_emb_dim in self.zcp_embedder_dims:  # [128, 128]
+        for zcp_emb_dim in self.zcp_embedder_dims:  
             self.zcp_embedder.append(
                 nn.Sequential(
                     nn.Linear(mid_zcp_dim, zcp_emb_dim),
@@ -1567,7 +1556,7 @@ class EncoderBlock(nn.Module):
         in_features=5,
         pine_hidden=256,
         heads=6,
-        linear_input=512,  # 80,
+        linear_input=512,  
         zcp_embedder_dims=[256, 512, 1024, 2048, 4096],
     ):
         super().__init__()
@@ -1619,11 +1608,11 @@ class EncoderBlock(nn.Module):
         self.zcp_embedder_dims = zcp_embedder_dims
         self.zcp_embedder = []
         if bench == '101':
-            mid_zcp_dim = 83 * 3  # for nb101
+            mid_zcp_dim = 83 * 3  
             emb_out_dim = 7 * linear_input  # pos_enc_dim
             patch_size = 7
         elif bench == '201':
-            mid_zcp_dim = 98 * 3  # for nb201
+            mid_zcp_dim = 98 * 3  
             emb_out_dim = 6 * linear_input  # pos_enc_dim
             patch_size = 6
 
@@ -1738,7 +1727,7 @@ class ParZCBMM(nn.Module):
         d_inner,
         pad_idx=None,
         pos_enc_dim=7,
-        linear_hidden=512,  # 80,
+        linear_hidden=512,  
         pine_hidden=256,
         bench='101',
     ):
@@ -1802,12 +1791,16 @@ class ParZCBMM(nn.Module):
 
 
 class ZCEmbedder(nn.Module):
-    def __init__(self, zcp_embedder_dims, emb_out_dim, dropout):
+    def __init__(self, zcp_embedder_dims, emb_out_dim, dropout, bench='101'):
         super(ZCEmbedder, self).__init__()
         self.zcp_embedder_dims = zcp_embedder_dims
 
         # Initialize the ZCP embedder layers
         layers = []
+        if bench == '201':
+            mid_zcp_dim = 98 * 3
+        elif bench == '101':
+            mid_zcp_dim = 83 * 3
         for zcp_emb_dim in self.zcp_embedder_dims:
             layers.append(
                 nn.Sequential(
@@ -1838,182 +1831,14 @@ class ZCEmbedder(nn.Module):
         return x
 
 
-class EncoderBlock2(nn.Module):
-    """An encoder model with self attention mechanism."""
-
-    def __init__(
-        self,
-        n_src_vocab,
-        d_word_vec,
-        n_layers,
-        n_head,
-        d_k,
-        d_v,
-        d_model,
-        d_inner,
-        pad_idx,
-        pos_enc_dim=7,
-        dropout=0.1,
-        n_position=200,
-        bench='101',
-        in_features=5,
-        pine_hidden=256,
-        heads=6,
-        linear_input=512,  # 80,
-        zcp_embedder_dims=[256, 512, 1024, 2048, 4096],
-    ):
-        super().__init__()
-
-        self.src_word_emb = nn.Embedding(
-            n_src_vocab, d_word_vec, padding_idx=pad_idx)
-        self.bench = bench
-        if self.bench == '101':
-            self.embedding_lap_pos_enc = nn.Linear(
-                pos_enc_dim, d_word_vec
-            )  # position embedding
-        elif self.bench == '201':
-            self.pos_map = nn.Linear(pos_enc_dim, n_src_vocab + 1)
-            self.embedding_lap_pos_enc = nn.Linear(pos_enc_dim, d_word_vec)
-            self.proj_func = nn.Linear(4, 6)
-        else:
-            raise ValueError('No defined NAS bench.')
-
-        # pine structure
-        self.conv1 = GATConv(in_features, pine_hidden, heads=heads)
-        self.lin1 = torch.nn.Linear(in_features, heads * pine_hidden)
-
-        self.conv2 = GATConv(heads * pine_hidden, pine_hidden, heads=heads)
-        self.lin2 = torch.nn.Linear(heads * pine_hidden, heads * pine_hidden)
-
-        self.conv3 = GATConv(heads * pine_hidden,
-                             linear_input, heads=6, concat=False)
-        self.lin3 = torch.nn.Linear(heads * pine_hidden, linear_input)
-
-        self.dropout = nn.Dropout(p=dropout)
-        self.layer_stack = nn.ModuleList(
-            [
-                EncoderLayer(
-                    d_model,
-                    d_inner,
-                    n_head,
-                    d_k,
-                    d_v,
-                    dropout=dropout,
-                    pine_hidden=pine_hidden,
-                    bench=bench,
-                )
-                for _ in range(n_layers)
-            ]
-        )
-        self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
-
-        # zcp embedder
-        self.zcp_embedder_dims = zcp_embedder_dims
-        self.zcp_embedder = []
-        if bench == '101':
-            mid_zcp_dim = 83 * 3  # for nb101
-            emb_out_dim = 7 * linear_input  # pos_enc_dim
-            patch_size = 7
-        elif bench == '201':
-            mid_zcp_dim = 98 * 3  # for nb201
-            emb_out_dim = 6 * linear_input  # pos_enc_dim
-            patch_size = 6
-
-        self.bayesian_mlp_mixer = BaysianMLPMixer(
-            input_dim=mid_zcp_dim,
-            sequence_length=256,
-            patch_size=16,
-            dim=512,
-            depth=4,
-            emb_out_dim=emb_out_dim,
-            expansion_factor=4,
-            expansion_factor_token=0.5,
-            dropout=dropout,
-        )
-
-    def to_pyg_batch(self, xs, edge_index_list, num_nodes):
-        assert xs.shape[0] == len(
-            edge_index_list
-        ), f'{xs.shape[0]}, {len(edge_index_list)}'
-        assert xs.shape[0] == len(
-            num_nodes), f'{xs.shape[0]}, {len(num_nodes)}'
-        data_list = []
-        for x, e, n in zip(xs, edge_index_list, num_nodes):
-            data_list.append(torch_geometric.data.Data(x=x[:n], edge_index=e))
-        batch = torch_geometric.data.Batch.from_data_list(data_list)
-        return batch
-
-    def forward(
-        self,
-        src_seq,  # features: bs, 7
-        pos_seq,  # lapla: bs, 7, 7
-        operations,  # operations: bs, 7, 5 -> bs, 35
-        edge_index_list,  # list with different length tensor
-        num_nodes,  # num of node: bs
-        zcp_layerwise,  # zcp: bs, 83
-        src_mask=None,
-    ):
-        # op emb and pos emb
-        enc_output = self.src_word_emb(src_seq)
-        if self.bench == '101':
-            pos_output = self.embedding_lap_pos_enc(
-                pos_seq)  # positional embedding
-            enc_output += pos_output  # bs, 7, 80
-            enc_output = self.dropout(enc_output)
-        elif self.bench == '201':
-            pos_output = self.pos_map(pos_seq).transpose(1, 2)
-            pos_output = self.embedding_lap_pos_enc(pos_output)
-            # breakpoint()
-            enc_output += pos_output
-            enc_output = self.dropout(enc_output)
-        else:
-            raise ValueError('No defined NAS bench.')
-
-        # PITE
-        x = operations  # bs, 7, 5
-        bs = operations.shape[0]  # bs=10 for test
-        pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
-        x = F.elu(
-            self.conv1(pyg_batch.x, pyg_batch.edge_index) +
-            self.lin1(pyg_batch.x)
-        )
-        x = F.elu(self.conv2(x, pyg_batch.edge_index) + self.lin2(x))
-        x = self.conv3(x, pyg_batch.edge_index) + self.lin3(x)
-        x = x.view(bs, -1, x.shape[-1])
-
-        if self.bench == '201':
-            x = x.transpose(1, 2)
-            x = self.proj_func(x)
-            x = x.transpose(1, 2)
-
-        enc_output += self.dropout(x)
-        enc_output = self.layer_norm(enc_output)
-
-        # bayesian mlp mixer
-        zc_embed = self.bayesian_mlp_mixer(zcp_layerwise)
-
-        # reshape
-        if self.bench == '101':
-            zc_embed = zc_embed.view(bs, 7, -1)
-        elif self.bench == '201':
-            zc_embed = zc_embed.view(bs, 6, -1)
-        enc_output += zc_embed
-
-        # backone forward for n_layers (3)
-        for enc_layer in self.layer_stack:
-            enc_output, enc_slf_attn = enc_layer(
-                enc_output, edge_index_list, num_nodes, slf_attn_mask=src_mask
-            )
-        return enc_output
-
-
 class ParZCBMM2(nn.Module):
     """
+    ParZCBMM2 = transformer + bayesian + mlp mixer (naive way)
     ParZCBMM = transformer + bayesian mlp mixer
     PINATModel7 is trying to incooperate the bayesian network the estimate the uncertainty of zc.
     PINATModel6 is trying to combine zcp into the transformer rather than ensumble.
     PINATModel5 + zcp embedding (naive embedder)
-    PINATModel4 is a small size model with [128,128]
+    PINATModel4 is a small size model with [128, 128]
     Here We use large Model
     """
 
@@ -2030,16 +1855,17 @@ class ParZCBMM2(nn.Module):
         d_inner,
         pad_idx=None,
         pos_enc_dim=7,
-        linear_hidden=512,  # 80,
+        linear_hidden=512,  
         pine_hidden=256,
         bench='101',
+        dropout=0.1, 
     ):
         super(ParZCBMM2, self).__init__()
 
         # backone
         self.bench = bench
         self.adj_type = adj_type
-        self.encoder = EncoderBlock2(
+        self.encoder = Encoder(
             n_src_vocab,
             d_word_vec,
             n_layers,
@@ -2050,7 +1876,7 @@ class ParZCBMM2(nn.Module):
             d_inner,
             pad_idx,
             pos_enc_dim=pos_enc_dim,
-            dropout=0.1,
+            dropout=dropout,
             pine_hidden=pine_hidden,
             bench=bench,
             linear_input=d_word_vec,
@@ -2058,10 +1884,10 @@ class ParZCBMM2(nn.Module):
 
         # zc embedder
         self.zcp_embedder_dims = [256, 512, 1024, 2048, 4096]
-        self.zcp_embedder = ZCEmbedder(self.zcp_embedder_dims, d_word_vec, 0.1)
+        self.zcp_embedder = ZCEmbedder(self.zcp_embedder_dims, d_word_vec, dropout)
 
         # regressor
-        self.dropout = nn.Dropout(0.1)
+        self.dropout = nn.Dropout(dropout)
         self.fc1 = nn.Linear(d_word_vec, linear_hidden, bias=False)
         self.fc2 = nn.Linear(linear_hidden, 1, bias=False)
 
@@ -2085,7 +1911,6 @@ class ParZCBMM2(nn.Module):
             operations=inputs['operations'].squeeze(0),  # bs, 7, 5
             num_nodes=numv,
             edge_index_list=edge_index_list,
-            zcp_layerwise=inputs['zcp_layerwise'],
         )
 
         # regressor forward

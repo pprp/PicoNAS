@@ -160,7 +160,7 @@ def create_model_hpo(
     n_layers, n_head, pine_hidden, linear_hidden, d_word_model, d_k_v, d_inner
 ):
     pos_enc_dim_dict = {'101': 7, '201': 4}
-    net = ParZCBMM(
+    net = ParZCBMM2(
         bench='101',
         pos_enc_dim=pos_enc_dim_dict['101'],
         adj_type='adj_lapla',
