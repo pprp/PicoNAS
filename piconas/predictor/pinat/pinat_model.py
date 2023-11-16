@@ -1234,7 +1234,7 @@ class Encoder7(nn.Module):
         else:
             raise ValueError('No defined NAS bench.')
 
-        # PITE
+        # GCN
         x = operations  # bs, 7, 5
         bs = operations.shape[0]  # bs=10 for test
         pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
@@ -1749,6 +1749,164 @@ class ZCEmbedder(nn.Module):
         return x
 
 
+class EncoderBlock2(nn.Module):
+    """ An encoder model with self attention mechanism. """
+
+    def __init__(
+            self,
+            n_src_vocab,
+            d_word_vec,
+            n_layers,
+            n_head,
+            d_k,
+            d_v,
+            d_model,
+            d_inner,
+            pad_idx,
+            pos_enc_dim=7,
+            dropout=0.1,
+            n_position=200,
+            bench='101',
+            in_features=5,
+            pine_hidden=256,
+            heads=6,
+            linear_input=512,  #80,
+            zcp_embedder_dims=[256, 512, 1024, 2048, 4096]):
+        super().__init__()
+
+        self.src_word_emb = nn.Embedding(
+            n_src_vocab, d_word_vec, padding_idx=pad_idx)
+        self.bench = bench
+        if self.bench == '101':
+            self.embedding_lap_pos_enc = nn.Linear(
+                pos_enc_dim, d_word_vec)  # position embedding
+        elif self.bench == '201':
+            self.pos_map = nn.Linear(pos_enc_dim, n_src_vocab + 1)
+            self.embedding_lap_pos_enc = nn.Linear(pos_enc_dim, d_word_vec)
+            self.proj_func = nn.Linear(4, 6)
+        else:
+            raise ValueError('No defined NAS bench.')
+
+        # pine structure
+        self.conv1 = GATConv(in_features, pine_hidden, heads=heads)
+        self.lin1 = torch.nn.Linear(in_features, heads * pine_hidden)
+
+        self.conv2 = GATConv(heads * pine_hidden, pine_hidden, heads=heads)
+        self.lin2 = torch.nn.Linear(heads * pine_hidden, heads * pine_hidden)
+
+        self.conv3 = GATConv(
+            heads * pine_hidden, linear_input, heads=6, concat=False)
+        self.lin3 = torch.nn.Linear(heads * pine_hidden, linear_input)
+
+        self.dropout = nn.Dropout(p=dropout)
+        self.layer_stack = nn.ModuleList([
+            EncoderLayer(
+                d_model,
+                d_inner,
+                n_head,
+                d_k,
+                d_v,
+                dropout=dropout,
+                pine_hidden=pine_hidden,
+                bench=bench) for _ in range(n_layers)
+        ])
+        self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
+
+        # zcp embedder
+        self.zcp_embedder_dims = zcp_embedder_dims
+        self.zcp_embedder = []
+        if bench == '101':
+            mid_zcp_dim = 83 * 3  # for nb101
+            emb_out_dim = 7 * linear_input  # pos_enc_dim
+            patch_size = 7
+        elif bench == '201':
+            mid_zcp_dim = 98 * 3  # for nb201
+            emb_out_dim = 6 * linear_input  # pos_enc_dim
+            patch_size = 6
+
+        self.bayesian_mlp_mixer = BaysianMLPMixer(
+            input_dim=mid_zcp_dim,  # layerwise zc dim
+            sequence_length=256,
+            patch_size=16,
+            dim=512,
+            depth=4,
+            emb_out_dim=emb_out_dim,
+            expansion_factor=4,
+            expansion_factor_token=0.5,
+            dropout=dropout)
+
+    def to_pyg_batch(self, xs, edge_index_list, num_nodes):
+        assert xs.shape[0] == len(
+            edge_index_list), f'{xs.shape[0]}, {len(edge_index_list)}'
+        assert xs.shape[0] == len(
+            num_nodes), f'{xs.shape[0]}, {len(num_nodes)}'
+        data_list = []
+        for x, e, n in zip(xs, edge_index_list, num_nodes):
+            data_list.append(torch_geometric.data.Data(x=x[:n], edge_index=e))
+        batch = torch_geometric.data.Batch.from_data_list(data_list)
+        return batch
+
+    def forward(
+            self,
+            src_seq,  # features: bs, 7
+            pos_seq,  # lapla: bs, 7, 7
+            operations,  # operations: bs, 7, 5 -> bs, 35
+            edge_index_list,  # list with different length tensor
+            num_nodes,  # num of node: bs
+            zcp_layerwise,  # zcp: bs, 83
+            src_mask=None):
+        # op emb and pos emb
+        enc_output = self.src_word_emb(src_seq)
+        if self.bench == '101':
+            pos_output = self.embedding_lap_pos_enc(
+                pos_seq)  # positional embedding
+            enc_output += pos_output  # bs, 7, 80
+            enc_output = self.dropout(enc_output)
+        elif self.bench == '201':
+            pos_output = self.pos_map(pos_seq).transpose(1, 2)
+            pos_output = self.embedding_lap_pos_enc(pos_output)
+            # breakpoint()
+            enc_output += pos_output
+            enc_output = self.dropout(enc_output)
+        else:
+            raise ValueError('No defined NAS bench.')
+
+        # PITE
+        x = operations  # bs, 7, 5
+        bs = operations.shape[0]  # bs=10 for test
+        pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
+        x = F.elu(
+            self.conv1(pyg_batch.x, pyg_batch.edge_index) +
+            self.lin1(pyg_batch.x))
+        x = F.elu(self.conv2(x, pyg_batch.edge_index) + self.lin2(x))
+        x = self.conv3(x, pyg_batch.edge_index) + self.lin3(x)
+        x = x.view(bs, -1, x.shape[-1])
+
+        if self.bench == '201':
+            x = x.transpose(1, 2)
+            x = self.proj_func(x)
+            x = x.transpose(1, 2)
+
+        enc_output += self.dropout(x)
+        enc_output = self.layer_norm(enc_output)
+
+        # bayesian mlp mixer
+        zc_embed = self.bayesian_mlp_mixer(zcp_layerwise)
+
+        # reshape
+        if self.bench == '101':
+            zc_embed = zc_embed.view(bs, 7, -1)
+        elif self.bench == '201':
+            zc_embed = zc_embed.view(bs, 6, -1)
+        enc_output += zc_embed
+
+        # backone forward for n_layers (3)
+        for enc_layer in self.layer_stack:
+            enc_output, enc_slf_attn = enc_layer(
+                enc_output, edge_index_list, num_nodes, slf_attn_mask=src_mask)
+        return enc_output
+
+
 class ParZCBMM2(nn.Module):
     """
         ParZCBMM = transformer + bayesian mlp mixer
@@ -1780,7 +1938,7 @@ class ParZCBMM2(nn.Module):
         # backone
         self.bench = bench
         self.adj_type = adj_type
-        self.encoder = EncoderBlock(
+        self.encoder = EncoderBlock2(
             n_src_vocab,
             d_word_vec,
             n_layers,

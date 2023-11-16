@@ -1,15 +1,16 @@
+import math
+
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
-import matplotlib.pyplot as plt
 
 # Assuming BayesianLinear and BayesianMLP classes are defined as provided above.
 
 # Initialize the BayesianMLP
-input_size = ... # Set the input size
-hidden_size = ... # Set the hidden layer size
-output_size = ... # Set the output size
+input_size = ...  # Set the input size
+hidden_size = ...  # Set the hidden layer size
+output_size = ...  # Set the output size
 bayesian_mlp = BayesianMLP(input_size, hidden_size, output_size)
 
 # Dummy input data for demonstration, replace with your actual data

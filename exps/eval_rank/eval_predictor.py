@@ -129,7 +129,7 @@ def evaluate(test_set, test_loader, model, criterion):
 
     import matplotlib.pyplot as plt
 
-    # filter out architectures gt < -5 
+    # filter out architectures gt < -5
     predicts = predicts[targets > -5]
     targets = targets[targets > -5]
 
@@ -154,7 +154,7 @@ def evaluate(test_set, test_loader, model, criterion):
 
     # Save the figure
     plt.savefig('scatterplot.png')
-    plt.close() 
+    plt.close()
 
     # filter the top 10% architectures
     top_idx = np.argsort(predicts)[-int(len(predicts) * 0.05):]
@@ -167,7 +167,7 @@ def evaluate(test_set, test_loader, model, criterion):
         alpha=0.3,
         s=5,
         label='kendall_tau: %.4f' % kendall_tau)
-    
+
     # Label and title
     plt.xlabel('Predicted Performance')
     plt.ylabel('Ground Truth Performance')

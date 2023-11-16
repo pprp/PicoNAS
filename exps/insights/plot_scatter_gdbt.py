@@ -63,7 +63,8 @@ with plt.style.context('default'):
             color=custom_colors[i],
             alpha=0.7,
             s=50,
-            marker=custom_marker[i],)
+            marker=custom_marker[i],
+        )
         # plt.plot(pos, feature_importance_normalized, color=custom_colors[i], alpha=0.7, linewidth=1.5)
 
         # Collect handles for legend

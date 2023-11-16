@@ -54,7 +54,7 @@ Train_batch_size=10
 Eval_batch_size=50
 Script=./exps/runner/runner_pinat_rank.py
 Bench=201
-SEED=(666) 
+SEED=(666)
 # 666 777
 
 
@@ -79,7 +79,7 @@ for ((s=0; s<${#SEED[*]}; s++)); do
         echo "sleep 30s"
         sleep 30s
     fi
-  done 
+  done
 done
 
 tail -f $LOGDIR/$EXP_Name.log

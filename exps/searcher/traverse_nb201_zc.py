@@ -173,8 +173,7 @@ def main():
     trial_list, best_zc_score_list, best_gt_score_list = [], [], []
 
     # Directly implement random search
-    # for i in tqdm(range(5000)):
-    for i in evaluator.api.
+    for i in tqdm(range(5000)):
         # random sample one subnet config
         rnd_subnet = trainer.mutator.random_subnet
         # set config to model

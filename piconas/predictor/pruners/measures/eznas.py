@@ -1,6 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np 
+
 from piconas.autozc import unary_operation
 from piconas.autozc.unary_ops import to_mean_scalar
 from . import measure

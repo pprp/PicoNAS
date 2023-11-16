@@ -40,7 +40,6 @@ parser.add_argument('--model_name', type=str, default='PINATModel7')
 parser.add_argument('--loss_type', type=str, default='diffkendall')
 args = parser.parse_args()
 
-
 assert args.loss_type in {
     'mse', 'pairwise', 'diffkendall', 'mse+pw', 'mse+dk', 'pw+dk', 'mse+pw+dk'
 }, 'No defined loss type!'
@@ -199,6 +198,8 @@ def evaluate(test_set, test_loader, model, criterion):
             batch = to_cuda(batch, device)
             target = batch['test_acc']
             predict = model(batch)
+            import pdb
+            pdb.set_trace()
             predicts.append(predict.cpu().numpy())
             targets.append(target.cpu().numpy())
             kd_test = kendalltau(predict.squeeze().cpu().detach().numpy(),

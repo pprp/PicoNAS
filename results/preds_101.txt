@@ -105,3 +105,10 @@ EXP:101_cifar10_MLPMixer_t100_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 1
 EXP:101_cifar10_MLP_t100_vall_e300_bs10_ABLATION_MODULE	lr: 0.0001	train: 100	test: all	kendall_tau: 0.469172	 spearman_rho: 0.650768	 pearson_rho: 0.365407
 EXP:PINAT	lr: 0.0001	train: 100	test: all	kendall_tau: 0.640432	 spearman_rho: 0.831376	 pearson_rho: 0.531425
 EXP:PINAT	lr: 0.0001	train: 100	test: all	kendall_tau: 0.654131	 spearman_rho: 0.845092	 pearson_rho: 0.539154
+EXP:101_cifar10_ParZCBMM_mse_t100_vall_e150_bs10_seed42	lr: 0.0001	train: 100	test: all	kendall_tau: 0.653005	 spearman_rho: 0.842574	 pearson_rho: 0.556403
+EXP:101_cifar10_ParZCBMM_mse_t172_vall_e150_bs10_seed42	lr: 0.0001	train: 172	test: all	kendall_tau: 0.676324	 spearman_rho: 0.863392	 pearson_rho: 0.548845
+EXP:101_cifar10_ParZCBMM_mse_t424_vall_e150_bs10_seed42	lr: 0.0001	train: 424	test: all	kendall_tau: 0.747375	 spearman_rho: 0.915916	 pearson_rho: 0.577316
+EXP:101_cifar10_ParZCBMM_mse_t4236_vall_e150_bs10_seed42	lr: 0.0001	train: 4236	test: all	kendall_tau: 0.779164	 spearman_rho: 0.936429	 pearson_rho: 0.584356
+EXP:101_cifar10_ParZCBMM_mse_t172_vall_e150_bs10_seed555	lr: 0.0001	train: 172	test: all	kendall_tau: 0.649536	 spearman_rho: 0.842684	 pearson_rho: 0.521872
+EXP:101_cifar10_ParZCBMM_mse_t172_vall_e124_bs10_seed555	lr: 0.0001	train: 172	test: all	kendall_tau: 0.636963	 spearman_rho: 0.832029	 pearson_rho: 0.517797
+EXP:101_cifar10_ParZCBMM_pairwise_t172_vall_e124_bs10_seed555	lr: 0.0001	train: 172	test: all	kendall_tau: 0.652411	 spearman_rho: 0.844631	 pearson_rho: 0.524202

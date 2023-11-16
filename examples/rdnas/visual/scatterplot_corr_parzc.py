@@ -1,12 +1,15 @@
+import csv
+
 import matplotlib.pyplot as plt
-import numpy as np 
-import csv 
-import scipy 
+import numpy as np
+import scipy
 from scipy.stats import gaussian_kde
+
 
 def kendalltau(true_vector, pred_vector):
     tau, p_value = scipy.stats.kendalltau(true_vector, pred_vector)
     return tau
+
 
 plt.rc('font', family='Times New Roman')
 GLOBAL_DPI = 300
@@ -62,7 +65,7 @@ z = gaussian_kde(xy)(xy)
 idx = z.argsort()
 predicts, targets, z = predicts[idx], targets[idx], z[idx]
 
-# filter out architectures gt < -5 
+# filter out architectures gt < -5
 z = z[targets > -5]
 predicts = predicts[targets > -5]
 targets = targets[targets > -5]
@@ -88,7 +91,7 @@ plt.legend()
 
 # Save the figure
 plt.savefig('scatterplot.png')
-plt.close() 
+plt.close()
 
 # filter the top 10% architectures
 top_idx = np.argsort(predicts)[-int(len(predicts) * 0.05):]
@@ -102,14 +105,9 @@ z = gaussian_kde(xy)(xy)
 idx = z.argsort()
 predicts, targets, z = predicts[idx], targets[idx], z[idx]
 
-plt.scatter(
-    predicts,
-    targets,
-    alpha=0.5,
-    c=z,
-    s=5)
+plt.scatter(predicts, targets, alpha=0.5, c=z, s=5)
 
-# show the top-3 with highest targets with star 
+# show the top-3 with highest targets with star
 top_idx = np.argsort(targets)[-3:]
 plt.scatter(
     predicts[top_idx],
@@ -120,14 +118,13 @@ plt.scatter(
     marker='*',
     label='top-3 arch')
 
-
 # Label and title
 plt.xlabel('Predicted Performance')
 plt.ylabel('Ground Truth Performance')
 
 # Adjust axis limits
-plt.xlim(min(predicts), max(predicts)*1.01)
-plt.ylim(min(targets), max(targets)*1.02)
+plt.xlim(min(predicts), max(predicts) * 1.01)
+plt.ylim(min(targets), max(targets) * 1.02)
 
 # Add a legend
 plt.legend()
