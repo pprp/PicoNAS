@@ -45,7 +45,8 @@ class MLPMixer(nn.Module):
         self.mixer_blocks = nn.ModuleList(
             [
                 nn.Sequential(
-                    PreNormResidual(dim, FeedForward(dim, expansion_factor, dropout)),
+                    PreNormResidual(dim, FeedForward(
+                        dim, expansion_factor, dropout)),
                     PreNormResidual(
                         dim, FeedForward(dim, expansion_factor_token, dropout)
                     ),
@@ -70,7 +71,8 @@ if __name__ == '__main__':
     model = MLPMixer()
 
     # Assuming Nb201DatasetPINAT is defined elsewhere
-    test_set = Nb201DatasetPINAT(split='all', data_type='test', data_set='cifar10')
+    test_set = Nb201DatasetPINAT(
+        split='all', data_type='test', data_set='cifar10')
 
     loader = torch.utils.data.DataLoader(
         test_set, batch_size=32, shuffle=False, num_workers=0, drop_last=False

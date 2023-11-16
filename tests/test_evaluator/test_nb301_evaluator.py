@@ -18,7 +18,8 @@ class TestNB301Evaluator(TestCase):
         nb301_evaluator = NB301Evaluator(trainer=trainer, num_sample=50)
 
         random_subnet = nb301_mutator.random_subnet
-        genotype = nb301_evaluator.generate_genotype(random_subnet, nb301_mutator)
+        genotype = nb301_evaluator.generate_genotype(
+            random_subnet, nb301_mutator)
         print(nb301_evaluator.query_result(genotype))
 
 

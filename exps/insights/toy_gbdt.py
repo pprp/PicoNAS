@@ -16,11 +16,13 @@ VISUALIZE = True
 with open('/data/lujunl/pprp/bench/zc_nasbench201_layerwise.json', 'rb') as f:
     input_dict = json.load(f)
 
-nb201_api = API('/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth', verbose=False)
+nb201_api = API(
+    '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth', verbose=False)
 
 ds_target = 'cifar10'  # cifar100, ImageNet16-120
 input_dict = input_dict[ds_target]
-zc_target = 'grad_norm_layerwise'  # plain_layerwise, snip_layerwise, synflow_layerwise grad_norm_layerwise fisher_layerwise l2_norm_layerwise grasp_layerwise
+# plain_layerwise, snip_layerwise, synflow_layerwise grad_norm_layerwise fisher_layerwise l2_norm_layerwise grasp_layerwise
+zc_target = 'grad_norm_layerwise'
 
 print('zc_target: ', zc_target)
 
@@ -33,7 +35,8 @@ for key, value in input_dict.items():
     v = [0 if np.isnan(x) else x for x in v]
     x_train.append(v)
     # query gt by key
-    gt = nb201_api.get_more_info(int(key), dataset=ds_target, hp='200')['test-accuracy']
+    gt = nb201_api.get_more_info(int(key), dataset=ds_target, hp='200')[
+        'test-accuracy']
     y_train.append(gt)
 
 # preprocess to find max length

@@ -1,6 +1,7 @@
 import numpy as np
 
-NAS_BENCH_201 = ['none', 'skip_connect', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3']
+NAS_BENCH_201 = ['none', 'skip_connect',
+                 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3']
 
 
 def get_adj_matrix(arch):

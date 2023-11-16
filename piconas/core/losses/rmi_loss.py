@@ -65,8 +65,8 @@ def center_gram(gram, unbiased=False):
     else:  # (256, 256)
         means = np.mean(gram, 0, dtype=np.float64)  # (256,)
         means -= np.mean(means) / 2  # (256,)
-        gram -= means[:, None]  ##(256, 256)
-        gram -= means[None, :]  ##(256, 256)
+        gram -= means[:, None]  # (256, 256)
+        gram -= means[None, :]  # (256, 256)
 
     return gram
 

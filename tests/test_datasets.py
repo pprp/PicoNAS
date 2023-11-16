@@ -66,7 +66,8 @@ class TestDataset(TestCase):
             plt.savefig('origin.png')
 
             # 2, 3, 32, 32 -> 2, 16 * 16, 2*2*3
-            img = rearrange(img, 'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)', p1=16, p2=16)
+            img = rearrange(
+                img, 'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)', p1=16, p2=16)
 
             # mask [2, 16, 16] -> [2, 16 * 16]
             mask = rearrange(mask, 'b h w -> b (h w)')

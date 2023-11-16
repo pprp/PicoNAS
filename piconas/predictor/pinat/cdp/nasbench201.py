@@ -84,7 +84,8 @@ class NB201:
         return op_list
 
     def operation2integers(self, op_list):
-        dict_oper2int = {self.NULL: 0, self.CONV1X1: 1, self.CONV3X3: 2, self.AP3X3: 3}
+        dict_oper2int = {self.NULL: 0, self.CONV1X1: 1,
+                         self.CONV3X3: 2, self.AP3X3: 3}
         module_integers = np.array([dict_oper2int[x] for x in op_list[1:-1]])
         return module_integers
 
@@ -93,11 +94,13 @@ class NB201:
         for index in range(len(ordered_dic)):
             final_valid_acc = ordered_dic[index][dataset]
             epoch12_time = ordered_dic[index]['cifar10_all_time']
-            op_list = self.save_arch_str2op_list(ordered_dic[index]['arch_str'])
+            op_list = self.save_arch_str2op_list(
+                ordered_dic[index]['arch_str'])
             pruned_matrix, pruned_op = self.delete_useless_node(op_list)
             if pruned_matrix is None:
                 continue
-            padding_matrix, padding_op = utils.padding_zeros(pruned_matrix, pruned_op)
+            padding_matrix, padding_op = utils.padding_zeros(
+                pruned_matrix, pruned_op)
             op_integers = self.operation2integers(padding_op)
 
             metrics[index] = {
@@ -120,7 +123,8 @@ class NB201:
             for index in range(len(nasbench201.evaluated_indexes)):
                 info = nasbench201.query_meta_info_by_index(index, '12')
                 arch_str = info.arch_str
-                cifar10_valid = info.get_metrics('cifar10-valid', 'x-valid')['accuracy']
+                cifar10_valid = info.get_metrics(
+                    'cifar10-valid', 'x-valid')['accuracy']
                 cifar10_all_time = info.get_metrics('cifar10-valid', 'x-valid')[
                     'all_time'
                 ]

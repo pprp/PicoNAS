@@ -69,8 +69,10 @@ class MultiHeadAttention(nn.Module):
         # pine structure
         self.conv1 = GATConv(d_model, pine_hidden, heads=pine_heads)
         self.lin1 = torch.nn.Linear(d_model, pine_heads * pine_hidden)
-        self.conv2 = GATConv(pine_heads * pine_hidden, pine_hidden, heads=pine_heads)
-        self.lin2 = torch.nn.Linear(pine_heads * pine_hidden, pine_heads * pine_hidden)
+        self.conv2 = GATConv(pine_heads * pine_hidden,
+                             pine_hidden, heads=pine_heads)
+        self.lin2 = torch.nn.Linear(
+            pine_heads * pine_hidden, pine_heads * pine_hidden)
         self.conv3 = GATConv(
             pine_heads * pine_hidden, pine_heads * d_k, heads=pine_heads, concat=False
         )
@@ -97,7 +99,8 @@ class MultiHeadAttention(nn.Module):
         bs = x.shape[0]
         pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
         x = F.elu(
-            self.conv1(pyg_batch.x, pyg_batch.edge_index) + self.lin1(pyg_batch.x)
+            self.conv1(pyg_batch.x, pyg_batch.edge_index) +
+            self.lin1(pyg_batch.x)
         )
         x = F.elu(self.conv2(x, pyg_batch.edge_index) + self.lin2(x))
         x = self.conv3(x, pyg_batch.edge_index) + self.lin3(x)
@@ -161,7 +164,8 @@ class EncoderLayer(nn.Module):
         self.slf_attn = MultiHeadAttention(
             n_head, d_model, d_k, d_v, pine_hidden, dropout=dropout, bench=bench
         )
-        self.pos_ffn = PositionwiseFeedForward(d_model, d_inner, dropout=dropout)
+        self.pos_ffn = PositionwiseFeedForward(
+            d_model, d_inner, dropout=dropout)
 
     def forward(self, enc_input, edge_index_list, num_nodes, slf_attn_mask=None):
         enc_output, enc_slf_attn = self.slf_attn(
@@ -201,7 +205,8 @@ class Encoder(nn.Module):
     ):
         super().__init__()
 
-        self.src_word_emb = nn.Embedding(n_src_vocab, d_word_vec, padding_idx=pad_idx)
+        self.src_word_emb = nn.Embedding(
+            n_src_vocab, d_word_vec, padding_idx=pad_idx)
         self.bench = bench
         if self.bench == '101':
             self.embedding_lap_pos_enc = nn.Linear(
@@ -219,7 +224,8 @@ class Encoder(nn.Module):
         self.lin1 = torch.nn.Linear(in_features, heads * pine_hidden)
         self.conv2 = GATConv(heads * pine_hidden, pine_hidden, heads=heads)
         self.lin2 = torch.nn.Linear(heads * pine_hidden, heads * pine_hidden)
-        self.conv3 = GATConv(heads * pine_hidden, linear_input, heads=6, concat=False)
+        self.conv3 = GATConv(heads * pine_hidden,
+                             linear_input, heads=6, concat=False)
         self.lin3 = torch.nn.Linear(heads * pine_hidden, linear_input)
 
         self.dropout = nn.Dropout(p=dropout)
@@ -264,7 +270,8 @@ class Encoder(nn.Module):
         # op emb and pos emb
         enc_output = self.src_word_emb(src_seq)
         if self.bench == '101':
-            pos_output = self.embedding_lap_pos_enc(pos_seq)  # positional embedding
+            pos_output = self.embedding_lap_pos_enc(
+                pos_seq)  # positional embedding
             enc_output += pos_output  # bs, 7, 80
             # enc_output = pos_output
             enc_output = self.dropout(enc_output)
@@ -281,7 +288,8 @@ class Encoder(nn.Module):
         bs = operations.shape[0]
         pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
         x = F.elu(
-            self.conv1(pyg_batch.x, pyg_batch.edge_index) + self.lin1(pyg_batch.x)
+            self.conv1(pyg_batch.x, pyg_batch.edge_index) +
+            self.lin1(pyg_batch.x)
         )
         x = F.elu(self.conv2(x, pyg_batch.edge_index) + self.lin2(x))
         x = self.conv3(x, pyg_batch.edge_index) + self.lin3(x)

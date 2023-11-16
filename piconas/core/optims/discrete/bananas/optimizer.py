@@ -119,7 +119,8 @@ class Bananas(MetaOptimizer):
 
         if self.zc and len(self.train_data) <= self.max_zerocost:
             # pass the zero-cost scores to the ensemble
-            train_info = {'zero_cost_scores': [m.zc_scores for m in self.train_data]}
+            train_info = {'zero_cost_scores': [
+                m.zc_scores for m in self.train_data]}
             ensemble.set_pre_computations(xtrain_zc_info=train_info)
 
         ensemble.fit(xtrain, ytrain)
@@ -142,13 +143,14 @@ class Bananas(MetaOptimizer):
                     encoding_type='adjacency_one_hot',
                     ss_type=self.search_space.get_type(),
                 )
-                model.accuracy = self.zc_api[str(model.arch_hash)]['val_accuracy']
+                model.accuracy = self.zc_api[str(
+                    model.arch_hash)]['val_accuracy']
 
                 candidates.append(model)
 
         elif self.acq_fn_optimization == 'mutation':
             # mutate the k best architectures by x
-            best_arch_indices = np.argsort(ytrain)[-self.num_arches_to_mutate :]
+            best_arch_indices = np.argsort(ytrain)[-self.num_arches_to_mutate:]
             best_arches = [self.train_data[i].arch for i in best_arch_indices]
             candidates = []
             for arch in best_arches:
@@ -187,7 +189,7 @@ class Bananas(MetaOptimizer):
             values = [acq_fn(model.arch) for model in candidates]
 
         sorted_indices = np.argsort(values)
-        choices = [candidates[i] for i in sorted_indices[-self.k :]]
+        choices = [candidates[i] for i in sorted_indices[-self.k:]]
 
         return choices
 

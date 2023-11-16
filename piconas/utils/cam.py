@@ -148,8 +148,10 @@ if __name__ == '__main__':
         default=None,
         help='Default device to perform computation on',
     )
-    parser.add_argument('--savefig', type=str, default=None, help='Path to save figure')
-    parser.add_argument('--method', type=str, default=None, help='CAM method to use')
+    parser.add_argument('--savefig', type=str, default=None,
+                        help='Path to save figure')
+    parser.add_argument('--method', type=str, default=None,
+                        help='CAM method to use')
     parser.add_argument(
         '--alpha', type=float, default=0.5, help='Transparency of the heatmap'
     )

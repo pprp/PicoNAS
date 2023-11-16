@@ -66,7 +66,8 @@ class TestNasBench201(TestCase):
         for param1, param2 in zip(
             dfmutator.parameters(), dfmutator.arch_params.values()
         ):
-            print(f'param1 shape: {param1.shape} ==> param2 shape: {param2.shape}')
+            print(
+                f'param1 shape: {param1.shape} ==> param2 shape: {param2.shape}')
 
         print(dfmutator.search_group.keys())
 

@@ -19,7 +19,8 @@ GLOBAL_FONTSIZE = 26
 GLOBAL_LABELSIZE = 21
 GLOBAL_LEGENDSIZE = 11
 
-font1 = {'family': 'Times New Roman', 'weight': 'bold', 'size': GLOBAL_LABELSIZE}
+font1 = {'family': 'Times New Roman',
+         'weight': 'bold', 'size': GLOBAL_LABELSIZE}
 
 plt.rc('font', **font1)  # controls default text sizes
 plt.rc('axes', titlesize=GLOBAL_LABELSIZE)  # fontsize of the axes title
@@ -91,7 +92,7 @@ plt.savefig('scatterplot.png')
 plt.close()
 
 # filter the top 10% architectures
-top_idx = np.argsort(predicts)[-int(len(predicts) * 0.05) :]
+top_idx = np.argsort(predicts)[-int(len(predicts) * 0.05):]
 predicts = predicts[top_idx]
 targets = targets[top_idx]
 

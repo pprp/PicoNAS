@@ -134,7 +134,8 @@ def train(
 
             # For logging, we can compute MSE or other metrics if desired.
             mse = accuracy_mse(predict.squeeze(), target.squeeze(), train_set)
-            meters.update({'loss': loss.item(), 'mse': mse.item()}, n=target.size(0))
+            meters.update(
+                {'loss': loss.item(), 'mse': mse.item()}, n=target.size(0))
 
             if step % args.train_print_freq == 0:
                 logging.info(
@@ -173,7 +174,8 @@ def evaluate(test_set, test_loader, model, criterion):
             )
             if step % args.eval_print_freq == 0 or step + 1 == len(test_loader):
                 logging.info(
-                    'Evaluation Step [%d/%d]  %s', step + 1, len(test_loader), meters
+                    'Evaluation Step [%d/%d]  %s', step +
+                    1, len(test_loader), meters
                 )
 
     predicts = np.concatenate(predicts)
@@ -202,7 +204,8 @@ def main():
     # define loss, optimizer, and lr_scheduler
     criterion1 = nn.MSELoss()
     criterion2 = PairwiseRankLoss()
-    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
+    optimizer = optim.Adam(
+        model.parameters(), lr=args.lr, weight_decay=args.wd)
     lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     # train and evaluate predictor

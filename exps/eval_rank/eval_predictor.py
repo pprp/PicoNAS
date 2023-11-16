@@ -116,7 +116,8 @@ def evaluate(test_set, test_loader, model, criterion):
             )
             if step % args.eval_print_freq == 0 or step + 1 == len(test_loader):
                 logging.info(
-                    'Evaluation Step [%d/%d]  %s', step + 1, len(test_loader), meters
+                    'Evaluation Step [%d/%d]  %s', step +
+                    1, len(test_loader), meters
                 )
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
@@ -156,7 +157,7 @@ def evaluate(test_set, test_loader, model, criterion):
     plt.close()
 
     # filter the top 10% architectures
-    top_idx = np.argsort(predicts)[-int(len(predicts) * 0.05) :]
+    top_idx = np.argsort(predicts)[-int(len(predicts) * 0.05):]
     predicts = predicts[top_idx]
     targets = targets[top_idx]
 
@@ -194,7 +195,8 @@ def main():
 
     # load model
     ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
-    model.load_state_dict(torch.load(ckpt_dir, map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load(
+        ckpt_dir, map_location=torch.device('cpu')))
 
     model = model.to(device)
     print(model)
@@ -209,7 +211,8 @@ def main():
 
     # define loss, optimizer, and lr_scheduler
     criterion1 = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
+    optimizer = optim.Adam(
+        model.parameters(), lr=args.lr, weight_decay=args.wd)
 
     # train and evaluate predictor
     kendall_tau, predict_all, target_all = evaluate(

@@ -37,7 +37,8 @@ class ArchDarts:
             # input nodes for reduce
             nodes_in_reduce = np.random.choice(range(i + 2), 2, replace=False)
 
-            normal.extend([(nodes_in_normal[0], ops[0]), (nodes_in_normal[1], ops[1])])
+            normal.extend([(nodes_in_normal[0], ops[0]),
+                          (nodes_in_normal[1], ops[1])])
             reduction.extend(
                 [(nodes_in_reduce[0], ops[2]), (nodes_in_reduce[1], ops[3])]
             )
@@ -203,7 +204,8 @@ class DataSetDarts:
         DartsArchitectureSet = collections.OrderedDict()
         for index, tuple_arch in enumerate(self.dataset):
             norm_matrixes, norm_ops = self.delete_useless_nodes(tuple_arch[0])
-            reduc_matrixes, reduc_ops = self.delete_useless_nodes(tuple_arch[1])
+            reduc_matrixes, reduc_ops = self.delete_useless_nodes(
+                tuple_arch[1])
 
             padding_norm_matrixes, padding_norm_ops = padding_zeros_darts(
                 norm_matrixes, norm_ops

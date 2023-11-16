@@ -43,7 +43,8 @@ def compute_gdnas_score(
     with torch.no_grad():
         for _ in range(repeat):
             network_weight_gaussian_init(net)
-            input = torch.randn(size=list(inputs.shape), device=device, dtype=dtype)
+            input = torch.randn(size=list(inputs.shape),
+                                device=device, dtype=dtype)
             net(input)
             # compute BN scaling
             log_bn_scaling_factor = 0.0

@@ -31,7 +31,8 @@ class KLLossSoft(torch.nn.modules.loss._Loss):
             target = target.unsqueeze(1)
             output_log_prob = output_log_prob.unsqueeze(2)
             ce_loss = -torch.bmm(target, output_log_prob).squeeze()
-            loss = alpha * temperature * temperature * kd_loss + (1.0 - alpha) * ce_loss
+            loss = alpha * temperature * temperature * \
+                kd_loss + (1.0 - alpha) * ce_loss
         else:
             loss = kd_loss
 

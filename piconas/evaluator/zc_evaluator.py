@@ -25,7 +25,8 @@ class ZeroCostPredictorEvaluator(object):
         self.test_size = config.test_size
         self.dataset = config.dataset
         self.metric = Metric.VAL_ACCURACY
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device(
+            'cuda:0' if torch.cuda.is_available() else 'cpu')
         self.results = [config]
 
         self.test_data_file = config.test_data_file
@@ -144,12 +145,14 @@ class ZeroCostPredictorEvaluator(object):
 
         logger.info('Compute evaluation metrics')
         results_dict = utils.compute_scores(ytest, test_pred)
-        results_dict['query_time'] = (query_time_end - query_time_start) / len(xtest)
+        results_dict['query_time'] = (
+            query_time_end - query_time_start) / len(xtest)
 
         method_type = self.predictor.method_type
         logger.info(
             'dataset: {}, predictor: {}, kendalltau {}'.format(
-                self.dataset, method_type, np.round(results_dict['kendalltau'], 4)
+                self.dataset, method_type, np.round(
+                    results_dict['kendalltau'], 4)
             )
         )
 
@@ -158,14 +161,16 @@ class ZeroCostPredictorEvaluator(object):
         for key in results_dict:
             if type(results_dict[key]) not in [str, set, bool]:
                 # todo: serialize other types
-                print_string += key + ': {}, '.format(np.round(results_dict[key], 4))
+                print_string += key + \
+                    ': {}, '.format(np.round(results_dict[key], 4))
         logger.info(print_string)
         self.results.append(results_dict)
 
     def load_test_data(self):
         if self.test_data_file is not None:
             logger.info('Loading the test set from file')
-            test_data = self.load_dataset_from_file(self.test_data_file, self.test_size)
+            test_data = self.load_dataset_from_file(
+                self.test_data_file, self.test_size)
         else:
             logger.info('Sampling from search space...')
             test_data = self.load_dataset(

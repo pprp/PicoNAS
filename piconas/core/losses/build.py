@@ -71,7 +71,8 @@ class LSR(nn.Module):
 
         if x.dim() != 2:
             raise ValueError(
-                'Only 2 dimension tensor are implemented, (got {})'.format(x.size())
+                'Only 2 dimension tensor are implemented, (got {})'.format(
+                    x.size())
             )
 
         smoothed_target = self._smooth_label(target, x.size(1), self.e)

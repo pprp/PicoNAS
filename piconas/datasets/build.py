@@ -17,7 +17,8 @@ def collate_fn(batch):
             ret.append(None)
         else:
             ret.append(
-                default_collate([batch[i][0][item_idx] for i in range(batch_num)])
+                default_collate([batch[i][0][item_idx]
+                                for i in range(batch_num)])
             )
     ret.append(default_collate([batch[i][1] for i in range(batch_num)]))
     return ret
@@ -87,14 +88,16 @@ def build_dataset(
             dataset_type = ImageNet16(
                 root=data_dir,
                 train=True,
-                transform=build_transforms('ImageNet16-120', 'train', config=config),
+                transform=build_transforms(
+                    'ImageNet16-120', 'train', config=config),
                 use_num_of_class_only=120,
             )
         elif type == 'val':
             dataset_type = ImageNet16(
                 root=data_dir,
                 train=False,
-                transform=build_transforms('ImageNet16-120', 'val', config=config),
+                transform=build_transforms(
+                    'ImageNet16-120', 'val', config=config),
                 use_num_of_class_only=120,
             )
     else:

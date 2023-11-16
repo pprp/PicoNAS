@@ -103,7 +103,8 @@ def hash_module(matrix, labeling):
         new_hashes = []
         for v in range(vertices):
             in_neighbors = [hashes[w] for w in range(vertices) if matrix[w, v]]
-            out_neighbors = [hashes[w] for w in range(vertices) if matrix[v, w]]
+            out_neighbors = [hashes[w]
+                             for w in range(vertices) if matrix[v, w]]
             new_hashes.append(
                 hashlib.md5(
                     (
@@ -133,7 +134,7 @@ def permute_graph(graph, label, permutation):
     # vertex permutation[v] in new graph is vertex v in the old graph
     forward_perm = zip(permutation, list(range(len(permutation))))
     inverse_perm = [x[1] for x in sorted(forward_perm)]
-    edge_fn = lambda x, y: graph[inverse_perm[x], inverse_perm[y]] == 1
+    def edge_fn(x, y): return graph[inverse_perm[x], inverse_perm[y]] == 1
     new_matrix = np.fromfunction(
         np.vectorize(edge_fn), (len(label), len(label)), dtype=np.int8
     )

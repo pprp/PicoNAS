@@ -25,7 +25,8 @@ zc_api = get_zc_benchmark_api(config.search_space, config.dataset)
 # Initialize the search space and predictor
 # Method type can be "fisher", "grasp", "grad_norm", "jacov", "snip", "synflow", "flops", "params", "nwot", "zen", "plain", "l2_norm" or "epe_nas"
 predictor = ZeroCost(method_type=config.predictor)
-search_space = get_search_space(name=config.search_space, dataset=config.dataset)
+search_space = get_search_space(
+    name=config.search_space, dataset=config.dataset)
 search_space.instantiate_model = False
 search_space.labeled_archs = [eval(arch) for arch in zc_api.keys()]
 

@@ -205,7 +205,8 @@ class InvertedResidual(nn.Module):
         if expand_ratio == 1:
             self.conv = nn.Sequential(
                 # dw
-                nn.Conv2d(inp, inp, ksize, stride, padding, groups=inp, bias=False),
+                nn.Conv2d(inp, inp, ksize, stride,
+                          padding, groups=inp, bias=False),
                 nn.BatchNorm2d(inp),
                 nn.ReLU6(inplace=True),
                 # pw-linear

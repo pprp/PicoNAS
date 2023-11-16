@@ -184,7 +184,8 @@ class NB301Evaluator(Evaluator):
             random_subnet_dict = self.trainer.mutator.random_subnet
 
             # get true indictor by query nb301 api
-            genotype = self.generate_genotype(random_subnet_dict, self.trainer.mutator)
+            genotype = self.generate_genotype(
+                random_subnet_dict, self.trainer.mutator)
             results = self.query_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
 
@@ -216,7 +217,8 @@ class NB301Evaluator(Evaluator):
             random_subnet_dict = self.trainer.mutator.random_subnet
 
             # get true indictor by query nb301 api
-            genotype = self.generate_genotype(random_subnet_dict, self.trainer.mutator)
+            genotype = self.generate_genotype(
+                random_subnet_dict, self.trainer.mutator)
             results = self.query_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
 
@@ -254,7 +256,8 @@ class NB301Evaluator(Evaluator):
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)
-        minn_at_ks = minmax_n_at_k(true_indicator_list, generated_indicator_list)
+        minn_at_ks = minmax_n_at_k(
+            true_indicator_list, generated_indicator_list)
         patks = p_at_tb_k(true_indicator_list, generated_indicator_list)
 
         if flops_indicator_list is not None:
@@ -266,10 +269,11 @@ class NB301Evaluator(Evaluator):
             # compute splited index by flops
             range_length = len(sorted_idx_by_flops) // 5
             splited_idx_by_flops = [
-                sorted_idx_by_flops[i * range_length : (i + 1) * range_length]
+                sorted_idx_by_flops[i * range_length: (i + 1) * range_length]
                 for i in range(int(len(sorted_idx_by_flops) / range_length) + 1)
                 if (
-                    sorted_idx_by_flops[i * range_length : (i + 1) * range_length]
+                    sorted_idx_by_flops[i *
+                                        range_length: (i + 1) * range_length]
                 ).any()
             ]
 

@@ -304,9 +304,11 @@ class DynaDiffOP(DiffOP):
             if not self.is_fixed:
                 # if not fixed, judge whether to fix.
                 sorted_param = torch.topk(probs, 2)
-                index = sorted_param[0][0] - sorted_param[0][1] >= self.dyna_thresh
+                index = sorted_param[0][0] - \
+                    sorted_param[0][1] >= self.dyna_thresh
                 if index:
-                    print(f'Current DynaDiffOP fix the op: {self.choices[index]}')
+                    print(
+                        f'Current DynaDiffOP fix the op: {self.choices[index]}')
                     self.fix_chosen(self.choices[index])
             else:
                 # if fixed, query the fix operation.

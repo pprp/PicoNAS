@@ -104,7 +104,8 @@ def find_measures_arrays(
                 while inputs.shape[0] % ds != 0:
                     ds += 1
                 torch.cuda.empty_cache()
-                print(f'Caught CUDA OOM, retrying with data split into {ds} parts')
+                print(
+                    f'Caught CUDA OOM, retrying with data split into {ds} parts')
             else:
                 raise e
 
@@ -115,10 +116,12 @@ def find_measures_arrays(
 def find_measures(
     net_orig,  # neural network
     dataloader,  # a data loader (typically for training data)
-    dataload_info,  # a tuple with (dataload_type = {random, grasp}, number_of_batches_for_random_or_images_per_class_for_grasp, number of classes)
+    # a tuple with (dataload_type = {random, grasp}, number_of_batches_for_random_or_images_per_class_for_grasp, number of classes)
+    dataload_info,
     device,  # GPU/CPU device used
     loss_fn,  # loss function to use within the zero-cost metrics
-    measure_names=None,  # an array of measure names to compute, if left blank, all measures are computed by default
+    # an array of measure names to compute, if left blank, all measures are computed by default
+    measure_names=None,
     measures_arr=None,
 ):
     # Given a neural net

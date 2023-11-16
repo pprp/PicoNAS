@@ -317,7 +317,8 @@ class BaseTrainer(nn.Module):
                 f'FLOPs counter is currently not currently supported with {flops_model.__class__.__name__}'
             )
 
-        flops, params = get_model_complexity_info(flops_model, self.input_shape)
+        flops, params = get_model_complexity_info(
+            flops_model, self.input_shape)
         flops_lookup = dict()
         for name, module in flops_model.named_modules():
             flops = getattr(module, '__flops__', 0)

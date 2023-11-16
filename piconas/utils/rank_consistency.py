@@ -32,7 +32,8 @@ def pearson(true_vector, pred_vector):
     num = p_sum - (sum1 * sum2 / n)
     try:
         den = math.sqrt(
-            (sum1_pow - pow(sum1, 2) / n) * (sum2_pow - pow(sum2, 2) / n) + 1e-8
+            (sum1_pow - pow(sum1, 2) / n) *
+            (sum2_pow - pow(sum2, 2) / n) + 1e-8
         )
     except ValueError:
         return 0
@@ -120,7 +121,7 @@ def p_at_tb_k(true_scores, predict_scores, ratios=[0.01, 0.05, 0.1, 0.5]):
         if k < 1:
             continue
         top_inds = predict_inds[:k]
-        bottom_inds = predict_inds[num_archs - k :]
+        bottom_inds = predict_inds[num_archs - k:]
         p_at_topk = len(np.where(true_ranks[top_inds] < k)[0]) / float(k)
         p_at_bottomk = len(
             np.where(true_ranks[bottom_inds] >= num_archs - k)[0]
@@ -132,7 +133,8 @@ def p_at_tb_k(true_scores, predict_scores, ratios=[0.01, 0.05, 0.1, 0.5]):
             predict_scores[bottom_inds], true_scores[bottom_inds]
         ).correlation
         # [ratio, k, P@topK, P@bottomK, KT in predicted topK, KT in predicted bottomK]
-        patks.append((ratio, k, p_at_topk, p_at_bottomk, kd_at_topk, kd_at_bottomk))
+        patks.append((ratio, k, p_at_topk, p_at_bottomk,
+                     kd_at_topk, kd_at_bottomk))
     return patks
 
 

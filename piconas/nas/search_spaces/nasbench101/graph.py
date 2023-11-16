@@ -87,11 +87,13 @@ class NasBench101SearchSpace(Graph):
         Query results from nasbench 101
         """
         assert isinstance(metric, Metric)
-        assert dataset in ['cifar10', None], 'Unknown dataset: {}'.format(dataset)
+        assert dataset in ['cifar10',
+                           None], 'Unknown dataset: {}'.format(dataset)
         if metric in [Metric.ALL, Metric.HP]:
             raise NotImplementedError()
         if dataset_api is None:
-            raise NotImplementedError('Must pass in dataset_api to query nasbench101')
+            raise NotImplementedError(
+                'Must pass in dataset_api to query nasbench101')
         assert epoch in [
             -1,
             4,
@@ -205,7 +207,8 @@ class NasBench101SearchSpace(Graph):
             return self.sample_random_labeled_architecture()
 
         while True:
-            matrix = np.random.choice([0, 1], size=(NUM_VERTICES, NUM_VERTICES))
+            matrix = np.random.choice(
+                [0, 1], size=(NUM_VERTICES, NUM_VERTICES))
             matrix = np.triu(matrix, 1)
             ops = np.random.choice(OPS, size=NUM_VERTICES).tolist()
             ops[0] = INPUT

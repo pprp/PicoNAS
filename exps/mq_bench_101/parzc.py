@@ -40,7 +40,8 @@ class BayesianMLP(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(BayesianMLP, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-        self.bayesian_fc = BayesianLinear(hidden_size, hidden_size)  # Bayesian layer
+        self.bayesian_fc = BayesianLinear(
+            hidden_size, hidden_size)  # Bayesian layer
         self.fc2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
@@ -97,7 +98,8 @@ class BaysianMLPMixer(nn.Module):
         self.mixer_blocks = nn.ModuleList(
             [
                 nn.Sequential(
-                    PreNormResidual(dim, FeedForward(dim, expansion_factor, dropout)),
+                    PreNormResidual(dim, FeedForward(
+                        dim, expansion_factor, dropout)),
                     PreNormResidual(
                         dim, FeedForward(dim, expansion_factor_token, dropout)
                     ),

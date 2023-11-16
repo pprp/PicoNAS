@@ -26,7 +26,8 @@ class ZeroCost(Predictor):
         self.method_type = method_type
         self.dataload = 'random'
         self.num_imgs_or_batches = 1
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device(
+            'cuda:0' if torch.cuda.is_available() else 'cpu')
 
     def query(self, graph, dataloader=None, info=None):
         loss_fn = F.cross_entropy

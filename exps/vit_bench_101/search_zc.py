@@ -36,7 +36,8 @@ def all_same(items):
 
 
 def build_model(arch_config, cfg, num_classes):
-    model = MODEL.get(cfg.MODEL.TYPE)(arch_config=arch_config, num_classes=num_classes)
+    model = MODEL.get(cfg.MODEL.TYPE)(
+        arch_config=arch_config, num_classes=num_classes)
     return model
 
 
@@ -212,7 +213,8 @@ def autoprox_parzc(cfg, data_loader, arch_pop, acc_pop, struct, ratio):
             logger.info('Invalid structure, exit...')
             return -1
 
-        single_data_zc = [sum(item) / len(item) for item in single_data_layerzc]
+        single_data_zc = [sum(item) / len(item)
+                          for item in single_data_layerzc]
         single_data_kendall = kendalltau(acc_pop[i], single_data_zc)
         logger.info(
             f'kendall score on dataset {list(_DATASETS.keys())[i]} is : {single_data_kendall}'
@@ -236,8 +238,10 @@ def autoprox_parzc(cfg, data_loader, arch_pop, acc_pop, struct, ratio):
     )
 
     for i in range(len(data_loader)):
-        kendalltau_temp = kendalltau(moe_test_y[i], predictions[i].detach().numpy())
-        spearman_temp = spearman(moe_test_y[i], predictions[i].detach().numpy())
+        kendalltau_temp = kendalltau(
+            moe_test_y[i], predictions[i].detach().numpy())
+        spearman_temp = spearman(
+            moe_test_y[i], predictions[i].detach().numpy())
         pearson_temp = pearson(moe_test_y[i], predictions[i].detach().numpy())
         ken.append(kendalltau_temp)
 
@@ -246,7 +250,8 @@ def autoprox_parzc(cfg, data_loader, arch_pop, acc_pop, struct, ratio):
             f'After moe, kendall score for datasets {list(_DATASETS.keys())[:len(acc_pop)]}: {ken}'
         )
         joint_kdall = joint_func(ken)
-        logger.info(f'Valid structure, joint correlation metric is : {joint_kdall}')
+        logger.info(
+            f'Valid structure, joint correlation metric is : {joint_kdall}')
         struct.kendall_score = joint_kdall
         return joint_kdall
 
@@ -307,7 +312,8 @@ if __name__ == '__main__':
         type=int,
         help='population size should be larger than 10',
     )
-    parser.add_argument('--gt_path', type=str, default=None, help='ground truth path')
+    parser.add_argument('--gt_path', type=str, default=None,
+                        help='ground truth path')
     parser.add_argument(
         '--gt_num', type=int, default=100, help='number of ground truth'
     )

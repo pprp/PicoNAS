@@ -141,7 +141,7 @@ def random_cell_path(nasbench, index_hash, weighted, cont, cutoff):
             weighted_probs = [
                 path_probs[i] * weights[i] for i in range(len(path_probs))
             ]
-            path_indices = np.argsort(weighted_probs)[-1 * num_paths :]
+            path_indices = np.argsort(weighted_probs)[-1 * num_paths:]
         else:
             # pick each path with some probability
             path_indices = [

@@ -50,11 +50,13 @@ if __name__ == '__main__':
             print('=' * 17, 'API Distance Test', '=' * 17)
             print('=' * 53)
             for idx in range(10):
-                print(nb301.cate_nb301['predicted_accs'][idx] - nb301.get_valacc(idx))
+                print(nb301.cate_nb301['predicted_accs']
+                      [idx] - nb301.get_valacc(idx))
             for idx in range(1000000, 1000040, 1):
                 print(
                     nb301.cate_nb301_zcp['cifar10'][
-                        list(nb301.cate_nb301_zcp['cifar10'].keys())[idx - 1000000]
+                        list(nb301.cate_nb301_zcp['cifar10'].keys())[
+                            idx - 1000000]
                     ]['val_accuracy']
                     - nb301.get_valacc(idx)
                 )

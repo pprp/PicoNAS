@@ -62,7 +62,8 @@ class Attention(nn.Module):
 
     def forward(self, x):
         qkv = self.to_qkv(x).chunk(3, dim=-1)
-        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv)
+        q, k, v = map(lambda t: rearrange(
+            t, 'b n (h d) -> b h n d', h=self.heads), qkv)
 
         dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale
 
@@ -88,7 +89,8 @@ class Transformer(nn.Module):
                                 dim, heads=heads, dim_head=dim_head, dropout=dropout
                             ),
                         ),
-                        PreNorm(dim, FeedForward(dim, mlp_dim, dropout=dropout)),
+                        PreNorm(dim, FeedForward(
+                            dim, mlp_dim, dropout=dropout)),
                     ]
                 )
             )
@@ -126,7 +128,8 @@ class ViT(nn.Module):
             image_height % patch_height == 0
         ), 'Image dimensions must be divisible by the patch size.'
 
-        num_patches = (image_height // patch_height) * (image_width // patch_width)
+        num_patches = (image_height // patch_height) * \
+            (image_width // patch_width)
         patch_dim = channels * patch_height * patch_width
         assert pool in {
             'cls',
@@ -146,12 +149,14 @@ class ViT(nn.Module):
         self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
         self.dropout = nn.Dropout(emb_dropout)
 
-        self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, dropout)
+        self.transformer = Transformer(
+            dim, depth, heads, dim_head, mlp_dim, dropout)
 
         self.pool = pool
         self.to_latent = nn.Identity()
 
-        self.mlp_head = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, num_classes))
+        self.mlp_head = nn.Sequential(
+            nn.LayerNorm(dim), nn.Linear(dim, num_classes))
 
     def forward(self, img):
         x = self.to_patch_embedding(img)

@@ -97,7 +97,8 @@ def convert_genotype_to_naslib(genotype, naslib_object):
             if i % 2 == 0:
                 tail += 1
             head = edge[1] + 1
-            edge_op_dict[cell_names[c]][(head, tail)] = genotype_to_ops[edge[0]]
+            edge_op_dict[cell_names[c]][(
+                head, tail)] = genotype_to_ops[edge[0]]
 
     def add_genotype_op_index(edge):
         # function that adds the op index from genotype to each edge, and deletes the rest
@@ -146,7 +147,7 @@ def convert_genotype_to_config(genotype):
         n = 2
         for node_idx in range(4):
             end = start + n
-            ops = cell[2 * node_idx : 2 * node_idx + 2]
+            ops = cell[2 * node_idx: 2 * node_idx + 2]
 
             # get edge idx
             edges = {
@@ -187,7 +188,8 @@ def convert_config_to_genotype(config):
             end = start + n
             # print(start, end)
             for j in range(start, end):
-                key = 'NetworkSelectorDatasetInfo:darts:edge_{}_{}'.format(cell_type, j)
+                key = 'NetworkSelectorDatasetInfo:darts:edge_{}_{}'.format(
+                    cell_type, j)
                 if key in config:
                     genotype[i].append((config[key], j - start))
 

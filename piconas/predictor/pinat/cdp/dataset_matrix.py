@@ -48,11 +48,13 @@ class Dataset_Train(Dataset):
 
         if percentile:
             NB101_acc = [
-                self.normalize(Dataset_Metrics101[i]['final_valid_accuracy'], '1')
+                self.normalize(
+                    Dataset_Metrics101[i]['final_valid_accuracy'], '1')
                 for i in Dataset_Metrics101
             ]
             NB201_acc = [
-                self.normalize(Dataset_Metrics201[i]['final_valid_accuracy'], '2')
+                self.normalize(
+                    Dataset_Metrics201[i]['final_valid_accuracy'], '2')
                 for i in Dataset_Metrics201
             ]
             all_acc = NB101_acc + NB201_acc
@@ -63,7 +65,8 @@ class Dataset_Train(Dataset):
                 i_percentile = []
                 step = 100 / i
                 for j in range(1, i + 1):
-                    i_percentile.append(np.percentile(all_acc, min(step * j, 100)))
+                    i_percentile.append(np.percentile(
+                        all_acc, min(step * j, 100)))
                 self.percentile.append(i_percentile)
 
         # dataset101 and dataset201
@@ -81,10 +84,12 @@ class Dataset_Train(Dataset):
             for index in DataSet:
                 fixed_metrics = DataSet[index]['fixed_metrics']
                 accuracy = self.normalize(
-                    DataSet[index]['final_valid_accuracy'], dataset=str(dataset_num)
+                    DataSet[index]['final_valid_accuracy'], dataset=str(
+                        dataset_num)
                 )
                 adjacency_matrix = fixed_metrics['module_adjacency']
-                module_integers = [-1] + list(fixed_metrics['module_integers']) + [-2]
+                module_integers = [-1] + \
+                    list(fixed_metrics['module_integers']) + [-2]
 
                 ops_onehot = np.array(
                     [[i == k + 2 for i in range(6)] for k in module_integers],
@@ -185,7 +190,8 @@ class Dataset_Darts(Dataset):
                 )
         elif dataset_type == 'small_tiny':
             if dataset_num == None:
-                self.dataset = tiny_darts.DataSetSmallTinyDarts(dataset_num=1e6)
+                self.dataset = tiny_darts.DataSetSmallTinyDarts(
+                    dataset_num=1e6)
             else:
                 self.dataset = tiny_darts.DataSetSmallTinyDarts(
                     dataset_num=dataset_num, dataset=dataset
@@ -221,7 +227,8 @@ class Dataset_Darts(Dataset):
             self.operations.append(operations_sub)
             self.num_vertices.append(num_vertices_sub)
 
-        assert len(self.adjacency) == len(self.operations) == len(self.num_vertices)
+        assert len(self.adjacency) == len(
+            self.operations) == len(self.num_vertices)
 
     def __len__(self):
         return len(self.adjacency)
@@ -242,7 +249,8 @@ if __name__ == '__main__':
     import torch
     from cross_domain_predictor import get_target_train_dataloader
 
-    filename = os.path.join('eval-DATASET-20210320-171343', 'darts_dataset.pth.tar')
+    filename = os.path.join(
+        'eval-DATASET-20210320-171343', 'darts_dataset.pth.tar')
     data = torch.load(filename)
     target_dataloader = get_target_train_dataloader(
         train_batch_size=100, dataset_num=len(data['dataset']), dataset=data['dataset']

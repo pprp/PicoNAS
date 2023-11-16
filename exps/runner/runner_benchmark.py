@@ -46,7 +46,8 @@ end_index = (
     else len(archs)
 )
 
-archs_to_evaluate = {idx: archs[idx] for idx in range(config.start_idx, end_index)}
+archs_to_evaluate = {idx: archs[idx]
+                     for idx in range(config.start_idx, end_index)}
 
 utils.set_seed(config.seed)
 train_loader = build_dataloader(dataset='cifar10', type='train')
@@ -56,7 +57,8 @@ predictor = ZeroCost(method_type=config.predictor)
 zc_scores = []
 
 for i, (idx, arch) in enumerate(archs_to_evaluate.items()):
-    logger.info(f'{i} \tComputing ZC score for model id {idx} with encoding {arch}')
+    logger.info(
+        f'{i} \tComputing ZC score for model id {idx} with encoding {arch}')
     zc_score = {}
     graph = search_space.clone()
     graph.set_spec(arch)

@@ -67,7 +67,8 @@ def compute_grasp_per_weight(
             outputs = outputs[0]
         outputs /= T
         loss = loss_fn(outputs, targets[st:en])
-        grad_f = autograd.grad(loss, weights, create_graph=True, allow_unused=True)
+        grad_f = autograd.grad(
+            loss, weights, create_graph=True, allow_unused=True)
 
         # accumulate gradients computed in previous step and call backwards
         z, count = 0, 0

@@ -68,7 +68,8 @@ class GATSetConv(MessagePassing):
         self.a = Parameter(torch.Tensor(in_channels, heads * out_channels))
         self.b = Parameter(torch.Tensor(1, out_channels, self.heads_2))
         self.e = Parameter(torch.Tensor(1, out_channels, self.heads_2))
-        self.w = Parameter(torch.Tensor(self.heads, out_channels, self.heads_2))
+        self.w = Parameter(torch.Tensor(
+            self.heads, out_channels, self.heads_2))
         self.h = Parameter(torch.Tensor(self.heads, out_channels))
         self.c = Parameter(torch.Tensor(self.heads, out_channels))
 
@@ -307,7 +308,8 @@ class GATSetConv_v5(MessagePassing):
         self.v = Parameter(torch.Tensor(out_channels, 1, self.t2))
 
         # self.wb = nn.Linear(self.t * self.t2, out_channels * self.t3)
-        self.w = Parameter(torch.Tensor(out_channels, self.t, self.t2, self.t3))
+        self.w = Parameter(torch.Tensor(
+            out_channels, self.t, self.t2, self.t3))
         self.b = Parameter(torch.Tensor(out_channels, self.t3))
         # self.c = nn.Linear(self.t3, out_channels, bias=False)
         self.c = Parameter(torch.Tensor(1, self.out_channels, self.t3))
@@ -351,7 +353,8 @@ class GATSetConv_v5(MessagePassing):
         return x_j
 
     def update(self, aggr_out):
-        aggr_out = aggr_out.view(-1, self.out_channels, self.t, self.t2).unsqueeze(-1)
+        aggr_out = aggr_out.view(-1, self.out_channels,
+                                 self.t, self.t2).unsqueeze(-1)
 
         out = aggr_out * self.w
         out = out.sum(2).sum(2)
@@ -444,13 +447,15 @@ class GATSetConv_v2(MessagePassing):
         self.a = Parameter(torch.Tensor(in_channels, heads * out_channels))
         self.b = Parameter(torch.Tensor(1, out_channels, self.heads_2))
         self.e = Parameter(torch.Tensor(1, out_channels, self.heads_2))
-        self.w = Parameter(torch.Tensor(self.heads, out_channels, self.heads_2))
+        self.w = Parameter(torch.Tensor(
+            self.heads, out_channels, self.heads_2))
         self.h = Parameter(torch.Tensor(self.heads, out_channels))
         self.c = Parameter(torch.Tensor(self.heads, out_channels))
         if concat:
             self.lin = nn.Linear(in_channels, heads * out_channels)
         else:
-            self.lin = nn.Linear(in_features=in_channels, out_features=out_channels)
+            self.lin = nn.Linear(in_features=in_channels,
+                                 out_features=out_channels)
 
         # if bias and concat:
         #     self.bias = Parameter(torch.Tensor(heads * out_channels))
@@ -479,7 +484,8 @@ class GATSetConv_v2(MessagePassing):
 
         cpx = F.relu(self.lin(x))
         # edge_index = add_self_loops(edge_index, num_nodes=x.size(0))
-        edge_index, norm = GCNConv.norm(edge_index, x.size(0), None, dtype=x.dtype)
+        edge_index, norm = GCNConv.norm(
+            edge_index, x.size(0), None, dtype=x.dtype)
         # x = torch.mm(x, self.weight).view(-1, self.heads, self.out_channels)
         x = torch.mm(x, self.a).view(-1, self.heads, self.out_channels)
 
@@ -609,13 +615,15 @@ class GATSetConv_v3(MessagePassing):
         self.a = Parameter(torch.Tensor(out_channels, heads * out_channels))
         self.b = Parameter(torch.Tensor(1, out_channels, self.heads_2))
         self.e = Parameter(torch.Tensor(1, out_channels, self.heads_2))
-        self.w = Parameter(torch.Tensor(self.heads, out_channels, self.heads_2))
+        self.w = Parameter(torch.Tensor(
+            self.heads, out_channels, self.heads_2))
         self.h = Parameter(torch.Tensor(self.heads, out_channels))
         self.c = Parameter(torch.Tensor(self.heads, out_channels))
         if concat:
             self.lin = nn.Linear(in_channels, heads * out_channels)
         else:
-            self.lin = nn.Linear(in_features=in_channels, out_features=out_channels)
+            self.lin = nn.Linear(in_features=in_channels,
+                                 out_features=out_channels)
 
         # if bias and concat:
         #     self.bias = Parameter(torch.Tensor(heads * out_channels))
@@ -644,12 +652,14 @@ class GATSetConv_v3(MessagePassing):
 
         cpx = self.lin(x)
         edge_index = add_self_loops(edge_index, num_nodes=x.size(0))
-        edge_index, norm = GCNConv.norm(edge_index, x.size(0), None, dtype=x.dtype)
+        edge_index, norm = GCNConv.norm(
+            edge_index, x.size(0), None, dtype=x.dtype)
         # x = torch.mm(x, self.weight).view(-1, self.heads, self.out_channels)
         hidden = cpx.clone()
         alpha = 0.1
         for _ in range(2):
-            cpx = self.propagate(edge_index, x=cpx, norm=norm, num_nodes=x.size(0))
+            cpx = self.propagate(
+                edge_index, x=cpx, norm=norm, num_nodes=x.size(0))
             cpx = cpx * (1 - alpha)
             cpx = cpx + alpha * hidden
 

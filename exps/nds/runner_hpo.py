@@ -81,8 +81,10 @@ def objective(trial):
     )
 
     # Create data loaders for batch processing
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(
+        test_dataset, batch_size=batch_size, shuffle=False)
 
     if args.search_space == 'Amoeba':
         input_dim = 2832
@@ -130,7 +132,8 @@ def objective(trial):
             optimizer.step()
 
         if (epoch + 1) % 2 == 0:
-            logging.info(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+            logging.info(
+                f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
     logging.info('Training completed!')
 

@@ -69,7 +69,8 @@ class MacroTrainer(BaseTrainer):
             self.mutator.prepare_from_supernet(self.model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(num_sample=50, dataset=self.dataset)
+        self.evaluator = self._build_evaluator(
+            num_sample=50, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -336,9 +337,11 @@ class MacroTrainer(BaseTrainer):
 
         # distill loss
         if loss2 > loss1:
-            loss4 = self.distill_loss(feat_s=feat2, feat_t=feat1) * self.lambda_kd
+            loss4 = self.distill_loss(
+                feat_s=feat2, feat_t=feat1) * self.lambda_kd
         else:
-            loss4 = self.distill_loss(feat_s=feat1, feat_t=feat2) * self.lambda_kd
+            loss4 = self.distill_loss(
+                feat_s=feat1, feat_t=feat2) * self.lambda_kd
         loss_list.append(loss4)
 
         loss = sum(loss_list)
@@ -381,7 +384,8 @@ class MacroTrainer(BaseTrainer):
             for j in range(i):
                 flops1, flops2 = flops_list[i], flops_list[j]
                 loss1, loss2 = loss_list[i], loss_list[j]
-                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+                tmp_rank_loss = self.pairwise_rankloss(
+                    flops1, flops2, loss1, loss2)
 
                 rank_loss_list.append(tmp_rank_loss)
 
@@ -462,7 +466,8 @@ class MacroTrainer(BaseTrainer):
             )
 
             if epoch % 5 == 0:
-                kt, ps, sp = self.evaluator.compute_rank_consistency(val_loader)
+                kt, ps, sp = self.evaluator.compute_rank_consistency(
+                    val_loader)
                 self.writer.add_scalar(
                     'RANK/kendall_tau', kt, global_step=self.current_epoch
                 )
@@ -499,7 +504,8 @@ class MacroTrainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 # move to device
-                outputs, labels = self._predict(batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(
+                    batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)

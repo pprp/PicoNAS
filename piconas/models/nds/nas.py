@@ -68,7 +68,8 @@ class ASPP(nn.Module):
             nn.ReLU(inplace=True),
         )
         self.classifier = nn.Sequential(
-            nn.Conv2d(out_channels * (len(rates) + 2), out_channels, 1, bias=False),
+            nn.Conv2d(out_channels * (len(rates) + 2),
+                      out_channels, 1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.Conv2d(out_channels, num_classes, 1),
@@ -229,7 +230,8 @@ class NetworkCIFAR(nn.Module):
         stem_multiplier = 3
         C_curr = stem_multiplier * C
         self.stem = nn.Sequential(
-            nn.Conv2d(3, C_curr, 3, padding=1, bias=False), nn.BatchNorm2d(C_curr)
+            nn.Conv2d(3, C_curr, 3, padding=1,
+                      bias=False), nn.BatchNorm2d(C_curr)
         )
 
         C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
@@ -251,7 +253,8 @@ class NetworkCIFAR(nn.Module):
                 C_to_auxiliary = C_prev
 
         if auxiliary:
-            self.auxiliary_head = AuxiliaryHeadCIFAR(C_to_auxiliary, num_classes)
+            self.auxiliary_head = AuxiliaryHeadCIFAR(
+                C_to_auxiliary, num_classes)
         self.classifier = Classifier(C_prev, num_classes)
 
     def forward(self, input):
@@ -287,7 +290,8 @@ class NetworkImageNet(nn.Module):
         self._auxiliary = auxiliary
 
         self.stem0 = nn.Sequential(
-            nn.Conv2d(3, C // 2, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.Conv2d(3, C // 2, kernel_size=3,
+                      stride=2, padding=1, bias=False),
             nn.BatchNorm2d(C // 2),
             nn.ReLU(inplace=True),
             nn.Conv2d(C // 2, C, 3, stride=2, padding=1, bias=False),
@@ -321,7 +325,8 @@ class NetworkImageNet(nn.Module):
                 C_to_auxiliary = C_prev
 
         if auxiliary:
-            self.auxiliary_head = AuxiliaryHeadImageNet(C_to_auxiliary, num_classes)
+            self.auxiliary_head = AuxiliaryHeadImageNet(
+                C_to_auxiliary, num_classes)
         self.classifier = Classifier(C_prev, num_classes)
 
     def forward(self, input):
@@ -365,7 +370,8 @@ class NAS(nn.Module):
             'cityscapes',
         ], 'Testing on {} is not supported'.format(dataset)
 
-        assert genotype in GENOTYPES, 'Genotype {} not supported'.format(genotype)
+        assert genotype in GENOTYPES, 'Genotype {} not supported'.format(
+            genotype)
         super(NAS, self).__init__()
 
         # Use a custom or predefined genotype

@@ -12,7 +12,8 @@ def adj_distance(cell_1, cell_2):
     by comparing their adjacency matrices and op lists
     (edit distance)
     """
-    graph_dist = np.sum(np.array(cell_1.get_matrix()) != np.array(cell_2.get_matrix()))
+    graph_dist = np.sum(np.array(cell_1.get_matrix()) !=
+                        np.array(cell_2.get_matrix()))
     ops_dist = np.sum(np.array(cell_1.get_ops()) != np.array(cell_2.get_ops()))
     return graph_dist + ops_dist
 
@@ -22,10 +23,12 @@ def cont_adj_distance(cell_1, cell_2):
     compute the distance between two architectures
     by comparing their adjacency matrices and op lists
     """
-    graph_dist = np.sum(np.array(cell_1.get_matrix()) != np.array(cell_2.get_matrix()))
+    graph_dist = np.sum(np.array(cell_1.get_matrix()) !=
+                        np.array(cell_2.get_matrix()))
     ops_dist = np.sum(np.array(cell_1.get_ops()) != np.array(cell_2.get_ops()))
     delta_edges = np.abs(
-        np.array(cell_1.get_matrix()).sum() - np.array(cell_2.get_matrix()).sum()
+        np.array(cell_1.get_matrix()).sum() -
+        np.array(cell_2.get_matrix()).sum()
     )
     return graph_dist + ops_dist + delta_edges
 

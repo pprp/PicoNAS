@@ -39,7 +39,8 @@ def get_args():
         help='name of this experiments',
     )
 
-    parser.add_argument('--crit', type=str, default='mse', help='decide the criterion')
+    parser.add_argument('--crit', type=str, default='mse',
+                        help='decide the criterion')
     parser.add_argument(
         '--optims', type=str, default='sgd', help='decide the optimizer'
     )
@@ -47,16 +48,20 @@ def get_args():
         '--sched', type=str, default='cosine', help='decide the scheduler'
     )
 
-    parser.add_argument('--classes', type=int, default=10, help='dataset classes')
+    parser.add_argument('--classes', type=int, default=10,
+                        help='dataset classes')
     parser.add_argument('--layers', type=int, default=20, help='batch size')
     parser.add_argument(
         '--num_choices', type=int, default=4, help='number choices per layer'
     )
-    parser.add_argument('--batch_size', type=int, default=16, help='batch size')
+    parser.add_argument('--batch_size', type=int,
+                        default=16, help='batch size')
     parser.add_argument('--epochs', type=int, default=200, help='batch size')
-    parser.add_argument('--lr', type=float, default=0.025, help='initial learning rate')
+    parser.add_argument('--lr', type=float, default=0.025,
+                        help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
-    parser.add_argument('--weight-decay', type=float, default=5e-4, help='weight decay')
+    parser.add_argument('--weight-decay', type=float,
+                        default=5e-4, help='weight decay')
     parser.add_argument(
         '--val_interval', type=int, default=5, help='validate and save frequency'
     )
@@ -68,7 +73,8 @@ def get_args():
         '--dataset', type=str, default='cifar10', help='path to the dataset'
     )
     parser.add_argument('--cutout', action='store_true', help='use cutout')
-    parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
+    parser.add_argument('--cutout_length', type=int,
+                        default=16, help='cutout length')
     parser.add_argument(
         '--auto_aug', action='store_true', default=False, help='use auto augmentation'
     )
@@ -96,17 +102,20 @@ def main():
     else:
         device = torch.device('cpu')
 
-    train_dataloader = build_dataloader(type='train', dataset=cfg.dataset, config=cfg)
+    train_dataloader = build_dataloader(
+        type='train', dataset=cfg.dataset, config=cfg)
 
     zc_name_list = ['eznas-a']
 
-    nb101_api = api.NASBench('/data/lujunl/pprp/bench/nasbench_only108.tfrecord')
+    nb101_api = api.NASBench(
+        '/data/lujunl/pprp/bench/nasbench_only108.tfrecord')
 
     for zc_name in zc_name_list:
         p_scores, gt_scores = [], []
         for _hash in tqdm(RANDOM_SAMPLED_HASHES):
             # build network
-            ops = nb101_api.get_metrics_from_hash(_hash)[0]['module_operations']
+            ops = nb101_api.get_metrics_from_hash(
+                _hash)[0]['module_operations']
             adj = nb101_api.get_metrics_from_hash(_hash)[0]['module_adjacency']
             net = NBNetwork((adj, ops))
 

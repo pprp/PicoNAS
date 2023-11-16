@@ -64,7 +64,8 @@ def diffkendall(x, y, alpha=0.5, beta=1.0):
 
     # Numerator
     num = (
-        torch.sigmoid(beta * alpha * x_diff) - torch.sigmoid(-beta * alpha * x_diff)
+        torch.sigmoid(beta * alpha * x_diff) -
+        torch.sigmoid(-beta * alpha * x_diff)
     ) * (torch.sigmoid(beta * alpha * y_diff) - torch.sigmoid(-beta * alpha * y_diff))
 
     # Exclude diagonal elements from the numerator

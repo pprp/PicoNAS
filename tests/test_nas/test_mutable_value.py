@@ -17,7 +17,8 @@ class ToyBlock(nn.Module):
 
     def __init__(self, depth=max([3, 5, 7]), kernel=2, channel=0.5):
         super().__init__()
-        self.mutable_depth = MutableValue(value_list=[3, 5, 7], default_value=7)
+        self.mutable_depth = MutableValue(
+            value_list=[3, 5, 7], default_value=7)
         self.m = nn.ModuleList()
         for _ in range(depth):
             self.m.append(

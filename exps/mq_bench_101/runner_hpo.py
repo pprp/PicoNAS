@@ -69,8 +69,10 @@ def objective(trial):
     )
 
     # Create data loaders for batch processing
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(
+        test_dataset, batch_size=batch_size, shuffle=False)
 
     # Create an instance of the MLP model and define the loss function and optimizer
     mlp_model = BaysianMLPMixer(
@@ -107,7 +109,8 @@ def objective(trial):
             optimizer.step()
 
         if (epoch + 1) % 2 == 0:
-            logging.info(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+            logging.info(
+                f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
     logging.info('Training completed!')
 

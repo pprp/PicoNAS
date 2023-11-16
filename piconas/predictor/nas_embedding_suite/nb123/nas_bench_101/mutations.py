@@ -28,7 +28,8 @@ def adj_mutate(nasbench, matrix, ops, cont, mutation_rate=1.0, patience=5000):
 
         if not cont:
             # flip each edge w.p. so expected flips is 1. same for ops
-            edge_mutation_prob = mutation_rate / (NUM_VERTICES * (NUM_VERTICES - 1) / 2)
+            edge_mutation_prob = mutation_rate / \
+                (NUM_VERTICES * (NUM_VERTICES - 1) / 2)
             for src in range(0, NUM_VERTICES - 1):
                 for dst in range(src + 1, NUM_VERTICES):
                     if np.random.rand() < edge_mutation_prob:

@@ -46,7 +46,8 @@ class ZCTrainer(object):
         self.lightweight_output = lightweight_output
 
         # preparations
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device(
+            'cuda:0' if torch.cuda.is_available() else 'cpu')
 
         # measuring stuff
         self.train_top1 = utils.AverageMeter()
@@ -103,7 +104,8 @@ class ZCTrainer(object):
                 resume_from, period=checkpoint_freq, scheduler=self.scheduler
             )
         else:
-            start_epoch = self._setup_checkpointers(resume_from, period=checkpoint_freq)
+            start_epoch = self._setup_checkpointers(
+                resume_from, period=checkpoint_freq)
 
         if self.optimizer.using_step_function:
             self.train_queue, self.valid_queue, _ = self.build_search_dataloaders(
@@ -129,7 +131,8 @@ class ZCTrainer(object):
                     stats = self.optimizer.step(data_train, data_val)
                     logits_train, logits_val, train_loss, val_loss = stats
 
-                    self._store_accuracies(logits_train, data_train[1], 'train')
+                    self._store_accuracies(
+                        logits_train, data_train[1], 'train')
                     self._store_accuracies(logits_val, data_val[1], 'val')
 
                     log_every_n_seconds(
@@ -143,7 +146,8 @@ class ZCTrainer(object):
                     if torch.cuda.is_available():
                         log_first_n(
                             logging.INFO,
-                            'cuda consumption\n {}'.format(torch.cuda.memory_summary()),
+                            'cuda consumption\n {}'.format(
+                                torch.cuda.memory_summary()),
                             n=3,
                         )
 
@@ -306,7 +310,8 @@ class ZCTrainer(object):
                     self.test_queue,
                 ) = self.build_eval_dataloaders(self.config)
 
-                optim = self.build_eval_optimizer(best_arch.parameters(), self.config)
+                optim = self.build_eval_optimizer(
+                    best_arch.parameters(), self.config)
                 scheduler = self.build_eval_scheduler(optim, self.config)
 
                 start_epoch = self._setup_checkpointers(
@@ -343,7 +348,8 @@ class ZCTrainer(object):
                     if torch.cuda.is_available():
                         log_first_n(
                             logging.INFO,
-                            'cuda consumption\n {}'.format(torch.cuda.memory_summary()),
+                            'cuda consumption\n {}'.format(
+                                torch.cuda.memory_summary()),
                             n=20,
                         )
 
@@ -360,7 +366,8 @@ class ZCTrainer(object):
                     # Train queue
                     for i, (input_train, target_train) in enumerate(self.train_queue):
                         input_train = input_train.to(self.device)
-                        target_train = target_train.to(self.device, non_blocking=True)
+                        target_train = target_train.to(
+                            self.device, non_blocking=True)
 
                         optim.zero_grad()
                         logits_train = best_arch(input_train)
@@ -368,7 +375,8 @@ class ZCTrainer(object):
                         if hasattr(
                             best_arch, 'auxilary_logits'
                         ):  # darts specific stuff
-                            log_first_n(logging.INFO, 'Auxiliary is used', n=10)
+                            log_first_n(
+                                logging.INFO, 'Auxiliary is used', n=10)
                             auxiliary_loss = loss(
                                 best_arch.auxilary_logits(), target_train
                             )
@@ -382,7 +390,8 @@ class ZCTrainer(object):
                             )
                         optim.step()
 
-                        self._store_accuracies(logits_train, target_train, 'train')
+                        self._store_accuracies(
+                            logits_train, target_train, 'train')
                         log_every_n_seconds(
                             logging.INFO,
                             'Epoch {}-{}, Train loss: {:.5}, learning rate: {}'.format(
@@ -436,13 +445,15 @@ class ZCTrainer(object):
                 with torch.no_grad():
                     logits = best_arch(input_test)
 
-                    prec1, prec5 = utils.accuracy(logits, target_test, topk=(1, 5))
+                    prec1, prec5 = utils.accuracy(
+                        logits, target_test, topk=(1, 5))
                     top1.update(prec1.data.item(), n)
                     top5.update(prec5.data.item(), n)
 
                 log_every_n_seconds(
                     logging.INFO,
-                    'Inference batch {} of {}.'.format(i, len(self.test_queue)),
+                    'Inference batch {} of {}.'.format(
+                        i, len(self.test_queue)),
                     n=5,
                 )
 
@@ -503,11 +514,15 @@ class ZCTrainer(object):
         )
 
         if writer is not None:
-            writer.add_scalar('Train accuracy (top 1)', self.train_top1.avg, epoch)
-            writer.add_scalar('Train accuracy (top 5)', self.train_top5.avg, epoch)
+            writer.add_scalar('Train accuracy (top 1)',
+                              self.train_top1.avg, epoch)
+            writer.add_scalar('Train accuracy (top 5)',
+                              self.train_top5.avg, epoch)
             writer.add_scalar('Train loss', self.train_loss.avg, epoch)
-            writer.add_scalar('Validation accuracy (top 1)', self.val_top1.avg, epoch)
-            writer.add_scalar('Validation accuracy (top 5)', self.val_top5.avg, epoch)
+            writer.add_scalar('Validation accuracy (top 1)',
+                              self.val_top1.avg, epoch)
+            writer.add_scalar('Validation accuracy (top 5)',
+                              self.val_top5.avg, epoch)
             writer.add_scalar('Validation loss', self.val_loss.avg, epoch)
 
         self.train_top1.reset()
@@ -531,7 +546,8 @@ class ZCTrainer(object):
             self.val_top1.update(prec1.data.item(), n)
             self.val_top5.update(prec5.data.item(), n)
         else:
-            raise ValueError("Unknown split: {}. Expected either 'train' or 'val'")
+            raise ValueError(
+                "Unknown split: {}. Expected either 'train' or 'val'")
 
     def _prepare_dataloaders(self, config, mode='train'):
         """
@@ -603,4 +619,5 @@ class ZCTrainer(object):
                 lightweight_dict = copy.deepcopy(self.errors_dict)
                 for key in ['arch_eval', 'train_loss', 'valid_loss', 'test_loss']:
                     lightweight_dict.pop(key)
-                json.dump([self.config, lightweight_dict], file, separators=(',', ':'))
+                json.dump([self.config, lightweight_dict],
+                          file, separators=(',', ':'))

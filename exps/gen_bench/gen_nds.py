@@ -64,7 +64,8 @@ def get_cifar10_dataloader(batch_size, data_dir, train=True):
 loss_fn = torch.nn.CrossEntropyLoss()
 
 # zc name candidates
-zc_candidates = ['fisher', 'grad_norm', 'grasp', 'l2_norm', 'plain', 'snip', 'synflow']
+zc_candidates = ['fisher', 'grad_norm', 'grasp',
+                 'l2_norm', 'plain', 'snip', 'synflow']
 
 
 def min_max_scaling(data):

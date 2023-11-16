@@ -27,7 +27,8 @@ def delete_margin(matrix):
 # output: the metrics after padding
 def padding_zero_in_matrix(important_metrics, max_length=PADDING_MAX_LENGTH):
     for i in important_metrics:
-        len_operations = len(important_metrics[i]['fixed_metrics']['module_operations'])
+        len_operations = len(
+            important_metrics[i]['fixed_metrics']['module_operations'])
         if len_operations != max_length:
             # if the operations is less than max_length
             for j in range(len_operations, max_length):
@@ -89,7 +90,8 @@ def padding_zeros_darts(matrixes, ops, max_length=PADDING_MAX_LENGTH):
     for matrix, op in zip(matrixes, ops):
         if op is None:
             # matrix is None this case
-            padding_matrix = np.zeros(shape=[max_length, max_length], dtype='int8')
+            padding_matrix = np.zeros(
+                shape=[max_length, max_length], dtype='int8')
             tmp_op = np.zeros(shape=max_length, dtype='int8')
 
             padding_matrixes.append(padding_matrix)

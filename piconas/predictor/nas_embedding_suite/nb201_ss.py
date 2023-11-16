@@ -49,9 +49,12 @@ class NASBench201:
             BASE_PATH
             + 'arch2vec_embeddings/arch2vec-model-dim_32_search_space_nasbench201-nasbench201.pt'
         )
-        self.cate_nb201 = torch.load(BASE_PATH + 'cate_embeddings/cate_nasbench201.pt')
-        self.zcp_nb201 = json.load(open(BASE_PATH + 'zc_nasbench201.json', 'r'))
-        self.zcp_nb201_valacc = json.load(open(BASE_PATH + 'zc_nasbench201.json', 'r'))
+        self.cate_nb201 = torch.load(
+            BASE_PATH + 'cate_embeddings/cate_nasbench201.pt')
+        self.zcp_nb201 = json.load(
+            open(BASE_PATH + 'zc_nasbench201.json', 'r'))
+        self.zcp_nb201_valacc = json.load(
+            open(BASE_PATH + 'zc_nasbench201.json', 'r'))
         self.zcp_nb201_valacc = {
             k: v['val_accuracy'] for k, v in self.zcp_nb201_valacc['cifar10'].items()
         }
@@ -79,7 +82,8 @@ class NASBench201:
             'output': 6,
             'global': 7,
         }
-        self._index_to_opname = {v: k for k, v in self._opname_to_index.items()}
+        self._index_to_opname = {v: k for k,
+                                 v in self._opname_to_index.items()}
         self.nb2_api = NB2API(BASE_PATH + 'NAS-Bench-201-v1_1-096897.pth')
         print('Loaded files in: ', time.time() - a, ' seconds')
         self.zcps = [
@@ -163,7 +167,8 @@ class NASBench201:
             ).T
 
             # Add normalization code here
-            self.norm_zcp['epe_nas'] = self.min_max_scaling(self.norm_zcp['epe_nas'])
+            self.norm_zcp['epe_nas'] = self.min_max_scaling(
+                self.norm_zcp['epe_nas'])
             self.norm_zcp['fisher'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['fisher'])
             )
@@ -173,14 +178,18 @@ class NASBench201:
             self.norm_zcp['grad_norm'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['grad_norm'])
             )
-            self.norm_zcp['grasp'] = self.standard_scaling(self.norm_zcp['grasp'])
-            self.norm_zcp['jacov'] = self.min_max_scaling(self.norm_zcp['jacov'])
-            self.norm_zcp['l2_norm'] = self.min_max_scaling(self.norm_zcp['l2_norm'])
+            self.norm_zcp['grasp'] = self.standard_scaling(
+                self.norm_zcp['grasp'])
+            self.norm_zcp['jacov'] = self.min_max_scaling(
+                self.norm_zcp['jacov'])
+            self.norm_zcp['l2_norm'] = self.min_max_scaling(
+                self.norm_zcp['l2_norm'])
             self.norm_zcp['nwot'] = self.min_max_scaling(self.norm_zcp['nwot'])
             self.norm_zcp['params'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['params'])
             )
-            self.norm_zcp['plain'] = self.min_max_scaling(self.norm_zcp['plain'])
+            self.norm_zcp['plain'] = self.min_max_scaling(
+                self.norm_zcp['plain'])
             self.norm_zcp['snip'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['snip'])
             )
@@ -206,12 +215,14 @@ class NASBench201:
         else:
             arch_str = self.nb2_api.query_by_index(idx).arch_str
             cellobj = Cell201(arch_str)
-            gcn_encoding = cellobj.gcn_encoding(self.nb2_api, deterministic=True)
+            gcn_encoding = cellobj.gcn_encoding(
+                self.nb2_api, deterministic=True)
             arch_vector = self.get_arch_vector_from_arch_str(arch_str)
             matrix = self.get_matrix_and_ops(arch_vector)[0]
             op_mat = gcn_encoding['operations'].tolist()
             adj_mat = np.asarray(matrix).flatten()
-            op_mat = torch.Tensor(np.asarray(op_mat)).argmax(dim=1).numpy().flatten()
+            op_mat = torch.Tensor(np.asarray(op_mat)).argmax(
+                dim=1).numpy().flatten()
             op_mat = op_mat / np.max(op_mat)
             return np.concatenate(
                 [adj_mat, op_mat, np.asarray(self.get_zcp(idx))]
@@ -236,7 +247,8 @@ class NASBench201:
         else:
             arch_str = self.nb2_api.query_by_index(idx).arch_str
             cellobj = Cell201(arch_str)
-            gcn_encoding = cellobj.gcn_encoding(self.nb2_api, deterministic=True)
+            gcn_encoding = cellobj.gcn_encoding(
+                self.nb2_api, deterministic=True)
             arch_vector = self.get_arch_vector_from_arch_str(arch_str)
             return {
                 'module_adjacency': self.get_matrix_and_ops(arch_vector)[0],
@@ -360,7 +372,8 @@ class NASBench201:
                             vis[other] = True
 
             bfs(0, visited_fw, lambda src, dst: matrix[src][dst])  # forward
-            bfs(n_nodes - 1, visited_bw, lambda src, dst: matrix[dst][src])  # backward
+            bfs(n_nodes - 1, visited_bw, lambda src,
+                dst: matrix[dst][src])  # backward
             for v in range(n_nodes - 1, -1, -1):
                 if not visited_fw[v] or not visited_bw[v]:
                     labels[v] = None

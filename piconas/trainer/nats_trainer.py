@@ -284,7 +284,8 @@ class NATSTrainer(BaseTrainer):
         t_loss.backward(retain_graph=True)
 
         # middle supernet
-        mid_forward_lists = [self.model.set_forward_cfg('uni') for _ in range(2)]
+        mid_forward_lists = [
+            self.model.set_forward_cfg('uni') for _ in range(2)]
         for mid_forward_list in mid_forward_lists:
             output, s_feat = self.model(inputs, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
@@ -312,7 +313,8 @@ class NATSTrainer(BaseTrainer):
         mse_loss_list.append(t_loss)
 
         # middle supernet
-        mid_forward_lists = [self.model.set_forward_cfg('uni') for _ in range(2)]
+        mid_forward_lists = [
+            self.model.set_forward_cfg('uni') for _ in range(2)]
         for mid_forward_list in mid_forward_lists:
             output, feat_s = self.model(inputs, mid_forward_list)
             loss = self.distill_criterion(output, t_output)

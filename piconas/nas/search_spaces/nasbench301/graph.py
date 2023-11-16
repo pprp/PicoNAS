@@ -149,7 +149,8 @@ class NasBench301SearchSpace(Graph):
         self.add_node(3)
 
         # cells
-        self.add_node(4, subgraph=normal_cell.set_scope('n_stage_1').set_input([2, 3]))
+        self.add_node(4, subgraph=normal_cell.set_scope(
+            'n_stage_1').set_input([2, 3]))
         self.add_node(
             5, subgraph=normal_cell.copy().set_scope('n_stage_1').set_input([2, 4])
         )
@@ -229,7 +230,8 @@ class NasBench301SearchSpace(Graph):
         stem_multiplier = 3
         self.edges[1, 2].set(
             'op',
-            ops.Stem(C_in=self.in_channels, C_out=self.channels[0] * stem_multiplier),
+            ops.Stem(C_in=self.in_channels,
+                     C_out=self.channels[0] * stem_multiplier),
         )
 
         # edges connecting cells
@@ -246,7 +248,8 @@ class NasBench301SearchSpace(Graph):
                     if v in reduction_cell_indices:
                         C_out *= 2
                     data.set(
-                        'op', ops.ReLUConvBN(C_in, C_out, kernel_size=1, affine=affine)
+                        'op', ops.ReLUConvBN(
+                            C_in, C_out, kernel_size=1, affine=affine)
                     )
                 else:
                     data.set(
@@ -263,7 +266,8 @@ class NasBench301SearchSpace(Graph):
             ops.Sequential(
                 nn.AdaptiveAvgPool2d(1),
                 nn.Flatten(),
-                nn.Linear(self.channels[-1] * self.num_in_edges, self.num_classes),
+                nn.Linear(self.channels[-1] *
+                          self.num_in_edges, self.num_classes),
             ),
         )
 
@@ -405,7 +409,8 @@ class NasBench301SearchSpace(Graph):
         Query results from nasbench 301
         """
         if dataset_api is None:
-            raise NotImplementedError('Must pass in dataset_api to query NAS-Bench-301')
+            raise NotImplementedError(
+                'Must pass in dataset_api to query NAS-Bench-301')
 
         metric_to_nb301 = {
             Metric.TRAIN_LOSS: 'train_losses',
@@ -472,7 +477,8 @@ class NasBench301SearchSpace(Graph):
                     return  # TODO: how about mixed final and non-final?
                 else:
                     for _ in range(len(in_edges) - k):
-                        in_edges[random.randint(0, len(in_edges) - 1)][1].delete()
+                        in_edges[random.randint(
+                            0, len(in_edges) - 1)][1].delete()
 
     def get_compact(self):
         if self.compact is None:

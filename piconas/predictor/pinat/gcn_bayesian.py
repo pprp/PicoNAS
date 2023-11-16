@@ -40,9 +40,11 @@ class DirectedGraphConvolution(nn.Module):
 
     def forward(self, inputs, adj):
         norm_adj = normalize_adj(adj)
-        output1 = F.relu(torch.matmul(norm_adj, torch.matmul(inputs, self.weight1)))
+        output1 = F.relu(torch.matmul(
+            norm_adj, torch.matmul(inputs, self.weight1)))
         inv_norm_adj = normalize_adj(adj.transpose(1, 2))
-        output2 = F.relu(torch.matmul(inv_norm_adj, torch.matmul(inputs, self.weight2)))
+        output2 = F.relu(torch.matmul(
+            inv_norm_adj, torch.matmul(inputs, self.weight2)))
         out = (output1 + output2) / 2
         out = self.dropout(out)
         return out
@@ -137,7 +139,8 @@ if __name__ == '__main__':
         predictor = predictor.cuda()
 
     # Assuming Nb201DatasetPINAT is defined elsewhere
-    test_set = Nb201DatasetPINAT(split='all', data_type='test', data_set='cifar10')
+    test_set = Nb201DatasetPINAT(
+        split='all', data_type='test', data_set='cifar10')
 
     loader = torch.utils.data.DataLoader(
         test_set, batch_size=batch_size, shuffle=False, num_workers=0, drop_last=False

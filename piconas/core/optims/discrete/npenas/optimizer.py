@@ -147,12 +147,15 @@ class Npenas(MetaOptimizer):
                 zc_scores = []
 
                 # mutate the k best architectures by x
-                best_arch_indices = np.argsort(ytrain)[-self.num_arches_to_mutate :]
-                best_arches = [self.train_data[i].arch_hash for i in best_arch_indices]
+                best_arch_indices = np.argsort(
+                    ytrain)[-self.num_arches_to_mutate:]
+                best_arches = [
+                    self.train_data[i].arch_hash for i in best_arch_indices]
                 candidates = []
                 for arch in best_arches:
                     for _ in range(
-                        int(self.num_candidates / len(best_arches) / self.max_mutations)
+                        int(self.num_candidates /
+                            len(best_arches) / self.max_mutations)
                     ):
                         candidate = torch.nn.Module()
                         current_hash = copy.deepcopy(arch)
@@ -185,13 +188,14 @@ class Npenas(MetaOptimizer):
                         )
 
                     values = [
-                        acq_fn(model.arch, [{'zero_cost_scores': model.zc_scores}])
+                        acq_fn(model.arch, [
+                               {'zero_cost_scores': model.zc_scores}])
                         for model in candidates
                     ]
                 else:
                     values = [acq_fn(model.arch) for model in candidates]
                 sorted_indices = np.argsort(values)
-                choices = [candidates[i] for i in sorted_indices[-self.k :]]
+                choices = [candidates[i] for i in sorted_indices[-self.k:]]
                 self.next_batch = [*choices]
 
             # train the next architecture chosen by the neural predictor
@@ -256,7 +260,8 @@ class Npenas(MetaOptimizer):
 
             op_indices = list(arch_hash)
             edge = np.random.choice(len(arch_hash))
-            available = [o for o in range(len(OP_NAMES)) if o != arch_hash[edge]]
+            available = [o for o in range(
+                len(OP_NAMES)) if o != arch_hash[edge]]
             op_index = np.random.choice(available)
             op_indices[edge] = op_index
 
@@ -282,10 +287,12 @@ class Npenas(MetaOptimizer):
                                 new_matrix[src][dst] = 1 - new_matrix[src][dst]
                     for ind in range(1, NUM_VERTICES - 1):
                         if np.random.random() < 1 / len(OPS):
-                            available = [op for op in OPS if op != new_ops[ind]]
+                            available = [
+                                op for op in OPS if op != new_ops[ind]]
                             new_ops[ind] = np.random.choice(available)
 
-                    new_spec = dataset_api['api'].ModelSpec(new_matrix, new_ops)
+                    new_spec = dataset_api['api'].ModelSpec(
+                        new_matrix, new_ops)
                     if dataset_api['nb101_data'].is_valid(new_spec):
                         break
 
@@ -300,7 +307,8 @@ class Npenas(MetaOptimizer):
 
             op_indices = list(arch_hash)
             edge = np.random.choice(len(arch_hash))
-            available = [o for o in range(len(OP_NAMES)) if o != arch_hash[edge]]
+            available = [o for o in range(
+                len(OP_NAMES)) if o != arch_hash[edge]]
             op_index = np.random.choice(available)
             op_indices[edge] = op_index
 

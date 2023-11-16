@@ -43,7 +43,8 @@ class Cell101:
         n = np.shape(self.matrix)[0]
         sub_paths = []
         for j in range(0, n):
-            sub_paths.append([[(0, j)]]) if self.matrix[0][j] else sub_paths.append([])
+            sub_paths.append(
+                [[(0, j)]]) if self.matrix[0][j] else sub_paths.append([])
 
         # create paths sequentially
         for i in range(1, n - 1):
@@ -152,7 +153,8 @@ class Cell101:
 
         op_map = [OUTPUT, INPUT, *OPS]
         ops_onehot = np.array(
-            [[i == op_map.index(op) for i in range(len(op_map))] for op in self.ops],
+            [[i == op_map.index(op) for i in range(len(op_map))]
+             for op in self.ops],
             dtype=np.float32,
         )
         val_loss = self.get_val_loss(nasbench, deterministic=deterministic)
@@ -181,7 +183,8 @@ class Cell101:
                 if self.matrix[i][j]:
                     adj_list[j][i + 1] = 1
 
-        acc = 1 - self.get_val_loss(nasbench, deterministic=deterministic) / 100
+        acc = 1 - self.get_val_loss(nasbench,
+                                    deterministic=deterministic) / 100
         return [adj_list, acc]
 
     def distance(self, other, dist_type, cutoff=None):
@@ -483,7 +486,8 @@ class Cell101:
             cutoff_value = total_paths
 
         new_sets = []
-        path_indices_cutoff = [path for path in path_indices if path < cutoff_value]
+        path_indices_cutoff = [
+            path for path in path_indices if path < cutoff_value]
 
         # remove paths
         for path in path_indices_cutoff:
@@ -491,7 +495,8 @@ class Cell101:
             new_sets.append(new_path_indices)
 
         # add paths
-        other_paths = [path for path in range(cutoff_value) if path not in path_indices]
+        other_paths = [path for path in range(
+            cutoff_value) if path not in path_indices]
         for path in other_paths:
             new_path_indices = [*path_indices, path]
             new_sets.append(new_path_indices)

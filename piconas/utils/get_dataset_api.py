@@ -58,7 +58,8 @@ def get_transbench101_api(dataset):
 def get_nasbench101_api(dataset=None):
     import piconas.nas.utils.nb101_api as api
 
-    nb101_datapath = os.path.join(get_project_root(), 'data', 'nasbench_only108.pkl')
+    nb101_datapath = os.path.join(
+        get_project_root(), 'data', 'nasbench_only108.pkl')
     assert os.path.exists(
         nb101_datapath
     ), f'Could not find {nb101_datapath}. Please download nasbench_only108.pk \
@@ -81,7 +82,8 @@ def get_nasbench201_api(dataset):
     if dataset not in datafiles.keys():
         return None
 
-    datafile_path = os.path.join(get_project_root(), 'data', datafiles[dataset])
+    datafile_path = os.path.join(
+        get_project_root(), 'data', datafiles[dataset])
     assert os.path.exists(
         datafile_path
     ), f'Could not find {datafile_path}. Please download {datafiles[dataset]} from \
@@ -308,7 +310,8 @@ def get_dataset_api(search_space=None, dataset=None):
 
 
 def get_zc_benchmark_api(search_space, dataset):
-    datafile_path = os.path.join(get_project_root(), 'data', f'zc_{search_space}.json')
+    datafile_path = os.path.join(
+        get_project_root(), 'data', f'zc_{search_space}.json')
     with open(datafile_path) as f:
         data = json.load(f)
 
@@ -317,7 +320,8 @@ def get_zc_benchmark_api(search_space, dataset):
 
 def load_sampled_architectures(search_space, postfix=''):
     datafile_path = os.path.join(
-        get_project_root(), 'data', 'archs', f'archs_{search_space}{postfix}.json'
+        get_project_root(
+        ), 'data', 'archs', f'archs_{search_space}{postfix}.json'
     )
     with open(datafile_path) as f:
         data = json.load(f)

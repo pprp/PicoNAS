@@ -11,7 +11,8 @@ class RandomCropPaste(object):
     def __call__(self, img):
         lam = np.random.beta(self.alpha, self.alpha)
         front_bbx1, front_bby1, front_bbx2, front_bby2 = self._rand_bbox(lam)
-        img_front = img[:, front_bby1:front_bby2, front_bbx1:front_bbx2].clone()
+        img_front = img[:, front_bby1:front_bby2,
+                        front_bbx1:front_bbx2].clone()
         front_w = front_bbx2 - front_bbx1
         front_h = front_bby2 - front_bby1
 

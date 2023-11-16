@@ -18,7 +18,8 @@ class Nb201DatasetPINAT(Dataset):
     CACHE_FILE_PATH = BASE_PATH + '/nb201_cellobj_cache.pkl'
 
     def __init__(self, split, candidate_ops=5, data_type='train', data_set='cifar10'):
-        assert data_set in ['cifar10', 'cifar100', 'ImageNet16-120', 'imagenet16']
+        assert data_set in ['cifar10', 'cifar100',
+                            'ImageNet16-120', 'imagenet16']
 
         self.nb2_api = NB2API(
             BASE_PATH + 'NAS-Bench-201-v1_1-096897.pth', verbose=False
@@ -63,7 +64,8 @@ class Nb201DatasetPINAT(Dataset):
 
         # self.preprocess_sample_range()
 
-        self.zcp_nb201 = json.load(open(BASE_PATH + 'zc_nasbench201.json', 'r'))
+        self.zcp_nb201 = json.load(
+            open(BASE_PATH + 'zc_nasbench201.json', 'r'))
         self.zcp_nb201_layerwise = json.load(
             open(BASE_PATH + 'zc_nasbench201_layerwise.json', 'r')
         )
@@ -151,8 +153,10 @@ class Nb201DatasetPINAT(Dataset):
         # filter the model that can not converge
         filtered_sample_range = []
         for index in self.sample_range:
-            val_acc = self.nasbench201_dict[str(index)]['%s_valid' % idx_data_set]
-            test_acc = self.nasbench201_dict[str(index)]['%s_test' % idx_data_set]
+            val_acc = self.nasbench201_dict[str(
+                index)]['%s_valid' % idx_data_set]
+            test_acc = self.nasbench201_dict[str(
+                index)]['%s_test' % idx_data_set]
             if val_acc > 12 and test_acc > 12:
                 filtered_sample_range.append(index)
         self.sample_range = filtered_sample_range
@@ -170,7 +174,8 @@ class Nb201DatasetPINAT(Dataset):
             ).T
 
             # Add normalization code here
-            self.norm_zcp['epe_nas'] = self.min_max_scaling(self.norm_zcp['epe_nas'])
+            self.norm_zcp['epe_nas'] = self.min_max_scaling(
+                self.norm_zcp['epe_nas'])
             self.norm_zcp['fisher'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['fisher'])
             )
@@ -180,14 +185,18 @@ class Nb201DatasetPINAT(Dataset):
             self.norm_zcp['grad_norm'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['grad_norm'])
             )
-            self.norm_zcp['grasp'] = self.standard_scaling(self.norm_zcp['grasp'])
-            self.norm_zcp['jacov'] = self.min_max_scaling(self.norm_zcp['jacov'])
-            self.norm_zcp['l2_norm'] = self.min_max_scaling(self.norm_zcp['l2_norm'])
+            self.norm_zcp['grasp'] = self.standard_scaling(
+                self.norm_zcp['grasp'])
+            self.norm_zcp['jacov'] = self.min_max_scaling(
+                self.norm_zcp['jacov'])
+            self.norm_zcp['l2_norm'] = self.min_max_scaling(
+                self.norm_zcp['l2_norm'])
             self.norm_zcp['nwot'] = self.min_max_scaling(self.norm_zcp['nwot'])
             self.norm_zcp['params'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['params'])
             )
-            self.norm_zcp['plain'] = self.min_max_scaling(self.norm_zcp['plain'])
+            self.norm_zcp['plain'] = self.min_max_scaling(
+                self.norm_zcp['plain'])
             self.norm_zcp['snip'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['snip'])
             )
@@ -323,8 +332,10 @@ class Nb201DatasetPINAT(Dataset):
         else:
             idx_data_set = self.data_set
 
-        val_acc = self.nasbench201_dict[str(ss_index)]['%s_valid' % idx_data_set]
-        test_acc = self.nasbench201_dict[str(ss_index)]['%s_test' % idx_data_set]
+        val_acc = self.nasbench201_dict[str(
+            ss_index)]['%s_valid' % idx_data_set]
+        test_acc = self.nasbench201_dict[str(
+            ss_index)]['%s_test' % idx_data_set]
         adjacency = self.nasbench201_dict[str(ss_index)]['adj_matrix']
         lapla = self._generate_lapla_matrix(adj_matrix=adjacency)
         operation = np.array(
@@ -375,7 +386,8 @@ class Nb201DatasetPINAT(Dataset):
         key = str(ss_index)
         # zcp_layerwise = self.zcp_nb201_layerwise[self.data_set][key][self.lw_zcps_selected]
         # Use combination of grad_norm, snip, synflow:
-        combinations = ['grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise']
+        combinations = ['grad_norm_layerwise',
+                        'snip_layerwise', 'synflow_layerwise']
 
         idx_dataset = self.data_set if self.data_set != 'ImageNet16-120' else 'cifar10'
 

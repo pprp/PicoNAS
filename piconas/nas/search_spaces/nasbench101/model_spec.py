@@ -114,7 +114,8 @@ class ModelSpec(object):
           MD5 hash of this spec which can be used to query the dataset.
         """
         # Invert the operations back to integer label indices used in graph gen.
-        labeling = [-1] + [canonical_ops.index(op) for op in self.ops[1:-1]] + [-2]
+        labeling = [-1] + [canonical_ops.index(op)
+                           for op in self.ops[1:-1]] + [-2]
         return hash_module(self.matrix, labeling)
 
     def visualize(self):

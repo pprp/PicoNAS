@@ -109,7 +109,8 @@ class ZCEnsembleEvaluator(object):
         )
 
         # Get their ZC scores
-        zc_predictors = [ZeroCost(method_type=zc_name) for zc_name in self.zc_names]
+        zc_predictors = [ZeroCost(method_type=zc_name)
+                         for zc_name in self.zc_names]
 
         logger.info('Computing ZC scores')
         self.compute_zc_scores(train_models, zc_predictors, train_loader)

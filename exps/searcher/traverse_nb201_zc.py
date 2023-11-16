@@ -27,7 +27,8 @@ def get_args():
         '--data_dir', type=str, default='./data/cifar', help='path to the dataset'
     )
 
-    parser.add_argument('--seed', type=int, default=42, help='seed of experiments')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='seed of experiments')
 
     parser.add_argument(
         '--model_name',
@@ -47,7 +48,8 @@ def get_args():
 
     # ******************************* settings *******************************#
 
-    parser.add_argument('--crit', type=str, default='ce', help='decide the criterion')
+    parser.add_argument('--crit', type=str, default='ce',
+                        help='decide the criterion')
     parser.add_argument(
         '--optims', type=str, default='sgd', help='decide the optimizer'
     )
@@ -55,16 +57,20 @@ def get_args():
         '--sched', type=str, default='cosine', help='decide the scheduler'
     )
 
-    parser.add_argument('--classes', type=int, default=10, help='dataset classes')
+    parser.add_argument('--classes', type=int, default=10,
+                        help='dataset classes')
     parser.add_argument('--layers', type=int, default=20, help='batch size')
     parser.add_argument(
         '--num_choices', type=int, default=4, help='number choices per layer'
     )
-    parser.add_argument('--batch_size', type=int, default=128, help='batch size')
+    parser.add_argument('--batch_size', type=int,
+                        default=128, help='batch size')
     parser.add_argument('--epochs', type=int, default=200, help='batch size')
-    parser.add_argument('--lr', type=float, default=0.025, help='initial learning rate')
+    parser.add_argument('--lr', type=float, default=0.025,
+                        help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
-    parser.add_argument('--weight-decay', type=float, default=5e-4, help='weight decay')
+    parser.add_argument('--weight-decay', type=float,
+                        default=5e-4, help='weight decay')
     parser.add_argument(
         '--val_interval', type=int, default=5, help='validate and save frequency'
     )
@@ -76,7 +82,8 @@ def get_args():
         '--dataset', type=str, default='cifar10', help='path to the dataset'
     )
     parser.add_argument('--cutout', action='store_true', help='use cutout')
-    parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
+    parser.add_argument('--cutout_length', type=int,
+                        default=16, help='cutout length')
     parser.add_argument(
         '--auto_aug', action='store_true', default=False, help='use auto augmentation'
     )
@@ -117,9 +124,11 @@ def main():
     else:
         device = torch.device('cpu')
 
-    train_dataloader = build_dataloader(type='train', dataset=args.dataset, config=args)
+    train_dataloader = build_dataloader(
+        type='train', dataset=args.dataset, config=args)
 
-    val_dataloader = build_dataloader(type='val', dataset=args.dataset, config=args)
+    val_dataloader = build_dataloader(
+        type='val', dataset=args.dataset, config=args)
 
     # build model
     model = build_model(args.model_name)
@@ -145,7 +154,8 @@ def main():
     # Random Search Algorithm for Zero-cost proxies
 
     # Build trainer and evaluator
-    evaluator = NB201Evaluator(trainer, num_sample=50, is_predictor=args.is_predictor)
+    evaluator = NB201Evaluator(
+        trainer, num_sample=50, is_predictor=args.is_predictor)
 
     # Record the best one with highest zc score
     best_subnet = None

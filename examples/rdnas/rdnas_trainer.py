@@ -58,7 +58,8 @@ class PGONASTrainer(BaseTrainer):
         self._init_flops()
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(num_sample=20, dataset=self.dataset)
+        self.evaluator = self._build_evaluator(
+            num_sample=20, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -109,7 +110,8 @@ class PGONASTrainer(BaseTrainer):
         # load model for predictor
         p_model = create_best_nb201_model()
         ckpt_dir = '/data/lujunl/pprp/PicoNAS/checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
-        p_model.load_state_dict(torch.load(ckpt_dir, map_location=torch.device('cpu')))
+        p_model.load_state_dict(torch.load(
+            ckpt_dir, map_location=torch.device('cpu')))
         self.predictor = p_model
         self.predictor_datasets = Nb201DatasetPINAT(
             split=78, data_type='test', data_set='cifar10'
@@ -484,7 +486,8 @@ class PGONASTrainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 # move to device
-                outputs, labels = self._predict(batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(
+                    batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
@@ -555,9 +558,11 @@ class PGONASTrainer(BaseTrainer):
         samples = self.predictor_datasets.get_batch(_idx)
         # keys = num_vertices, lapla, edge_numm, edge_index_list, features, operations, zcp_layerwise
         # convert samples with keys to batch_inputs
-        key_list = ['num_vertices', 'lapla', 'edge_num', 'features', 'zcp_layerwise']
+        key_list = ['num_vertices', 'lapla',
+                    'edge_num', 'features', 'zcp_layerwise']
         # convert to batch-like
-        samples['edge_index_list'] = [samples['edge_index_list'].to(self.device)]
+        samples['edge_index_list'] = [
+            samples['edge_index_list'].to(self.device)]
         samples['operations'] = (
             torch.tensor(samples['operations'])
             .unsqueeze(dim=0)
@@ -567,12 +572,15 @@ class PGONASTrainer(BaseTrainer):
         for _key in key_list:
             if isinstance(samples[_key], (list, float, int)):
                 samples[_key] = torch.tensor(samples[_key])
-                samples[_key] = torch.unsqueeze(samples[_key], dim=0).to(self.device)
+                samples[_key] = torch.unsqueeze(
+                    samples[_key], dim=0).to(self.device)
             elif isinstance(samples[_key], np.ndarray):
                 samples[_key] = torch.from_numpy(samples[_key])
-                samples[_key] = torch.unsqueeze(samples[_key], dim=0).to(self.device)
+                samples[_key] = torch.unsqueeze(
+                    samples[_key], dim=0).to(self.device)
             elif isinstance(samples[_key], torch.Tensor):
-                samples[_key] = torch.unsqueeze(samples[_key], dim=0).to(self.device)
+                samples[_key] = torch.unsqueeze(
+                    samples[_key], dim=0).to(self.device)
             else:
                 raise NotImplementedError(
                     f'key: {_key} is not list, is a {type(samples[_key])}'
@@ -752,12 +760,14 @@ class PGONASTrainer(BaseTrainer):
             loss = self._compute_loss(outputs, labels)
             loss.backward(retain_graph=True)
             # prior = torch.tensor([self.get_subnet_predictor(subnet)]).to(self.device)
-            prior = torch.tensor([self.get_subnet_flops(subnet)]).to(self.device)
+            prior = torch.tensor(
+                [self.get_subnet_flops(subnet)]).to(self.device)
 
             loss_list.append(loss)
             prior_list.append(prior)
 
-        loss_tensor, prior_tensor = torch.tensor(loss_list), torch.tensor(prior_list)
+        loss_tensor, prior_tensor = torch.tensor(
+            loss_list), torch.tensor(prior_list)
         loss_tensor, prior_tensor = loss_tensor.to(self.device), prior_tensor.to(
             self.device
         )
@@ -810,9 +820,11 @@ class PGONASTrainer(BaseTrainer):
 
         # distill loss
         if loss2 > loss1:
-            loss4 = self.distill_loss(feat_s=feat2, feat_t=feat1) * self.lambda_kd
+            loss4 = self.distill_loss(
+                feat_s=feat2, feat_t=feat1) * self.lambda_kd
         else:
-            loss4 = self.distill_loss(feat_s=feat1, feat_t=feat2) * self.lambda_kd
+            loss4 = self.distill_loss(
+                feat_s=feat1, feat_t=feat2) * self.lambda_kd
         loss_list.append(loss4)
 
         loss = sum(loss_list)
@@ -855,7 +867,8 @@ class PGONASTrainer(BaseTrainer):
             for j in range(i):
                 flops1, flops2 = flops_list[i], flops_list[j]
                 loss1, loss2 = loss_list[i], loss_list[j]
-                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+                tmp_rank_loss = self.pairwise_rankloss(
+                    flops1, flops2, loss1, loss2)
 
                 rank_loss_list.append(tmp_rank_loss)
 

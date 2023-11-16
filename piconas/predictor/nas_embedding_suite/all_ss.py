@@ -216,7 +216,7 @@ class AllSS:
                 # Convert it into 7 x max_oplen with leading zero padding
                 padded_opmat = np.zeros((opmat.shape[0], self.max_oplen))
                 for i in range(opmat.shape[0]):
-                    padded_opmat[i, -opmat.shape[1] :] = opmat[i]
+                    padded_opmat[i, -opmat.shape[1]:] = opmat[i]
                 # ss_pad will have a 1 x 4 opmat will have a shape 7 x max_oplen
                 # replicate ss_pad on each row of opmat to make it 7 x (max_oplen + 4)
                 ss_pad = self.ss_to_binary(space)
@@ -234,12 +234,13 @@ class AllSS:
                     # Convert it into 7 x max_oplen with leading zero padding
                     padded_ropmat = np.zeros((ropmat.shape[0], self.max_oplen))
                     for i in range(ropmat.shape[0]):
-                        padded_ropmat[i, -ropmat.shape[1] :] = ropmat[i]
+                        padded_ropmat[i, -ropmat.shape[1]:] = ropmat[i]
                     # ss_pad will have a 1 x 4 opmat will have a shape 7 x max_oplen
                     # replicate ss_pad on each row of opmat to make it 7 x (max_oplen + 4)
                     ss_pad = self.ss_to_binary(space)
                     final_mat = np.hstack(
-                        [padded_ropmat, np.tile(ss_pad, (padded_ropmat.shape[0], 1))]
+                        [padded_ropmat, np.tile(
+                            ss_pad, (padded_ropmat.shape[0], 1))]
                     )
                     new_adj_op_mat[matkey] = final_mat.tolist()
             return new_adj_op_mat

@@ -17,7 +17,8 @@ def adj_distance(cell_1, cell_2):
     by comparing their adjacency matrices and op lists
     (edit distance)
     """
-    graph_dist = np.sum(np.array(cell_1.get_matrix()) != np.array(cell_2.get_matrix()))
+    graph_dist = np.sum(np.array(cell_1.get_matrix()) !=
+                        np.array(cell_2.get_matrix()))
     ops_dist = np.sum(np.array(cell_1.get_ops()) != np.array(cell_2.get_ops()))
     return graph_dist + ops_dist
 
@@ -46,7 +47,8 @@ def nasbot_distance(cell_1, cell_2):
         cell_1_ops = cell_1.get_op_list()
         cell_2_ops = cell_2.get_op_list()
         return np.sum(
-            [1 for i in range(len(cell_1_ops)) if cell_1_ops[i] != cell_2_ops[i]]
+            [1 for i in range(len(cell_1_ops))
+             if cell_1_ops[i] != cell_2_ops[i]]
         )
 
     cell_1_ops = cell_1.get_op_list()
@@ -127,7 +129,8 @@ class Cell201:
         ops = self.get_op_list()
         ops = [INPUT, *ops, OUTPUT]
         ops_onehot = np.array(
-            [[i == op_map.index(op) for i in range(len(op_map))] for op in ops],
+            [[i == op_map.index(op) for i in range(len(op_map))]
+             for op in ops],
             dtype=np.float32,
         )
         val_loss = self.get_val_loss(nasbench, deterministic=deterministic)
@@ -192,7 +195,8 @@ class Cell201:
         # given a string, get the list of operations
 
         tokens = self.string.split('|')
-        ops = [t.split('~')[0] for i, t in enumerate(tokens) if i not in [0, 2, 5, 9]]
+        ops = [t.split('~')[0]
+               for i, t in enumerate(tokens) if i not in [0, 2, 5, 9]]
         return ops
 
     def get_num(self):
@@ -340,7 +344,8 @@ class Cell201:
 
     def encode_paths(self):
         """output one-hot encoding of paths"""
-        num_paths = sum([NUM_OPS**i for i in range(1, LONGEST_PATH_LENGTH + 1)])
+        num_paths = sum(
+            [NUM_OPS**i for i in range(1, LONGEST_PATH_LENGTH + 1)])
         path_indices = self.get_path_indices()
         encoding = np.zeros(num_paths)
         for index in path_indices:
@@ -349,7 +354,8 @@ class Cell201:
 
     def encode_freq_paths(self, cutoff=30):
         # natural cutoffs 5, 30, 155 (last)
-        num_paths = sum([NUM_OPS**i for i in range(1, LONGEST_PATH_LENGTH + 1)])
+        num_paths = sum(
+            [NUM_OPS**i for i in range(1, LONGEST_PATH_LENGTH + 1)])
         path_indices = self.get_path_indices()
         encoding = np.zeros(cutoff)
         for index in range(min(num_paths, cutoff)):
@@ -404,7 +410,8 @@ class Cell201:
                             if ops[j] != new_ops[j]:
                                 same = False
                         if not same:
-                            new_arch = {'string': self.get_string_from_ops(new_ops)}
+                            new_arch = {
+                                'string': self.get_string_from_ops(new_ops)}
                             nbhd.append(new_arch)
         else:
             print('{} is an invalid mutate encoding'.format(mutate_encoding))

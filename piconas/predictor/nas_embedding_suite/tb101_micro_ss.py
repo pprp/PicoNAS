@@ -16,7 +16,8 @@ class TransNASBench101Micro:
         zcp_dict=False,
         normalize_zcp=True,
         log_synflow=True,
-        embedding_list=['adj', 'adj_op', 'path', 'one_hot', 'path_indices', 'zcp'],
+        embedding_list=['adj', 'adj_op', 'path',
+                        'one_hot', 'path_indices', 'zcp'],
     ):
         if path is None:
             path = ''
@@ -30,7 +31,8 @@ class TransNASBench101Micro:
         ]
         self.cate_embeddings = {
             k: torch.load(
-                BASE_PATH + 'cate_embeddings/cate_transnasbench101_{}.pt'.format(k)
+                BASE_PATH +
+                'cate_embeddings/cate_transnasbench101_{}.pt'.format(k)
             )
             for k in sspaces
         }
@@ -59,7 +61,8 @@ class TransNASBench101Micro:
             'synflow',
             'zen',
         ]
-        self.zcp_tb101 = json.load(open(BASE_PATH + 'zc_transbench101_micro.json', 'r'))
+        self.zcp_tb101 = json.load(
+            open(BASE_PATH + 'zc_transbench101_micro.json', 'r'))
         self.unnorm_zcp_tb101 = json.load(
             open(BASE_PATH + 'zc_transbench101_micro.json', 'r')
         )
@@ -99,13 +102,16 @@ class TransNASBench101Micro:
                     }
                 ).T
                 if log_synflow:
-                    self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(0, 1e-2)
-                    self.norm_zcp['synflow'] = np.log10(self.norm_zcp['synflow'])
+                    self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(
+                        0, 1e-2)
+                    self.norm_zcp['synflow'] = np.log10(
+                        self.norm_zcp['synflow'])
                 else:
                     print(
                         'WARNING: Not taking log of synflow values for normalization results in very small synflow inputs'
                     )
-                minfinite = self.norm_zcp['synflow'].replace(-np.inf, 1000).min()
+                minfinite = self.norm_zcp['synflow'].replace(
+                    -np.inf, 1000).min()
                 self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(
                     -np.inf, minfinite + 1e-2
                 )
@@ -132,7 +138,8 @@ class TransNASBench101Micro:
             'input': 4,
             'output': 5,
         }
-        self._index_to_opname = {v: k for k, v in self._opname_to_index.items()}
+        self._index_to_opname = {v: k for k,
+                                 v in self._opname_to_index.items()}
         self.OPS = [self.ZEROIZE, self.SKIP, self.CONV1X1, self.CONV3X3]
         self.init_op_map = {
             0: self.ZEROIZE,
@@ -146,7 +153,8 @@ class TransNASBench101Micro:
     def get_adjmlp_zcp(self, idx, task=None):
         adj_mat, op_mat = self.get_adj_op(idx, task).values()
         adj_mat = np.asarray(adj_mat).flatten()
-        op_mat = torch.Tensor(np.asarray(op_mat)).argmax(dim=1).numpy().flatten()
+        op_mat = torch.Tensor(np.asarray(op_mat)).argmax(
+            dim=1).numpy().flatten()
         op_mat = op_mat / np.max(op_mat)
         return np.concatenate(
             [adj_mat, op_mat, np.asarray(self.get_zcp(idx, task))]
@@ -206,7 +214,8 @@ class TransNASBench101Micro:
         ops_ = [self.init_op_map[x] for x in op_list]
         ops_ = [self.INPUT, *ops_, self.OUTPUT]
         ops_onehot = np.array(
-            [[i == op_map.index(op) for i in range(len(op_map))] for op in ops_],
+            [[i == op_map.index(op) for i in range(len(op_map))]
+             for op in ops_],
             dtype=np.float32,
         )
         return ops_onehot
@@ -268,7 +277,8 @@ class TransNASBench101Micro:
                             vis[other] = True
 
             bfs(0, visited_fw, lambda src, dst: matrix[src][dst])  # forward
-            bfs(n_nodes - 1, visited_bw, lambda src, dst: matrix[dst][src])  # backward
+            bfs(n_nodes - 1, visited_bw, lambda src,
+                dst: matrix[dst][src])  # backward
             for v in range(n_nodes - 1, -1, -1):
                 if not visited_fw[v] or not visited_bw[v]:
                     labels[v] = None
@@ -295,6 +305,7 @@ class TransNASBench101Micro:
         if task is None:
             task = 'class_scene'
         return (
-            self.unnorm_zcp_tb101[task][self.hash_iterator_list[idx]]['params']['score']
+            self.unnorm_zcp_tb101[task][self.hash_iterator_list[idx]
+                                        ]['params']['score']
             * 1e5
         )

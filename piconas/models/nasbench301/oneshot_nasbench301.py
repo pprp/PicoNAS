@@ -54,7 +54,8 @@ class Node(nn.Module):
                 }
             )
             edges.add_module(
-                edge_id, OneShotOP(candidate_ops=candidate_ops, alias=f'{node_id}_p{i}')
+                edge_id, OneShotOP(candidate_ops=candidate_ops,
+                                   alias=f'{node_id}_p{i}')
             )
         self.route = OneShotChoiceRoute(edges=edges, alias=node_id)
 
@@ -90,9 +91,11 @@ class DartsCell(nn.Module):
         # If previous cell is reduction cell, current input size does not match with
         # output size of cell[k-2]. So the output[k-2] should be reduced by preprocessing.
         if reduction_p:
-            self.preproc0 = FactorizedReduce(channels_pp, channels, affine=False)
+            self.preproc0 = FactorizedReduce(
+                channels_pp, channels, affine=False)
         else:
-            self.preproc0 = StdConv(channels_pp, channels, 1, 1, 0, affine=False)
+            self.preproc0 = StdConv(
+                channels_pp, channels, 1, 1, 0, affine=False)
         self.preproc1 = StdConv(channels_p, channels, 1, 1, 0, affine=False)
 
         # generate dag
@@ -150,7 +153,8 @@ class OneShotNASBench301Network(nn.Module):
 
         c_cur = stem_multiplier * self.channels
         self.stem = nn.Sequential(
-            nn.Conv2d(in_channels, c_cur, 3, 1, 1, bias=False), nn.BatchNorm2d(c_cur)
+            nn.Conv2d(in_channels, c_cur, 3, 1, 1,
+                      bias=False), nn.BatchNorm2d(c_cur)
         )
 
         # for the first cell, stem is used for both s0 and s1

@@ -105,7 +105,8 @@ class NasBench201SearchSpace(Graph):
         # stage 2
         self.edges[7, 8].set(
             'op',
-            ResNetBasicblock(C_in=self.channels[0], C_out=self.channels[1], stride=2),
+            ResNetBasicblock(
+                C_in=self.channels[0], C_out=self.channels[1], stride=2),
         )
         for i in range(8, 13):
             self.edges[i, i + 1].set('op', cell.copy().set_scope('stage_2'))
@@ -113,7 +114,8 @@ class NasBench201SearchSpace(Graph):
         # stage 3
         self.edges[13, 14].set(
             'op',
-            ResNetBasicblock(C_in=self.channels[1], C_out=self.channels[2], stride=2),
+            ResNetBasicblock(
+                C_in=self.channels[1], C_out=self.channels[2], stride=2),
         )
         for i in range(14, 19):
             self.edges[i, i + 1].set('op', cell.copy().set_scope('stage_3'))
@@ -136,7 +138,8 @@ class NasBench201SearchSpace(Graph):
         # set the ops at the cells (channel dependent)
         for scope, c in zip(self.OPTIMIZER_SCOPE, self.channels):
             self.update_edges(
-                update_func=lambda edge: NasBench201SearchSpace._set_ops(edge, C=c),
+                update_func=lambda edge: NasBench201SearchSpace._set_ops(
+                    edge, C=c),
                 scope=scope,
                 private_edge_data=True,
             )
@@ -163,7 +166,8 @@ class NasBench201SearchSpace(Graph):
                 'ImageNet16-120',
             ], 'Unknown dataset: {}'.format(dataset)
         if dataset_api is None:
-            raise NotImplementedError('Must pass in dataset_api to query NAS-Bench-201')
+            raise NotImplementedError(
+                'Must pass in dataset_api to query NAS-Bench-201')
 
         metric_to_nb201 = {
             Metric.TRAIN_ACCURACY: 'train_acc1es',
@@ -296,7 +300,8 @@ class NasBench201SearchSpace(Graph):
         op_indices = list(parent_op_indices)
 
         edge = np.random.choice(len(parent_op_indices))
-        available = [o for o in range(len(OP_NAMES)) if o != parent_op_indices[edge]]
+        available = [o for o in range(
+            len(OP_NAMES)) if o != parent_op_indices[edge]]
         op_index = np.random.choice(available)
         op_indices[edge] = op_index
         self.set_op_indices(op_indices)

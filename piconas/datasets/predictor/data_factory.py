@@ -7,7 +7,8 @@ from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
 def create_dataloader(args):
     # load dataset
     if args.bench == '101':
-        train_set = Nb101DatasetPINAT(split=args.train_split, data_type='train')
+        train_set = Nb101DatasetPINAT(
+            split=args.train_split, data_type='train')
         test_set = Nb101DatasetPINAT(split=args.eval_split, data_type='test')
     elif args.bench == '201':
         train_set = Nb201DatasetPINAT(

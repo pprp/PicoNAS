@@ -118,13 +118,16 @@ class Level(list):
                 item.prior_score = prior_score
 
     def sort_by_iters(self) -> None:
-        self.data = sorted(self.data, key=lambda brick: brick.num_iters, reverse=True)
+        self.data = sorted(
+            self.data, key=lambda brick: brick.num_iters, reverse=True)
 
     def sort_by_prior(self) -> None:
-        self.data = sorted(self.data, key=lambda brick: brick.prior_score, reverse=True)
+        self.data = sorted(
+            self.data, key=lambda brick: brick.prior_score, reverse=True)
 
     def sort_by_val(self) -> None:
-        self.data = sorted(self.data, key=lambda brick: brick.val_acc, reverse=True)
+        self.data = sorted(
+            self.data, key=lambda brick: brick.val_acc, reverse=True)
 
     def __repr__(self):
         res = 'Level: \n'
@@ -181,7 +184,8 @@ class SuccessiveHalvingPyramid:
         for _ in range(K_init):
             current_brick = Brick(self.mutator.random_subnet)
             # zen score
-            prior_score = self.evaluator.query_zerometric(current_brick.subnet_cfg)
+            prior_score = self.evaluator.query_zerometric(
+                current_brick.subnet_cfg)
             current_brick.prior_score = prior_score
             self.pyramid[0].append(current_brick)
 
@@ -216,7 +220,8 @@ class SuccessiveHalvingPyramid:
             for brick in level[: int(self.move_ratio * K)]:
                 subnet_cfg = brick.subnet_cfg
 
-                self.trainer.fit_specific(train_loader, val_loader, epoch, subnet_cfg)
+                self.trainer.fit_specific(
+                    train_loader, val_loader, epoch, subnet_cfg)
 
                 brick.num_iters += epoch
                 brick.val_acc = self.trainer._validate(val_loader)
@@ -234,7 +239,8 @@ class SuccessiveHalvingPyramid:
         for _ in range(self.K_proposal):
             current_brick = Brick(self.mutator.random_subnet)
             # zen score
-            prior_score = self.evaluator.query_zerometric(current_brick.subnet_cfg)
+            prior_score = self.evaluator.query_zerometric(
+                current_brick.subnet_cfg)
             current_brick.prior_score = prior_score
             self.pyramid[0].append(current_brick)
 
@@ -253,7 +259,8 @@ class SuccessiveHalvingPyramid:
             current_brick = random.sample(
                 current_level.data[: len(current_level) // 2], 1
             )[0]
-            next_brick = random.sample(next_level.data[: len(next_level) // 2], 1)[0]
+            next_brick = random.sample(
+                next_level.data[: len(next_level) // 2], 1)[0]
             inputs, labels = iter_loader.next()
             inputs = inputs.cuda()
             labels = labels.cuda()

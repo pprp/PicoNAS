@@ -44,9 +44,11 @@ class BasicBlock(nn.Module):
         if norm_layer is None:
             norm_layer = BN
         if groups != 1 or base_width != 64:
-            raise ValueError('BasicBlock only supports groups=1 and base_width=64')
+            raise ValueError(
+                'BasicBlock only supports groups=1 and base_width=64')
         if dilation > 1:
-            raise NotImplementedError('Dilation > 1 not supported in BasicBlock')
+            raise NotImplementedError(
+                'Dilation > 1 not supported in BasicBlock')
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = norm_layer(planes)
@@ -165,20 +167,24 @@ class ResNet(nn.Module):
         if len(replace_stride_with_dilation) != 3:
             raise ValueError(
                 'replace_stride_with_dilation should be None '
-                'or a 3-element tuple, got {}'.format(replace_stride_with_dilation)
+                'or a 3-element tuple, got {}'.format(
+                    replace_stride_with_dilation)
             )
         self.groups = groups
         self.base_width = width_per_group
 
         if self.deep_stem:
             self.conv1 = nn.Sequential(
-                nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1, bias=False),
+                nn.Conv2d(3, 32, kernel_size=3, stride=2,
+                          padding=1, bias=False),
                 norm_layer(32),
                 nn.ReLU(inplace=True),
-                nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1, bias=False),
+                nn.Conv2d(32, 32, kernel_size=3, stride=1,
+                          padding=1, bias=False),
                 norm_layer(32),
                 nn.ReLU(inplace=True),
-                nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1, bias=False),
+                nn.Conv2d(32, 64, kernel_size=3, stride=1,
+                          padding=1, bias=False),
             )
         else:
             self.conv1 = nn.Conv2d(
@@ -203,7 +209,8 @@ class ResNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(
+                    m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)

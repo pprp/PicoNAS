@@ -12,7 +12,8 @@ zc_name_list = [
 zc_name_legend = ['plain', 'gradnorm', 'fisher']
 # grasp_layerwise
 # Define a list of custom colors suitable for scientific figures with higher opacity
-custom_colors = ['#e377c2', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+custom_colors = ['#e377c2', '#ff7f0e',
+                 '#2ca02c', '#d62728', '#9467bd', '#8c564b']
 custom_marker = ['o', '*', 'D', '^', 'D', 'P']
 
 # Create a single figure using "ggplot" style

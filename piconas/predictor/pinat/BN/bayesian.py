@@ -13,7 +13,8 @@ class BayesianLayer(nn.Module):
         self.weight_mu = nn.Parameter(torch.Tensor(output_size, input_size))
         self.weight_rho = nn.Parameter(torch.Tensor(output_size, input_size))
 
-        self.register_buffer('weight_eps', torch.Tensor(output_size, input_size))
+        self.register_buffer(
+            'weight_eps', torch.Tensor(output_size, input_size))
 
         self.reset_parameters()
 
@@ -25,7 +26,8 @@ class BayesianLayer(nn.Module):
     def forward(self, input):
         # Reparameterization trick for the weights
         epsilon = torch.randn_like(self.weight_eps)
-        weight = self.weight_mu + torch.log1p(torch.exp(self.weight_rho)) * epsilon
+        weight = self.weight_mu + \
+            torch.log1p(torch.exp(self.weight_rho)) * epsilon
 
         # Linear transformation with Bayesian weights
         return torch.mm(input, weight.t())

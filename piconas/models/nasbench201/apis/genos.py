@@ -31,7 +31,8 @@ class Structure:
             assert isinstance(node_info, list) or isinstance(
                 node_info, tuple
             ), 'invalid class of node_info : {:}'.format(type(node_info))
-            assert len(node_info) >= 1, 'invalid length : {:}'.format(len(node_info))
+            assert len(node_info) >= 1, 'invalid length : {:}'.format(
+                len(node_info))
             for node_in in node_info:
                 assert isinstance(node_in, list) or isinstance(
                     node_in, tuple

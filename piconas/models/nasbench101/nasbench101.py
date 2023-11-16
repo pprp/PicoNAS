@@ -25,7 +25,8 @@ class Cell(nn.Module):
             nodes.append(ConvBnRelu(self.inplanes, self.outplanes, 3))
             nodes.append(MaxPool(self.inplanes, self.outplanes))
         nodes.append(nn.Conv2d(outplanes, outplanes, kernel_size=1, stride=1))
-        self.edges = OneShotPathOP(candidate_ops=nodes, alias=f'layer-{layer_idx}')
+        self.edges = OneShotPathOP(
+            candidate_ops=nodes, alias=f'layer-{layer_idx}')
 
         self.bn_list = nn.ModuleList([])
         if self.shadow_bn:

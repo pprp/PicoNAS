@@ -74,7 +74,8 @@ class MacroEvaluator(Evaluator):
             self.trainer.logger.info(f'evaluating the {i}th architecture.')
 
             subnet_dict = convert_arch2dict(k)
-            indicator = self.trainer.metric_score(dataloader, subnet_dict=subnet_dict)
+            indicator = self.trainer.metric_score(
+                dataloader, subnet_dict=subnet_dict)
 
             supernet_indicator_list.append(indicator)
             true_indicator_list.append(v[self.type])
@@ -83,7 +84,8 @@ class MacroEvaluator(Evaluator):
         ps = pearson(true_indicator_list, supernet_indicator_list)
         sp = spearman(true_indicator_list, supernet_indicator_list)
 
-        print(f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+        print(
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
 
         return kt, ps, sp
 
@@ -108,7 +110,8 @@ class MacroEvaluator(Evaluator):
         ps = pearson(true_indicator_list, supernet_indicator_list)
         sp = spearman(true_indicator_list, supernet_indicator_list)
 
-        print(f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+        print(
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
         return kt, ps, sp
 
     def compute_rank_by_nwot(self):
@@ -132,5 +135,6 @@ class MacroEvaluator(Evaluator):
         ps = pearson(true_indicator_list, supernet_indicator_list)
         sp = spearman(true_indicator_list, supernet_indicator_list)
 
-        print(f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+        print(
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
         return kt, ps, sp

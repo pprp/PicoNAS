@@ -12,7 +12,8 @@ class ViTBenchAPI:
 
     def query_by_idx(self, idx: int) -> Dict:
         if idx < 0 or idx >= len(self.data):
-            raise IndexError(f'Index out of range. Max index: {len(self.data) - 1}')
+            raise IndexError(
+                f'Index out of range. Max index: {len(self.data) - 1}')
         return self.data[idx]
 
     def query_by_arch(self, arch: Dict) -> List[Dict]:

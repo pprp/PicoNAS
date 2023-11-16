@@ -56,6 +56,7 @@ class NATSEvaluator(Evaluator):
         ps = pearson(true_indicator_list, supernet_indicator_list)
         sp = spearman(true_indicator_list, supernet_indicator_list)
 
-        print(f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+        print(
+            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
 
         return kt, ps, sp

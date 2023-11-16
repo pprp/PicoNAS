@@ -52,15 +52,18 @@ class MacroNet(nn.Module):
                 self.feature_dim[0] // stride,
                 self.feature_dim[1] // stride,
             ]
-            layer = self._make_layer(self.cell, target_channel, 2, stride, True, True)
+            layer = self._make_layer(
+                self.cell, target_channel, 2, stride, True, True)
             self.add_module(f'layer{i}', layer)
             self.layers.append(f'layer{i}')
 
         self.avgpool = (
-            nn.AdaptiveAvgPool2d((1, 1)) if structure in ['drop_last', 'full'] else None
+            nn.AdaptiveAvgPool2d((1, 1)) if structure in [
+                'drop_last', 'full'] else None
         )
         self.head = (
-            nn.Linear(self.inplanes, num_classes) if structure in ['full'] else None
+            nn.Linear(self.inplanes, num_classes) if structure in [
+                'full'] else None
         )
 
         if structure == 'full':
@@ -132,7 +135,8 @@ class MacroNet(nn.Module):
         # kaiming initialization
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(
+                    m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)

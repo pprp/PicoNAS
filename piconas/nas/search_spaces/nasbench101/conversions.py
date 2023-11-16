@@ -13,7 +13,8 @@ CONV3X3 = 'conv3x3-bn-relu'
 MAXPOOL3X3 = 'maxpool3x3'
 NUM_VERTICES = 7
 
-all_ops = ['input', 'output', 'maxpool3x3', 'conv1x1-bn-relu', 'conv3x3-bn-relu']
+all_ops = ['input', 'output', 'maxpool3x3',
+           'conv1x1-bn-relu', 'conv3x3-bn-relu']
 
 
 def get_children(model):

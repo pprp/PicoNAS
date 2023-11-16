@@ -149,7 +149,8 @@ def train(
                     predict, target
                 )
             elif args.loss_type == 'pw+dk':
-                loss = pair_loss(predict, target.float()) + diffkendall(predict, target)
+                loss = pair_loss(predict, target.float()) + \
+                    diffkendall(predict, target)
             elif args.loss_type == 'mse+pw+dk':
                 loss = (
                     criterion1(predict, target.float())
@@ -203,7 +204,8 @@ def train(
                 )
 
         if epoch > 20 and epoch % 10 == 0:
-            kd_test, _, _ = evaluate(train_set, train_loader, model, criterion1)
+            kd_test, _, _ = evaluate(
+                train_set, train_loader, model, criterion1)
             epoch_list.append(epoch)
             kd_list.append(kd_test)
 
@@ -249,7 +251,8 @@ def evaluate(test_set, test_loader, model, criterion):
             )
             if step % args.eval_print_freq == 0 or step + 1 == len(test_loader):
                 logging.info(
-                    'Evaluation Step [%d/%d]  %s', step + 1, len(test_loader), meters
+                    'Evaluation Step [%d/%d]  %s', step +
+                    1, len(test_loader), meters
                 )
             # make np.array to str
             adj = batch['adjacency'].cpu().numpy()
@@ -328,7 +331,8 @@ def main():
     # define loss, optimizer, and lr_scheduler
     criterion1 = nn.MSELoss()
     criterion2 = PairwiseRankLoss()
-    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
+    optimizer = optim.Adam(
+        model.parameters(), lr=args.lr, weight_decay=args.wd)
     lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     # train and evaluate predictor

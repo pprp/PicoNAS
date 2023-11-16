@@ -36,7 +36,8 @@ def get_tagates_sample_indices(args):
                 + '/'
                 + 'nas_embedding_suite/embedding_datasets/'
             )
-            nb1_api = NB1API.NASBench(BASE_PATH + 'nasbench_only108_caterec.tfrecord')
+            nb1_api = NB1API.NASBench(
+                BASE_PATH + 'nasbench_only108_caterec.tfrecord')
             hash_to_idx = {
                 v: idx for idx, v in enumerate(list(nb1_api.hash_iterator()))
             }
@@ -47,7 +48,8 @@ def get_tagates_sample_indices(args):
                 'rb',
             ) as fp:
                 nb101_hash = pickle.load(fp)
-            nb101_tagates_sample_indices = [hash_to_idx[hash_] for hash_ in nb101_hash]
+            nb101_tagates_sample_indices = [
+                hash_to_idx[hash_] for hash_ in nb101_hash]
             with open(
                 os.environ['PROJ_BPATH']
                 + '/'
@@ -244,7 +246,8 @@ def get_accuracy(inputs, targets):
     ops, adj = targets[0], targets[1]
     # post processing, assume non-symmetric
     adj_recon, adj = adj_recon.triu(1), adj.triu(1)
-    correct_ops = ops_recon.argmax(dim=-1).eq(ops.argmax(dim=-1)).float().mean().item()
+    correct_ops = ops_recon.argmax(
+        dim=-1).eq(ops.argmax(dim=-1)).float().mean().item()
     mean_correct_adj = adj_recon[adj.type(torch.bool)].sum().item() / adj.sum()
     mean_false_positive_adj = adj_recon[
         (~adj.type(torch.bool)).triu(1)
@@ -335,7 +338,8 @@ def get_val_acc(model, cfg, X_adj, X_ops, indices):
         ) = get_accuracy((ops_recon, adj_recon), (ops, adj))
         correct_ops_ave += correct_ops * len(ind) / len(indices)
         mean_correct_adj_ave += mean_correct_adj * len(ind) / len(indices)
-        mean_false_positive_adj_ave += mean_false_positive_adj * len(ind) / len(indices)
+        mean_false_positive_adj_ave += mean_false_positive_adj * \
+            len(ind) / len(indices)
         correct_adj_ave += correct_adj * len(ind) / len(indices)
 
     return (
@@ -379,7 +383,8 @@ def get_val_acc_vae(model, cfg, X_adj, X_ops, indices):
         ) = get_accuracy((ops_recon, adj_recon), (ops, adj))
         correct_ops_ave += correct_ops * len(ind) / len(indices)
         mean_correct_adj_ave += mean_correct_adj * len(ind) / len(indices)
-        mean_false_positive_adj_ave += mean_false_positive_adj * len(ind) / len(indices)
+        mean_false_positive_adj_ave += mean_false_positive_adj * \
+            len(ind) / len(indices)
         correct_adj_ave += correct_adj * len(ind) / len(indices)
 
     return (

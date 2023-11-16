@@ -103,7 +103,8 @@ PARAMETER_OP = [
 ]
 
 CONNECT_NAS_BENCHMARK = ['none', 'skip_connect', 'nor_conv_3x3']
-NAS_BENCH_201 = ['none', 'skip_connect', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3']
+NAS_BENCH_201 = ['none', 'skip_connect',
+                 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3']
 DARTS_SPACE = [
     'none',
     'skip_connect',
@@ -291,7 +292,8 @@ class POOLING(nn.Module):
                 C_in, C_out, 1, 1, 0, affine, track_running_stats
             )
         if mode == 'avg':
-            self.op = nn.AvgPool2d(3, stride=stride, padding=1, count_include_pad=False)
+            self.op = nn.AvgPool2d(
+                3, stride=stride, padding=1, count_include_pad=False)
         elif mode == 'max':
             self.op = nn.MaxPool2d(3, stride=stride, padding=1)
         else:
@@ -360,11 +362,13 @@ class FactorizedReduce(nn.Module):
             self.convs = nn.ModuleList()
             for i in range(2):
                 self.convs.append(
-                    nn.Conv2d(C_in, C_outs[i], 1, stride=stride, padding=0, bias=False)
+                    nn.Conv2d(C_in, C_outs[i], 1,
+                              stride=stride, padding=0, bias=False)
                 )
             self.pad = nn.ConstantPad2d((0, 1, 0, 1), 0)
         elif stride == 1:
-            self.conv = nn.Conv2d(C_in, C_out, 1, stride=stride, padding=0, bias=False)
+            self.conv = nn.Conv2d(
+                C_in, C_out, 1, stride=stride, padding=0, bias=False)
         else:
             raise ValueError('Invalid stride : {:}'.format(stride))
         self.bn = nn.BatchNorm2d(
@@ -375,7 +379,8 @@ class FactorizedReduce(nn.Module):
         if self.stride == 2:
             x = self.relu(x)
             y = self.pad(x)
-            out = torch.cat([self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])], dim=1)
+            out = torch.cat(
+                [self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])], dim=1)
         else:
             out = self.conv(x)
         out = self.bn(out)
@@ -387,12 +392,14 @@ class FactorizedReduce(nn.Module):
     def wider(self, new_C_in, new_C_out):
         if self.stride == 2:
             self.convs[0], _ = InChannelWider(self.convs[0], new_C_in)
-            self.convs[0], index1 = OutChannelWider(self.convs[0], new_C_out // 2)
+            self.convs[0], index1 = OutChannelWider(
+                self.convs[0], new_C_out // 2)
             self.convs[1], _ = InChannelWider(self.convs[1], new_C_in)
             self.convs[1], index2 = OutChannelWider(
                 self.convs[1], new_C_out - new_C_out // 2
             )
-            self.bn, _ = BNWider(self.bn, new_C_out, index=torch.cat([index1, index2]))
+            self.bn, _ = BNWider(self.bn, new_C_out,
+                                 index=torch.cat([index1, index2]))
         elif self.stride == 1:
             self.conv, _ = InChannelWider(self.conv, new_C_in)
             self.conv, index = OutChannelWider(self.conv, new_C_out)
@@ -428,7 +435,8 @@ def InChannelWider(module, new_channels, index=None):
     module.weight.t = 'conv'
     if hasattr(weight, 'out_index'):
         module.weight.out_index = weight.out_index
-    module.weight.raw_id = weight.raw_id if hasattr(weight, 'raw_id') else id(weight)
+    module.weight.raw_id = weight.raw_id if hasattr(
+        weight, 'raw_id') else id(weight)
     return module, index
 
 
@@ -450,7 +458,8 @@ def OutChannelWider(module, new_channels, index=None):
     module.weight.t = 'conv'
     if hasattr(weight, 'in_index'):
         module.weight.in_index = weight.in_index
-    module.weight.raw_id = weight.raw_id if hasattr(weight, 'raw_id') else id(weight)
+    module.weight.raw_id = weight.raw_id if hasattr(
+        weight, 'raw_id') else id(weight)
     return module, index
 
 
@@ -466,7 +475,8 @@ def BNWider(module, new_features, index=None):
         index = torch.randint(
             low=0, high=num_features, size=(new_features - num_features,)
         )
-    module.running_mean = torch.cat([running_mean, running_mean[index].clone()])
+    module.running_mean = torch.cat(
+        [running_mean, running_mean[index].clone()])
     module.running_var = torch.cat([running_var, running_var[index].clone()])
     if module.affine:
         module.weight = nn.Parameter(
@@ -483,6 +493,7 @@ def BNWider(module, new_features, index=None):
         module.weight.raw_id = (
             weight.raw_id if hasattr(weight, 'raw_id') else id(weight)
         )
-        module.bias.raw_id = bias.raw_id if hasattr(bias, 'raw_id') else id(bias)
+        module.bias.raw_id = bias.raw_id if hasattr(
+            bias, 'raw_id') else id(bias)
     module.num_features = new_features
     return (module,)

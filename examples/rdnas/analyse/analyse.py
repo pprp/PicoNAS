@@ -25,8 +25,10 @@ model.load_state_dict(torch.load(ckpt_path)['state_dict'])
 mutator = OneShotMutator(with_alias=True)
 mutator.prepare_from_supernet(model)
 
-dataloader = build_dataloader('cifar10', 'train', data_dir='../../../data/cifar')
-val_dataloader = build_dataloader('cifar10', 'val', data_dir='../../../data/cifar')
+dataloader = build_dataloader(
+    'cifar10', 'train', data_dir='../../../data/cifar')
+val_dataloader = build_dataloader(
+    'cifar10', 'val', data_dir='../../../data/cifar')
 trainer = NB201Trainer(model=model, mutator=None, device=torch.device('cpu'))
 evaluator = NB201Evaluator(trainer, 50)
 
@@ -203,7 +205,8 @@ def measure_one_shot_concordant(num_samples=200):
 
 
 def measure_concordant(dist_type: str = None, threshold=None, num_samples=200):
-    print(f'Current distance type is: {dist_type}, current threshold is: {threshold}')
+    print(
+        f'Current distance type is: {dist_type}, current threshold is: {threshold}')
     hm_dst_list = []
     ad_dst_list = []
     gt_list = []

@@ -94,7 +94,8 @@ class DenseGraphFlow(nn.Module):
         self.opattention = opattention
         self.leakrelu = leakrelu
 
-        self.weight = nn.Parameter(torch.FloatTensor(in_features, out_features))
+        self.weight = nn.Parameter(
+            torch.FloatTensor(in_features, out_features))
         self.op_attention = nn.Linear(op_emb_dim, out_features)
         self.bias = nn.Parameter(torch.FloatTensor(out_features))
         self.reset_parameters()
@@ -161,7 +162,8 @@ class GraphAttentionLayer(nn.Module):
         self.layernorm = nn.LayerNorm(out_features)
 
     def forward(self, h, adj, op_emb):
-        Whk = self.Wk(h)  # model actual attention -> 3 different Ws, remove leakyrelu
+        # model actual attention -> 3 different Ws, remove leakyrelu
+        Whk = self.Wk(h)
         if self.unique_attn_proj:
             Whv = self.Wv(h)
             Whq = self.Wq(h)
@@ -400,7 +402,8 @@ class GIN_Model(nn.Module):
             dim = self.gcn_out_dims[-1]
             num_fb_layers = len(self.fb_conversion_dims)
             for i_dim, fb_conversion_dim in enumerate(fb_conversion_dims):
-                self.fb_conversion_list.append(nn.Linear(dim, fb_conversion_dim))
+                self.fb_conversion_list.append(
+                    nn.Linear(dim, fb_conversion_dim))
                 if i_dim < num_fb_layers - 1:
                     self.fb_conversion_list.append(nn.ReLU(inplace=False))
                 dim = fb_conversion_dim
@@ -452,8 +455,8 @@ class GIN_Model(nn.Module):
         # Remove the first and last index of op_emb
         # shape is [128, 7, 48], remove [128, 0, 48] and [128, 6, 48]
         if self.dual_input:
-            op_embs = op_embs[:, self.dinp : -1, :]
-            op_inds = op_inds[:, self.dinp : -1]
+            op_embs = op_embs[:, self.dinp: -1, :]
+            op_inds = op_inds[:, self.dinp: -1]
         else:
             op_embs = op_embs[:, 1:-1, :]
             op_inds = op_inds[:, 1:-1]
@@ -465,14 +468,17 @@ class GIN_Model(nn.Module):
                     self.input_op_emb.unsqueeze(0).repeat([b_size, 1, 1]),
                     self.input_op_emb.unsqueeze(0).repeat([b_size, 1, 1]),
                     op_embs,
-                    self.output_op_emb.weight.unsqueeze(0).repeat([b_size, 1, 1]),
+                    self.output_op_emb.weight.unsqueeze(
+                        0).repeat([b_size, 1, 1]),
                 ),
                 dim=1,
             )
             node_embs = torch.cat(
                 (
-                    self.input_node_emb.weight.unsqueeze(0).repeat([b_size, 1, 1]),
-                    self.input_node_emb.weight.unsqueeze(0).repeat([b_size, 1, 1]),
+                    self.input_node_emb.weight.unsqueeze(
+                        0).repeat([b_size, 1, 1]),
+                    self.input_node_emb.weight.unsqueeze(
+                        0).repeat([b_size, 1, 1]),
                     self.other_node_emb.unsqueeze(0).repeat(
                         [b_size, self.vertices - 2, 1]
                     ),
@@ -484,13 +490,15 @@ class GIN_Model(nn.Module):
                 (
                     self.input_op_emb.unsqueeze(0).repeat([b_size, 1, 1]),
                     op_embs,
-                    self.output_op_emb.weight.unsqueeze(0).repeat([b_size, 1, 1]),
+                    self.output_op_emb.weight.unsqueeze(
+                        0).repeat([b_size, 1, 1]),
                 ),
                 dim=1,
             )
             node_embs = torch.cat(
                 (
-                    self.input_node_emb.weight.unsqueeze(0).repeat([b_size, 1, 1]),
+                    self.input_node_emb.weight.unsqueeze(
+                        0).repeat([b_size, 1, 1]),
                     self.other_node_emb.unsqueeze(0).repeat(
                         [b_size, self.vertices - 1, 1]
                     ),
@@ -545,7 +553,7 @@ class GIN_Model(nn.Module):
 
     def _final_process(self, y, op_inds):
         if self.dual_input:
-            y = y[:, self.dinp :, :]
+            y = y[:, self.dinp:, :]
         else:
             y = y[:, 1:, :]
         y = torch.cat(
@@ -575,7 +583,8 @@ class GIN_Model(nn.Module):
         if zcp is not None:
             zcp = zcp.to(self.device)
         # import pdb; pdb.set_trace()
-        adjs_1, x_1, op_emb_1, op_inds_1 = self.embed_and_transform_arch(archs_1)
+        adjs_1, x_1, op_emb_1, op_inds_1 = self.embed_and_transform_arch(
+            archs_1)
         adjs_1, x_1, op_emb_1, op_inds_1 = (
             adjs_1.to(self.device),
             x_1.to(self.device),
@@ -596,7 +605,8 @@ class GIN_Model(nn.Module):
                 [np.asarray(x.cpu()) for x in x_adj_2],
                 [np.asarray(x.cpu()) for x in x_ops_2],
             ]
-            adjs_2, x_2, op_emb_2, op_inds_2 = self.embed_and_transform_arch(archs_2)
+            adjs_2, x_2, op_emb_2, op_inds_2 = self.embed_and_transform_arch(
+                archs_2)
             adjs_2, x_2, op_emb_2, op_inds_2 = (
                 adjs_2.to(self.device),
                 x_2.to(self.device),

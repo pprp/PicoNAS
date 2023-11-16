@@ -47,7 +47,8 @@ class EMQAPI:
 
     def query_by_idx(self, idx: int) -> float:
         """Query acc by index."""
-        assert idx < len(self.bit_dict), f'Out of range, max range {len(self.bit_dict)}'
+        assert idx < len(
+            self.bit_dict), f'Out of range, max range {len(self.bit_dict)}'
         if self.verbose:
             print(
                 f'Querying the {idx}-th arch: {self.bit_dict[idx]["bit_cfg"]} with acc: {self.bit_dict[idx]["acc"]}'

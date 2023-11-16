@@ -37,7 +37,8 @@ class Cell301:
         return self.get_val_loss(nasbench)
 
     def convert_to_genotype(self, arch):
-        Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
+        Genotype = namedtuple(
+            'Genotype', 'normal normal_concat reduce reduce_concat')
         op_dict = {
             0: 'max_pool_3x3',
             1: 'avg_pool_3x3',
@@ -182,7 +183,8 @@ class Cell301:
             # input nodes for reduce
             nodes_in_reduce = np.random.choice(range(i + 2), 2, replace=False)
 
-            normal.extend([(nodes_in_normal[0], ops[0]), (nodes_in_normal[1], ops[1])])
+            normal.extend([(nodes_in_normal[0], ops[0]),
+                          (nodes_in_normal[1], ops[1])])
             reduction.extend(
                 [(nodes_in_reduce[0], ops[2]), (nodes_in_reduce[1], ops[3])]
             )
@@ -285,7 +287,8 @@ class Cell301:
             matrices.append(matrix)
             ops.append(op_list)
 
-        encoding = [*matrices[0].flatten(), *ops[0], *matrices[1].flatten(), *ops[1]]
+        encoding = [*matrices[0].flatten(), *ops[0], *
+                    matrices[1].flatten(), *ops[1]]
         return np.array(encoding)
 
     def get_neighborhood(

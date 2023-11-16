@@ -31,14 +31,15 @@ class LinearRegionCount(object):
             self.activations = torch.zeros(self.n_samples, n_neuron)
             if self.gpu is not None:
                 self.activations = self.activations.cuda(self.gpu)
-        self.activations[self.ptr : self.ptr + n_batch] = torch.sign(
+        self.activations[self.ptr: self.ptr + n_batch] = torch.sign(
             activations
         )  # after ReLU
         self.ptr += n_batch
 
     @torch.no_grad()
     def calc_LR(self):
-        res = torch.matmul(self.activations.half(), (1 - self.activations).T.half())
+        res = torch.matmul(self.activations.half(),
+                           (1 - self.activations).T.half())
         res += res.T
         res = 1 - torch.sign(res)
         res = res.sum(1)
@@ -105,7 +106,8 @@ class Linear_Region_Collector:
             for model in self.models:
                 self.register_hook(model)
             self.LRCounts = [
-                LinearRegionCount(self.input_size[0] * self.sample_batch, gpu=self.gpu)
+                LinearRegionCount(
+                    self.input_size[0] * self.sample_batch, gpu=self.gpu)
                 for _ in range(len(models))
             ]
         if input_size is not None or sample_batch is not None:
@@ -237,7 +239,8 @@ def get_ntk_n(
     grads = [[] for _ in range(len(networks))]
 
     for i in range(num_batch):
-        inputs = torch.randn((batch_size, 3, image_size, image_size), device=device)
+        inputs = torch.randn(
+            (batch_size, 3, image_size, image_size), device=device)
         for net_idx, network in enumerate(networks):
             network.zero_grad()
             if gpu is not None:
@@ -249,8 +252,8 @@ def get_ntk_n(
             if isinstance(logit, tuple):
                 logit = logit[1]  # 201 networks: return features and logits
             for _idx in range(len(inputs_)):
-                logit[_idx : _idx + 1].backward(
-                    torch.ones_like(logit[_idx : _idx + 1]), retain_graph=True
+                logit[_idx: _idx + 1].backward(
+                    torch.ones_like(logit[_idx: _idx + 1]), retain_graph=True
                 )
                 grad = []
                 for name, W in network.named_parameters():

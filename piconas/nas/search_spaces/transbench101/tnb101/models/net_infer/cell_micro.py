@@ -1,3 +1,4 @@
+from models.net_ops.cell_ops import OPS, ReLUConvBN
 import sys
 from pathlib import Path
 
@@ -7,8 +8,6 @@ import torch.nn as nn
 lib_dir = (Path(__file__).parent / '..' / '..').resolve()
 if str(lib_dir) not in sys.path:
     sys.path.insert(0, str(lib_dir))
-
-from models.net_ops.cell_ops import OPS, ReLUConvBN
 
 
 class MicroCell(nn.Module):
@@ -49,7 +48,8 @@ class MicroCell(nn.Module):
                         C_in, C_out, self.stride, affine, track_running_stats
                     )
                 else:
-                    edge = OPS[op_idx](C_out, C_out, 1, affine, track_running_stats)
+                    edge = OPS[op_idx](
+                        C_out, C_out, 1, affine, track_running_stats)
                 self.edges.append(edge)
 
         self.cell_code = cell_code
@@ -131,7 +131,8 @@ class ResNetBasicblock(nn.Module):
                     padding=0,
                     bias=False,
                 ),
-                nn.BatchNorm2d(planes * self.expansion, affine, track_running_stats),
+                nn.BatchNorm2d(planes * self.expansion,
+                               affine, track_running_stats),
             )
 
     def forward(self, inputs):

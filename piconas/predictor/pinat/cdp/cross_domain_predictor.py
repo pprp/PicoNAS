@@ -50,7 +50,8 @@ def get_train_dataloader(
 
 def get_target_train_dataloader(train_batch_size, dataset_num=None, dataset=None):
     Darts = Dataset_Darts(dataset_num, dataset)
-    dataloader_darts = DataLoader(Darts, batch_size=train_batch_size, shuffle=True)
+    dataloader_darts = DataLoader(
+        Darts, batch_size=train_batch_size, shuffle=True)
     return dataloader_darts
 
 
@@ -76,9 +77,11 @@ class DirectedGraphConvolution(nn.Module):
 
     def forward(self, inputs, adj):
         norm_adj = normalize_adj(adj)
-        output1 = F.relu(torch.matmul(norm_adj, torch.matmul(inputs, self.weight1)))
+        output1 = F.relu(torch.matmul(
+            norm_adj, torch.matmul(inputs, self.weight1)))
         inv_norm_adj = normalize_adj(adj.transpose(1, 2))
-        output2 = F.relu(torch.matmul(inv_norm_adj, torch.matmul(inputs, self.weight2)))
+        output2 = F.relu(torch.matmul(
+            inv_norm_adj, torch.matmul(inputs, self.weight2)))
         out = (output1 + output2) / 2
         out = self.dropout(out)
         return out
@@ -314,18 +317,22 @@ class GCN_predictor:
             i += 1
             criterion = nn.MSELoss()
             net.cuda()
-            optimizer = optim.Adam(net.parameters(), lr=init_lr, weight_decay=wd)
-            lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, epochs)
+            optimizer = optim.Adam(
+                net.parameters(), lr=init_lr, weight_decay=wd)
+            lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, epochs)
             net.train()
             for epoch in range(epochs):
                 # calculate k first
                 # k = 2
                 if self.speed == 'cos':
-                    k = K - math.floor(math.cos((epoch + 1) / epochs * math.pi / 2) * K)
+                    k = K - math.floor(math.cos((epoch + 1) /
+                                       epochs * math.pi / 2) * K)
                 elif self.speed == 'sin':
                     k = (
                         math.floor(
-                            math.cos((epochs - (epoch + 1)) / epochs * math.pi / 2) * K
+                            math.cos((epochs - (epoch + 1)) /
+                                     epochs * math.pi / 2) * K
                         )
                         + 1
                     )
@@ -420,8 +427,10 @@ class GCN_predictor:
             i += 1
             criterion = nn.MSELoss()
             net.cuda()
-            optimizer = optim.Adam(net.parameters(), lr=init_lr, weight_decay=wd)
-            lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, epochs)
+            optimizer = optim.Adam(
+                net.parameters(), lr=init_lr, weight_decay=wd)
+            lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, epochs)
             net.train()
             for epoch in range(epochs):
                 meters = AverageMeterGroup()
@@ -479,7 +488,8 @@ class GCN_predictor:
                     # no target in evaluation stage
                     target, s_label, K = None, None, None
                     if self._is_adv == False:
-                        predict, mmd_loss = net(batch_set[j], target, s_label, K)
+                        predict, mmd_loss = net(
+                            batch_set[j], target, s_label, K)
                     else:
                         # using adversarial network
                         predict, _ = net(batch_set[j], target)
@@ -525,7 +535,8 @@ if __name__ == '__main__':
     elif args.cifarORimage == 'image':
         normal_layer = 12
     else:
-        raise ValueError("the normal_type should be chosen from ['cifar', 'image']")
+        raise ValueError(
+            "the normal_type should be chosen from ['cifar', 'image']")
     train_dataloader_set, percentile = get_train_dataloader(
         normal_layer, args.train_batch_size, percentile=True
     )
@@ -541,7 +552,7 @@ if __name__ == '__main__':
         Darts, batch_size=args.train_batch_size, shuffle=True
     )
     # assistant dataloader
-    ### Maybe need to add a function saving tiny darts
+    # Maybe need to add a function saving tiny darts
     Tiny_darts = Dataset_Darts(dataset_num=5e4, dataset_type='tiny')
     assistant_dataloader = DataLoader(
         Tiny_darts, batch_size=args.train_batch_size, shuffle=True
@@ -551,13 +562,15 @@ if __name__ == '__main__':
     localtime = time.asctime(time.localtime(time.time()))
     print('end loading training data, start training:{}'.format(localtime))
     # If you do not want to use the assistant dataloader
-    predictor.train(train_dataloader_set, target_dataloader, assistant_dataloader)
+    predictor.train(train_dataloader_set,
+                    target_dataloader, assistant_dataloader)
 
     # prediction
     localtime = time.asctime(time.localtime(time.time()))
     print('start loading darts data:{}'.format(localtime))
     # Darts = Dataset_Darts()
-    dataloader_darts = DataLoader(Darts, batch_size=args.test_batch_size, shuffle=False)
+    dataloader_darts = DataLoader(
+        Darts, batch_size=args.test_batch_size, shuffle=False)
 
     localtime = time.asctime(time.localtime(time.time()))
     print('start predicting:{}'.format(localtime))

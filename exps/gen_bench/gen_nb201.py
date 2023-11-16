@@ -117,7 +117,8 @@ def get_imagenet16_dataloader(batch_size, data_dir, train=True):
 loss_fn = torch.nn.CrossEntropyLoss()
 
 # zc name candidates
-zc_candidates = ['fisher', 'grad_norm', 'grasp', 'l2_norm', 'plain', 'snip', 'synflow']
+zc_candidates = ['fisher', 'grad_norm', 'grasp',
+                 'l2_norm', 'plain', 'snip', 'synflow']
 
 # Build nasbench201 API
 nb201_api = API(

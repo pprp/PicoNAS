@@ -26,7 +26,8 @@ one_hot_nasbench201 = [
 OPS = ['avg_pool_3x3', 'nor_conv_1x1', 'nor_conv_3x3', 'none', 'skip_connect']
 NUM_OPS = len(OPS)
 
-one_hot_transnasbench201 = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+one_hot_transnasbench201 = [[1, 0, 0, 0], [
+    0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
 
 TRANS_OPS = ['Identity', 'Zero', 'ReLUConvBN3x3', 'ReLUConvBN1x1']
 TRANS_NUM_OPS = len(TRANS_OPS)
@@ -49,7 +50,8 @@ def encode_adjacency_one_hot_transbench_macro_op_indices(op_indices):
     one_hot_mapping = np.eye(5)
 
     if len(op_indices) < 6:
-        op_indices = op_indices + tuple((0 for i in range(6 - len(op_indices))))
+        op_indices = op_indices + \
+            tuple((0 for i in range(6 - len(op_indices))))
 
     for e in op_indices:
         one_hot = [*one_hot, *one_hot_mapping[e]]
@@ -126,7 +128,8 @@ def encode_gcn_nasbench201(arch):
     ops = [op + 1 for op in ops]
     ops = [0, *ops, 6]
     # print(ops)
-    ops_onehot = np.array([[i == op for i in range(7)] for op in ops], dtype=np.float32)
+    ops_onehot = np.array([[i == op for i in range(7)]
+                          for op in ops], dtype=np.float32)
     matrix = np.array(
         [
             [0, 1, 1, 1, 0, 0, 0, 0],
@@ -162,7 +165,8 @@ def encode_bonas_nasbench201(arch):
     ops = [op + 1 for op in ops]
     ops = [0, *ops, 6]
     # print(ops)
-    ops_onehot = np.array([[i == op for i in range(7)] for op in ops], dtype=np.float32)
+    ops_onehot = np.array([[i == op for i in range(7)]
+                          for op in ops], dtype=np.float32)
     matrix = np.array(
         [
             [0, 1, 1, 1, 0, 0, 0, 0],
@@ -240,7 +244,8 @@ def encode_transnasbench101_micro(arch, encoding_type='adjacency_one_hot'):
         return encode_adjacency_one_hot_transbench_micro(arch)
     else:
         logger.info(
-            '{} is not yet supported as a predictor encoding'.format(encoding_type)
+            '{} is not yet supported as a predictor encoding'.format(
+                encoding_type)
         )
         raise NotImplementedError()
 
@@ -250,7 +255,8 @@ def encode_transnasbench101_macro(arch, encoding_type='adjacency_one_hot'):
         return encode_adjacency_one_hot_transbench_macro(arch)
     else:
         logger.info(
-            '{} is not yet supported as a predictor encoding'.format(encoding_type)
+            '{} is not yet supported as a predictor encoding'.format(
+                encoding_type)
         )
         raise NotImplementedError()
 
@@ -273,7 +279,8 @@ def encode_201(arch, encoding_type='adjacency_one_hot'):
 
     else:
         logger.info(
-            '{} is not yet supported as a predictor encoding'.format(encoding_type)
+            '{} is not yet supported as a predictor encoding'.format(
+                encoding_type)
         )
         raise NotImplementedError()
 

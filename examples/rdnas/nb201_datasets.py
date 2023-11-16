@@ -30,7 +30,8 @@ def convert_param(original_lists):
         original_lists
     )
     ctype, value = original_lists[0], original_lists[1]
-    assert ctype in support_types, 'Ctype={:}, support={:}'.format(ctype, support_types)
+    assert ctype in support_types, 'Ctype={:}, support={:}'.format(
+        ctype, support_types)
     is_list = isinstance(value, list)
     if not is_list:
         value = [value]
@@ -226,7 +227,8 @@ class SearchDataset(data.Dataset):
         return self.length
 
     def __getitem__(self, index):
-        assert index >= 0 and index < self.length, 'invalid index = {:}'.format(index)
+        assert index >= 0 and index < self.length, 'invalid index = {:}'.format(
+            index)
         train_index = self.train_split[index]
         valid_index = random.choice(self.valid_split)
         if self.mode_str == 'V1':
@@ -471,7 +473,8 @@ def get_nas_search_loaders(
         batch, test_batch = batch_size, batch_size
     if dataset == 'cifar10':
         # split_Fpath = 'configs/nas-benchmark/cifar-split.txt'
-        cifar_split = load_config('{:}/cifar-split.txt'.format(config_root), None, None)
+        cifar_split = load_config(
+            '{:}/cifar-split.txt'.format(config_root), None, None)
         # search over the proposed training and validation set
         train_split, valid_split = cifar_split.train, cifar_split.valid
         # they are two disjoint groups in the original CIFAR-10 training set
@@ -480,7 +483,8 @@ def get_nas_search_loaders(
         if hasattr(xvalid_data, 'transforms'):  # to avoid a print issue
             xvalid_data.transforms = valid_data.transform
         xvalid_data.transform = deepcopy(valid_data.transform)
-        search_data = SearchDataset(dataset, train_data, train_split, valid_split)
+        search_data = SearchDataset(
+            dataset, train_data, train_split, valid_split)
         # data loader
         search_loader = torch.utils.data.DataLoader(
             search_data,
@@ -541,7 +545,8 @@ def get_nas_search_loaders(
         )
     elif dataset == 'ImageNet16-120':
         imagenet_test_split = load_config(
-            '{:}/imagenet-16-120-test-split.txt'.format(config_root), None, None
+            '{:}/imagenet-16-120-test-split.txt'.format(
+                config_root), None, None
         )
         search_train_data = train_data
         search_valid_data = deepcopy(valid_data)

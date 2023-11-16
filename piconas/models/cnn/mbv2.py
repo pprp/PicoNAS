@@ -151,7 +151,8 @@ class MobileNetv2(nn.Module):
         ]
 
         # building first layer
-        input_channel = _make_divisible(32 * width_mult, 4 if width_mult == 0.1 else 8)
+        input_channel = _make_divisible(
+            32 * width_mult, 4 if width_mult == 0.1 else 8)
         layers = [conv_3x3_bn(3, input_channel, 2)]
         # building inverted residual blocks
         block = InvertedResidual

@@ -101,7 +101,8 @@ class NASBench101:
         module_operations = self.transform_nb101_operations(ops)
         adj_mat = np.asarray(matrix).flatten()
         op_mat = (
-            torch.Tensor(np.asarray(module_operations)).argmax(dim=1).numpy().flatten()
+            torch.Tensor(np.asarray(module_operations)).argmax(
+                dim=1).numpy().flatten()
         )
         op_mat = op_mat / np.max(op_mat)
         return np.concatenate((adj_mat, op_mat, np.asarray(self.get_zcp(idx)))).tolist()
@@ -162,13 +163,16 @@ class NASBench101:
         print('Loading Files for NASBench101...')
         start_time = time.time()
 
-        self.cate_nb101 = torch.load(BASE_PATH + 'cate_embeddings/cate_nasbench101.pt')
+        self.cate_nb101 = torch.load(
+            BASE_PATH + 'cate_embeddings/cate_nasbench101.pt')
         self.arch2vec_nb101 = torch.load(
             BASE_PATH
             + 'arch2vec_embeddings/arch2vec-model-dim_32_search_space_nasbench101-nasbench101.pt'
         )
-        self.zcp_nb101 = json.load(open(BASE_PATH + 'zc_nasbench101_full.json', 'r'))
-        self.nb1_api = NB1API.NASBench(BASE_PATH + 'nasbench_only108_caterec.tfrecord')
+        self.zcp_nb101 = json.load(
+            open(BASE_PATH + 'zc_nasbench101_full.json', 'r'))
+        self.nb1_api = NB1API.NASBench(
+            BASE_PATH + 'nasbench_only108_caterec.tfrecord')
 
         print('Loaded files in: ', time.time() - start_time, ' seconds')
 
@@ -201,7 +205,8 @@ class NASBench101:
                 pdb.set_trace()
 
             # Add normalization code here
-            self.norm_zcp['epe_nas'] = self.min_max_scaling(self.norm_zcp['epe_nas'])
+            self.norm_zcp['epe_nas'] = self.min_max_scaling(
+                self.norm_zcp['epe_nas'])
             self.norm_zcp['fisher'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['fisher'])
             )
@@ -211,14 +216,18 @@ class NASBench101:
             self.norm_zcp['grad_norm'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['grad_norm'])
             )
-            self.norm_zcp['grasp'] = self.standard_scaling(self.norm_zcp['grasp'])
-            self.norm_zcp['jacov'] = self.min_max_scaling(self.norm_zcp['jacov'])
-            self.norm_zcp['l2_norm'] = self.min_max_scaling(self.norm_zcp['l2_norm'])
+            self.norm_zcp['grasp'] = self.standard_scaling(
+                self.norm_zcp['grasp'])
+            self.norm_zcp['jacov'] = self.min_max_scaling(
+                self.norm_zcp['jacov'])
+            self.norm_zcp['l2_norm'] = self.min_max_scaling(
+                self.norm_zcp['l2_norm'])
             self.norm_zcp['nwot'] = self.min_max_scaling(self.norm_zcp['nwot'])
             self.norm_zcp['params'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['params'])
             )
-            self.norm_zcp['plain'] = self.min_max_scaling(self.norm_zcp['plain'])
+            self.norm_zcp['plain'] = self.min_max_scaling(
+                self.norm_zcp['plain'])
             self.norm_zcp['snip'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['snip'])
             )
@@ -266,7 +275,8 @@ class NASBench101:
 
     def pad_size_6(self, matrix, ops):
         if len(matrix) < 7:
-            new_matrix, new_ops = self.create_padded_matrix_and_ops(matrix, ops)
+            new_matrix, new_ops = self.create_padded_matrix_and_ops(
+                matrix, ops)
             return new_matrix, new_ops
         else:
             return matrix, ops

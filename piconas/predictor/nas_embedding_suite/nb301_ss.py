@@ -42,7 +42,8 @@ class NASBench301:
 
         self.use_nb3_performance_model = use_nb3_performance_model
         self.ensemble_dir_performance = BASE_PATH + 'nb_models_0.9/xgb_v0.9'
-        self.cate_nb301 = torch.load(BASE_PATH + 'cate_embeddings/cate_nasbench301.pt')
+        self.cate_nb301 = torch.load(
+            BASE_PATH + 'cate_embeddings/cate_nasbench301.pt')
         self.nb301_proxy_cate = None
         self.arch2vec_nb301 = torch.load(
             BASE_PATH
@@ -73,7 +74,8 @@ class NASBench301:
     def get_adjmlp_zcp(self, idx):
         adj_mat, op_mat = self.get_adj_op(idx)
         adj_mat = np.asarray(adj_mat).flatten()
-        op_mat = torch.Tensor(np.asarray(op_mat)).argmax(dim=1).numpy().flatten()
+        op_mat = torch.Tensor(np.asarray(op_mat)).argmax(
+            dim=1).numpy().flatten()
         op_mat = op_mat / np.max(op_mat)
         return np.concatenate([adj_mat, op_mat, np.asarray(self.get_zcp(idx))]).tolist()
 
@@ -100,8 +102,10 @@ class NASBench301:
             cate_nb301_arch = self.cate_nb301['genotypes'][idx]
             arch_desc = {
                 'arch': (
-                    [(int(x[0]), self.op_dict_rev[x[1]]) for x in cate_nb301_arch],
-                    [(int(x[0]), self.op_dict_rev[x[1]]) for x in cate_nb301_arch],
+                    [(int(x[0]), self.op_dict_rev[x[1]])
+                     for x in cate_nb301_arch],
+                    [(int(x[0]), self.op_dict_rev[x[1]])
+                     for x in cate_nb301_arch],
                 )
             }
             cate_nb301_arch = Cell301(None).convert_to_genotype(**arch_desc)

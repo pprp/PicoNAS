@@ -10,10 +10,12 @@ OPS = {
     if (stride == 1 and C_in == C_out)
     else FactorizedReduce(C_in, C_out, stride, affine, track_running_stats),
     '2': lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
-        C_in, C_out, (1, 1), stride, (0, 0), (1, 1), affine, track_running_stats
+        C_in, C_out, (1, 1), stride, (0, 0), (1,
+                                              1), affine, track_running_stats
     ),
     '3': lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
-        C_in, C_out, (3, 3), stride, (1, 1), (1, 1), affine, track_running_stats
+        C_in, C_out, (3, 3), stride, (1, 1), (1,
+                                              1), affine, track_running_stats
     ),
 }
 
@@ -112,7 +114,8 @@ class FactorizedReduce(nn.Module):
         self.convs = nn.ModuleList()
         for i in range(2):
             self.convs.append(
-                nn.Conv2d(C_in, C_outs[i], 1, stride=stride, padding=0, bias=False)
+                nn.Conv2d(C_in, C_outs[i], 1,
+                          stride=stride, padding=0, bias=False)
             )
         self.pad = nn.ConstantPad2d((0, 1, 0, 1), 0)
         self.bn = nn.BatchNorm2d(
@@ -122,7 +125,8 @@ class FactorizedReduce(nn.Module):
     def forward(self, x):
         x = self.relu(x)
         y = self.pad(x)
-        out = torch.cat([self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])], dim=1)
+        out = torch.cat(
+            [self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])], dim=1)
         # print(self.convs[0](x).shape, self.convs[1](y[:,:,1:,1:]).shape)
         # print(out.shape)
 

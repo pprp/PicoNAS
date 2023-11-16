@@ -32,7 +32,8 @@ plt.yscale('log')
 # Add a colorbar for reference
 sm = plt.cm.ScalarMappable(
     cmap=cmap,
-    norm=plt.Normalize(vmin=min(feature_importance), vmax=max(feature_importance)),
+    norm=plt.Normalize(vmin=min(feature_importance),
+                       vmax=max(feature_importance)),
 )
 sm.set_array([])
 cbar = plt.colorbar(sm, orientation='vertical', pad=0.02)

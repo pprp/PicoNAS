@@ -35,9 +35,11 @@ def main():
     else:
         device = torch.device('cpu')
 
-    train_dataloader = build_dataloader(type='train', dataset=cfg.dataset, config=cfg)
+    train_dataloader = build_dataloader(
+        type='train', dataset=cfg.dataset, config=cfg)
 
-    val_dataloader = build_dataloader(type='val', dataset=cfg.dataset, config=cfg)
+    val_dataloader = build_dataloader(
+        type='val', dataset=cfg.dataset, config=cfg)
 
     model = build_model(cfg.model_name)
 
@@ -63,7 +65,8 @@ def main():
 
     SHPyramid = SuccessiveHalvingPyramid(trainer=trainer)
 
-    SHPyramid.fit(train_loader=train_dataloader, val_loader=val_dataloader, epoch=200)
+    SHPyramid.fit(train_loader=train_dataloader,
+                  val_loader=val_dataloader, epoch=200)
 
     utils.time_record(start)
 

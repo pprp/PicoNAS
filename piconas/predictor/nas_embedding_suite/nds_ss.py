@@ -16,7 +16,8 @@ class NDS:
         zcp_dict=False,
         normalize_zcp=True,
         log_synflow=True,
-        embedding_list=['adj', 'adj_op', 'path', 'one_hot', 'path_indices', 'zcp'],
+        embedding_list=['adj', 'adj_op', 'path',
+                        'one_hot', 'path_indices', 'zcp'],
     ):
         adj_path = BASE_PATH + 'nds_adj_encoding/'
         # self.spaces = ['Amoeba.json', 'NASNet.json','DARTS.json','ENAS.json','PNAS.json']
@@ -87,20 +88,25 @@ class NDS:
             for task_ in self.spaces:
                 print('normalizing task: ', task_)
                 self.norm_zcp = pd.read_csv(
-                    BASE_PATH + 'nds_zcps/' + task_.replace('.json', '') + '_zcps.csv',
+                    BASE_PATH + 'nds_zcps/' +
+                    task_.replace('.json', '') + '_zcps.csv',
                     index_col=0,
                 )
                 self.norm_zcp = self.norm_zcp[self.zcps]
                 minfinite = self.norm_zcp['zen'].replace(-np.inf, 1000).min()
-                self.norm_zcp['zen'] = self.norm_zcp['zen'].replace(-np.inf, minfinite)
+                self.norm_zcp['zen'] = self.norm_zcp['zen'].replace(
+                    -np.inf, minfinite)
                 if log_synflow:
-                    self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(0, 1e-2)
-                    self.norm_zcp['synflow'] = np.log10(self.norm_zcp['synflow'])
+                    self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(
+                        0, 1e-2)
+                    self.norm_zcp['synflow'] = np.log10(
+                        self.norm_zcp['synflow'])
                 else:
                     print(
                         'WARNING: Not taking log of synflow values for normalization results in very small synflow inputs'
                     )
-                minfinite = self.norm_zcp['synflow'].replace(-np.inf, 1000).min()
+                minfinite = self.norm_zcp['synflow'].replace(
+                    -np.inf, 1000).min()
                 self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(
                     -np.inf, minfinite
                 )
@@ -130,7 +136,8 @@ class NDS:
             for idx in range(len(self.space_dicts[space])):
                 try:
                     self.all_accs[space].append(
-                        float(100.0 - self.space_dicts[space][idx]['test_ep_top1'][-1])
+                        float(
+                            100.0 - self.space_dicts[space][idx]['test_ep_top1'][-1])
                     )
                 except:
                     self.all_accs[space].append(
@@ -145,7 +152,8 @@ class NDS:
                 np.array(self.all_accs[space]).reshape(-1, 1)
             ).flatten()
             self.unnorm_all_accs[space] = (
-                np.array(self.all_accs[space]).reshape(-1, 1).flatten().tolist()
+                np.array(self.all_accs[space]
+                         ).reshape(-1, 1).flatten().tolist()
             )
             self.all_accs[space] = self.all_accs[space].tolist()
             self.minmax_sc[space] = min_max_scaler
@@ -160,10 +168,12 @@ class NDS:
         adj_mat_norm = np.asarray(adj_mat_norm).flatten()
         adj_mat_red = np.asarray(adj_mat_red).flatten()
         op_mat_norm = (
-            torch.Tensor(np.asarray(op_mat_norm)).argmax(dim=1).numpy().flatten()
+            torch.Tensor(np.asarray(op_mat_norm)).argmax(
+                dim=1).numpy().flatten()
         )  # Careful here.
         op_mat_red = (
-            torch.Tensor(np.asarray(op_mat_red)).argmax(dim=1).numpy().flatten()
+            torch.Tensor(np.asarray(op_mat_red)).argmax(
+                dim=1).numpy().flatten()
         )  # Careful here.
         op_mat_norm = op_mat_norm / np.max(op_mat_norm)
         op_mat_red = op_mat_red / np.max(op_mat_red)

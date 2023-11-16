@@ -109,7 +109,8 @@ class Pooling(nn.Module):
             self.preprocess = ReLUConvBN(
                 C_in, C_out, 1, 1, 0, 0, bn_affine, bn_momentum, bn_track_running_stats
             )
-        self.op = nn.AvgPool2d(3, stride=stride, padding=1, count_include_pad=False)
+        self.op = nn.AvgPool2d(
+            3, stride=stride, padding=1, count_include_pad=False)
 
     def forward(self, x):
         """
@@ -182,7 +183,8 @@ class FactorizedReduce(nn.Module):
         self.convs = nn.ModuleList()
         for i in range(2):
             self.convs.append(
-                nn.Conv2d(C_in, C_outs[i], 1, stride=stride, padding=0, bias=False)
+                nn.Conv2d(C_in, C_outs[i], 1,
+                          stride=stride, padding=0, bias=False)
             )
         self.pad = nn.ConstantPad2d((0, 1, 0, 1), 0)
         self.bn = nn.BatchNorm2d(
@@ -195,7 +197,8 @@ class FactorizedReduce(nn.Module):
     def forward(self, x):
         x = self.relu(x)
         y = self.pad(x)
-        out = torch.cat([self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])], dim=1)
+        out = torch.cat(
+            [self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])], dim=1)
         out = self.bn(out)
         return out
 
@@ -416,8 +419,10 @@ class OneShotNASBench201Network(nn.Module):
             nn.BatchNorm2d(C, momentum=self.bn_momentum),
         )
 
-        layer_channels = [C] * N + [C * 2] + [C * 2] * N + [C * 4] + [C * 4] * N
-        layer_reductions = [False] * N + [True] + [False] * N + [True] + [False] * N
+        layer_channels = [C] * N + [C * 2] + \
+            [C * 2] * N + [C * 4] + [C * 4] * N
+        layer_reductions = [False] * N + [True] + \
+            [False] * N + [True] + [False] * N
 
         C_prev = C
         self.cells = nn.ModuleList()
@@ -446,7 +451,8 @@ class OneShotNASBench201Network(nn.Module):
             C_prev = C_curr
 
         self.lastact = nn.Sequential(
-            nn.BatchNorm2d(C_prev, momentum=self.bn_momentum), nn.ReLU(inplace=True)
+            nn.BatchNorm2d(C_prev, momentum=self.bn_momentum), nn.ReLU(
+                inplace=True)
         )
         self.dropout = nn.Dropout(0.1)
         self.global_pooling = nn.AdaptiveAvgPool2d(1)

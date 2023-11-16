@@ -37,7 +37,8 @@ class TestZenScore(TestCase):
         inputs = torch.randn(4, 3, 32, 32)
         for _ in range(3):
             m = ToyModel()
-            score = compute_zen_score(net=m, inputs=inputs, targets=None, repeat=3)
+            score = compute_zen_score(
+                net=m, inputs=inputs, targets=None, repeat=3)
             assert score is not None
 
     def test_nb201_zen_score_with_mutablemodel(self):
@@ -50,7 +51,8 @@ class TestZenScore(TestCase):
         for i in range(3):
             rand_subnet = o.random_subnet
             o.set_subnet(rand_subnet)
-            score = compute_zen_score(net=m, inputs=inputs, targets=None, repeat=5)
+            score = compute_zen_score(
+                net=m, inputs=inputs, targets=None, repeat=5)
             print(f'The score of {i} th model is {score}')
 
 

@@ -6,7 +6,8 @@ class ConvBnRelu(nn.Module):
         super(ConvBnRelu, self).__init__()
 
         self.op = nn.Sequential(
-            nn.Conv2d(inplanes, outplanes, kernel_size=1, stride=1, bias=False),
+            nn.Conv2d(inplanes, outplanes, kernel_size=1,
+                      stride=1, bias=False),
             nn.BatchNorm2d(outplanes),
             nn.ReLU(),
             nn.Conv2d(
@@ -30,7 +31,8 @@ class MaxPool(nn.Module):
         super(MaxPool, self).__init__()
 
         self.op = nn.Sequential(
-            nn.Conv2d(inplanes, outplanes, kernel_size=1, stride=1, bias=False),
+            nn.Conv2d(inplanes, outplanes, kernel_size=1,
+                      stride=1, bias=False),
             nn.BatchNorm2d(outplanes),
             nn.ReLU(),
             nn.MaxPool2d(3, 1, padding=1),

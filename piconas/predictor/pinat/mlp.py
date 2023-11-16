@@ -19,7 +19,8 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.project = nn.Linear(input_dim, dim)
 
-        self.mlp_blocks = nn.ModuleList([nn.Linear(dim, dim) for _ in range(depth)])
+        self.mlp_blocks = nn.ModuleList(
+            [nn.Linear(dim, dim) for _ in range(depth)])
         self.layer_norm = nn.LayerNorm(dim)
         self.fc = nn.Linear(dim, 1)
 
@@ -37,7 +38,8 @@ if __name__ == '__main__':
     model = MLP()
 
     # Assuming Nb201DatasetPINAT is defined elsewhere
-    test_set = Nb201DatasetPINAT(split='all', data_type='test', data_set='cifar10')
+    test_set = Nb201DatasetPINAT(
+        split='all', data_type='test', data_set='cifar10')
 
     loader = torch.utils.data.DataLoader(
         test_set, batch_size=32, shuffle=False, num_workers=0, drop_last=False

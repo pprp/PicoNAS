@@ -159,7 +159,8 @@ def sample_arch():
 
 def build_mat_encoding(normal):
     normal_cell = [(item[1], int(item[0])) for item in tuple(normal)]
-    adj_nas101_format, ops_nas101_format = transform_geno_to_nas101_format(normal_cell)
+    adj_nas101_format, ops_nas101_format = transform_geno_to_nas101_format(
+        normal_cell)
     return {
         'module_adjacency': adj_nas101_format.astype(int).tolist(),
         'module_operations': ops_nas101_format.astype(int).tolist(),

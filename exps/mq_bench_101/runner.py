@@ -99,7 +99,8 @@ for epoch in range(num_epochs):
             )
 
     if (epoch + 1) % 1 == 0:
-        logging.info(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+        logging.info(
+            f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
 logging.info('Training completed!')
 

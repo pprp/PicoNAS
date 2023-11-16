@@ -40,12 +40,14 @@ class Checkpointer(fvCheckpointer):
         """
         if not path:
             # no checkpoint provided
-            self.logger.info('No checkpoint found. Initializing model from scratch')
+            self.logger.info(
+                'No checkpoint found. Initializing model from scratch')
             return {}
         self.logger.info('Loading checkpoint from {}'.format(path))
         if not os.path.isfile(path):
             path = PathManager.get_local_path(path)
-            assert os.path.isfile(path), 'Checkpoint {} not found!'.format(path)
+            assert os.path.isfile(
+                path), 'Checkpoint {} not found!'.format(path)
 
         checkpoint = self._load_file(path)
         incompatible = self._load_model(checkpoint)
@@ -130,9 +132,11 @@ def compute_scores(ytest, test_pred):
                 [y > sorted(ytest)[max(-len(ytest), -k - 1)] for y in ytest]
             )
             top_test_pred = np.array(
-                [y > sorted(test_pred)[max(-len(test_pred), -k - 1)] for y in test_pred]
+                [y > sorted(test_pred)[max(-len(test_pred), -k - 1)]
+                 for y in test_pred]
             )
-            metrics_dict['precision_{}'.format(k)] = sum(top_ytest & top_test_pred) / k
+            metrics_dict['precision_{}'.format(k)] = sum(
+                top_ytest & top_test_pred) / k
         metrics_dict['full_ytest'] = ytest.tolist()
         metrics_dict['full_testpred'] = test_pred.tolist()
 
@@ -185,7 +189,8 @@ def save_checkpoint(state, exp_name=None, iters=0, tag=''):
         exp_full_path = './checkpoints'
     if not os.path.exists(exp_full_path):
         os.makedirs(exp_full_path)
-    filename = os.path.join(exp_full_path, '{}_ckpt_{:04}.pth.tar'.format(tag, iters))
+    filename = os.path.join(
+        exp_full_path, '{}_ckpt_{:04}.pth.tar'.format(tag, iters))
     torch.save(state, filename)
 
 
@@ -195,7 +200,8 @@ def time_record(start):
     hour = duration // 3600
     minute = (duration - hour * 3600) // 60
     second = duration - hour * 3600 - minute * 60
-    print('Elapsed time: hour: %d, minute: %d, second: %f' % (hour, minute, second))
+    print('Elapsed time: hour: %d, minute: %d, second: %f' %
+          (hour, minute, second))
     return f'Elapsed time: hour: {hour}, minute: {minute}, second: {second}'
 
 
@@ -216,7 +222,8 @@ def drop_path(x, drop_prob: float = 0.0, training: bool = False):
     keep_prob = 1 - drop_prob
     # work with diff dim tensors, not just 2D ConvNets
     shape = (x.shape[0],) + (1,) * (x.ndim - 1)
-    random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
+    random_tensor = keep_prob + \
+        torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
     return x.div(keep_prob) * random_tensor
 

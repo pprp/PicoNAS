@@ -140,7 +140,8 @@ class MAE_Decoder(torch.nn.Module):
             [
                 features,
                 self.mask_token.expand(
-                    backward_indexes.shape[0] - features.shape[0], features.shape[1], -1
+                    backward_indexes.shape[0] -
+                    features.shape[0], features.shape[1], -1
                 ),
             ],
             dim=0,

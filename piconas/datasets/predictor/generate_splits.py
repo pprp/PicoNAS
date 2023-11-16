@@ -37,7 +37,8 @@ for n_samples in split_list:
 # >91
 valid91 = denoise_nasbench(metrics, threshold=0.91)
 for n_samples in split_list:
-    result['91-' + str(n_samples)] = np.intersect1d(result[str(n_samples)], valid91)
+    result['91-' + str(n_samples)
+           ] = np.intersect1d(result[str(n_samples)], valid91)
 result['denoise-91'] = valid91
 
 result['denoise-80'] = denoise_nasbench(metrics)

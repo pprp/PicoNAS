@@ -16,7 +16,8 @@ class ResNetBasicblock(AbstractPrimitive):
         if stride == 2:
             self.downsample = nn.Sequential(
                 nn.AvgPool2d(kernel_size=2, stride=2, padding=0),
-                nn.Conv2d(C_in, C_out, kernel_size=1, stride=1, padding=0, bias=False),
+                nn.Conv2d(C_in, C_out, kernel_size=1,
+                          stride=1, padding=0, bias=False),
             )
         else:
             self.downsample = None

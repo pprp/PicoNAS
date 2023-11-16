@@ -1,3 +1,4 @@
+from piconas.predictor.pinat.model_factory import create_best_nb201_model
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
@@ -33,7 +34,8 @@ def visualize_bayesian_weights(
         # Overlaying a standard normal distribution for comparison
         xmin, xmax = ax.get_xlim()
         x = np.linspace(xmin, xmax, 100)
-        p = stats.norm.pdf(x, np.mean(samples[:, i, :]), np.std(samples[:, i, :]))
+        p = stats.norm.pdf(x, np.mean(
+            samples[:, i, :]), np.std(samples[:, i, :]))
         ax.plot(x, p, 'k', linewidth=2)
 
     plt.tight_layout()
@@ -42,7 +44,6 @@ def visualize_bayesian_weights(
 
 
 # Example usage
-from piconas.predictor.pinat.model_factory import create_best_nb201_model
 
 model = create_best_nb201_model()
 # load model

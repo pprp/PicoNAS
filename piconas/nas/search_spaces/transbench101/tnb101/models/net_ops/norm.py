@@ -30,7 +30,8 @@ class _NewEmptyTensorOp(torch.autograd.Function):
 class AllReduce(Function):
     @staticmethod
     def forward(ctx, input):
-        input_list = [torch.zeros_like(input) for k in range(dist.get_world_size())]
+        input_list = [torch.zeros_like(input)
+                      for k in range(dist.get_world_size())]
         # Use allgather instead of allreduce since I don't trust in-place operations ..
         dist.all_gather(input_list, input, async_op=False)
         inputs = torch.stack(input_list, dim=0)
@@ -95,7 +96,8 @@ class NaiveSyncBatchNorm(BatchNorm2d):
             momentum = self.momentum
         else:
             if B == 0:
-                vec = torch.zeros([2 * C + 1], device=mean.device, dtype=mean.dtype)
+                vec = torch.zeros(
+                    [2 * C + 1], device=mean.device, dtype=mean.dtype)
                 vec = vec + input.sum()  # make sure there is gradient w.r.t input
             else:
                 vec = torch.cat(

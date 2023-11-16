@@ -77,7 +77,8 @@ class Structure:
                 node_info, (list, tuple)
             ), 'invalid class of node_info : {:}'.format(type(node_info))
 
-            assert len(node_info) >= 1, 'invalid length : {:}'.format(len(node_info))
+            assert len(node_info) >= 1, 'invalid length : {:}'.format(
+                len(node_info))
             for node_in in node_info:
                 assert isinstance(node_in, list) or isinstance(
                     node_in, tuple
@@ -328,7 +329,8 @@ class InferCell(nn.Module):
                         C_in, C_out, stride, affine, track_running_stats
                     )
                 else:
-                    layer = OPS[op_name](C_out, C_out, 1, affine, track_running_stats)
+                    layer = OPS[op_name](
+                        C_out, C_out, 1, affine, track_running_stats)
                 cur_index.append(len(self.layers))
                 cur_innod.append(op_in)
                 self.layers.append(layer)

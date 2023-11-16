@@ -115,7 +115,8 @@ def plot_valid_curve():
     plt.legend(loc=2, fontsize=legend_fontsize)  # TODO
 
     # save figure
-    fig.savefig('./val_loss_chapt4_exp1.0.1.png', dpi=dpi, bbox_inches='tight')  # TODO
+    fig.savefig('./val_loss_chapt4_exp1.0.1.png',
+                dpi=dpi, bbox_inches='tight')  # TODO
     plt.close(fig)
 
 

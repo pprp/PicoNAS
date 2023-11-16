@@ -45,7 +45,8 @@ class BNNAS(nn.Module):
             self.layers.append(layer)
 
         self.avgpool = nn.AdaptiveAvgPool2d(1)
-        self.classifier = nn.Sequential(nn.Linear(self.last_channels, num_classes))
+        self.classifier = nn.Sequential(
+            nn.Linear(self.last_channels, num_classes))
 
         if is_only_train_bn:
             print('Only train BN.')

@@ -106,7 +106,8 @@ class Cell(nn.Module):
         # operation for each node
         self.vertex_op = nn.ModuleList([None])
         for t in range(1, self.num_vertices - 1):
-            op = OP_MAP[spec.ops[t]](self.vertex_channels[t], self.vertex_channels[t])
+            op = OP_MAP[spec.ops[t]](
+                self.vertex_channels[t], self.vertex_channels[t])
             self.vertex_op.append(op)
 
         # operation for input on each vertex
@@ -114,7 +115,8 @@ class Cell(nn.Module):
         self.input_op = nn.ModuleList([None])
         for t in range(1, self.num_vertices):
             if self.spec.matrix[0, t]:
-                self.input_op.append(Projection(in_channels, self.vertex_channels[t]))
+                self.input_op.append(Projection(
+                    in_channels, self.vertex_channels[t]))
             else:
                 self.input_op.append(None)
 
@@ -160,7 +162,8 @@ class Cell(nn.Module):
             # and then do sum with concatenated tensor
             if self.spec.matrix[0, self.num_vertices - 1]:
                 # outputs += self.input_op[self.num_vertices-1](tensors[0])
-                outputs = outputs + self.input_op[self.num_vertices - 1](tensors[0])
+                outputs = outputs + \
+                    self.input_op[self.num_vertices - 1](tensors[0])
 
             # if self.spec.matrix[0, self.num_vertices-1]:
             #    out_concat.append(self.input_op[self.num_vertices-1](tensors[0]))
@@ -235,7 +238,8 @@ def ComputeVertexChannels(in_channels, out_channels, matrix):
         if not matrix[v, num_vertices - 1]:
             for dst in range(v + 1, num_vertices - 1):
                 if matrix[v, dst]:
-                    vertex_channels[v] = max(vertex_channels[v], vertex_channels[dst])
+                    vertex_channels[v] = max(
+                        vertex_channels[v], vertex_channels[dst])
         assert vertex_channels[v] > 0
 
     # Sanity check, verify that channels never increase and final channels add up.

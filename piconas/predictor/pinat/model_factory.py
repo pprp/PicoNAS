@@ -22,8 +22,10 @@ _name2model = {
     'PINATModel3': PINATModel3,  # PINAT + ZCP + BN
     'PINATModel4': PINATModel4,  # PINAT + ZCP Layerwise + Gating
     'PINATModel5': PINATModel5,  # PINAT + ZCP Layerwise + Gating + Larger Model
-    'PINATModel6': PINATModel6,  # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder
-    'PINATModel7': PINATModel7,  # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder + bayesian network
+    # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder
+    'PINATModel6': PINATModel6,
+    # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder + bayesian network
+    'PINATModel7': PINATModel7,
     'ParZCBMM': ParZCBMM,  # ZCP + BMM
     'ParZCBMM2': ParZCBMM2,
     # ablation study

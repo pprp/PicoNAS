@@ -79,17 +79,21 @@ class MixOps(nn.Module):
         if to_dispatch:
             if PRIMITIVES[init_op_index].endswith('_dual'):
                 self._mix_ops.append(
-                    OPS[PRIMITIVES[init_op_index]](inc, outc, stride, hidden_outc)
+                    OPS[PRIMITIVES[init_op_index]](
+                        inc, outc, stride, hidden_outc)
                 )
             else:
-                self._mix_ops.append(OPS[PRIMITIVES[init_op_index]](inc, outc, stride))
+                self._mix_ops.append(
+                    OPS[PRIMITIVES[init_op_index]](inc, outc, stride))
 
         else:
             for i, prim in enumerate(PRIMITIVES):
                 if prim.endswith('_dual'):
-                    self._mix_ops.append(OPS[prim](inc, outc, stride, hidden_outc))
+                    self._mix_ops.append(
+                        OPS[prim](inc, outc, stride, hidden_outc))
                 else:
-                    self._mix_ops.append(OPS[prim](inc, outc, stride, downsamples[i]))
+                    self._mix_ops.append(
+                        OPS[prim](inc, outc, stride, downsamples[i]))
 
     def forward(self, x, forward_index=0):
         # Single-path
@@ -217,7 +221,7 @@ class SupernetMBConv(nn.Module):
                     layers,
                     to_dispatch=self._to_dis,
                     init_op_list=self._init_op_list[
-                        block_layer_index : block_layer_index + layers
+                        block_layer_index: block_layer_index + layers
                     ],
                 )
             )
@@ -237,7 +241,7 @@ class SupernetMBConv(nn.Module):
                 x = block(
                     x,
                     forward_op[
-                        sum(self._op_layers_list[:i]) : sum(
+                        sum(self._op_layers_list[:i]): sum(
                             self._op_layers_list[: (i + 1)]
                         )
                     ],

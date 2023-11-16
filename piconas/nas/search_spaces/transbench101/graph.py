@@ -33,7 +33,8 @@ class TransBench101SearchSpaceMicro(Graph):
     It also has an interface to the tabular benchmark of transbench 101.
     """
 
-    OPTIMIZER_SCOPE = ['r_stage_1', 'n_stage_1', 'r_stage_2', 'n_stage_2', 'r_stage_3']
+    OPTIMIZER_SCOPE = ['r_stage_1', 'n_stage_1',
+                       'r_stage_2', 'n_stage_2', 'r_stage_3']
 
     QUERYABLE = True
 
@@ -141,7 +142,8 @@ class TransBench101SearchSpaceMicro(Graph):
         self.edges[node, node + 1].set(
             'op',
             self._get_decoder_for_task(
-                self.dataset, n_channels=self._get_module_n_output_channels(module)
+                self.dataset, n_channels=self._get_module_n_output_channels(
+                    module)
             ),
         )
 
@@ -172,7 +174,8 @@ class TransBench101SearchSpaceMicro(Graph):
             if self.use_small_model:
                 return ops.GenerativeDecoder((64, 32), (256, 2048))  # Short
             else:
-                return ops.GenerativeDecoder((512, 32), (512, 2048))  # Full TNB
+                # Full TNB
+                return ops.GenerativeDecoder((512, 32), (512, 2048))
 
         else:
             return ops.Sequential(
@@ -327,7 +330,8 @@ class TransBench101SearchSpaceMicro(Graph):
                     )
                 # if there's no op indices set, and no model on edge 1-2 either
                 else:
-                    raise NotImplementedError('Neither op_indices nor the model is set')
+                    raise NotImplementedError(
+                        'Neither op_indices nor the model is set')
         return self.op_indices
 
     def get_hash(self):
@@ -341,7 +345,8 @@ class TransBench101SearchSpaceMicro(Graph):
             if self.create_graph:
                 convert_op_indices_to_naslib(op_indices, self)
             else:
-                model = convert_op_indices_micro_to_model(self.op_indices, self.dataset)
+                model = convert_op_indices_micro_to_model(
+                    self.op_indices, self.dataset)
                 self.edges[1, 2].set('op', model)
 
     def get_arch_iterator(self, dataset_api=None):
@@ -397,7 +402,8 @@ class TransBench101SearchSpaceMicro(Graph):
         op_indices = list(parent_op_indices)
 
         edge = np.random.choice(len(parent_op_indices))
-        available = [o for o in range(len(OP_NAMES)) if o != parent_op_indices[edge]]
+        available = [o for o in range(
+            len(OP_NAMES)) if o != parent_op_indices[edge]]
         op_index = np.random.choice(available)
         op_indices[edge] = op_index
         self.set_op_indices(op_indices)
@@ -407,7 +413,8 @@ class TransBench101SearchSpaceMicro(Graph):
         self.get_op_indices()
         nbrs = []
         for edge in range(len(self.op_indices)):
-            available = [o for o in range(len(OP_NAMES)) if o != self.op_indices[edge]]
+            available = [o for o in range(
+                len(OP_NAMES)) if o != self.op_indices[edge]]
 
             for op_index in available:
                 nbr_op_indices = list(self.op_indices).copy()
@@ -478,7 +485,8 @@ class TransBench101SearchSpaceMicro(Graph):
 
     def forward_before_global_avg_pool(self, x):
         if (self.create_graph and self.dataset in ['ninapro', 'svhn', 'scifar100']) or (
-            self.dataset in ['class_scene', 'class_object', 'room_layout', 'jigsaw']
+            self.dataset in ['class_scene',
+                             'class_object', 'room_layout', 'jigsaw']
         ):
             return self._forward_before_global_avg_pool(x)
         elif not self.create_graph:
@@ -541,7 +549,8 @@ class TransBench101SearchSpaceMacro(Graph):
         if metric == Metric.ALL:
             raise NotImplementedError()
         if dataset_api is None:
-            raise NotImplementedError('Must pass in dataset_api to query transbench101')
+            raise NotImplementedError(
+                'Must pass in dataset_api to query transbench101')
 
         arch_str = convert_op_indices_macro_to_str(self.op_indices)
 

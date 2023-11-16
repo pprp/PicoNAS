@@ -37,7 +37,7 @@ def get_some_data_grasp(train_dataloader, num_classes, samples_per_class, device
     while True:
         inputs, targets = next(dataloader_iter)
         for idx in range(inputs.shape[0]):
-            x, y = inputs[idx : idx + 1], targets[idx : idx + 1]
+            x, y = inputs[idx: idx + 1], targets[idx: idx + 1]
             category = y.item()
             if len(datas[category]) == samples_per_class:
                 mark[category] = True
@@ -69,7 +69,8 @@ def reshape_elements(elements, shapes, device):
         ret_grads = []
         for e, sh in zip(elements, shapes):
             ret_grads.append(
-                torch.stack([torch.Tensor(sh).fill_(v) for v in e], dim=0).to(device)
+                torch.stack([torch.Tensor(sh).fill_(v)
+                            for v in e], dim=0).to(device)
             )
         return ret_grads
 

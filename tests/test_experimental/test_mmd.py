@@ -10,8 +10,10 @@ def gaussian_kernel(source, target, kernel_mul=2.0, kernel_num=5, fix_sigma=None
     """
     n_samples = source.size(0) + target.size(0)
     total = torch.cat([source, target], dim=0)
-    total0 = total.unsqueeze(0).expand(total.size(0), total.size(0), total.size(1))
-    total1 = total.unsqueeze(1).expand(total.size(0), total.size(0), total.size(1))
+    total0 = total.unsqueeze(0).expand(
+        total.size(0), total.size(0), total.size(1))
+    total1 = total.unsqueeze(1).expand(
+        total.size(0), total.size(0), total.size(1))
     L2_distance = ((total0 - total1) ** 2).sum(2)
 
     if fix_sigma:
@@ -172,6 +174,7 @@ if __name__ == '__main__':
     lmmd_loss = LMMDLoss(class_num=3)
     source_label = torch.from_numpy(np.array([[0, 0, 2, 0]]))
     target_label = torch.from_numpy(
-        np.array([[0.1, 0.8, 0.1], [0.4, 0.1, 0.5], [0.1, 0.5, 0.4], [0.8, 0.1, 0.1]])
+        np.array([[0.1, 0.8, 0.1], [0.4, 0.1, 0.5],
+                 [0.1, 0.5, 0.4], [0.8, 0.1, 0.1]])
     )
     print(lmmd_loss.calculate_weight(source_label, target_label, class_num=3))

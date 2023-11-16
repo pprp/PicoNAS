@@ -57,7 +57,8 @@ class Distill_Trainer(BaseTrainer):
 
         self.num_choices = 2
         self.learnable_params = nn.Parameter(
-            torch.randn(self.num_choices, device=self.device, requires_grad=True) * 2
+            torch.randn(self.num_choices, device=self.device,
+                        requires_grad=True) * 2
         )
 
         self.teacher = teacher
@@ -148,7 +149,8 @@ class Distill_Trainer(BaseTrainer):
                 )
 
         # FOR DEBUG
-        self.logger.info(f'current learnable_params: {self.learnable_params.cpu()}')
+        self.logger.info(
+            f'current learnable_params: {self.learnable_params.cpu()}')
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
@@ -259,7 +261,8 @@ class Distill_Trainer(BaseTrainer):
             epoch_start_time = time.time()
 
             # train
-            tr_loss, top1_tacc, top5_tacc = self._train(train_loader, val_loader)
+            tr_loss, top1_tacc, top5_tacc = self._train(
+                train_loader, val_loader)
 
             # validate
             val_loss, top1_vacc, top5_vacc = self._validate(val_loader)

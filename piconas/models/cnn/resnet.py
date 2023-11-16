@@ -118,7 +118,8 @@ class ResNet(nn.Module):
             raise ValueError('block_name shoule be Basicblock or Bottleneck')
 
         self.inplanes = num_filters[0]
-        self.conv1 = nn.Conv2d(3, num_filters[0], kernel_size=3, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(
+            3, num_filters[0], kernel_size=3, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(num_filters[0])
         self.relu = nn.ReLU(inplace=True)
         self.layer1 = self._make_layer(block, num_filters[1], n)
@@ -129,7 +130,8 @@ class ResNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(
+                    m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
@@ -150,11 +152,13 @@ class ResNet(nn.Module):
 
         layers = list([])
         layers.append(
-            block(self.inplanes, planes, stride, downsample, is_last=(blocks == 1))
+            block(self.inplanes, planes, stride,
+                  downsample, is_last=(blocks == 1))
         )
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes, is_last=(i == blocks - 1)))
+            layers.append(block(self.inplanes, planes,
+                          is_last=(i == blocks - 1)))
 
         return nn.Sequential(*layers)
 

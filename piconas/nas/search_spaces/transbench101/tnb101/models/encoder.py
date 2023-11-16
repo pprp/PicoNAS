@@ -24,7 +24,8 @@ class FFEncoder(nn.Module):
                     *list(self.network.children())[:-2],
                 )
             else:
-                self.network = nn.Sequential(*list(self.network.children())[:-2])
+                self.network = nn.Sequential(
+                    *list(self.network.children())[:-2])
         # elif self.encoder_str == '64-41414-super_0123':
         #     self.network = SuperNetDartsV1(encoder_str, structure='backbone')
         else:

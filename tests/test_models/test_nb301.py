@@ -94,7 +94,8 @@ class TestNB301(TestCase):
         api = get_dataset_api('nasbench301', dataset='cifar10')
         api = api['nb301_model']
         p_m, r_m = api
-        p_r = p_m.predict(config=genotype, representation='genotype', with_noise=False)
+        p_r = p_m.predict(
+            config=genotype, representation='genotype', with_noise=False)
         print('performance:', p_r)
 
     def test_forward_os_nb301(self):

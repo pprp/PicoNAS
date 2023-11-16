@@ -37,7 +37,8 @@ Remaining : 0
 #     array = [5 if acc > thresholds_map[4] else 4 if acc > thresholds_map[3] else 3 if acc > thresholds_map[2] else 2 if acc > thresholds_map[1] else 1 if acc > thresholds_map[0] else 0 for acc in array]
 #     return array
 def thresholdize(array, divisions=[99, 97, 95, 90, 80]):
-    thresholds = [np.percentile(array, q) for q in [99, 97, 95, 90, 80, 70, 60, 50]]
+    thresholds = [np.percentile(array, q)
+                  for q in [99, 97, 95, 90, 80, 70, 60, 50]]
     thresholds_map = {
         0: thresholds[7],
         1: thresholds[6],
@@ -133,14 +134,16 @@ if True:
     arch2vec_nb201 = pd.DataFrame.from_dict(nb201.arch2vec_nb201).T
     cate_nb201 = pd.DataFrame.from_dict(nb201.cate_nb201)
     zcp_nb201 = pd.DataFrame.from_dict(nb201.zcp_nb201['cifar10']).T
-    zcp_nb201_valacc = pd.DataFrame.from_dict(nb201.zcp_nb201_valacc['cifar10']).T
+    zcp_nb201_valacc = pd.DataFrame.from_dict(
+        nb201.zcp_nb201_valacc['cifar10']).T
     if subsample_others is not None:
         arch2vec_nb201 = arch2vec_nb201.sample(n=subsample_others)
         cate_nb201 = cate_nb201.sample(n=subsample_others)
         zcp_nb201 = zcp_nb201.sample(n=subsample_others)
     x1 = np.asarray(arch2vec_nb201['valid_accuracy'])
     x2 = np.asarray(cate_nb201['valid_accs'])
-    x3 = np.asarray(zcp_nb201_valacc.loc[zcp_nb201.index]['val_accuracy'].tolist())
+    x3 = np.asarray(
+        zcp_nb201_valacc.loc[zcp_nb201.index]['val_accuracy'].tolist())
     cate_nb201 = stackize(cate_nb201[['embeddings']], 'embeddings')
     arch2vec_nb201 = stackize(arch2vec_nb201[['feature']], 'feature')
     arch2vec_nb201['tsne_acc'] = thresholdize(x1)
@@ -212,7 +215,8 @@ if not skip_adj:
         # for i in tqdm(random.sample(range(len(nb101.nb1_api.hash_iterator())), subsample_adj)):
         #     nb1_adj[str(i)] = nb101.get_adj(i)
         for i in tqdm(
-            random.sample(range(len(nb101.nb1_api.hash_iterator())), subsample_adj)
+            random.sample(
+                range(len(nb101.nb1_api.hash_iterator())), subsample_adj)
         ):
             nb1_adj[str(i)] = nb101.get_adj(i)
 

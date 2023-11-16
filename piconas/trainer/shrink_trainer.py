@@ -42,7 +42,8 @@ class NB201Shrinker(object):
         """each operator is ranked according to its metric score."""
 
         # sort by
-        extend_operators.sort(key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
+        extend_operators.sort(
+            key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
         # drop operators whose ranking fall at the tail.
         num = 0
@@ -82,7 +83,8 @@ class NB201Shrinker(object):
         """each operator is ranked according to its metric score."""
 
         # sort by
-        extend_operators.sort(key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
+        extend_operators.sort(
+            key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
         # drop operators whose ranking fall at the tail.
         num, drop_ops = 0, []
@@ -129,7 +131,8 @@ class NB201Shrinker(object):
             info = vis_dict_slice[operator]
             if self.sample_num - len(info['cand_pool']) > 0:
                 num = self.sample_num - len(info['cand_pool'])
-                candidate_subnets = self.get_random_extend(num, operator, vis_dict)
+                candidate_subnets = self.get_random_extend(
+                    num, operator, vis_dict)
 
                 for subnet in candidate_subnets:
                     for id, choice in subnet.items():
@@ -314,7 +317,8 @@ class NB201ShrinkTrainer(BaseTrainer):
             self.mutator.prepare_from_supernet(model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(num_sample=1000, dataset=self.dataset)
+        self.evaluator = self._build_evaluator(
+            num_sample=1000, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -457,7 +461,8 @@ class NB201ShrinkTrainer(BaseTrainer):
             return (n_list - min_n) / max_n - min_n
 
         if policy == 'flops':
-            n_flops = torch.tensor([self.get_subnet_flops(i) for i in n_subnets])
+            n_flops = torch.tensor([self.get_subnet_flops(i)
+                                   for i in n_subnets])
             res = minmaxscaler(n_flops)
             res = F.softmax(res, dim=0)
             # Find the max
@@ -466,7 +471,8 @@ class NB201ShrinkTrainer(BaseTrainer):
             subnet = n_subnets[max_idx]
 
         elif policy == 'params':
-            n_params = torch.tensor([self.get_subnet_params(i) for i in n_subnets])
+            n_params = torch.tensor(
+                [self.get_subnet_params(i) for i in n_subnets])
             res = minmaxscaler(n_params)
             res = F.softmax(res, dim=0)
             # Find the max
@@ -474,7 +480,8 @@ class NB201ShrinkTrainer(BaseTrainer):
             subnet = n_subnets[max_idx]
 
         elif policy == 'zenscore':
-            n_zenscore = torch.tensor([self.get_subnet_zenscore(i) for i in n_subnets])
+            n_zenscore = torch.tensor(
+                [self.get_subnet_zenscore(i) for i in n_subnets])
             res = minmaxscaler(n_zenscore)
             res = F.softmax(res, dim=0)
             # Find the max
@@ -538,7 +545,8 @@ class NB201ShrinkTrainer(BaseTrainer):
                 elif self.type == 'sandwich':
                     loss, outputs = self._forward_sandwich(batch_inputs)
             elif self.type in {'zenscore', 'flops', 'params', 'nwot'}:
-                loss, outputs = self._forward_balanced(batch_inputs, policy=self.type)
+                loss, outputs = self._forward_balanced(
+                    batch_inputs, policy=self.type)
             else:
                 loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
@@ -681,7 +689,8 @@ class NB201ShrinkTrainer(BaseTrainer):
             epoch_start_time = time.time()
 
             # train
-            tr_loss, top1_tacc, top5_tacc = self._train(train_loader, val_loader)
+            tr_loss, top1_tacc, top5_tacc = self._train(
+                train_loader, val_loader)
 
             # validate
             val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
@@ -743,7 +752,8 @@ class NB201ShrinkTrainer(BaseTrainer):
                 self.writer.add_scalar(
                     'RANK/spearman', sp, global_step=self.current_epoch
                 )
-                self.writer.add_scalar('RANK/cpr', cpr, global_step=self.current_epoch)
+                self.writer.add_scalar(
+                    'RANK/cpr', cpr, global_step=self.current_epoch)
 
                 if isinstance(rd, list):
                     for i, r in enumerate(rd):
@@ -824,7 +834,8 @@ class NB201ShrinkTrainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 # move to device
-                outputs, labels = self._predict(batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(
+                    batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
@@ -1123,14 +1134,17 @@ class NB201ShrinkTrainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+        loss3 = self._lambda * self.pairwise_rankloss(
+            flops1, flops2, loss1, loss2)
         loss_list.append(loss3)
 
         # distill loss
         if loss2 > loss1:
-            loss4 = self.distill_loss(feat_s=feat2, feat_t=feat1) * self.lambda_kd
+            loss4 = self.distill_loss(
+                feat_s=feat2, feat_t=feat1) * self.lambda_kd
         else:
-            loss4 = self.distill_loss(feat_s=feat1, feat_t=feat2) * self.lambda_kd
+            loss4 = self.distill_loss(
+                feat_s=feat1, feat_t=feat2) * self.lambda_kd
         loss_list.append(loss4)
 
         loss = sum(loss_list)
@@ -1173,7 +1187,8 @@ class NB201ShrinkTrainer(BaseTrainer):
             for j in range(i):
                 flops1, flops2 = flops_list[i], flops_list[j]
                 loss1, loss2 = loss_list[i], loss_list[j]
-                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+                tmp_rank_loss = self.pairwise_rankloss(
+                    flops1, flops2, loss1, loss2)
 
                 rank_loss_list.append(tmp_rank_loss)
 

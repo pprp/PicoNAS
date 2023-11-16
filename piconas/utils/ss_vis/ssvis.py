@@ -118,7 +118,8 @@ def visualize_tsne(X_2d, sampled_labels, ranges, ax, title, name_map, pl):
         f'{title}',
         fontsize=16,
         horizontalalignment='right',
-        bbox=dict(facecolor='white', edgecolor='gray', boxstyle='round,pad=0.3'),
+        bbox=dict(facecolor='white', edgecolor='gray',
+                  boxstyle='round,pad=0.3'),
         transform=ax.transAxes,
     )
 
@@ -127,7 +128,8 @@ def visualize_tsne(X_2d, sampled_labels, ranges, ax, title, name_map, pl):
 
 
 # Load the first dictionary and prepare data
-data_dict1 = torch.load(BASE_PATH + '/' + 'model-dim_32_search_space_all_ss-all_ss.pt')
+data_dict1 = torch.load(
+    BASE_PATH + '/' + 'model-dim_32_search_space_all_ss-all_ss.pt')
 sampled_features1, sampled_labels1 = load_and_prepare_data(data_dict1, ranges)
 
 # Load the second dictionary and prepare data
@@ -154,7 +156,8 @@ if True:
     visualize_tsne(
         X_2d1, sampled_labels1, ranges, axs[0], 'Arch2Vec', name_map, pl=False
     )
-    visualize_tsne(X_2d2, sampled_labels2, ranges, axs[1], 'CATE', name_map, pl=False)
+    visualize_tsne(X_2d2, sampled_labels2, ranges,
+                   axs[1], 'CATE', name_map, pl=False)
     for ax in axs:
         h, l = ax.get_legend_handles_labels()
         handles.extend(h)
@@ -182,7 +185,8 @@ if True:
     visualize_tsne(
         X_2d1, sampled_labels1, ranges, axs[0], 'Arch2Vec', name_map, pl=False
     )
-    visualize_tsne(X_2d2, sampled_labels2, ranges, axs[1], 'CATE', name_map, pl=False)
+    visualize_tsne(X_2d2, sampled_labels2, ranges,
+                   axs[1], 'CATE', name_map, pl=False)
     for ax in axs:
         h, l = ax.get_legend_handles_labels()
         handles.extend(h)
@@ -195,7 +199,8 @@ if True:
     legend_ax = fig.add_axes([0.82, 0.1, 0.1, 0.8])
     legend_ax.axis('off')
 
-    lgnd = legend_ax.legend(handles, labels, loc='center left', ncol=2, fontsize=16)
+    lgnd = legend_ax.legend(
+        handles, labels, loc='center left', ncol=2, fontsize=16)
     for handle in lgnd.legendHandles:
         handle.set_sizes([35.0])
     plt.savefig('tsne_combined_5000_nums_legside.png', dpi=500)

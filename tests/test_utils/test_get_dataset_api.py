@@ -6,7 +6,8 @@ from piconas.utils.get_dataset_api import get_dataset_api
 
 class TestNasBench(TestCase):
     def setUp(self) -> None:
-        self.api = get_dataset_api(search_space='nasbench201', dataset='cifar10')
+        self.api = get_dataset_api(
+            search_space='nasbench201', dataset='cifar10')
 
     def test_nas_bench_201(self):
         tk = list(self.api['nb201_data'].keys())[1]

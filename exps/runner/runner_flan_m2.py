@@ -1,3 +1,4 @@
+from nas_embedding_suite.all_ss import AllSS as EmbGenClass
 import argparse
 import copy
 import os
@@ -42,7 +43,8 @@ parser.add_argument(
 parser.add_argument(
     '--test_tagates', action='store_true'
 )  # Currently only supports testing on NB101 networks. Easy to extend.
-parser.add_argument('--loss_type', type=str, default='pwl')  # mse, pwl supported
+parser.add_argument('--loss_type', type=str,
+                    default='pwl')  # mse, pwl supported
 parser.add_argument(
     '--back_dense', action='store_true'
 )  # If True, backward flow will be DenseFlow
@@ -116,9 +118,11 @@ def flatten_mixed_list(pred_scores):
     flattened = []
     for sublist in pred_scores:
         if isinstance(sublist, (list, tuple)):  # Check if the item is iterable
-            flattened.extend(sublist)  # If it's iterable, extend the flattened list
+            # If it's iterable, extend the flattened list
+            flattened.extend(sublist)
         else:
-            flattened.append(sublist)  # If it's not iterable, append it directly
+            # If it's not iterable, append it directly
+            flattened.append(sublist)
     return flattened
 
 
@@ -162,7 +166,7 @@ def pwl_train(
                 'tb101',
             ]:
                 continue
-        #### Params for PWL Loss
+        # Params for PWL Loss
         accs = targets
         max_compare_ratio = 4
         compare_threshold = 0.0
@@ -185,8 +189,10 @@ def pwl_train(
                 ex_thresh_inds[1][keep_inds],
             )
         if args.representation in ['adj_mlp', 'zcp', 'arch2vec', 'cate']:
-            archs_1 = [torch.stack(list((inputs[indx] for indx in ex_thresh_inds[1])))]
-            archs_2 = [torch.stack(list((inputs[indx] for indx in ex_thresh_inds[0])))]
+            archs_1 = [torch.stack(list((inputs[indx]
+                                   for indx in ex_thresh_inds[1])))]
+            archs_2 = [torch.stack(list((inputs[indx]
+                                   for indx in ex_thresh_inds[0])))]
             X_input_1 = archs_1[0].to(device)
             s_1 = model(X_input_1).squeeze()
             X_input_2 = archs_2[0].to(device)
@@ -194,14 +200,20 @@ def pwl_train(
         elif args.representation in ['adj_gin']:
             if space in ['nb101', 'nb201', 'nb301', 'tb101']:
                 archs_1 = [
-                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[0][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[1][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[2][indx]
+                                for indx in ex_thresh_inds[1]))),
                 ]
                 archs_2 = [
-                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[0][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[1][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[2][indx]
+                                for indx in ex_thresh_inds[0]))),
                 ]
                 X_adj_1, X_ops_1, norm_w_d_1 = (
                     archs_1[0].to(device),
@@ -231,18 +243,28 @@ def pwl_train(
                 ).squeeze()
             else:
                 archs_1 = [
-                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[4][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[0][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[1][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[2][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[3][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[4][indx]
+                                for indx in ex_thresh_inds[1]))),
                 ]
                 archs_2 = [
-                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[4][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[0][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[1][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[2][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[3][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[4][indx]
+                                for indx in ex_thresh_inds[0]))),
                 ]
                 X_adj_a_1, X_ops_a_1, X_adj_b_1, X_ops_b_1, norm_w_d_1 = (
                     archs_1[0].to(device),
@@ -282,16 +304,24 @@ def pwl_train(
         ]:
             if space in ['nb101', 'nb201', 'nb301', 'tb101']:
                 archs_1 = [
-                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[0][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[1][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[2][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[3][indx]
+                                for indx in ex_thresh_inds[1]))),
                 ]
                 archs_2 = [
-                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[0][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[1][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[2][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[3][indx]
+                                for indx in ex_thresh_inds[0]))),
                 ]
                 X_adj_1, X_ops_1, zcp, norm_w_d_1 = (
                     archs_1[0].to(device),
@@ -323,20 +353,32 @@ def pwl_train(
                 ).squeeze()
             else:
                 archs_1 = [
-                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[4][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(list((inputs[5][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[0][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[1][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[2][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[3][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[4][indx]
+                                for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[5][indx]
+                                for indx in ex_thresh_inds[1]))),
                 ]
                 archs_2 = [
-                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[4][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(list((inputs[5][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[0][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[1][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[2][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[3][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[4][indx]
+                                for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[5][indx]
+                                for indx in ex_thresh_inds[0]))),
                 ]
                 X_adj_a_1, X_ops_a_1, X_adj_b_1, X_ops_b_1, zcp, norm_w_d_1 = (
                     archs_1[0].to(device),
@@ -376,7 +418,8 @@ def pwl_train(
         better_pm = 2 * s_1.new(np.array(better_lst, dtype=np.float32)) - 1
         zero_ = s_1.new([0.0])
         margin = s_1.new(margin)
-        pair_loss = torch.mean(torch.max(zero_, margin - better_pm * (s_2 - s_1)))
+        pair_loss = torch.mean(
+            torch.max(zero_, margin - better_pm * (s_2 - s_1)))
         optimizer.zero_grad()
         pair_loss.backward()
         optimizer.step()
@@ -479,7 +522,6 @@ def pwl_train(
 
 
 sys.path.append('..')
-from nas_embedding_suite.all_ss import AllSS as EmbGenClass
 
 embedding_gen = EmbGenClass()
 
@@ -553,14 +595,16 @@ def get_dataloader(
                         i, bin_space=True
                     ).values()
                     if space == 'tb101':
-                        accs.append(embedding_gen.get_valacc(i, task=args.task))
+                        accs.append(embedding_gen.get_valacc(
+                            i, task=args.task))
                     else:
                         accs.append(embedding_gen.get_valacc(i))
                     norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
                     norm_w_d = np.asarray(norm_w_d).flatten()
                     adj_mat = np.asarray(adj_mat).flatten()
                     op_mat = (
-                        torch.Tensor(np.asarray(op_mat)).argmax(dim=1).numpy().flatten()
+                        torch.Tensor(np.asarray(op_mat)).argmax(
+                            dim=1).numpy().flatten()
                     )  # Careful here.
                     representations.append(
                         np.concatenate((adj_mat, op_mat, norm_w_d)).tolist()
@@ -595,8 +639,10 @@ def get_dataloader(
                     ) = embedding_gen.get_adj_op(i, space=space).values()
                     norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
                     norm_w_d = np.asarray(norm_w_d).flatten()
-                    op_mat_norm = torch.Tensor(np.array(op_mat_norm)).argmax(dim=1)
-                    op_mat_red = torch.Tensor(np.array(op_mat_red)).argmax(dim=1)
+                    op_mat_norm = torch.Tensor(
+                        np.array(op_mat_norm)).argmax(dim=1)
+                    op_mat_red = torch.Tensor(
+                        np.array(op_mat_red)).argmax(dim=1)
                     accs.append(embedding_gen.get_valacc(i, space=space))
                     representations.append(
                         (
@@ -631,13 +677,17 @@ def get_dataloader(
                         adj_mat_red,
                         op_mat_red,
                     ) = embedding_gen.get_adj_op(i, space=space).values()
-                    method_name = 'get_{}'.format(representation.split('_')[-1])
+                    method_name = 'get_{}'.format(
+                        representation.split('_')[-1])
                     method_to_call = getattr(embedding_gen, method_name)
-                    zcp_ = method_to_call(i, space=space, joint=args.joint_repr)
+                    zcp_ = method_to_call(
+                        i, space=space, joint=args.joint_repr)
                     norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
                     norm_w_d = np.asarray(norm_w_d).flatten()
-                    op_mat_norm = torch.Tensor(np.array(op_mat_norm)).argmax(dim=1)
-                    op_mat_red = torch.Tensor(np.array(op_mat_red)).argmax(dim=1)
+                    op_mat_norm = torch.Tensor(
+                        np.array(op_mat_norm)).argmax(dim=1)
+                    op_mat_red = torch.Tensor(
+                        np.array(op_mat_red)).argmax(dim=1)
                     accs.append(embedding_gen.get_valacc(i, space=space))
                     representations.append(
                         (
@@ -653,9 +703,11 @@ def get_dataloader(
                     adj_mat, op_mat = embedding_gen.get_adj_op(
                         i, space=space, bin_space=True
                     ).values()
-                    method_name = 'get_{}'.format(representation.split('_')[-1])
+                    method_name = 'get_{}'.format(
+                        representation.split('_')[-1])
                     method_to_call = getattr(embedding_gen, method_name)
-                    zcp_ = method_to_call(i, space=space, joint=args.joint_repr)
+                    zcp_ = method_to_call(
+                        i, space=space, joint=args.joint_repr)
                     norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
                     norm_w_d = np.asarray(norm_w_d).flatten()
                     op_mat = torch.Tensor(np.array(op_mat)).argmax(dim=1)
@@ -784,7 +836,8 @@ params_optimize = list(model.parameters())
 optimizer = torch.optim.AdamW(
     params_optimize, lr=args.lr, weight_decay=args.weight_decay
 )
-scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=args.eta_min)
+scheduler = CosineAnnealingLR(
+    optimizer, T_max=args.epochs, eta_min=args.eta_min)
 kdt_l5, spr_l5 = [], []
 for epoch in range(args.epochs):
     start_time = time.time()
@@ -902,7 +955,7 @@ for tr_ in range(args.num_trials):
             test_size=args.test_size,
         )
         # import pdb; pdb.set_trace()
-        ### Transfer
+        # Transfer
         model.vertices = next(iter(transfer_dataloader))[0][1].shape[1]
         if args.transfer_space not in ['nb101', 'nb201', 'nb301', 'tb101']:
             model.dual_gcn = True
@@ -974,7 +1027,8 @@ for tr_ in range(args.num_trials):
             )
         )
         pprint(samp_eff)
-        across_trials[transfer_sample_count].append(samp_eff[transfer_sample_count])
+        across_trials[transfer_sample_count].append(
+            samp_eff[transfer_sample_count])
 
 # print average across trials for each sample count
 for transfer_sample_count in transfer_sample_counts:

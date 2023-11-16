@@ -184,7 +184,7 @@ class Darts_Trainer(BaseTrainer):
             self.mutator.parameters()
         )
         w_grads = torch.autograd.grad(loss, w_model + w_arch)
-        d_model, d_arch = w_grads[: len(w_model)], w_grads[len(w_model) :]
+        d_model, d_arch = w_grads[: len(w_model)], w_grads[len(w_model):]
 
         # compute hessian and final gradients [expression (8) from paper]
         hessian = self._compute_hessian(backup_params, d_model, trn_x, trn_y)
@@ -237,7 +237,8 @@ class Darts_Trainer(BaseTrainer):
                     p += e * d
             output = self.model(trn_x)
             loss = self.criterion(output, trn_y)
-            dalphas.append(torch.autograd.grad(loss, self.mutator.parameters()))
+            dalphas.append(torch.autograd.grad(
+                loss, self.mutator.parameters()))
         dalpha_pos, dalpha_neg = dalphas
         return [(p - n) / 2.0 * eps for p, n in zip(dalpha_pos, dalpha_neg)]
 
@@ -321,7 +322,8 @@ class Darts_Trainer(BaseTrainer):
             epoch_start_time = time.time()
 
             # train
-            tr_loss, top1_tacc, top5_tacc = self._train(train_loader, val_loader)
+            tr_loss, top1_tacc, top5_tacc = self._train(
+                train_loader, val_loader)
 
             # validate
             val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
@@ -383,7 +385,8 @@ class Darts_Trainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 # move to device
-                outputs, labels = self._predict(batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(
+                    batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)

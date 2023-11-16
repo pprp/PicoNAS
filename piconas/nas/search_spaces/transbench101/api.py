@@ -14,7 +14,8 @@ class TransNASBenchAPI(object):
         self.database = torch.load(database_path)
         self.verbose = verbose
 
-        self.metrics_dict = self.database['metrics_dict']  # {task : metrics_list}
+        # {task : metrics_list}
+        self.metrics_dict = self.database['metrics_dict']
         self.info_names = self.database['info_names']
         # ['inference_time', 'encoder_params', 'encoder_FLOPs' ... ]
         self.task_list = self.database['task_list']  # [7 tasks]
@@ -170,7 +171,8 @@ class TransNASBenchAPI(object):
         for ss in self.search_spaces:
             data[ss] = {}
         for idx, (arch, space) in enumerate(arch2space.items()):
-            data[space][arch] = ArchResult(idx, arch, database['data'][space][arch])
+            data[space][arch] = ArchResult(
+                idx, arch, database['data'][space][arch])
         return data
 
 

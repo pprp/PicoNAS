@@ -280,7 +280,8 @@ class Stem(AbstractPrimitive):
     def __init__(self, C_in=3, C_out=64, **kwargs):
         super().__init__(locals())
         self.seq = nn.Sequential(
-            nn.Conv2d(C_in, C_out, 3, padding=1, bias=False), nn.BatchNorm2d(C_out)
+            nn.Conv2d(C_in, C_out, 3, padding=1,
+                      bias=False), nn.BatchNorm2d(C_out)
         )
 
     def forward(self, x, edge_data=None):
@@ -350,7 +351,8 @@ class MaxPool1x1(AbstractPrimitive):
         self.maxpool = nn.MaxPool2d(kernel_size, stride=stride, padding=1)
         if stride > 1:
             assert C_in is not None and C_out is not None
-            self.conv = nn.Conv2d(C_in, C_out, 1, stride=1, padding=0, bias=False)
+            self.conv = nn.Conv2d(
+                C_in, C_out, 1, stride=1, padding=0, bias=False)
             self.bn = nn.BatchNorm2d(C_out, affine=affine)
 
     def forward(self, x, edge_data):
@@ -376,7 +378,8 @@ class AvgPool(AbstractPrimitive):
 
         if use_bn:
             self.avgpool = nn.Sequential(
-                nn.AvgPool2d(3, stride=stride, padding=1, count_include_pad=False),
+                nn.AvgPool2d(3, stride=stride, padding=1,
+                             count_include_pad=False),
                 nn.BatchNorm2d(C_in, affine=False),
             )
         else:
@@ -411,7 +414,8 @@ class AvgPool1x1(AbstractPrimitive):
         )
         if stride > 1:
             assert C_in is not None and C_out is not None
-            self.conv = nn.Conv2d(C_in, C_out, 1, stride=1, padding=0, bias=False)
+            self.conv = nn.Conv2d(
+                C_in, C_out, 1, stride=1, padding=0, bias=False)
             self.bn = nn.BatchNorm2d(C_out, affine=affine)
 
     def forward(self, x, edge_data):
@@ -465,7 +469,8 @@ class ReLUConvBN(AbstractPrimitive):
         pad = 0 if kernel_size == 1 else 1
         self.op = nn.Sequential(
             nn.ReLU(inplace=False),
-            nn.Conv2d(C_in, C_out, kernel_size, stride=stride, padding=pad, bias=bias),
+            nn.Conv2d(C_in, C_out, kernel_size,
+                      stride=stride, padding=pad, bias=bias),
             nn.BatchNorm2d(
                 C_out, affine=affine, track_running_stats=track_running_stats
             ),
@@ -496,7 +501,8 @@ class ConvBnReLU(AbstractPrimitive):
         self.kernel_size = kernel_size
         pad = 0 if stride == 1 and kernel_size == 1 else 1
         self.op = nn.Sequential(
-            nn.Conv2d(C_in, C_out, kernel_size, stride=stride, padding=pad, bias=False),
+            nn.Conv2d(C_in, C_out, kernel_size,
+                      stride=stride, padding=pad, bias=False),
             nn.BatchNorm2d(C_out, affine=affine),
             nn.ReLU(inplace=False),
         )
@@ -585,7 +591,8 @@ class StemJigsaw(AbstractPrimitive):
     def __init__(self, C_in=3, C_out=64, **kwargs):
         super().__init__(locals())
         self.seq = nn.Sequential(
-            nn.Conv2d(C_in, C_out, 3, padding=1, bias=False), nn.BatchNorm2d(C_out)
+            nn.Conv2d(C_in, C_out, 3, padding=1,
+                      bias=False), nn.BatchNorm2d(C_out)
         )
         # self.seq = nn.Sequential(*list(models.resnet50().children())[:-2])
 
@@ -633,20 +640,24 @@ class GenerativeDecoder(AbstractPrimitive):
         in_channel, in_width = in_dim[0], in_dim[1]
         out_width = target_dim[0]
         num_upsample = int(math.log2(out_width / in_width))
-        assert num_upsample in [2, 3, 4, 5, 6], f'invalid num_upsample: {num_upsample}'
+        assert num_upsample in [2, 3, 4, 5,
+                                6], f'invalid num_upsample: {num_upsample}'
 
-        self.conv1 = ConvLayer(in_channel, 1024, 3, 1, 1, nn.LeakyReLU(0.2), norm)
+        self.conv1 = ConvLayer(in_channel, 1024, 3, 1,
+                               1, nn.LeakyReLU(0.2), norm)
         self.conv2 = ConvLayer(1024, 1024, 3, 2, 1, nn.LeakyReLU(0.2), norm)
 
         if num_upsample == 6:
-            self.conv3 = DeconvLayer(1024, 512, 3, 2, 1, nn.LeakyReLU(0.2), norm)
+            self.conv3 = DeconvLayer(
+                1024, 512, 3, 2, 1, nn.LeakyReLU(0.2), norm)
         else:
             self.conv3 = ConvLayer(1024, 512, 3, 1, 1, nn.LeakyReLU(0.2), norm)
 
         self.conv4 = ConvLayer(512, 512, 3, 1, 1, nn.LeakyReLU(0.2), norm)
 
         if num_upsample >= 5:
-            self.conv5 = DeconvLayer(512, 256, 3, 2, 1, nn.LeakyReLU(0.2), norm)
+            self.conv5 = DeconvLayer(
+                512, 256, 3, 2, 1, nn.LeakyReLU(0.2), norm)
         else:
             self.conv5 = ConvLayer(512, 256, 3, 1, 1, nn.LeakyReLU(0.2), norm)
 
@@ -670,7 +681,8 @@ class GenerativeDecoder(AbstractPrimitive):
         self.conv12 = ConvLayer(16, 32, 3, 1, 1, nn.LeakyReLU(0.2), norm)
         self.conv13 = DeconvLayer(32, 16, 3, 2, 1, nn.LeakyReLU(0.2), norm)
 
-        self.conv14 = ConvLayer(16, target_num_channel, 3, 1, 1, nn.Tanh(), norm)
+        self.conv14 = ConvLayer(16, target_num_channel,
+                                3, 1, 1, nn.Tanh(), norm)
 
     def forward(self, x, edge_data):
         x = self.conv1(x)

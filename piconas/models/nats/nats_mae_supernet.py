@@ -88,12 +88,13 @@ class MAESupernetNATS(SupernetNATS):
         x = self.stem[1](x, idx)
         # blocks
         for i, block in enumerate(self._blocks):
-            pre_op = forward_op[sum(self._op_layers_list[:i]) - 1] if i > 0 else -1
+            pre_op = forward_op[sum(
+                self._op_layers_list[:i]) - 1] if i > 0 else -1
             x = block(
                 x,
                 i,
                 forward_list=forward_op[
-                    sum(self._op_layers_list[:i]) : sum(self._op_layers_list[: (i + 1)])
+                    sum(self._op_layers_list[:i]): sum(self._op_layers_list[: (i + 1)])
                 ],
                 pre_op=pre_op,
             )

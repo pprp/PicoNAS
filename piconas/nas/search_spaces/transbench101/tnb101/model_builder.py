@@ -42,7 +42,8 @@ def create_model(encoder_str, task_name):
     elif task_name == 'normal':
         model = _create_model_normal(cfg)
     else:
-        raise NotImplementedError(f'Model not implemented for task {task_name}')
+        raise NotImplementedError(
+            f'Model not implemented for task {task_name}')
 
     return model
 
@@ -93,7 +94,8 @@ def _create_model_room_layout(cfg):
 
 def _create_model_autoencoder(cfg):
     cfg['target_dim'] = (256, 256)  # ORIG CODE (3, 256, 256)
-    cfg['decoder'] = GenerativeDecoder(cfg['decoder_input_dim'], cfg['target_dim'])
+    cfg['decoder'] = GenerativeDecoder(
+        cfg['decoder_input_dim'], cfg['target_dim'])
     cfg['discriminator'] = Discriminator()
     cfg['model'] = GAN(cfg['encoder'], cfg['decoder'], cfg['discriminator'])
 

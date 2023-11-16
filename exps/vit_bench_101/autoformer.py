@@ -41,7 +41,8 @@ class BaseTransformerModel(nn.Module, metaclass=ABCMeta):
             assert isinstance(self.depth, (list, tuple))
             assert len(self.hidden_dim) == len(self.depth)
             self.feature_dims = sum(
-                [[self.hidden_dim[i]] * d for i, d in enumerate(self.depth)], []
+                [[self.hidden_dim[i]] * d for i,
+                    d in enumerate(self.depth)], []
             )
         else:
             raise ValueError
@@ -54,7 +55,8 @@ class BaseTransformerModel(nn.Module, metaclass=ABCMeta):
         """
         for layer in layers:
             layer.register_forward_hook(self._feature_hook)
-        self.register_forward_pre_hook(lambda module, inp: self.features.clear())
+        self.register_forward_pre_hook(
+            lambda module, inp: self.features.clear())
 
     @abstractmethod
     def _feature_hook(self, module, inputs, outputs):
@@ -86,8 +88,10 @@ class MultiheadAttention(nn.Module):
         self.out_channels = out_channels
         self.num_heads = num_heads
 
-        self.norm_factor = qk_scale if qk_scale else (out_channels // num_heads) ** -0.5
-        self.qkv_transform = nn.Linear(in_channels, out_channels * 3, bias=qkv_bias)
+        self.norm_factor = qk_scale if qk_scale else (
+            out_channels // num_heads) ** -0.5
+        self.qkv_transform = nn.Linear(
+            in_channels, out_channels * 3, bias=qkv_bias)
         self.projection = nn.Linear(out_channels, out_channels)
         self.attention_dropout = nn.Dropout(attn_drop_rate)
         self.projection_dropout = nn.Dropout(proj_drop_rate)
@@ -285,7 +289,7 @@ class AutoFormerSub(BaseTransformerModel):
 
     def _feature_hook(self, module, inputs, outputs):
         feat_size = int(self.patch_embed.num_patches**0.5)
-        x = outputs[:, self.num_tokens :].view(
+        x = outputs[:, self.num_tokens:].view(
             outputs.size(0), feat_size, feat_size, self.hidden_dim
         )
         x = x.permute(0, 3, 1, 2).contiguous()

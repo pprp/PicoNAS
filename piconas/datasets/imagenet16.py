@@ -134,7 +134,9 @@ if __name__ == '__main__':
     print(len(train))
     print(len(valid))
     image, label = train[111]
-    trainX = ImageNet16('/data02/dongxuanyi/.torch/ImageNet16', True, None, 200)
-    validX = ImageNet16('/data02/dongxuanyi/.torch/ImageNet16', False, None, 200)
+    trainX = ImageNet16(
+        '/data02/dongxuanyi/.torch/ImageNet16', True, None, 200)
+    validX = ImageNet16(
+        '/data02/dongxuanyi/.torch/ImageNet16', False, None, 200)
     print(len(trainX))
     print(len(validX))

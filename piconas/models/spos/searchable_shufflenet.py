@@ -36,7 +36,8 @@ class SearchableShuffleNetV2(nn.Module):
             self.layers.append(layer)
 
         self.last_conv = nn.Sequential(
-            nn.Conv2d(self.in_channels, self.last_channel, 1, 1, 0, bias=False),
+            nn.Conv2d(self.in_channels, self.last_channel,
+                      1, 1, 0, bias=False),
             nn.BatchNorm2d(self.last_channel, affine=False),
             nn.ReLU6(inplace=True),
         )

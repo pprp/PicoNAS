@@ -57,14 +57,18 @@ OPS = {
     ),
     'conv_3x1_1x3': lambda C, stride, affine: nn.Sequential(
         nn.ReLU(inplace=False),
-        nn.Conv2d(C, C, (1, 3), stride=(1, stride), padding=(0, 1), bias=False),
-        nn.Conv2d(C, C, (3, 1), stride=(stride, 1), padding=(1, 0), bias=False),
+        nn.Conv2d(C, C, (1, 3), stride=(1, stride),
+                  padding=(0, 1), bias=False),
+        nn.Conv2d(C, C, (3, 1), stride=(stride, 1),
+                  padding=(1, 0), bias=False),
         nn.BatchNorm2d(C, affine=affine),
     ),
     'conv_7x1_1x7': lambda C, stride, affine: nn.Sequential(
         nn.ReLU(inplace=False),
-        nn.Conv2d(C, C, (1, 7), stride=(1, stride), padding=(0, 3), bias=False),
-        nn.Conv2d(C, C, (7, 1), stride=(stride, 1), padding=(3, 0), bias=False),
+        nn.Conv2d(C, C, (1, 7), stride=(1, stride),
+                  padding=(0, 3), bias=False),
+        nn.Conv2d(C, C, (7, 1), stride=(stride, 1),
+                  padding=(3, 0), bias=False),
         nn.BatchNorm2d(C, affine=affine),
     ),
     'conv_3x3': lambda C, stride, affine: ReLUConvBN(C, C, 3, stride, 1, affine=affine),
@@ -207,8 +211,10 @@ class FactorizedReduce(nn.Module):
         super(FactorizedReduce, self).__init__()
         assert C_out % 2 == 0
         self.relu = nn.ReLU(inplace=False)
-        self.conv_1 = nn.Conv2d(C_in, C_out // 2, 1, stride=2, padding=0, bias=False)
-        self.conv_2 = nn.Conv2d(C_in, C_out // 2, 1, stride=2, padding=0, bias=False)
+        self.conv_1 = nn.Conv2d(C_in, C_out // 2, 1,
+                                stride=2, padding=0, bias=False)
+        self.conv_2 = nn.Conv2d(C_in, C_out // 2, 1,
+                                stride=2, padding=0, bias=False)
         self.bn = nn.BatchNorm2d(C_out, affine=affine)
         self.pad = nn.ConstantPad2d((0, 1, 0, 1), 0)
 

@@ -48,14 +48,17 @@ def compute_zen_score(
     with torch.no_grad():
         for _ in range(repeat):
             network_weight_gaussian_init(net)
-            input = torch.randn(size=list(inputs.shape), device=device, dtype=dtype)
-            input2 = torch.randn(size=list(inputs.shape), device=device, dtype=dtype)
+            input = torch.randn(size=list(inputs.shape),
+                                device=device, dtype=dtype)
+            input2 = torch.randn(size=list(inputs.shape),
+                                 device=device, dtype=dtype)
             mixup_input = input + mixup_gamma * input2
 
             output = net.forward_before_global_avg_pool(input)
             mixup_output = net.forward_before_global_avg_pool(mixup_input)
 
-            nas_score = torch.sum(torch.abs(output - mixup_output), dim=[1, 2, 3])
+            nas_score = torch.sum(
+                torch.abs(output - mixup_output), dim=[1, 2, 3])
             nas_score = torch.mean(nas_score)
 
             # compute BN scaling

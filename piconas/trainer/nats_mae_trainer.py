@@ -144,7 +144,8 @@ class NATSMAETrainer(NATSTrainer):
         t_loss.backward(retain_graph=True)
 
         # middle supernet
-        mid_forward_lists = [self.model.set_forward_cfg('uni') for _ in range(2)]
+        mid_forward_lists = [
+            self.model.set_forward_cfg('uni') for _ in range(2)]
         for mid_forward_list in mid_forward_lists:
             output, s_feat = self.model(inputs, mask, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
@@ -173,7 +174,8 @@ class NATSMAETrainer(NATSTrainer):
         mse_loss_list.append(t_loss)
 
         # middle supernet
-        mid_forward_lists = [self.model.set_forward_cfg('uni') for _ in range(2)]
+        mid_forward_lists = [
+            self.model.set_forward_cfg('uni') for _ in range(2)]
         for mid_forward_list in mid_forward_lists:
             output, feat_s = self.model(inputs, mask, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
@@ -360,7 +362,8 @@ class NATSMAETrainer(NATSTrainer):
 
                 # print every 20 iter
                 if step % self.print_freq == 0:
-                    self.logger.info(f'Step: {step} \t Val loss: {loss.item()}')
+                    self.logger.info(
+                        f'Step: {step} \t Val loss: {loss.item()}')
                     self.writer.add_scalar(
                         'STEP_LOSS/valid_step_loss',
                         loss.item(),

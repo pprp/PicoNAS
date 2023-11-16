@@ -39,11 +39,14 @@ class AdaBound(Optimizer):
         if not 0.0 <= eps:
             raise ValueError('Invalid epsilon value: {}'.format(eps))
         if not 0.0 <= betas[0] < 1.0:
-            raise ValueError('Invalid beta parameter at index 0: {}'.format(betas[0]))
+            raise ValueError(
+                'Invalid beta parameter at index 0: {}'.format(betas[0]))
         if not 0.0 <= betas[1] < 1.0:
-            raise ValueError('Invalid beta parameter at index 1: {}'.format(betas[1]))
+            raise ValueError(
+                'Invalid beta parameter at index 1: {}'.format(betas[1]))
         if not 0.0 <= final_lr:
-            raise ValueError('Invalid final learning rate: {}'.format(final_lr))
+            raise ValueError(
+                'Invalid final learning rate: {}'.format(final_lr))
         if not 0.0 <= gamma < 1.0:
             raise ValueError('Invalid gamma parameter: {}'.format(gamma))
         defaults = dict(
@@ -121,15 +124,19 @@ class AdaBound(Optimizer):
 
                 bias_correction1 = 1 - beta1 ** state['step']
                 bias_correction2 = 1 - beta2 ** state['step']
-                step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
+                step_size = group['lr'] * \
+                    math.sqrt(bias_correction2) / bias_correction1
 
                 # Applies bounds on actual learning rate
                 # lr_scheduler cannot affect final_lr, this is a workaround to apply lr decay
                 final_lr = group['final_lr'] * group['lr'] / base_lr
-                lower_bound = final_lr * (1 - 1 / (group['gamma'] * state['step'] + 1))
-                upper_bound = final_lr * (1 + 1 / (group['gamma'] * state['step']))
+                lower_bound = final_lr * \
+                    (1 - 1 / (group['gamma'] * state['step'] + 1))
+                upper_bound = final_lr * \
+                    (1 + 1 / (group['gamma'] * state['step']))
                 step_size = torch.full_like(denom, step_size)
-                step_size.div_(denom).clamp_(lower_bound, upper_bound).mul_(exp_avg)
+                step_size.div_(denom).clamp_(
+                    lower_bound, upper_bound).mul_(exp_avg)
 
                 p.data.add_(-step_size)
 
@@ -171,11 +178,14 @@ class AdaBoundW(Optimizer):
         if not 0.0 <= eps:
             raise ValueError('Invalid epsilon value: {}'.format(eps))
         if not 0.0 <= betas[0] < 1.0:
-            raise ValueError('Invalid beta parameter at index 0: {}'.format(betas[0]))
+            raise ValueError(
+                'Invalid beta parameter at index 0: {}'.format(betas[0]))
         if not 0.0 <= betas[1] < 1.0:
-            raise ValueError('Invalid beta parameter at index 1: {}'.format(betas[1]))
+            raise ValueError(
+                'Invalid beta parameter at index 1: {}'.format(betas[1]))
         if not 0.0 <= final_lr:
-            raise ValueError('Invalid final learning rate: {}'.format(final_lr))
+            raise ValueError(
+                'Invalid final learning rate: {}'.format(final_lr))
         if not 0.0 <= gamma < 1.0:
             raise ValueError('Invalid gamma parameter: {}'.format(gamma))
         defaults = dict(
@@ -250,15 +260,19 @@ class AdaBoundW(Optimizer):
 
                 bias_correction1 = 1 - beta1 ** state['step']
                 bias_correction2 = 1 - beta2 ** state['step']
-                step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
+                step_size = group['lr'] * \
+                    math.sqrt(bias_correction2) / bias_correction1
 
                 # Applies bounds on actual learning rate
                 # lr_scheduler cannot affect final_lr, this is a workaround to apply lr decay
                 final_lr = group['final_lr'] * group['lr'] / base_lr
-                lower_bound = final_lr * (1 - 1 / (group['gamma'] * state['step'] + 1))
-                upper_bound = final_lr * (1 + 1 / (group['gamma'] * state['step']))
+                lower_bound = final_lr * \
+                    (1 - 1 / (group['gamma'] * state['step'] + 1))
+                upper_bound = final_lr * \
+                    (1 + 1 / (group['gamma'] * state['step']))
                 step_size = torch.full_like(denom, step_size)
-                step_size.div_(denom).clamp_(lower_bound, upper_bound).mul_(exp_avg)
+                step_size.div_(denom).clamp_(
+                    lower_bound, upper_bound).mul_(exp_avg)
 
                 if group['weight_decay'] != 0:
                     decayed_weights = torch.mul(p.data, group['weight_decay'])

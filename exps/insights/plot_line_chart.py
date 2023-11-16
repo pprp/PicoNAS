@@ -12,7 +12,8 @@ zc_name_list = [
 ]
 
 # Define a list of custom colors suitable for scientific figures with higher opacity
-custom_colors = ['#e377c2', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+custom_colors = ['#e377c2', '#ff7f0e',
+                 '#2ca02c', '#d62728', '#9467bd', '#8c564b']
 
 # Create a single figure using "ggplot" style
 with plt.style.context('default'):

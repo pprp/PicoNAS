@@ -104,7 +104,8 @@ def find_measures_arrays(
                 while inputs.shape[0] % ds != 0:
                     ds += 1
                 torch.cuda.empty_cache()
-                print(f'Caught CUDA OOM, retrying with data split into {ds} parts')
+                print(
+                    f'Caught CUDA OOM, retrying with data split into {ds} parts')
             else:
                 raise e
 

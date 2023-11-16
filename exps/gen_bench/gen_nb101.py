@@ -46,7 +46,8 @@ target_json_path = os.path.join(BASE, 'zc_nasbench101_layerwise.json')
 #     #sample '100'
 #         index (not hash)
 #              'fisher_layerwise': [0.1, 0.2, 0.3, 0.4, 0.5, ...]
-to_be_merged_json_path = os.path.join(BASE, 'zc_nasbench101_layerwise_5000.json')
+to_be_merged_json_path = os.path.join(
+    BASE, 'zc_nasbench101_layerwise_5000.json')
 to_be_merged_json = json.load(open(to_be_merged_json_path, 'r'))
 
 train_split_list = [100, 172, 424, 424, 4236]
@@ -77,7 +78,8 @@ def get_cifar10_dataloader(batch_size, data_dir, train=True):
     return dataloader
 
 
-loader = get_cifar10_dataloader(128, '/data2/dongpeijie/share/dataset/', train=True)
+loader = get_cifar10_dataloader(
+    128, '/data2/dongpeijie/share/dataset/', train=True)
 
 # get one batch from loader
 inputs, targets = next(iter(loader))
@@ -87,7 +89,8 @@ if torch.cuda.is_available():
 loss_fn = torch.nn.CrossEntropyLoss()
 
 # zc name candidates
-zc_candidates = ['fisher', 'grad_norm', 'grasp', 'l2_norm', 'plain', 'snip', 'synflow']
+zc_candidates = ['fisher', 'grad_norm', 'grasp',
+                 'l2_norm', 'plain', 'snip', 'synflow']
 
 # Build nasbench101 API
 nasbench_path = os.path.join(BASE, 'nasbench_only108.tfrecord')

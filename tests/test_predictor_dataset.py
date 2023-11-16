@@ -33,7 +33,8 @@ class TestPredictorDataset(TestCase):
             split=78, data_type='train', data_set='cifar10'
         )
 
-        train_loader, test_loader, train_set, test_set = create_dataloader(args)
+        train_loader, test_loader, train_set, test_set = create_dataloader(
+            args)
 
         self.train_loader = train_loader
 

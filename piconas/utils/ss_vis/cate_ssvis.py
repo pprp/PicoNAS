@@ -60,7 +60,8 @@ sampled_labels = []
 
 for unique_label in np.unique(labels):
     indices = np.where(labels == unique_label)[0]
-    sampled_indices = np.random.choice(indices, min(5000, len(indices)), replace=False)
+    sampled_indices = np.random.choice(
+        indices, min(5000, len(indices)), replace=False)
     sampled_features.extend(features[sampled_indices])
     sampled_labels.extend(labels[sampled_indices])
 
@@ -88,7 +89,8 @@ plt.legend(
     loc='center left',
     bbox_to_anchor=(1, 0.5),
     handles=[
-        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=c, markersize=10)
+        plt.Line2D([0], [0], marker='o', color='w',
+                   markerfacecolor=c, markersize=10)
         for c in colors
     ],
     labels=list(ranges.values()),

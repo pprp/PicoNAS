@@ -34,13 +34,15 @@ class RandomSearcher(object):
                 if top1_err < best_top1_err:
                     best_top1_err = top1_err
                     best_subnet = subnet
-                self.logger.info(f'The top1 error of the {s}-th subnet: {top1_err}')
+                self.logger.info(
+                    f'The top1 error of the {s}-th subnet: {top1_err}')
             self.recorder.append(tmp_recorder)
 
         genotype = self.trainer.evaluator.generate_genotype(
             best_subnet, self.trainer.mutator
         )
-        results = self.trainer.evaluator.query_result(genotype, cost_key='eval_acc1es')
+        results = self.trainer.evaluator.query_result(
+            genotype, cost_key='eval_acc1es')
 
         self.logger.info(f'Best subnet results: {results}')
 

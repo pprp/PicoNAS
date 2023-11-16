@@ -37,12 +37,14 @@ class NAS201SearchCell(nn.Module):
                 node_str = '{:}<-{:}'.format(i, j)
                 if j == 0:
                     xlists = [
-                        OPS[op_name](C_in, C_out, stride, affine, track_running_stats)
+                        OPS[op_name](C_in, C_out, stride,
+                                     affine, track_running_stats)
                         for op_name in op_names
                     ]
                 else:
                     xlists = [
-                        OPS[op_name](C_in, C_out, 1, affine, track_running_stats)
+                        OPS[op_name](C_in, C_out, 1, affine,
+                                     track_running_stats)
                         for op_name in op_names
                     ]
                 self.edges[node_str] = nn.ModuleList(xlists)
@@ -82,7 +84,8 @@ class NAS201SearchCell(nn.Module):
                 weights = hardwts[self.edge2index[node_str]]
                 argmaxs = index[self.edge2index[node_str]].item()
                 weigsum = sum(
-                    weights[_ie] * edge(nodes[j]) if _ie == argmaxs else weights[_ie]
+                    weights[_ie] *
+                    edge(nodes[j]) if _ie == argmaxs else weights[_ie]
                     for _ie, edge in enumerate(self.edges[node_str])
                 )
                 inter_nodes.append(weigsum)
@@ -176,16 +179,20 @@ class NASBench201CNN(nn.Module):
         self._C = C
         self._layerN = N
         self.max_nodes = max_nodes
-        self.basic_op_list = NAS_BENCH_201 if len(basic_op_list) == 0 else basic_op_list
+        self.basic_op_list = NAS_BENCH_201 if len(
+            basic_op_list) == 0 else basic_op_list
         self.non_op_idx = get_op_index(self.basic_op_list, NON_PARAMETER_OP)
         self.para_op_idx = get_op_index(self.basic_op_list, PARAMETER_OP)
         self.none_idx = 4
         self.stem = nn.Sequential(
-            nn.Conv2d(3, C, kernel_size=3, padding=1, bias=False), nn.BatchNorm2d(C)
+            nn.Conv2d(3, C, kernel_size=3, padding=1,
+                      bias=False), nn.BatchNorm2d(C)
         )
 
-        layer_channels = [C] * N + [C * 2] + [C * 2] * N + [C * 4] + [C * 4] * N
-        layer_reductions = [False] * N + [True] + [False] * N + [True] + [False] * N
+        layer_channels = [C] * N + [C * 2] + \
+            [C * 2] * N + [C * 4] + [C * 4] * N
+        layer_reductions = [False] * N + [True] + \
+            [False] * N + [True] + [False] * N
 
         C_prev, num_edge, edge2index = C, None, None
         self.cells = nn.ModuleList()
@@ -211,7 +218,8 @@ class NASBench201CNN(nn.Module):
         self.num_edges = num_edge
         self.all_edges = self.num_edges
         self.num_ops = len(self.basic_op_list)
-        self.lastact = nn.Sequential(nn.BatchNorm2d(C_prev), nn.ReLU(inplace=True))
+        self.lastact = nn.Sequential(
+            nn.BatchNorm2d(C_prev), nn.ReLU(inplace=True))
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(C_prev, num_classes)
 
@@ -253,16 +261,20 @@ class SPOS_nb201_CNN(NASBench201CNN):
         self._C = C
         self._layerN = N
         self.max_nodes = max_nodes
-        self.basic_op_list = NAS_BENCH_201 if len(basic_op_list) == 0 else basic_op_list
+        self.basic_op_list = NAS_BENCH_201 if len(
+            basic_op_list) == 0 else basic_op_list
         self.non_op_idx = get_op_index(self.basic_op_list, NON_PARAMETER_OP)
         self.para_op_idx = get_op_index(self.basic_op_list, PARAMETER_OP)
         self.none_idx = 4
         self.stem = nn.Sequential(
-            nn.Conv2d(3, C, kernel_size=3, padding=1, bias=False), nn.BatchNorm2d(C)
+            nn.Conv2d(3, C, kernel_size=3, padding=1,
+                      bias=False), nn.BatchNorm2d(C)
         )
 
-        layer_channels = [C] * N + [C * 2] + [C * 2] * N + [C * 4] + [C * 4] * N
-        layer_reductions = [False] * N + [True] + [False] * N + [True] + [False] * N
+        layer_channels = [C] * N + [C * 2] + \
+            [C * 2] * N + [C * 4] + [C * 4] * N
+        layer_reductions = [False] * N + [True] + \
+            [False] * N + [True] + [False] * N
 
         C_prev, num_edge, edge2index = C, None, None
         self.cells = nn.ModuleList()
@@ -288,7 +300,8 @@ class SPOS_nb201_CNN(NASBench201CNN):
         self.num_edges = num_edge
         self.all_edges = self.num_edges
         self.num_ops = len(self.basic_op_list)
-        self.lastact = nn.Sequential(nn.BatchNorm2d(C_prev), nn.ReLU(inplace=True))
+        self.lastact = nn.Sequential(
+            nn.BatchNorm2d(C_prev), nn.ReLU(inplace=True))
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(C_prev, num_classes)
         self.spos_all_edge_num = 3 * self._layerN * self.all_edges
@@ -300,7 +313,7 @@ class SPOS_nb201_CNN(NASBench201CNN):
             if isinstance(cell, ResNetBasicblock):
                 feature = cell(feature)
             else:
-                feature = cell(feature, weight[_it : _it + self.all_edges])
+                feature = cell(feature, weight[_it: _it + self.all_edges])
                 _it += self.all_edges
         assert _it == self.spos_all_edge_num
         out = self.lastact(feature)
@@ -331,7 +344,8 @@ class InferCell(nn.Module):
                         C_in, C_out, stride, affine, track_running_stats
                     )
                 else:
-                    layer = OPS[op_name](C_out, C_out, 1, affine, track_running_stats)
+                    layer = OPS[op_name](
+                        C_out, C_out, 1, affine, track_running_stats)
                 cur_index.append(len(self.layers))
                 cur_innod.append(op_in)
                 self.layers.append(layer)
@@ -380,11 +394,14 @@ class TinyNetwork(nn.Module):
         # self._feature_res = feature_res
 
         self.stem = nn.Sequential(
-            nn.Conv2d(3, C, kernel_size=3, padding=1, bias=False), nn.BatchNorm2d(C)
+            nn.Conv2d(3, C, kernel_size=3, padding=1,
+                      bias=False), nn.BatchNorm2d(C)
         )
 
-        layer_channels = [C] * N + [C * 2] + [C * 2] * N + [C * 4] + [C * 4] * N
-        layer_reductions = [False] * N + [True] + [False] * N + [True] + [False] * N
+        layer_channels = [C] * N + [C * 2] + \
+            [C * 2] * N + [C * 4] + [C * 4] * N
+        layer_reductions = [False] * N + [True] + \
+            [False] * N + [True] + [False] * N
 
         C_prev = C
         self.cells = nn.ModuleList()
@@ -399,7 +416,8 @@ class TinyNetwork(nn.Module):
             C_prev = cell.out_dim
         self._Layer = len(self.cells)
 
-        self.lastact = nn.Sequential(nn.BatchNorm2d(C_prev), nn.ReLU(inplace=True))
+        self.lastact = nn.Sequential(
+            nn.BatchNorm2d(C_prev), nn.ReLU(inplace=True))
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(C_prev, num_classes)
 

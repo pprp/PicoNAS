@@ -97,7 +97,8 @@ def train(train_set, train_loader, model, optimizer, lr_scheduler, criterion):
             loss.backward()
             optimizer.step()
             mse = accuracy_mse(predict.squeeze(), target.squeeze(), train_set)
-            meters.update({'loss': loss.item(), 'mse': mse.item()}, n=target.size(0))
+            meters.update(
+                {'loss': loss.item(), 'mse': mse.item()}, n=target.size(0))
             if (step + 1) % args.train_print_freq == 0 or step + 1 == len(train_loader):
                 logging.info(
                     'Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
@@ -134,7 +135,8 @@ def evaluate(test_set, test_loader, model, criterion):
             )
             if step % args.eval_print_freq == 0 or step + 1 == len(test_loader):
                 logging.info(
-                    'Evaluation Step [%d/%d]  %s', step + 1, len(test_loader), meters
+                    'Evaluation Step [%d/%d]  %s', step +
+                    1, len(test_loader), meters
                 )
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
@@ -161,11 +163,13 @@ def main():
 
     # define loss, optimizer, and lr_scheduler
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
+    optimizer = optim.Adam(
+        model.parameters(), lr=args.lr, weight_decay=args.wd)
     lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     # train and evaluate predictor
-    model = train(train_set, train_loader, model, optimizer, lr_scheduler, criterion)
+    model = train(train_set, train_loader, model,
+                  optimizer, lr_scheduler, criterion)
     kendall_tau, predict_all, target_all = evaluate(
         test_set, test_loader, model, criterion
     )

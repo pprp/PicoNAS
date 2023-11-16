@@ -35,7 +35,8 @@ class FactorizedReduce(AbstractPrimitive):
             return x
         else:
             x = self.relu(x)
-            out = torch.cat([self.conv_1(x), self.conv_2(x[:, :, 1:, 1:])], dim=1)
+            out = torch.cat(
+                [self.conv_1(x), self.conv_2(x[:, :, 1:, 1:])], dim=1)
             out = self.bn(out)
             return out
 

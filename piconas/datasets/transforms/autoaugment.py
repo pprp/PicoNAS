@@ -194,13 +194,15 @@ class SubPolicy(object):
             'translateX': lambda img, magnitude: img.transform(
                 img.size,
                 Image.AFFINE,
-                (1, 0, magnitude * img.size[0] * random.choice([-1, 1]), 0, 1, 0),
+                (1, 0, magnitude * img.size[0] *
+                 random.choice([-1, 1]), 0, 1, 0),
                 fillcolor=fillcolor,
             ),
             'translateY': lambda img, magnitude: img.transform(
                 img.size,
                 Image.AFFINE,
-                (1, 0, 0, 0, 1, magnitude * img.size[1] * random.choice([-1, 1])),
+                (1, 0, 0, 0, 1, magnitude *
+                 img.size[1] * random.choice([-1, 1])),
                 fillcolor=fillcolor,
             ),
             'rotate': lambda img, magnitude: rotate_with_fill(img, magnitude),

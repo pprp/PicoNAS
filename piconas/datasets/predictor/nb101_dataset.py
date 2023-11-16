@@ -24,7 +24,8 @@ def laplacian_positional_encoding(adj, pos_enc_dim, number_nodes=7):
     for i in range(len(adj)):
         adj_matrix = adj[i] + adj[i].T
         degree = torch.tensor(np.sum(adj_matrix, axis=1))
-        degree = sp.diags(dgl.backend.asnumpy(degree).clip(1) ** -0.5, dtype=float)
+        degree = sp.diags(dgl.backend.asnumpy(
+            degree).clip(1) ** -0.5, dtype=float)
         L = sp.eye(number_nodes) - degree * adj_matrix * degree
         try:
             EigVal, EigVec = sp.linalg.eigs(
@@ -37,7 +38,7 @@ def laplacian_positional_encoding(adj, pos_enc_dim, number_nodes=7):
             print(i, num)
         EigVec = EigVec[:, EigVal.argsort()]  # increasing order
         # lap_pos_enc.append(torch.from_numpy(EigVec[:, 1:pos_enc_dim + 1].real).float())
-        lap_pos_enc.append(EigVec[:, 1 : pos_enc_dim + 1].real)
+        lap_pos_enc.append(EigVec[:, 1: pos_enc_dim + 1].real)
 
     return lap_pos_enc
 
@@ -50,7 +51,8 @@ def generate_lapla_matrix(adjacency, note):
         # normalized lapla_matrix
         adj_matrix = adjacency[index]
         degree = torch.tensor(np.sum(adj_matrix, axis=1))
-        degree = sp.diags(dgl.backend.asnumpy(degree).clip(1) ** -0.5, dtype=float)
+        degree = sp.diags(dgl.backend.asnumpy(
+            degree).clip(1) ** -0.5, dtype=float)
         normalized_lapla = np.array(
             sp.eye(adj_matrix.shape[0]) - degree * adj_matrix * degree
         )
@@ -66,7 +68,8 @@ def generate_lapla_matrix(adjacency, note):
             print(note, index)
 
     np.save('%s_lapla_matrix.npy' % note, np.array(unnormalized_lapla_matrix))
-    np.save('%s_lapla_nor_matrix.npy' % note, np.array(normalized_lapla_matrix))
+    np.save('%s_lapla_nor_matrix.npy' %
+            note, np.array(normalized_lapla_matrix))
 
 
 class Nb101DatasetPINAT(Dataset):
@@ -93,7 +96,8 @@ class Nb101DatasetPINAT(Dataset):
         self.debug = debug
         self.seed = 0
         self.candidate_ops = candidate_ops
-        self.lapla = np.load('/data/lujunl/pprp/bench/nasbench101/lapla_matrix.npy')
+        self.lapla = np.load(
+            '/data/lujunl/pprp/bench/nasbench101/lapla_matrix.npy')
         self.lapla_nor = np.load(
             '/data/lujunl/pprp/bench/nasbench101/lapla_nor_matrix.npy'
         )
@@ -206,7 +210,8 @@ class Nb101DatasetPINAT(Dataset):
                 pdb.set_trace()
 
             # Add normalization code here
-            self.norm_zcp['epe_nas'] = self.min_max_scaling(self.norm_zcp['epe_nas'])
+            self.norm_zcp['epe_nas'] = self.min_max_scaling(
+                self.norm_zcp['epe_nas'])
             self.norm_zcp['fisher'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['fisher'])
             )
@@ -216,14 +221,18 @@ class Nb101DatasetPINAT(Dataset):
             self.norm_zcp['grad_norm'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['grad_norm'])
             )
-            self.norm_zcp['grasp'] = self.standard_scaling(self.norm_zcp['grasp'])
-            self.norm_zcp['jacov'] = self.min_max_scaling(self.norm_zcp['jacov'])
-            self.norm_zcp['l2_norm'] = self.min_max_scaling(self.norm_zcp['l2_norm'])
+            self.norm_zcp['grasp'] = self.standard_scaling(
+                self.norm_zcp['grasp'])
+            self.norm_zcp['jacov'] = self.min_max_scaling(
+                self.norm_zcp['jacov'])
+            self.norm_zcp['l2_norm'] = self.min_max_scaling(
+                self.norm_zcp['l2_norm'])
             self.norm_zcp['nwot'] = self.min_max_scaling(self.norm_zcp['nwot'])
             self.norm_zcp['params'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['params'])
             )
-            self.norm_zcp['plain'] = self.min_max_scaling(self.norm_zcp['plain'])
+            self.norm_zcp['plain'] = self.min_max_scaling(
+                self.norm_zcp['plain'])
             self.norm_zcp['snip'] = self.min_max_scaling(
                 self.log_transform(self.norm_zcp['snip'])
             )
@@ -423,7 +432,8 @@ class Nb101DatasetPINAT(Dataset):
         zcp = torch.tensor(zcp, dtype=torch.float32)
 
         # laod layerwise zcp
-        combinations = ['grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise']
+        combinations = ['grad_norm_layerwise',
+                        'snip_layerwise', 'synflow_layerwise']
         if self.split_num == 'all' or (
             self.data_type == 'test' and self.split_num == '100'
         ):

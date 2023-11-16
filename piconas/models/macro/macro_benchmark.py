@@ -105,7 +105,8 @@ class MacroBenchmarkSuperNet(nn.Module):
             [128, 1, 2, 'downsample'],  # 14
             [256, 2, 1, 'mutable'],  # 15, 16
         ]
-        self.in_conv = ConvBNReLU(3, first_conv_out_channels, kernel_size=3, stride=1)
+        self.in_conv = ConvBNReLU(
+            3, first_conv_out_channels, kernel_size=3, stride=1)
 
         self.in_channels = first_conv_out_channels
 

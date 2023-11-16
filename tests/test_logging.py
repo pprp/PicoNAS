@@ -110,7 +110,8 @@ def test_print_log_logger(caplog):
         with open(f.name) as fin:
             log_text = fin.read()
             regex_time = r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}'
-            match = re.fullmatch(regex_time + r' - abc - INFO - welcome\n', log_text)
+            match = re.fullmatch(
+                regex_time + r' - abc - INFO - welcome\n', log_text)
             assert match is not None
         # flushing and closing all handlers in order to remove `f.name`
         logging.shutdown()
