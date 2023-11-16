@@ -9,12 +9,7 @@ from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 
 
 class NATSEvaluator(Evaluator):
-
-    def __init__(self,
-                 trainer,
-                 bench_path=None,
-                 num_sample=None,
-                 dataset='cifar10'):
+    def __init__(self, trainer, bench_path=None, num_sample=None, dataset='cifar10'):
         super().__init__(trainer, bench_path)
         assert dataset == 'cifar10'
 
@@ -51,7 +46,8 @@ class NATSEvaluator(Evaluator):
             print(f'\r evaluating the {i}th architecture.', end='', flush=True)
             current_op_list = convert_channel2idx(k)
             loss = self.trainer.metric_score(
-                dataloader, current_op_list=current_op_list)
+                dataloader, current_op_list=current_op_list
+            )
 
             supernet_indicator_list.append(loss)
             true_indicator_list.append(v)
@@ -60,7 +56,6 @@ class NATSEvaluator(Evaluator):
         ps = pearson(true_indicator_list, supernet_indicator_list)
         sp = spearman(true_indicator_list, supernet_indicator_list)
 
-        print(
-            f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
+        print(f"Kendall's tau: {kt}, pearson coeff: {ps}, spearman coeff: {sp}.")
 
         return kt, ps, sp

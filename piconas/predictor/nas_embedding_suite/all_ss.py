@@ -11,8 +11,7 @@ from piconas.predictor.nas_embedding_suite.nb101_ss import NASBench101
 from piconas.predictor.nas_embedding_suite.nb201_ss import NASBench201
 from piconas.predictor.nas_embedding_suite.nb301_ss import NASBench301
 from piconas.predictor.nas_embedding_suite.nds_ss import NDS
-from piconas.predictor.nas_embedding_suite.tb101_micro_ss import \
-    TransNASBench101Micro
+from piconas.predictor.nas_embedding_suite.tb101_micro_ss import TransNASBench101Micro
 
 CACHE_DIR = '/var/tmp/piconas_cache'
 FILE_MAPPINGS = {
@@ -25,7 +24,6 @@ FILE_MAPPINGS = {
 
 
 class AllSS:
-
     def __init__(self):
         self.ss_mapper = {
             'nb101': 0,
@@ -40,7 +38,7 @@ class AllSS:
             'PNAS': 9,
             'DARTS_lr-wd': 10,
             'DARTS_fix-w-d': 11,
-            'tb101': 12
+            'tb101': 12,
         }
         self.arch2vec_ranges = {
             0: 'nb101',
@@ -59,49 +57,58 @@ class AllSS:
         }
         start_ = time.time()
         print(
-            '[WARNING]: ALL SS has a cache store at {}, which needs to be changed if reproducing in all_ss.py!!!!'
-            .format(CACHE_DIR))
+            '[WARNING]: ALL SS has a cache store at {}, which needs to be changed if reproducing in all_ss.py!!!!'.format(
+                CACHE_DIR
+            )
+        )
         # self._ensure_cache_exists()
         self.nb301 = NASBench301()
         self._load_classes()
         # check if os.environ["PROJ_BPATH"] + "/embedding_dataset/arch2vec_f_ss.csv", exists
         # if it does not exist, create it
         if not os.path.exists(
-                os.environ['PROJ_BPATH'] +
-                '/nas_embedding_suite/embedding_datasets/arch2vec_f_ss.csv'):
+            os.environ['PROJ_BPATH']
+            + '/nas_embedding_suite/embedding_datasets/arch2vec_f_ss.csv'
+        ):
             print('Creating arch2vec_f_ss.csv')
             self.arch2vec_data_dict = torch.load(
-                os.environ['PROJ_BPATH'] +
-                '/nas_embedding_suite/embedding_datasets/model-dim_32_search_space_all_ss-all_ss.pt'
+                os.environ['PROJ_BPATH']
+                + '/nas_embedding_suite/embedding_datasets/model-dim_32_search_space_all_ss-all_ss.pt'
             )
             self.prep_arch2vec_joint()
         else:  # load it
             self.arch2vec_f_ss = pd.read_csv(
-                os.environ['PROJ_BPATH'] +
-                '/nas_embedding_suite/embedding_datasets/arch2vec_f_ss.csv')
+                os.environ['PROJ_BPATH']
+                + '/nas_embedding_suite/embedding_datasets/arch2vec_f_ss.csv'
+            )
 
         if not os.path.exists(
-                os.environ['PROJ_BPATH'] +
-                '/nas_embedding_suite/embedding_datasets/cate_f_ss.csv'):
+            os.environ['PROJ_BPATH']
+            + '/nas_embedding_suite/embedding_datasets/cate_f_ss.csv'
+        ):
             self.cate_data_dict = torch.load(
-                os.environ['PROJ_BPATH'] +
-                '/nas_embedding_suite/embedding_datasets/cate_all_ss.pt')
+                os.environ['PROJ_BPATH']
+                + '/nas_embedding_suite/embedding_datasets/cate_all_ss.pt'
+            )
             self.prep_cate_joint()
         else:
             self.cate_f_ss = pd.read_csv(
-                os.environ['PROJ_BPATH'] +
-                '/nas_embedding_suite/embedding_datasets/cate_f_ss.csv')
+                os.environ['PROJ_BPATH']
+                + '/nas_embedding_suite/embedding_datasets/cate_f_ss.csv'
+            )
 
         self.joint_arch2vec_idxer = {}
         for space in self.arch2vec_ranges.values():
             class_map = self.ss_mapper[space]
             self.joint_arch2vec_idxer[space] = self.arch2vec_f_ss[
-                self.arch2vec_f_ss['label'] == class_map].values[:, :-1]
+                self.arch2vec_f_ss['label'] == class_map
+            ].values[:, :-1]
         self.joint_cate_idxer = {}
         for space in self.arch2vec_ranges.values():
             class_map = self.ss_mapper[space]
             self.joint_cate_idxer[space] = self.cate_f_ss[
-                self.cate_f_ss['label'] == class_map].values[:, :-1]
+                self.cate_f_ss['label'] == class_map
+            ].values[:, :-1]
         self.max_oplen = self.get_max_oplen()
         print('Time taken to load all_ss: {}'.format(time.time() - start_))
         self.ss_mapper_oprange = {}
@@ -123,7 +130,8 @@ class AllSS:
             for r in sorted(self.arch2vec_ranges):
                 if key >= r:
                     class_idx = list(self.arch2vec_ranges.values()).index(
-                        self.arch2vec_ranges[r])
+                        self.arch2vec_ranges[r]
+                    )
             labels.append(class_idx)
         features = np.asarray(self.cate_data_dict['embeddings'])
         labels = np.array(labels)
@@ -132,9 +140,10 @@ class AllSS:
         self.cate_f_ss['label'] = labels
         # Save this dataframe
         self.cate_f_ss.to_csv(
-            os.environ['PROJ_BPATH'] +
-            '/nas_embedding_suite/embedding_datasets/cate_f_ss.csv',
-            index=False)
+            os.environ['PROJ_BPATH']
+            + '/nas_embedding_suite/embedding_datasets/cate_f_ss.csv',
+            index=False,
+        )
 
     def prep_arch2vec_joint(self):
         features = []
@@ -145,7 +154,8 @@ class AllSS:
             for r in sorted(self.arch2vec_ranges):
                 if key >= r:
                     class_idx = list(self.arch2vec_ranges.values()).index(
-                        self.arch2vec_ranges[r])
+                        self.arch2vec_ranges[r]
+                    )
             labels.append(class_idx)
             features.append(feature_val.tolist())
         features = np.array(features)
@@ -155,9 +165,10 @@ class AllSS:
         self.arch2vec_f_ss['label'] = labels
         # Save this dataframe
         self.arch2vec_f_ss.to_csv(
-            os.environ['PROJ_BPATH'] +
-            '/nas_embedding_suite/embedding_datasets/arch2vec_f_ss.csv',
-            index=False)
+            os.environ['PROJ_BPATH']
+            + '/nas_embedding_suite/embedding_datasets/arch2vec_f_ss.csv',
+            index=False,
+        )
 
     def get_numitems(self, space=None, task=None):
         # assert self.arch2vec_f_ss.shape[0] == self.cate_f_ss.shape[0], "Number of Archs embedded in Arch2Vec and CATE should be the same!"
@@ -166,8 +177,9 @@ class AllSS:
     def get_ss_idxrange(self, space):
         class_idx = self.ss_mapper[space]
         # from arch2vec_f_ss, get the indices where label == class_idx
-        idxs = self.arch2vec_f_ss[self.arch2vec_f_ss['label'] ==
-                                  class_idx].index.tolist()
+        idxs = self.arch2vec_f_ss[
+            self.arch2vec_f_ss['label'] == class_idx
+        ].index.tolist()
         return idxs
 
     def pad_operation_matrix(self, op_matrix, space_name):
@@ -181,11 +193,13 @@ class AllSS:
         num_ops, space_idx = self.ss_mapper_oprange[space_name]
 
         # Calculate the start and end column indices for the operation matrix
-        start_idx = sum([
-            x[0] for _, x in sorted(
-                self.ss_mapper_oprange.items(), key=lambda y: y[1])
-            if x[1] < space_idx
-        ])
+        start_idx = sum(
+            [
+                x[0]
+                for _, x in sorted(self.ss_mapper_oprange.items(), key=lambda y: y[1])
+                if x[1] < space_idx
+            ]
+        )
         end_idx = start_idx + num_ops
 
         # Fill in the appropriate columns of the zero matrix
@@ -202,14 +216,13 @@ class AllSS:
                 # Convert it into 7 x max_oplen with leading zero padding
                 padded_opmat = np.zeros((opmat.shape[0], self.max_oplen))
                 for i in range(opmat.shape[0]):
-                    padded_opmat[i, -opmat.shape[1]:] = opmat[i]
+                    padded_opmat[i, -opmat.shape[1] :] = opmat[i]
                 # ss_pad will have a 1 x 4 opmat will have a shape 7 x max_oplen
                 # replicate ss_pad on each row of opmat to make it 7 x (max_oplen + 4)
                 ss_pad = self.ss_to_binary(space)
-                final_mat = np.hstack([
-                    padded_opmat,
-                    np.tile(ss_pad, (padded_opmat.shape[0], 1))
-                ])
+                final_mat = np.hstack(
+                    [padded_opmat, np.tile(ss_pad, (padded_opmat.shape[0], 1))]
+                )
                 new_adj_op_mat = copy.deepcopy(adj_op_mat)
                 new_adj_op_mat['module_operations'] = final_mat.tolist()
             else:
@@ -221,14 +234,13 @@ class AllSS:
                     # Convert it into 7 x max_oplen with leading zero padding
                     padded_ropmat = np.zeros((ropmat.shape[0], self.max_oplen))
                     for i in range(ropmat.shape[0]):
-                        padded_ropmat[i, -ropmat.shape[1]:] = ropmat[i]
+                        padded_ropmat[i, -ropmat.shape[1] :] = ropmat[i]
                     # ss_pad will have a 1 x 4 opmat will have a shape 7 x max_oplen
                     # replicate ss_pad on each row of opmat to make it 7 x (max_oplen + 4)
                     ss_pad = self.ss_to_binary(space)
-                    final_mat = np.hstack([
-                        padded_ropmat,
-                        np.tile(ss_pad, (padded_ropmat.shape[0], 1))
-                    ])
+                    final_mat = np.hstack(
+                        [padded_ropmat, np.tile(ss_pad, (padded_ropmat.shape[0], 1))]
+                    )
                     new_adj_op_mat[matkey] = final_mat.tolist()
             return new_adj_op_mat
         else:
@@ -280,7 +292,6 @@ class AllSS:
             if space == 'tb101':
                 params = eval('self.' + space).get_params(idx, task=task)
             else:
-
                 params = eval('self.' + space).get_params(idx)
         else:
             params = self.nds.get_params(idx, space=space)
@@ -319,12 +330,15 @@ class AllSS:
         for ssk in self.sskeys:
             if ssk in ['nb101', 'nb201', 'nb301', 'tb101']:
                 oplens[ssk] = len(
-                    eval('self.' + ssk).get_adj_op(0)['module_operations'][0])
+                    eval('self.' + ssk).get_adj_op(0)['module_operations'][0]
+                )
             else:
                 oplens[ssk + '_n'] = len(
-                    self.nds.get_adj_op(0, space=ssk)['normal_ops'][0])
+                    self.nds.get_adj_op(0, space=ssk)['normal_ops'][0]
+                )
                 oplens[ssk + '_r'] = len(
-                    self.nds.get_adj_op(0, space=ssk)['reduce_ops'][0])
+                    self.nds.get_adj_op(0, space=ssk)['reduce_ops'][0]
+                )
         self.oplens = oplens
         return max(list(oplens.values()))
 

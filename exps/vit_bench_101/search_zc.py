@@ -36,20 +36,23 @@ def all_same(items):
 
 
 def build_model(arch_config, cfg, num_classes):
-    model = MODEL.get(cfg.MODEL.TYPE)(
-        arch_config=arch_config, num_classes=num_classes)
+    model = MODEL.get(cfg.MODEL.TYPE)(arch_config=arch_config, num_classes=num_classes)
     return model
 
 
-def is_anomaly(
-        zc_score: Union[torch.Tensor, float, int, tuple] = None) -> bool:
+def is_anomaly(zc_score: Union[torch.Tensor, float, int, tuple] = None) -> bool:
     """filter the score with -1,0,nan,inf"""
     if isinstance(zc_score, tuple):
         return False
     if isinstance(zc_score, Tensor):
         zc_score = zc_score.item()
-    if zc_score is None or zc_score == -1 or math.isnan(
-            zc_score) or math.isinf(zc_score) or zc_score == 0:
+    if (
+        zc_score is None
+        or zc_score == -1
+        or math.isnan(zc_score)
+        or math.isinf(zc_score)
+        or zc_score == 0
+    ):
         return True
     return False
 
@@ -70,7 +73,6 @@ def joint_func(rank_score):
 def pad(layer_zc):
     item_len = [len(m) for m in layer_zc]
     for item in layer_zc:
-
         if len(item) != max(item_len):
             for i in range(max(item_len) - len(item)):
                 item.append(0)
@@ -111,7 +113,6 @@ def moe(num_experts, input_data, target_data, num_epochs, test_data):
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     for epoch in range(num_epochs):
-
         # 前向传播
         outputs = model(torch.Tensor(input_data))
         # 计算损失
@@ -182,11 +183,11 @@ def parzc_fitness(cfg, data_loader, arch_pop, acc_pop, structure, num_classes):
 
 
 def data_process(x_train, y_train, data_num, ratio):
-
     moe_train_x, moe_train_y, moe_test_x, moe_test_y = [], [], [], []
     for i in range(data_num):
         x_train_temp, x_test_temp, y_train_temp, y_test_temp = train_test_split(
-            pad(x_train[i]), y_train[i], test_size=1 - ratio, random_state=42)
+            pad(x_train[i]), y_train[i], test_size=1 - ratio, random_state=42
+        )
         moe_train_x += x_train_temp
         moe_train_y += y_train_temp
         moe_test_x.append(x_test_temp)
@@ -204,20 +205,14 @@ def autoprox_parzc(cfg, data_loader, arch_pop, acc_pop, struct, ratio):
         # classes =[100, 102, 4, 200, 10]
         classes = [100, 102, 10]
         single_data_layerzc = parzc_fitness(
-            cfg,
-            data_loader[i],
-            arch_pop,
-            acc_pop[i],
-            struct,
-            num_classes=classes[i])
+            cfg, data_loader[i], arch_pop, acc_pop[i], struct, num_classes=classes[i]
+        )
 
         if single_data_layerzc == -1:
             logger.info('Invalid structure, exit...')
             return -1
 
-        single_data_zc = [
-            sum(item) / len(item) for item in single_data_layerzc
-        ]
+        single_data_zc = [sum(item) / len(item) for item in single_data_layerzc]
         single_data_kendall = kendalltau(acc_pop[i], single_data_zc)
         logger.info(
             f'kendall score on dataset {list(_DATASETS.keys())[i]} is : {single_data_kendall}'
@@ -233,20 +228,16 @@ def autoprox_parzc(cfg, data_loader, arch_pop, acc_pop, struct, ratio):
         )
 
     moe_train_x, moe_train_y, moe_test_x, moe_test_y = data_process(
-        moe_train_x, moe_train_y, len(data_loader), ratio)
+        moe_train_x, moe_train_y, len(data_loader), ratio
+    )
 
     predictions = moe(
-        len(data_loader),
-        moe_train_x,
-        moe_train_y,
-        num_epochs=100,
-        test_data=moe_test_x)
+        len(data_loader), moe_train_x, moe_train_y, num_epochs=100, test_data=moe_test_x
+    )
 
     for i in range(len(data_loader)):
-        kendalltau_temp = kendalltau(moe_test_y[i],
-                                     predictions[i].detach().numpy())
-        spearman_temp = spearman(moe_test_y[i],
-                                 predictions[i].detach().numpy())
+        kendalltau_temp = kendalltau(moe_test_y[i], predictions[i].detach().numpy())
+        spearman_temp = spearman(moe_test_y[i], predictions[i].detach().numpy())
         pearson_temp = pearson(moe_test_y[i], predictions[i].detach().numpy())
         ken.append(kendalltau_temp)
 
@@ -255,8 +246,7 @@ def autoprox_parzc(cfg, data_loader, arch_pop, acc_pop, struct, ratio):
             f'After moe, kendall score for datasets {list(_DATASETS.keys())[:len(acc_pop)]}: {ken}'
         )
         joint_kdall = joint_func(ken)
-        logger.info(
-            f'Valid structure, joint correlation metric is : {joint_kdall}')
+        logger.info(f'Valid structure, joint correlation metric is : {joint_kdall}')
         struct.kendall_score = joint_kdall
         return joint_kdall
 
@@ -270,8 +260,9 @@ def random_search(cfg, args, arch_pop, acc_pop, data_loader, structure):
         logger.info(
             f'Struct={struct} Input={struct.genotype["input_geno"]} Op={struct.genotype["op_geno"]}'
         )
-        score = autoprox_parzc(cfg, data_loader, arch_pop, acc_pop, struct,
-                               args.train_ratio)
+        score = autoprox_parzc(
+            cfg, data_loader, arch_pop, acc_pop, struct, args.train_ratio
+        )
         if is_anomaly(score):
             continue
         population.append(struct)
@@ -289,24 +280,26 @@ def random_search(cfg, args, arch_pop, acc_pop, data_loader, structure):
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(
         description='evo search zc',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
     parser.add_argument(
         '--save_dir',
         type=str,
         default='./work_dirs/Search_Autoprox_Parzc',
-        help='log path')
+        help='log path',
+    )
     parser.add_argument(
         '--refer_cfg',
-        default=
-        './configs/parzc/autoformer/autoformer-ti-subnet_c100_base.yaml',
+        default='./configs/parzc/autoformer/autoformer-ti-subnet_c100_base.yaml',
         type=str,
-        help='save output path')
+        help='save output path',
+    )
     parser.add_argument(
-        '--tree_node', default=3, type=int, help='number of nodes in tree')
+        '--tree_node', default=3, type=int, help='number of nodes in tree'
+    )
     # popu size
     parser.add_argument(
         '--popu_size',
@@ -314,17 +307,16 @@ if __name__ == '__main__':
         type=int,
         help='population size should be larger than 10',
     )
+    parser.add_argument('--gt_path', type=str, default=None, help='ground truth path')
     parser.add_argument(
-        '--gt_path', type=str, default=None, help='ground truth path')
+        '--gt_num', type=int, default=100, help='number of ground truth'
+    )
     parser.add_argument(
-        '--gt_num', type=int, default=100, help='number of ground truth')
+        '--train_ratio', type=float, default=0.8, help='ratio of gt used to train gbdt'
+    )
     parser.add_argument(
-        '--train_ratio',
-        type=float,
-        default=0.8,
-        help='ratio of gt used to train gbdt')
-    parser.add_argument(
-        '--vanilla', action='store_true', help='search under vanilla gt')
+        '--vanilla', action='store_true', help='search under vanilla gt'
+    )
 
     args = parser.parse_args()
     config.load_cfg(args.refer_cfg)
@@ -337,8 +329,10 @@ if __name__ == '__main__':
 
     log_file = os.path.join(
         args.save_dir,
-        '{}_{}_{}_{}.txt'.format(cfg.MODEL.TYPE, cfg.AUTO_PROX.type,
-                                 cfg.PROXY_DATASET, time_str))
+        '{}_{}_{}_{}.txt'.format(
+            cfg.MODEL.TYPE, cfg.AUTO_PROX.type, cfg.PROXY_DATASET, time_str
+        ),
+    )
 
     file_handler = logging.FileHandler(log_file, 'w')
     file_handler.setLevel(logging.INFO)

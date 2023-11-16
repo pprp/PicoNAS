@@ -16,8 +16,7 @@ VISUALIZE = True
 with open('/data/lujunl/pprp/bench/zc_nasbench201_layerwise.json', 'rb') as f:
     input_dict = json.load(f)
 
-nb201_api = API(
-    '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth', verbose=False)
+nb201_api = API('/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth', verbose=False)
 
 ds_target = 'cifar10'  # cifar100, ImageNet16-120
 input_dict = input_dict[ds_target]
@@ -34,8 +33,7 @@ for key, value in input_dict.items():
     v = [0 if np.isnan(x) else x for x in v]
     x_train.append(v)
     # query gt by key
-    gt = nb201_api.get_more_info(
-        int(key), dataset=ds_target, hp='200')['test-accuracy']
+    gt = nb201_api.get_more_info(int(key), dataset=ds_target, hp='200')['test-accuracy']
     y_train.append(gt)
 
 # preprocess to find max length
@@ -50,16 +48,18 @@ for i in range(len(x_train)):
 
 # Ratio of whole dataset
 ratio = 1
-x_train = x_train[:int(len(x_train) * ratio)]
-y_train = y_train[:int(len(y_train) * ratio)]
+x_train = x_train[: int(len(x_train) * ratio)]
+y_train = y_train[: int(len(y_train) * ratio)]
 
 # Split the data into training and testing sets
 x_train, x_test, y_train, y_test = train_test_split(
-    x_train, y_train, test_size=0.2, random_state=42)
+    x_train, y_train, test_size=0.2, random_state=42
+)
 
 # Create a Gradient Boosting Regressor and fit it to the training data
 gbdt_model = GradientBoostingRegressor(
-    n_estimators=500, learning_rate=0.05, max_depth=3, random_state=42)
+    n_estimators=500, learning_rate=0.05, max_depth=3, random_state=42
+)
 gbdt_model.fit(x_train, y_train)
 
 # Use the trained gbdt_model to predict the test data
@@ -74,9 +74,9 @@ spearman_score = spearman(y_test, y_pred)
 pearson_score = pearson(y_test, y_pred)
 
 print(f'MSE loss: {mse_loss:.4f}')
-print(f'Kendall\'s tau: {kendalltau_score:.4f}')
-print(f'Spearman\'s rho: {spearman_score:.4f}')
-print(f'Pearson\'s r: {pearson_score:.4f}')
+print(f"Kendall's tau: {kendalltau_score:.4f}")
+print(f"Spearman's rho: {spearman_score:.4f}")
+print(f"Pearson's r: {pearson_score:.4f}")
 
 # Compute deviance in test dataset
 test_score = np.zeros((500, 1), dtype=np.float64)

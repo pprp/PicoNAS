@@ -94,13 +94,14 @@ class PairwiseRankLoss(nn.Module):
     """
 
     def forward(self, prior1, prior2, loss1, loss2, coeff=1.0):
-        return (coeff *
-                F.relu(loss2 - loss1.detach()) if prior1 < prior2 else coeff *
-                F.relu(loss1.detach() - loss2))
+        return (
+            coeff * F.relu(loss2 - loss1.detach())
+            if prior1 < prior2
+            else coeff * F.relu(loss1.detach() - loss2)
+        )
 
 
 class BatchPairwiseRankLoss(nn.Module):
-
     def forward(self, prior, loss, coeff=1.0):
         """
         Args:
@@ -119,58 +120,38 @@ class BatchPairwiseRankLoss(nn.Module):
         loss1, loss2 = loss[:, 0], loss[:, 1]
 
         # Compute the rank loss for each pair in the batch
-        rank_loss = torch.where(prior1 < prior2,
-                                coeff * F.relu(loss2 - loss1.detach()),
-                                coeff * F.relu(loss1.detach() - loss2))
+        rank_loss = torch.where(
+            prior1 < prior2,
+            coeff * F.relu(loss2 - loss1.detach()),
+            coeff * F.relu(loss1.detach() - loss2),
+        )
 
         return rank_loss
 
 
 _loss_fn = {
-    'mae_relu':
-    lambda l1, l2: F.relu(l1 - l2),
-    'mae_relu_inverse':
-    lambda l1, l2: F.relu(l2 - l1),
-    'mae_sign_relu':
-    lambda l1, l2: F.relu(torch.sign(l1 - l2)),
-    'mae_sign_tanh_relu':
-    lambda l1, l2: F.relu(torch.sign(torch.tanh(l1 - l2))),
-    'mae_tanh_relu':
-    lambda l1, l2: F.relu(torch.tanh(l1 - l2)),
-    'mae_softplus':
-    lambda l1, l2: F.softplus(l1 - l2),
-    'mae_softplus_beta3':
-    lambda l1, l2: F.softplus(l1 - l2, beta=3),
-    'mae_softplus_beta5':
-    lambda l1, l2: F.softplus(l1 - l2, beta=5),
-    'mae_softplus_beta7':
-    lambda l1, l2: F.softplus(l1 - l2, beta=7),
-    'focal_loss':
-    rank_cross_entropy_focal_loss,
-    'mae_relu_norm':
-    lambda l1, l2: F.relu((l1 - l2) / (l1 - l2).abs() * (l1 + l2) / 2),
-    'mae_tanh_infinite':
-    tanh_infinite,
-    'tanh_infinite':
-    tanh_infinite_norelu,
-    'mae_sign_tanh_infinite':
-    tanh_sign_infinite,
-    'mae_relu_sigmoid_infinite':
-    rank_infinite_loss_v1,
-    'mae_relu_infinite':
-    rank_infinite_relu,
-    'softplus_infinite':
-    rank_infinite_softplus,
-    'sigmoid_softplus_infinite':
-    rank_infinite_loss_v2,
-    'hinge_sign_infinite':
-    rank_hinge_sign_infinite,
-    'crossentropy':
-    rank_cross_entropy_loss,
-    'mixed_focal':
-    rank_mixed_cross_entropy_loss,
-    'pairwise_rank_loss':
-    PairwiseRankLoss,
+    'mae_relu': lambda l1, l2: F.relu(l1 - l2),
+    'mae_relu_inverse': lambda l1, l2: F.relu(l2 - l1),
+    'mae_sign_relu': lambda l1, l2: F.relu(torch.sign(l1 - l2)),
+    'mae_sign_tanh_relu': lambda l1, l2: F.relu(torch.sign(torch.tanh(l1 - l2))),
+    'mae_tanh_relu': lambda l1, l2: F.relu(torch.tanh(l1 - l2)),
+    'mae_softplus': lambda l1, l2: F.softplus(l1 - l2),
+    'mae_softplus_beta3': lambda l1, l2: F.softplus(l1 - l2, beta=3),
+    'mae_softplus_beta5': lambda l1, l2: F.softplus(l1 - l2, beta=5),
+    'mae_softplus_beta7': lambda l1, l2: F.softplus(l1 - l2, beta=7),
+    'focal_loss': rank_cross_entropy_focal_loss,
+    'mae_relu_norm': lambda l1, l2: F.relu((l1 - l2) / (l1 - l2).abs() * (l1 + l2) / 2),
+    'mae_tanh_infinite': tanh_infinite,
+    'tanh_infinite': tanh_infinite_norelu,
+    'mae_sign_tanh_infinite': tanh_sign_infinite,
+    'mae_relu_sigmoid_infinite': rank_infinite_loss_v1,
+    'mae_relu_infinite': rank_infinite_relu,
+    'softplus_infinite': rank_infinite_softplus,
+    'sigmoid_softplus_infinite': rank_infinite_loss_v2,
+    'hinge_sign_infinite': rank_hinge_sign_infinite,
+    'crossentropy': rank_cross_entropy_loss,
+    'mixed_focal': rank_mixed_cross_entropy_loss,
+    'pairwise_rank_loss': PairwiseRankLoss,
 }
 
 

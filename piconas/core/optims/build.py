@@ -35,10 +35,12 @@ def build_optimizer(model, args):
         )
     elif args.optims == 'adabound':
         optimizer = AdaBound(
-            filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr)
+            filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr
+        )
     elif args.optims == 'adaboundw':
         optimizer = AdaBoundW(
-            filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr)
+            filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr
+        )
     elif args.optims == 'sam':
         opt = optim.SGD(
             model.parameters(),

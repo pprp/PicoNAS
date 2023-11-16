@@ -20,7 +20,6 @@ from .registry import register_trainer
 
 @register_trainer
 class NB201Trainer(BaseTrainer):
-
     def __init__(
         self,
         model: OneShotNASBench201Network,
@@ -44,7 +43,8 @@ class NB201Trainer(BaseTrainer):
             log_name=log_name,
             searching=searching,
             dataset=dataset,
-            **kwargs)
+            **kwargs,
+        )
 
         # init flops
         self._init_flops()
@@ -55,8 +55,7 @@ class NB201Trainer(BaseTrainer):
             self.mutator.prepare_from_supernet(model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(
-            num_sample=50, dataset=self.dataset)
+        self.evaluator = self._build_evaluator(num_sample=50, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -75,7 +74,7 @@ class NB201Trainer(BaseTrainer):
             2: 'nor_conv_3x3',
             3: 'nor_conv_3x3',
             4: 'nor_conv_3x3',
-            5: 'nor_conv_3x3'
+            5: 'nor_conv_3x3',
         }
 
         self.min_subnet = {
@@ -84,14 +83,19 @@ class NB201Trainer(BaseTrainer):
             2: 'skip_connect',
             3: 'skip_connect',
             4: 'skip_connect',
-            5: 'skip_connect'
+            5: 'skip_connect',
         }
 
         # type from kwargs can be random, hamming, adaptive
         if 'type' in kwargs:
             self.type = kwargs['type']
             assert self.type in {
-                'random', 'hamming', 'adaptive', 'uniform', 'fair', 'sandwich'
+                'random',
+                'hamming',
+                'adaptive',
+                'uniform',
+                'fair',
+                'sandwich',
             }
         else:
             self.type = None
@@ -164,8 +168,7 @@ class NB201Trainer(BaseTrainer):
             subnet2 = self.mutator.random_subnet
 
             # 调参，调大或者调小 (1) 6.7 (2) 5 (3) 11
-            while adaptive_hamming_dist(subnet1,
-                                        subnet2) < 6.7 and max_iter > 0:
+            while adaptive_hamming_dist(subnet1, subnet2) < 6.7 and max_iter > 0:
                 subnet2 = self.mutator.random_subnet
             if max_iter > 0:
                 return subnet1, subnet2
@@ -331,7 +334,8 @@ class NB201Trainer(BaseTrainer):
                     )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg}'
-                f' Top5 acc: {top5_vacc.avg}')
+                f' Top5 acc: {top5_vacc.avg}'
+            )
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def fit(self, train_loader, val_loader, epochs):
@@ -378,65 +382,74 @@ class NB201Trainer(BaseTrainer):
             if epoch % 10 == 0:
                 assert self.evaluator is not None
                 # BWR@K, P@tbk
-                kt, ps, sp, rd, minn_at_ks, patks, cpr = self.evaluator.compute_rank_consistency(
-                    val_loader, self.mutator)
+                (
+                    kt,
+                    ps,
+                    sp,
+                    rd,
+                    minn_at_ks,
+                    patks,
+                    cpr,
+                ) = self.evaluator.compute_rank_consistency(val_loader, self.mutator)
                 self.writer.add_scalar(
-                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
+                    'RANK/kendall_tau', kt, global_step=self.current_epoch
+                )
                 self.writer.add_scalar(
-                    'RANK/pearson', ps, global_step=self.current_epoch)
+                    'RANK/pearson', ps, global_step=self.current_epoch
+                )
                 self.writer.add_scalar(
-                    'RANK/spearman', sp, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/cpr', cpr, global_step=self.current_epoch)
+                    'RANK/spearman', sp, global_step=self.current_epoch
+                )
+                self.writer.add_scalar('RANK/cpr', cpr, global_step=self.current_epoch)
 
                 if isinstance(rd, list):
                     for i, r in enumerate(rd):
                         self.writer.add_scalar(
                             f'ANALYSE/rank_diff_{(i+1)*20}%',
                             r,
-                            global_step=self.current_epoch)
+                            global_step=self.current_epoch,
+                        )
                 else:
                     self.writer.add_scalar(
-                        'ANALYSE/rank_diff',
-                        rd,
-                        global_step=self.current_epoch)
+                        'ANALYSE/rank_diff', rd, global_step=self.current_epoch
+                    )
 
                 for k, minn, brk, maxn, wrk in minn_at_ks:
                     self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{k}_BR@K',
-                        brk,
-                        global_step=self.current_epoch)
+                        f'ANALYSE/oneshot_{k}_BR@K', brk, global_step=self.current_epoch
+                    )
                     self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{k}_WR@K',
-                        wrk,
-                        global_step=self.current_epoch)
+                        f'ANALYSE/oneshot_{k}_WR@K', wrk, global_step=self.current_epoch
+                    )
 
                 for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
                     self.writer.add_scalar(
                         f'ANALYSE/oneshot_{ratio}_P@topK',
                         p_at_topk,
-                        global_step=self.current_epoch)
+                        global_step=self.current_epoch,
+                    )
                     self.writer.add_scalar(
                         f'ANALYSE/oneshot_{ratio}_P@bottomK',
                         p_at_bk,
-                        global_step=self.current_epoch)
+                        global_step=self.current_epoch,
+                    )
                     self.writer.add_scalar(
                         f'ANALYSE/oneshot_{ratio}_KD@topK',
                         kd_at_topk,
-                        global_step=self.current_epoch)
+                        global_step=self.current_epoch,
+                    )
                     self.writer.add_scalar(
                         f'ANALYSE/oneshot_{ratio}_KD@bottomK',
                         kd_at_bk,
-                        global_step=self.current_epoch)
+                        global_step=self.current_epoch,
+                    )
 
             self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss', tr_loss, global_step=self.current_epoch
+            )
             self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss', val_loss, global_step=self.current_epoch
+            )
 
             self.scheduler.step()
 
@@ -444,7 +457,8 @@ class NB201Trainer(BaseTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         # self.model.eval()
@@ -456,8 +470,7 @@ class NB201Trainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 # move to device
-                outputs, labels = self._predict(
-                    batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
@@ -502,7 +515,8 @@ class NB201Trainer(BaseTrainer):
         # Note 2: this function should be called before
         #       mutator.prepare_from_supernet()
         flops, params = get_model_complexity_info(
-            self.model, self.input_shape, print_per_layer_stat=False)
+            self.model, self.input_shape, print_per_layer_stat=False
+        )
         self.model.train()
         return flops, params
 
@@ -512,8 +526,7 @@ class NB201Trainer(BaseTrainer):
         for k, v in self.mutator.search_group.items():
             current_choice = subnet_dict[k]  # '1' or '2' or 'I'
             choice_flops = 0
-            for _, module in v[0]._candidate_ops[current_choice].named_modules(
-            ):
+            for _, module in v[0]._candidate_ops[current_choice].named_modules():
                 flops = getattr(module, '__flops__', 0)
                 if flops > 0:
                     choice_flops += flops
@@ -521,12 +534,12 @@ class NB201Trainer(BaseTrainer):
             subnet_flops += choice_flops
         return subnet_flops
 
-    def get_subnet_predictive(self,
-                              subnet_dict,
-                              dataloader,
-                              measure_name='nwot') -> float:
+    def get_subnet_predictive(
+        self, subnet_dict, dataloader, measure_name='nwot'
+    ) -> float:
         """Calculate zenscore based on subnet dict."""
         import copy
+
         m = copy.deepcopy(self.model)
         o = OneShotMutator(with_alias=True)
         o.prepare_from_supernet(m)
@@ -541,16 +554,16 @@ class NB201Trainer(BaseTrainer):
             dataload_info=dataload_info,
             measure_names=measure_name,
             loss_fn=F.cross_entropy,
-            device=self.trainer.device)
+            device=self.trainer.device,
+        )
 
         del m
         del o
         return score
 
-    def get_subnet_error(self,
-                         subnet_dict: Dict,
-                         train_loader=None,
-                         val_loader=None) -> float:
+    def get_subnet_error(
+        self, subnet_dict: Dict, train_loader=None, val_loader=None
+    ) -> float:
         """Calculate the subnet of validation error.
         Including:
         1. BN calibration
@@ -661,9 +674,11 @@ class NB201Trainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = (2 *
-                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
+        loss3 = (
+            2
+            * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+            * self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+        )
         loss3.backward()
 
         return loss2, outputs
@@ -701,17 +716,14 @@ class NB201Trainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1,
-                                                      loss2)
+        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1, loss2)
         loss_list.append(loss3)
 
         # distill loss
         if loss2 > loss1:
-            loss4 = self.distill_loss(
-                feat_s=feat2, feat_t=feat1) * self.lambda_kd
+            loss4 = self.distill_loss(feat_s=feat2, feat_t=feat1) * self.lambda_kd
         else:
-            loss4 = self.distill_loss(
-                feat_s=feat1, feat_t=feat2) * self.lambda_kd
+            loss4 = self.distill_loss(feat_s=feat1, feat_t=feat2) * self.lambda_kd
         loss_list.append(loss4)
 
         loss = sum(loss_list)
@@ -754,8 +766,7 @@ class NB201Trainer(BaseTrainer):
             for j in range(i):
                 flops1, flops2 = flops_list[i], flops_list[j]
                 loss1, loss2 = loss_list[i], loss_list[j]
-                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1,
-                                                       loss2)
+                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1, loss2)
 
                 rank_loss_list.append(tmp_rank_loss)
 

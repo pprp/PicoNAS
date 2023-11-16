@@ -26,20 +26,21 @@ parser.add_argument(
     '--space', type=str, default='Amoeba'
 )  # nb101, nb201, nb301, tb101, amoeba, darts, darts_fix-w-d, darts_lr-wd, enas, enas_fix-w-d, nasnet, pnas, pnas_fix-w-d supported
 parser.add_argument(
-    '--task', type=str, default='class_scene')  # all tb101 tasks supported
+    '--task', type=str, default='class_scene'
+)  # all tb101 tasks supported
 parser.add_argument(
     '--representation', type=str, default='cate'
 )  # adj_mlp, adj_gin, zcp (except nb301), cate, arch2vec, adj_gin_zcp, adj_gin_arch2vec, adj_gin_cate supported.
 parser.add_argument(
     '--test_tagates', action='store_true'
 )  # Currently only supports testing on NB101 networks. Easy to extend.
+parser.add_argument('--loss_type', type=str, default='pwl')  # mse, pwl supported
 parser.add_argument(
-    '--loss_type', type=str, default='pwl')  # mse, pwl supported
+    '--gnn_type', type=str, default='dense'
+)  # dense, gat, gat_mh supported
 parser.add_argument(
-    '--gnn_type', type=str, default='dense')  # dense, gat, gat_mh supported
-parser.add_argument(
-    '--back_dense',
-    action='store_true')  # If True, backward flow will be DenseFlow
+    '--back_dense', action='store_true'
+)  # If True, backward flow will be DenseFlow
 parser.add_argument('--num_trials', type=int, default=3)
 parser.add_argument('--no_residual', action='store_true')
 parser.add_argument('--no_leakyrelu', action='store_true')
@@ -50,8 +51,8 @@ parser.add_argument('--timesteps', type=int, default=2)
 ###################################################### Other Hyper-Parameters ######################################################
 parser.add_argument('--name_desc', type=str, default=None)
 parser.add_argument(
-    '--sample_sizes', nargs='+', type=int, default=[72, 364, 728, 3645,
-                                                    7280])  # Default NB101
+    '--sample_sizes', nargs='+', type=int, default=[72, 364, 728, 3645, 7280]
+)  # Default NB101
 parser.add_argument('--device', type=str, default='cuda:0')
 parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--test_batch_size', type=int, default=128)
@@ -76,7 +77,9 @@ args.opattention = not args.no_opattention
 args.leakyrelu = not args.no_leakyrelu
 args.attention_rescale = not args.no_attention_rescale
 
-assert args.name_desc is not None, 'Please provide a name description for the experiment.'
+assert (
+    args.name_desc is not None
+), 'Please provide a name description for the experiment.'
 
 
 # Set random seeds
@@ -86,6 +89,7 @@ def seed_everything(seed: int):
 
     import numpy as np
     import torch
+
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
@@ -98,8 +102,13 @@ def seed_everything(seed: int):
 if args.seed is not None:
     seed_everything(args.seed)
 
-nb101_train_tagates_sample_indices, \
-    nb101_tagates_sample_indices = [0,1,2,3,4], [5,6,7,8,9]
+nb101_train_tagates_sample_indices, nb101_tagates_sample_indices = [0, 1, 2, 3, 4], [
+    5,
+    6,
+    7,
+    8,
+    9,
+]
 # get_tagates_sample_indices(args)
 
 
@@ -107,36 +116,47 @@ def flatten_mixed_list(pred_scores):
     flattened = []
     for sublist in pred_scores:
         if isinstance(sublist, (list, tuple)):  # Check if the item is iterable
-            flattened.extend(
-                sublist)  # If it's iterable, extend the flattened list
+            flattened.extend(sublist)  # If it's iterable, extend the flattened list
         else:
-            flattened.append(
-                sublist)  # If it's not iterable, append it directly
+            flattened.append(sublist)  # If it's not iterable, append it directly
     return flattened
 
 
-def pwl_train(args, model, dataloader, criterion, optimizer, scheduler,
-              test_dataloader, epoch):
+def pwl_train(
+    args, model, dataloader, criterion, optimizer, scheduler, test_dataloader, epoch
+):
     model.training = True
     model.train()
     running_loss = 0.0
     for inputs, targets in dataloader:
         if args.representation in ['adj_mlp', 'zcp', 'arch2vec', 'cate']:
             if inputs.shape[0] == 1 and args.space in [
-                    'nb101', 'nb201', 'nb301', 'tb101'
+                'nb101',
+                'nb201',
+                'nb301',
+                'tb101',
             ]:
                 continue
             elif inputs.shape[0] <= 2 and args.space not in [
-                    'nb101', 'nb201', 'nb301', 'tb101'
+                'nb101',
+                'nb201',
+                'nb301',
+                'tb101',
             ]:
                 continue
         else:
             if inputs[0].shape[0] == 1 and args.space in [
-                    'nb101', 'nb201', 'nb301', 'tb101'
+                'nb101',
+                'nb201',
+                'nb301',
+                'tb101',
             ]:
                 continue
             elif inputs[0].shape[0] <= 2 and args.space not in [
-                    'nb101', 'nb201', 'nb301', 'tb101'
+                'nb101',
+                'nb201',
+                'nb301',
+                'tb101',
             ]:
                 continue
         #### Params for PWL Loss
@@ -155,18 +175,15 @@ def pwl_train(args, model, dataloader, criterion, optimizer, scheduler,
         ex_thresh_nums = len(ex_thresh_inds[0])
         if ex_thresh_nums > n_max_pairs:
             keep_inds = np.random.choice(
-                np.arange(ex_thresh_nums), n_max_pairs, replace=False)
-            ex_thresh_inds = (ex_thresh_inds[0][keep_inds],
-                              ex_thresh_inds[1][keep_inds])
+                np.arange(ex_thresh_nums), n_max_pairs, replace=False
+            )
+            ex_thresh_inds = (
+                ex_thresh_inds[0][keep_inds],
+                ex_thresh_inds[1][keep_inds],
+            )
         if args.representation in ['adj_mlp', 'zcp', 'arch2vec', 'cate']:
-            archs_1 = [
-                torch.stack(
-                    list((inputs[indx] for indx in ex_thresh_inds[1])))
-            ]
-            archs_2 = [
-                torch.stack(
-                    list((inputs[indx] for indx in ex_thresh_inds[0])))
-            ]
+            archs_1 = [torch.stack(list((inputs[indx] for indx in ex_thresh_inds[1])))]
+            archs_2 = [torch.stack(list((inputs[indx] for indx in ex_thresh_inds[0])))]
             X_input_1 = archs_1[0].to(device)
             s_1 = model(X_input_1).squeeze()
             X_input_2 = archs_2[0].to(device)
@@ -174,188 +191,189 @@ def pwl_train(args, model, dataloader, criterion, optimizer, scheduler,
         elif args.representation in ['adj_gin']:
             if args.space in ['nb101', 'nb201', 'nb301', 'tb101']:
                 archs_1 = [
-                    torch.stack(
-                        list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[2][indx] for indx in ex_thresh_inds[1])))
+                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
                 ]
                 archs_2 = [
-                    torch.stack(
-                        list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[2][indx] for indx in ex_thresh_inds[0])))
+                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
                 ]
-                X_adj_1, X_ops_1, norm_w_d_1 = archs_1[0].to(
-                    device), archs_1[1].to(device), archs_1[2].to(device)
+                X_adj_1, X_ops_1, norm_w_d_1 = (
+                    archs_1[0].to(device),
+                    archs_1[1].to(device),
+                    archs_1[2].to(device),
+                )
                 s_1 = model(
                     x_ops_1=X_ops_1,
                     x_adj_1=X_adj_1.to(torch.long),
                     x_ops_2=None,
                     x_adj_2=None,
                     zcp=None,
-                    norm_w_d=norm_w_d_1).squeeze()
-                X_adj_2, X_ops_2, norm_w_d_2 = archs_2[0].to(
-                    device), archs_2[1].to(device), archs_2[2].to(device)
+                    norm_w_d=norm_w_d_1,
+                ).squeeze()
+                X_adj_2, X_ops_2, norm_w_d_2 = (
+                    archs_2[0].to(device),
+                    archs_2[1].to(device),
+                    archs_2[2].to(device),
+                )
                 s_2 = model(
                     x_ops_1=X_ops_2,
                     x_adj_1=X_adj_2.to(torch.long),
                     x_ops_2=None,
                     x_adj_2=None,
                     zcp=None,
-                    norm_w_d=norm_w_d_2).squeeze()
+                    norm_w_d=norm_w_d_2,
+                ).squeeze()
             else:
                 archs_1 = [
-                    torch.stack(
-                        list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[3][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[4][indx] for indx in ex_thresh_inds[1])))
+                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[4][indx] for indx in ex_thresh_inds[1]))),
                 ]
                 archs_2 = [
-                    torch.stack(
-                        list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[3][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[4][indx] for indx in ex_thresh_inds[0])))
+                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[4][indx] for indx in ex_thresh_inds[0]))),
                 ]
-                X_adj_a_1, X_ops_a_1, X_adj_b_1, X_ops_b_1, norm_w_d_1 = archs_1[
-                    0].to(device), archs_1[1].to(device), archs_1[2].to(
-                        device), archs_1[3].to(device), archs_1[4].to(device)
+                X_adj_a_1, X_ops_a_1, X_adj_b_1, X_ops_b_1, norm_w_d_1 = (
+                    archs_1[0].to(device),
+                    archs_1[1].to(device),
+                    archs_1[2].to(device),
+                    archs_1[3].to(device),
+                    archs_1[4].to(device),
+                )
                 s_1 = model(
                     x_ops_1=X_ops_a_1,
                     x_adj_1=X_adj_a_1.to(torch.long),
                     x_ops_2=X_ops_b_1,
                     x_adj_2=X_adj_b_1.to(torch.long),
                     zcp=None,
-                    norm_w_d=norm_w_d_1).squeeze()
-                X_adj_a_2, X_ops_a_2, X_adj_b_2, X_ops_b_2, norm_w_d_2 = archs_2[
-                    0].to(device), archs_2[1].to(device), archs_2[2].to(
-                        device), archs_2[3].to(device), archs_2[4].to(device)
+                    norm_w_d=norm_w_d_1,
+                ).squeeze()
+                X_adj_a_2, X_ops_a_2, X_adj_b_2, X_ops_b_2, norm_w_d_2 = (
+                    archs_2[0].to(device),
+                    archs_2[1].to(device),
+                    archs_2[2].to(device),
+                    archs_2[3].to(device),
+                    archs_2[4].to(device),
+                )
                 s_2 = model(
                     x_ops_1=X_ops_a_2,
                     x_adj_1=X_adj_a_2.to(torch.long),
                     x_ops_2=X_ops_b_2,
                     x_adj_2=X_adj_b_2.to(torch.long),
                     zcp=None,
-                    norm_w_d=norm_w_d_2).squeeze()
+                    norm_w_d=norm_w_d_2,
+                ).squeeze()
         elif args.representation in [
-                'adj_gin_zcp', 'adj_gin_arch2vec', 'adj_gin_cate',
-                'adj_gin_a2vcatezcp'
+            'adj_gin_zcp',
+            'adj_gin_arch2vec',
+            'adj_gin_cate',
+            'adj_gin_a2vcatezcp',
         ]:
             if args.space in ['nb101', 'nb201', 'nb301', 'tb101']:
                 archs_1 = [
-                    torch.stack(
-                        list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[3][indx] for indx in ex_thresh_inds[1])))
+                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[1]))),
                 ]
                 archs_2 = [
-                    torch.stack(
-                        list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[3][indx] for indx in ex_thresh_inds[0])))
+                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[0]))),
                 ]
-                X_adj_1, X_ops_1, zcp, norm_w_d_1 = archs_1[0].to(
-                    device), archs_1[1].to(device), archs_1[2].to(
-                        device), archs_1[3].to(device)
+                X_adj_1, X_ops_1, zcp, norm_w_d_1 = (
+                    archs_1[0].to(device),
+                    archs_1[1].to(device),
+                    archs_1[2].to(device),
+                    archs_1[3].to(device),
+                )
                 s_1 = model(
                     x_ops_1=X_ops_1,
                     x_adj_1=X_adj_1.to(torch.long),
                     x_ops_2=None,
                     x_adj_2=None,
                     zcp=zcp,
-                    norm_w_d=norm_w_d_1).squeeze()
-                X_adj_2, X_ops_2, zcp, norm_w_d_2 = archs_2[0].to(
-                    device), archs_2[1].to(device), archs_2[2].to(
-                        device), archs_2[3].to(device)
+                    norm_w_d=norm_w_d_1,
+                ).squeeze()
+                X_adj_2, X_ops_2, zcp, norm_w_d_2 = (
+                    archs_2[0].to(device),
+                    archs_2[1].to(device),
+                    archs_2[2].to(device),
+                    archs_2[3].to(device),
+                )
                 s_2 = model(
                     x_ops_1=X_ops_2,
                     x_adj_1=X_adj_2.to(torch.long),
                     x_ops_2=None,
                     x_adj_2=None,
                     zcp=zcp,
-                    norm_w_d=norm_w_d_2).squeeze()
+                    norm_w_d=norm_w_d_2,
+                ).squeeze()
             else:
                 archs_1 = [
-                    torch.stack(
-                        list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[3][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[4][indx] for indx in ex_thresh_inds[1]))),
-                    torch.stack(
-                        list((inputs[5][indx] for indx in ex_thresh_inds[1])))
+                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[4][indx] for indx in ex_thresh_inds[1]))),
+                    torch.stack(list((inputs[5][indx] for indx in ex_thresh_inds[1]))),
                 ]
                 archs_2 = [
-                    torch.stack(
-                        list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[3][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[4][indx] for indx in ex_thresh_inds[0]))),
-                    torch.stack(
-                        list((inputs[5][indx] for indx in ex_thresh_inds[0])))
+                    torch.stack(list((inputs[0][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[1][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[2][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[3][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[4][indx] for indx in ex_thresh_inds[0]))),
+                    torch.stack(list((inputs[5][indx] for indx in ex_thresh_inds[0]))),
                 ]
-                X_adj_a_1, X_ops_a_1, X_adj_b_1, X_ops_b_1, zcp, norm_w_d_1 = archs_1[
-                    0].to(device), archs_1[1].to(device), archs_1[2].to(
-                        device), archs_1[3].to(device), archs_1[4].to(
-                            device), archs_1[5].to(device)
+                X_adj_a_1, X_ops_a_1, X_adj_b_1, X_ops_b_1, zcp, norm_w_d_1 = (
+                    archs_1[0].to(device),
+                    archs_1[1].to(device),
+                    archs_1[2].to(device),
+                    archs_1[3].to(device),
+                    archs_1[4].to(device),
+                    archs_1[5].to(device),
+                )
                 s_1 = model(
                     x_ops_1=X_ops_a_1,
                     x_adj_1=X_adj_a_1.to(torch.long),
                     x_ops_2=X_ops_b_1,
                     x_adj_2=X_adj_b_1.to(torch.long),
                     zcp=zcp,
-                    norm_w_d=norm_w_d_1).squeeze()
-                X_adj_a_2, X_ops_a_2, X_adj_b_2, X_ops_b_2, zcp, norm_w_d_2 = archs_2[
-                    0].to(device), archs_2[1].to(device), archs_2[2].to(
-                        device), archs_2[3].to(device), archs_2[4].to(
-                            device), archs_2[5].to(device)
+                    norm_w_d=norm_w_d_1,
+                ).squeeze()
+                X_adj_a_2, X_ops_a_2, X_adj_b_2, X_ops_b_2, zcp, norm_w_d_2 = (
+                    archs_2[0].to(device),
+                    archs_2[1].to(device),
+                    archs_2[2].to(device),
+                    archs_2[3].to(device),
+                    archs_2[4].to(device),
+                    archs_2[5].to(device),
+                )
                 s_2 = model(
                     x_ops_1=X_ops_a_2,
                     x_adj_1=X_adj_a_2.to(torch.long),
                     x_ops_2=X_ops_b_2,
                     x_adj_2=X_adj_b_2.to(torch.long),
                     zcp=zcp,
-                    norm_w_d=norm_w_d_2).squeeze()
+                    norm_w_d=norm_w_d_2,
+                ).squeeze()
         else:
             raise NotImplementedError
         better_lst = (acc_diff > 0)[ex_thresh_inds]
         better_pm = 2 * s_1.new(np.array(better_lst, dtype=np.float32)) - 1
-        zero_ = s_1.new([0.])
+        zero_ = s_1.new([0.0])
         margin = s_1.new(margin)
-        pair_loss = torch.mean(
-            torch.max(zero_, margin - better_pm * (s_2 - s_1)))
+        pair_loss = torch.mean(torch.max(zero_, margin - better_pm * (s_2 - s_1)))
         optimizer.zero_grad()
         pair_loss.backward()
         optimizer.step()
@@ -371,7 +389,8 @@ def pwl_train(args, model, dataloader, criterion, optimizer, scheduler,
             break
         if args.representation in ['adj_mlp', 'zcp', 'arch2vec', 'cate']:
             pred_scores.append(
-                model(reprs.to(device)).squeeze().detach().cpu().tolist())
+                model(reprs.to(device)).squeeze().detach().cpu().tolist()
+            )
         elif args.representation in ['adj_gin']:
             if args.space in ['nb101', 'nb201', 'nb301', 'tb101']:
                 pred_scores.append(
@@ -381,8 +400,13 @@ def pwl_train(args, model, dataloader, criterion, optimizer, scheduler,
                         x_ops_2=None,
                         x_adj_2=None,
                         zcp=None,
-                        norm_w_d=reprs[-1].to(
-                            device)).squeeze().detach().cpu().tolist())
+                        norm_w_d=reprs[-1].to(device),
+                    )
+                    .squeeze()
+                    .detach()
+                    .cpu()
+                    .tolist()
+                )
             else:
                 pred_scores.append(
                     model(
@@ -391,11 +415,18 @@ def pwl_train(args, model, dataloader, criterion, optimizer, scheduler,
                         x_ops_2=reprs[3].to(device),
                         x_adj_2=reprs[2].to(torch.long),
                         zcp=None,
-                        norm_w_d=reprs[-1].to(
-                            device)).squeeze().detach().cpu().tolist())
+                        norm_w_d=reprs[-1].to(device),
+                    )
+                    .squeeze()
+                    .detach()
+                    .cpu()
+                    .tolist()
+                )
         elif args.representation in [
-                'adj_gin_zcp', 'adj_gin_arch2vec', 'adj_gin_cate',
-                'adj_gin_a2vcatezcp'
+            'adj_gin_zcp',
+            'adj_gin_arch2vec',
+            'adj_gin_cate',
+            'adj_gin_a2vcatezcp',
         ]:
             if args.space in ['nb101', 'nb201', 'nb301', 'tb101']:
                 pred_scores.append(
@@ -405,8 +436,13 @@ def pwl_train(args, model, dataloader, criterion, optimizer, scheduler,
                         x_ops_2=None,
                         x_adj_2=None,
                         zcp=reprs[2].to(device),
-                        norm_w_d=reprs[-1].to(
-                            device)).squeeze().detach().cpu().tolist())
+                        norm_w_d=reprs[-1].to(device),
+                    )
+                    .squeeze()
+                    .detach()
+                    .cpu()
+                    .tolist()
+                )
             else:
                 pred_scores.append(
                     model(
@@ -415,8 +451,13 @@ def pwl_train(args, model, dataloader, criterion, optimizer, scheduler,
                         x_ops_2=reprs[3].to(device),
                         x_adj_2=reprs[2].to(torch.long),
                         zcp=reprs[4].to(device),
-                        norm_w_d=reprs[-1].to(
-                            device)).squeeze().detach().cpu().tolist())
+                        norm_w_d=reprs[-1].to(device),
+                    )
+                    .squeeze()
+                    .detach()
+                    .cpu()
+                    .tolist()
+                )
         else:
             raise NotImplementedError
         true_scores.append(scores.cpu().tolist())
@@ -425,37 +466,50 @@ def pwl_train(args, model, dataloader, criterion, optimizer, scheduler,
     pred_scores = flatten_mixed_list(pred_scores)
     true_scores = flatten_mixed_list(true_scores)
     num_test_items = len(pred_scores)
-    return model, num_test_items, running_loss / len(dataloader), spearmanr(
-        true_scores,
-        pred_scores).correlation, kendalltau(true_scores,
-                                             pred_scores).correlation
+    return (
+        model,
+        num_test_items,
+        running_loss / len(dataloader),
+        spearmanr(true_scores, pred_scores).correlation,
+        kendalltau(true_scores, pred_scores).correlation,
+    )
 
 
 sys.path.append('..')
 if args.space in [
-        'Amoeba', 'DARTS', 'DARTS_fix-w-d', 'DARTS_lr-wd', 'ENAS',
-        'ENAS_fix-w-d', 'NASNet', 'PNAS', 'PNAS_fix-w-d'
+    'Amoeba',
+    'DARTS',
+    'DARTS_fix-w-d',
+    'DARTS_lr-wd',
+    'ENAS',
+    'ENAS_fix-w-d',
+    'NASNet',
+    'PNAS',
+    'PNAS_fix-w-d',
 ]:
     from nas_embedding_suite.nds_ss import NDS as EmbGenClass
 elif args.space in ['nb101', 'nb201', 'nb301']:
     exec(
-        'from piconas.predictor.nas_embedding_suite.nb{}_ss import NASBench{} as EmbGenClass'
-        .format(args.space[-3:], args.space[-3:]))
+        'from piconas.predictor.nas_embedding_suite.nb{}_ss import NASBench{} as EmbGenClass'.format(
+            args.space[-3:], args.space[-3:]
+        )
+    )
 elif args.space in ['tb101']:
-    from nas_embedding_suite.tb101_micro_ss import \
-        TransNASBench101Micro as EmbGenClass
+    from nas_embedding_suite.tb101_micro_ss import TransNASBench101Micro as EmbGenClass
 
 embedding_gen = EmbGenClass(normalize_zcp=True, log_synflow=True)
 
 
-def get_dataloader(args,
-                   embedding_gen,
-                   space,
-                   sample_count,
-                   representation,
-                   mode,
-                   train_indexes=None,
-                   test_size=None):
+def get_dataloader(
+    args,
+    embedding_gen,
+    space,
+    sample_count,
+    representation,
+    mode,
+    train_indexes=None,
+    test_size=None,
+):
     representations = []
     accs = []
     if space == 'nb101' and args.test_tagates:
@@ -468,71 +522,101 @@ def get_dataloader(args,
         if mode == 'train':
             if space not in ['nb101', 'nb201', 'nb301', 'tb101']:
                 sample_indexes = random.sample(
-                    range(embedding_gen.get_numitems(space) - 1), sample_count)
+                    range(embedding_gen.get_numitems(space) - 1), sample_count
+                )
             else:
                 sample_indexes = random.sample(
-                    range(embedding_gen.get_numitems() - 1), sample_count)
+                    range(embedding_gen.get_numitems() - 1), sample_count
+                )
         else:
             if space not in ['nb101', 'nb201', 'nb301', 'tb101']:
                 remaining_indexes = list(
-                    set(range(embedding_gen.get_numitems(space) - 1)) -
-                    set(train_indexes))
+                    set(range(embedding_gen.get_numitems(space) - 1))
+                    - set(train_indexes)
+                )
             else:
                 remaining_indexes = list(
-                    set(range(embedding_gen.get_numitems() - 1)) -
-                    set(train_indexes))
+                    set(range(embedding_gen.get_numitems() - 1)) - set(train_indexes)
+                )
             if test_size is not None:
                 sample_indexes = random.sample(remaining_indexes, test_size)
             else:
                 sample_indexes = remaining_indexes
-    if representation.__contains__(
-            'gin'
-    ) == False:  # adj_mlp, zcp, arch2vec, cate --> FullyConnectedNN
+    if (
+        representation.__contains__('gin') == False
+    ):  # adj_mlp, zcp, arch2vec, cate --> FullyConnectedNN
         if representation == 'adj_mlp':  # adj_mlp --> FullyConnectedNN
             for i in tqdm(sample_indexes):
                 if space not in ['nb101', 'nb201', 'nb301', 'tb101']:
-                    adj_mat_norm, op_mat_norm, adj_mat_red, op_mat_red = embedding_gen.get_adj_op(
-                        i, space=space).values()
+                    (
+                        adj_mat_norm,
+                        op_mat_norm,
+                        adj_mat_red,
+                        op_mat_red,
+                    ) = embedding_gen.get_adj_op(i, space=space).values()
                     norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
                     norm_w_d = np.asarray(norm_w_d).flatten()
                     accs.append(embedding_gen.get_valacc(i, space=space))
                     adj_mat_norm = np.asarray(adj_mat_norm).flatten()
                     adj_mat_red = np.asarray(adj_mat_red).flatten()
-                    op_mat_norm = torch.Tensor(np.asarray(op_mat_norm)).argmax(
-                        dim=1).numpy().flatten()  # Careful here.
-                    op_mat_red = torch.Tensor(np.asarray(op_mat_red)).argmax(
-                        dim=1).numpy().flatten()  # Careful here.
+                    op_mat_norm = (
+                        torch.Tensor(np.asarray(op_mat_norm))
+                        .argmax(dim=1)
+                        .numpy()
+                        .flatten()
+                    )  # Careful here.
+                    op_mat_red = (
+                        torch.Tensor(np.asarray(op_mat_red))
+                        .argmax(dim=1)
+                        .numpy()
+                        .flatten()
+                    )  # Careful here.
                     representations.append(
-                        np.concatenate((adj_mat_norm, op_mat_norm, adj_mat_red,
-                                        op_mat_red, norm_w_d)).tolist())
+                        np.concatenate(
+                            (
+                                adj_mat_norm,
+                                op_mat_norm,
+                                adj_mat_red,
+                                op_mat_red,
+                                norm_w_d,
+                            )
+                        ).tolist()
+                    )
                 else:
                     adj_mat, op_mat = embedding_gen.get_adj_op(i).values()
                     if space == 'tb101':
-                        accs.append(
-                            embedding_gen.get_valacc(i, task=args.task))
+                        accs.append(embedding_gen.get_valacc(i, task=args.task))
                     else:
                         accs.append(embedding_gen.get_valacc(i))
                     norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
                     norm_w_d = np.asarray(norm_w_d).flatten()
                     adj_mat = np.asarray(adj_mat).flatten()
-                    op_mat = torch.Tensor(np.asarray(op_mat)).argmax(
-                        dim=1).numpy().flatten()  # Careful here.
+                    op_mat = (
+                        torch.Tensor(np.asarray(op_mat)).argmax(dim=1).numpy().flatten()
+                    )  # Careful here.
                     representations.append(
-                        np.concatenate((adj_mat, op_mat, norm_w_d)).tolist())
+                        np.concatenate((adj_mat, op_mat, norm_w_d)).tolist()
+                    )
         else:  # zcp, arch2vec, cate --> FullyConnectedNN
             for i in tqdm(sample_indexes):
                 if space in ['nb101', 'nb201', 'nb301']:
                     exec(
-                        'representations.append(np.concatenate((embedding_gen.get_{}(i), np.asarray(embedding_gen.get_norm_w_d(i, space="{}")).flatten())))'
-                        .format(representation, space))
+                        'representations.append(np.concatenate((embedding_gen.get_{}(i), np.asarray(embedding_gen.get_norm_w_d(i, space="{}")).flatten())))'.format(
+                            representation, space
+                        )
+                    )
                 elif space == 'tb101':
                     exec(
-                        'representations.append(np.concatenate((embedding_gen.get_{}(i, "{}"), np.asarray(embedding_gen.get_norm_w_d(i, space="{}")).flatten())))'
-                        .format(representation, args.task, args.task))
+                        'representations.append(np.concatenate((embedding_gen.get_{}(i, "{}"), np.asarray(embedding_gen.get_norm_w_d(i, space="{}")).flatten())))'.format(
+                            representation, args.task, args.task
+                        )
+                    )
                 else:
                     exec(
-                        'representations.append(np.concatenate((embedding_gen.get_{}(i, "{}"), np.asarray(embedding_gen.get_norm_w_d(i, space="{}")).flatten())))'
-                        .format(representation, space, space))
+                        'representations.append(np.concatenate((embedding_gen.get_{}(i, "{}"), np.asarray(embedding_gen.get_norm_w_d(i, space="{}")).flatten())))'.format(
+                            representation, space, space
+                        )
+                    )
                 if space == 'tb101':
                     accs.append(embedding_gen.get_valacc(i, task=args.task))
                 elif space not in ['nb101', 'nb201', 'nb301']:
@@ -540,28 +624,39 @@ def get_dataloader(args,
                 else:
                     accs.append(embedding_gen.get_valacc(i))
         representations = torch.stack(
-            [torch.FloatTensor(nxx) for nxx in representations])
+            [torch.FloatTensor(nxx) for nxx in representations]
+        )
     else:  # adj_gin, adj_gin_zcp, adj_gin_arch2vec, adj_gin_cate --> GIN_Model
         assert representation in [
-            'adj_gin', 'adj_gin_zcp', 'adj_gin_arch2vec', 'adj_gin_cate',
-            'adj_gin_a2vcatezcp'
+            'adj_gin',
+            'adj_gin_zcp',
+            'adj_gin_arch2vec',
+            'adj_gin_cate',
+            'adj_gin_a2vcatezcp',
         ], 'Representation Not Supported!'
         if args.representation == 'adj_gin':
             for i in tqdm(sample_indexes):
                 if space not in ['nb101', 'nb201', 'nb301', 'tb101']:
-                    adj_mat_norm, op_mat_norm, adj_mat_red, op_mat_red = embedding_gen.get_adj_op(
-                        i, space=space).values()
+                    (
+                        adj_mat_norm,
+                        op_mat_norm,
+                        adj_mat_red,
+                        op_mat_red,
+                    ) = embedding_gen.get_adj_op(i, space=space).values()
                     norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
                     norm_w_d = np.asarray(norm_w_d).flatten()
-                    op_mat_norm = torch.Tensor(
-                        np.array(op_mat_norm)).argmax(dim=1)
-                    op_mat_red = torch.Tensor(
-                        np.array(op_mat_red)).argmax(dim=1)
+                    op_mat_norm = torch.Tensor(np.array(op_mat_norm)).argmax(dim=1)
+                    op_mat_red = torch.Tensor(np.array(op_mat_red)).argmax(dim=1)
                     accs.append(embedding_gen.get_valacc(i, space=space))
                     representations.append(
-                        (torch.Tensor(adj_mat_norm), torch.Tensor(op_mat_norm),
-                         torch.Tensor(adj_mat_red), torch.Tensor(op_mat_red),
-                         torch.Tensor(norm_w_d)))
+                        (
+                            torch.Tensor(adj_mat_norm),
+                            torch.Tensor(op_mat_norm),
+                            torch.Tensor(adj_mat_red),
+                            torch.Tensor(op_mat_red),
+                            torch.Tensor(norm_w_d),
+                        )
+                    )
                 else:
                     adj_mat, op_mat = embedding_gen.get_adj_op(i).values()
                     op_mat = torch.Tensor(np.array(op_mat)).argmax(dim=1)
@@ -572,32 +667,42 @@ def get_dataloader(args,
                     else:
                         accs.append(embedding_gen.get_valacc(i))
                     representations.append(
-                        (torch.Tensor(adj_mat), torch.Tensor(op_mat),
-                         torch.Tensor(norm_w_d)))
+                        (
+                            torch.Tensor(adj_mat),
+                            torch.Tensor(op_mat),
+                            torch.Tensor(norm_w_d),
+                        )
+                    )
         else:  # "adj_gin_zcp", "adj_gin_arch2vec", "adj_gin_cate"
             for i in tqdm(sample_indexes):
                 if space not in ['nb101', 'nb201', 'nb301', 'tb101']:
-                    adj_mat_norm, op_mat_norm, adj_mat_red, op_mat_red = embedding_gen.get_adj_op(
-                        i, space=space).values()
-                    method_name = 'get_{}'.format(
-                        args.representation.split('_')[-1])
+                    (
+                        adj_mat_norm,
+                        op_mat_norm,
+                        adj_mat_red,
+                        op_mat_red,
+                    ) = embedding_gen.get_adj_op(i, space=space).values()
+                    method_name = 'get_{}'.format(args.representation.split('_')[-1])
                     method_to_call = getattr(embedding_gen, method_name)
                     zcp_ = method_to_call(i, space=space)
                     norm_w_d = embedding_gen.get_norm_w_d(i, space=space)
                     norm_w_d = np.asarray(norm_w_d).flatten()
-                    op_mat_norm = torch.Tensor(
-                        np.array(op_mat_norm)).argmax(dim=1)
-                    op_mat_red = torch.Tensor(
-                        np.array(op_mat_red)).argmax(dim=1)
+                    op_mat_norm = torch.Tensor(np.array(op_mat_norm)).argmax(dim=1)
+                    op_mat_red = torch.Tensor(np.array(op_mat_red)).argmax(dim=1)
                     accs.append(embedding_gen.get_valacc(i, space=space))
                     representations.append(
-                        (torch.Tensor(adj_mat_norm), torch.Tensor(op_mat_norm),
-                         torch.Tensor(adj_mat_red), torch.Tensor(op_mat_red),
-                         torch.Tensor(zcp_), torch.Tensor(norm_w_d)))
+                        (
+                            torch.Tensor(adj_mat_norm),
+                            torch.Tensor(op_mat_norm),
+                            torch.Tensor(adj_mat_red),
+                            torch.Tensor(op_mat_red),
+                            torch.Tensor(zcp_),
+                            torch.Tensor(norm_w_d),
+                        )
+                    )
                 else:
                     adj_mat, op_mat = embedding_gen.get_adj_op(i).values()
-                    method_name = 'get_{}'.format(
-                        args.representation.split('_')[-1])
+                    method_name = 'get_{}'.format(args.representation.split('_')[-1])
                     method_to_call = getattr(embedding_gen, method_name)
                     if space == 'tb101':
                         zcp_ = method_to_call(i, task=args.task)
@@ -607,20 +712,24 @@ def get_dataloader(args,
                     norm_w_d = np.asarray(norm_w_d).flatten()
                     op_mat = torch.Tensor(np.array(op_mat)).argmax(dim=1)
                     if space == 'tb101':
-                        accs.append(
-                            embedding_gen.get_valacc(i, task=args.task))
+                        accs.append(embedding_gen.get_valacc(i, task=args.task))
                     else:
                         accs.append(embedding_gen.get_valacc(i))
                     representations.append(
-                        (torch.Tensor(adj_mat), torch.LongTensor(op_mat),
-                         torch.Tensor(zcp_), torch.Tensor(norm_w_d)))
+                        (
+                            torch.Tensor(adj_mat),
+                            torch.LongTensor(op_mat),
+                            torch.Tensor(zcp_),
+                            torch.Tensor(norm_w_d),
+                        )
+                    )
 
     dataset = CustomDataset(representations, accs)
     dataloader = DataLoader(
         dataset,
-        batch_size=args.batch_size
-        if mode == 'train' else args.test_batch_size,
-        shuffle=True if mode == 'train' else False)
+        batch_size=args.batch_size if mode == 'train' else args.test_batch_size,
+        shuffle=True if mode == 'train' else False,
+    )
     return dataloader, sample_indexes
 
 
@@ -634,12 +743,8 @@ for tr_ in range(args.num_trials):
         # if sample_count > 32:
         #     args.batch_size = int(sample_count//4)
         train_dataloader, train_indexes = get_dataloader(
-            args,
-            embedding_gen,
-            args.space,
-            sample_count,
-            representation,
-            mode='train')
+            args, embedding_gen, args.space, sample_count, representation, mode='train'
+        )
         test_dataloader, test_indexes = get_dataloader(
             args,
             embedding_gen,
@@ -648,7 +753,8 @@ for tr_ in range(args.num_trials):
             representation=representation,
             mode='test',
             train_indexes=train_indexes,
-            test_size=args.test_size)
+            test_size=args.test_size,
+        )
         test_dataloader_lowbs, test_indexes = get_dataloader(
             args,
             embedding_gen,
@@ -657,7 +763,8 @@ for tr_ in range(args.num_trials):
             representation=representation,
             mode='test',
             train_indexes=train_indexes,
-            test_size=80)
+            test_size=80,
+        )
 
         if representation == 'adj_gin':
             input_dim = next(iter(train_dataloader))[0][1].shape[1]
@@ -673,11 +780,11 @@ for tr_ in range(args.num_trials):
                     none_op_ind=none_op_ind,
                     input_zcp=False,
                     residual=args.residual,
-                    unique_attention_projection=args.
-                    unique_attention_projection,
+                    unique_attention_projection=args.unique_attention_projection,
                     opattention=args.opattention,
                     leakyrelu=args.leakyrelu,
-                    attention_rescale=args.attention_rescale)
+                    attention_rescale=args.attention_rescale,
+                )
             else:
                 model = GIN_Model(
                     device=args.device,
@@ -689,14 +796,16 @@ for tr_ in range(args.num_trials):
                     none_op_ind=none_op_ind,
                     input_zcp=False,
                     residual=args.residual,
-                    unique_attention_projection=args.
-                    unique_attention_projection,
+                    unique_attention_projection=args.unique_attention_projection,
                     opattention=args.opattention,
                     leakyrelu=args.leakyrelu,
-                    attention_rescale=args.attention_rescale)
+                    attention_rescale=args.attention_rescale,
+                )
         elif representation in [
-                'adj_gin_zcp', 'adj_gin_arch2vec', 'adj_gin_cate',
-                'adj_gin_a2vcatezcp'
+            'adj_gin_zcp',
+            'adj_gin_arch2vec',
+            'adj_gin_cate',
+            'adj_gin_a2vcatezcp',
         ]:
             input_dim = next(iter(train_dataloader))[0][1].shape[1]
             num_zcps = next(iter(train_dataloader))[0][-2].shape[1]
@@ -713,11 +822,11 @@ for tr_ in range(args.num_trials):
                     none_op_ind=none_op_ind,
                     input_zcp=True,
                     residual=args.residual,
-                    unique_attention_projection=args.
-                    unique_attention_projection,
+                    unique_attention_projection=args.unique_attention_projection,
                     opattention=args.opattention,
                     leakyrelu=args.leakyrelu,
-                    attention_rescale=args.attention_rescale)
+                    attention_rescale=args.attention_rescale,
+                )
             else:
                 model = GIN_Model(
                     device=args.device,
@@ -730,23 +839,26 @@ for tr_ in range(args.num_trials):
                     none_op_ind=none_op_ind,
                     input_zcp=True,
                     residual=args.residual,
-                    unique_attention_projection=args.
-                    unique_attention_projection,
+                    unique_attention_projection=args.unique_attention_projection,
                     opattention=args.opattention,
                     leakyrelu=args.leakyrelu,
-                    attention_rescale=args.attention_rescale)
+                    attention_rescale=args.attention_rescale,
+                )
         elif representation in ['adj_mlp', 'zcp', 'arch2vec', 'cate']:
             representation_size = next(iter(train_dataloader))[0].shape[1]
-            model = FullyConnectedNN(layer_sizes=[representation_size] +
-                                     [128] * 3 + [1]).to(device)
+            model = FullyConnectedNN(
+                layer_sizes=[representation_size] + [128] * 3 + [1]
+            ).to(device)
 
         model.to(device)
         criterion = torch.nn.MSELoss()
         params_optimize = list(model.parameters())
         optimizer = torch.optim.AdamW(
-            params_optimize, lr=args.lr, weight_decay=args.weight_decay)
+            params_optimize, lr=args.lr, weight_decay=args.weight_decay
+        )
         scheduler = CosineAnnealingLR(
-            optimizer, T_max=args.epochs, eta_min=args.eta_min)
+            optimizer, T_max=args.epochs, eta_min=args.eta_min
+        )
         kdt_l5, spr_l5 = [], []
         for epoch in range(args.epochs):
             start_time = time.time()
@@ -756,12 +868,26 @@ for tr_ in range(args.num_trials):
             elif args.loss_type == 'pwl':
                 if epoch > args.epochs - 5:
                     model, num_test_items, mse_loss, spr, kdt = pwl_train(
-                        args, model, train_dataloader, criterion, optimizer,
-                        scheduler, test_dataloader, epoch)
+                        args,
+                        model,
+                        train_dataloader,
+                        criterion,
+                        optimizer,
+                        scheduler,
+                        test_dataloader,
+                        epoch,
+                    )
                 else:
                     model, num_test_items, mse_loss, spr, kdt = pwl_train(
-                        args, model, train_dataloader, criterion, optimizer,
-                        scheduler, test_dataloader_lowbs, epoch)
+                        args,
+                        model,
+                        train_dataloader,
+                        criterion,
+                        optimizer,
+                        scheduler,
+                        test_dataloader_lowbs,
+                        epoch,
+                    )
             else:
                 raise NotImplementedError
             # test_loss, num_test_items, test_spearmanr, test_kendalltau = test(args, model, test_dataloader, criterion)
@@ -776,12 +902,12 @@ for tr_ in range(args.num_trials):
                 print(
                     f'Epoch {epoch + 1}/{args.epochs} | Train Loss: {mse_loss:.4f} | Epoch Time: {end_time - start_time:.2f}s | Spearman@{num_test_items}: {spr:.4f} | Kendall@{num_test_items}: {kdt:.4f}'
                 )
-        samp_eff[sample_count] = (sum(spr_l5) / len(spr_l5),
-                                  sum(kdt_l5) / len(kdt_l5))
-        print('Sample Count: {}, Spearman: {}, Kendall: {}'.format(
-            sample_count,
-            sum(spr_l5) / len(spr_l5),
-            sum(kdt_l5) / len(kdt_l5)))
+        samp_eff[sample_count] = (sum(spr_l5) / len(spr_l5), sum(kdt_l5) / len(kdt_l5))
+        print(
+            'Sample Count: {}, Spearman: {}, Kendall: {}'.format(
+                sample_count, sum(spr_l5) / len(spr_l5), sum(kdt_l5) / len(kdt_l5)
+            )
+        )
         pprint(samp_eff)
         across_trials[sample_count].append(samp_eff[sample_count])
 
@@ -789,55 +915,83 @@ for tr_ in range(args.num_trials):
 for sample_count in sample_counts:
     print(
         'Average KDT: ',
-        sum([
-            across_trials[sample_count][i][1]
-            for i in range(len(across_trials[sample_count]))
-        ]) / len(across_trials[sample_count]))
+        sum(
+            [
+                across_trials[sample_count][i][1]
+                for i in range(len(across_trials[sample_count]))
+            ]
+        )
+        / len(across_trials[sample_count]),
+    )
     # Print variance of KDT across tests
     print(
         'Variance KDT: ',
-        np.var([
-            across_trials[sample_count][i][1]
-            for i in range(len(across_trials[sample_count]))
-        ]))
+        np.var(
+            [
+                across_trials[sample_count][i][1]
+                for i in range(len(across_trials[sample_count]))
+            ]
+        ),
+    )
     # print SPR
     print(
         'Average SPR: ',
-        sum([
-            across_trials[sample_count][i][0]
-            for i in range(len(across_trials[sample_count]))
-        ]) / len(across_trials[sample_count]))
+        sum(
+            [
+                across_trials[sample_count][i][0]
+                for i in range(len(across_trials[sample_count]))
+            ]
+        )
+        / len(across_trials[sample_count]),
+    )
     # Print variance of SPR across tests
     print(
         'Variance SPR: ',
-        np.var([
-            across_trials[sample_count][i][0]
-            for i in range(len(across_trials[sample_count]))
-        ]))
+        np.var(
+            [
+                across_trials[sample_count][i][0]
+                for i in range(len(across_trials[sample_count]))
+            ]
+        ),
+    )
 
 # sample_count = sample_counts[-1]
 record_ = {}
 for sample_count in sample_counts:
     avkdt = str(
-        sum([
-            across_trials[sample_count][i][1]
-            for i in range(len(across_trials[sample_count]))
-        ]) / len(across_trials[sample_count]))
+        sum(
+            [
+                across_trials[sample_count][i][1]
+                for i in range(len(across_trials[sample_count]))
+            ]
+        )
+        / len(across_trials[sample_count])
+    )
     kdt_std = str(
-        np.var([
-            across_trials[sample_count][i][1]
-            for i in range(len(across_trials[sample_count]))
-        ]))
+        np.var(
+            [
+                across_trials[sample_count][i][1]
+                for i in range(len(across_trials[sample_count]))
+            ]
+        )
+    )
     avspr = str(
-        sum([
-            across_trials[sample_count][i][0]
-            for i in range(len(across_trials[sample_count]))
-        ]) / len(across_trials[sample_count]))
+        sum(
+            [
+                across_trials[sample_count][i][0]
+                for i in range(len(across_trials[sample_count]))
+            ]
+        )
+        / len(across_trials[sample_count])
+    )
     spr_std = str(
-        np.var([
-            across_trials[sample_count][i][0]
-            for i in range(len(across_trials[sample_count]))
-        ]))
+        np.var(
+            [
+                across_trials[sample_count][i][0]
+                for i in range(len(across_trials[sample_count]))
+            ]
+        )
+    )
     record_[sample_count] = [avkdt, kdt_std, avspr, spr_std]
 
 if not os.path.exists('correlation_results/{}'.format(args.name_desc)):
@@ -853,12 +1007,28 @@ with open(filename, 'a') as f:
     for key in samp_eff.keys():
         f.write(
             '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n'
-            % (str(args.name_desc), str(args.seed), str(args.batch_size),
-               str(args.epochs), str(args.space), str(
-                   args.task), str(args.representation), str(args.timesteps),
-               str(args.loss_type), str(args.test_tagates), str(args.gnn_type),
-               str(args.back_dense), str(key), str(args.residual),
-               str(args.leakyrelu), str(args.unique_attention_projection),
-               str(args.opattention), str(args.attention_rescale),
-               str(record_[key][2]), str(record_[key][0]), str(
-                   record_[key][3]), str(record_[key][1])))
+            % (
+                str(args.name_desc),
+                str(args.seed),
+                str(args.batch_size),
+                str(args.epochs),
+                str(args.space),
+                str(args.task),
+                str(args.representation),
+                str(args.timesteps),
+                str(args.loss_type),
+                str(args.test_tagates),
+                str(args.gnn_type),
+                str(args.back_dense),
+                str(key),
+                str(args.residual),
+                str(args.leakyrelu),
+                str(args.unique_attention_projection),
+                str(args.opattention),
+                str(args.attention_rescale),
+                str(record_[key][2]),
+                str(record_[key][0]),
+                str(record_[key][3]),
+                str(record_[key][1]),
+            )
+        )

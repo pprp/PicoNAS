@@ -12,7 +12,6 @@ Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
 
 
 class TestNB301(TestCase):
-
     def test_osnb301_choiceroute(self):
         nb301 = OneShotNASBench301Network()
         osm = OneShotMutator(with_alias=True)
@@ -26,10 +25,15 @@ class TestNB301(TestCase):
         for name, module in nb301.named_modules():
             if isinstance(module, OneShotChoiceRoute):
                 choice_of_route = module.random_choice
-                print(name, choice_of_route,
-                      module._edges[choice_of_route[0]].random_choice)
-                print(module._edges.keys(),
-                      list(module._edges.keys()).index(choice_of_route[0]))
+                print(
+                    name,
+                    choice_of_route,
+                    module._edges[choice_of_route[0]].random_choice,
+                )
+                print(
+                    module._edges.keys(),
+                    list(module._edges.keys()).index(choice_of_route[0]),
+                )
         print('=' * 20)
 
         # build genotype
@@ -81,19 +85,19 @@ class TestNB301(TestCase):
             normal=normal_list,
             normal_concat=[2, 3, 4, 5],
             reduce=reduce_list,
-            reduce_concat=[2, 3, 4, 5])
+            reduce_concat=[2, 3, 4, 5],
+        )
         print(genotype)
 
         from piconas.utils.get_dataset_api import get_dataset_api
+
         api = get_dataset_api('nasbench301', dataset='cifar10')
         api = api['nb301_model']
         p_m, r_m = api
-        p_r = p_m.predict(
-            config=genotype, representation='genotype', with_noise=False)
+        p_r = p_m.predict(config=genotype, representation='genotype', with_noise=False)
         print('performance:', p_r)
 
     def test_forward_os_nb301(self):
-
         m = OneShotNASBench301Network()
         osm = OneShotMutator(with_alias=True)
         osm.prepare_from_supernet(m)
@@ -114,7 +118,6 @@ class TestNB301(TestCase):
         print(o.shape)
 
     def test_forward_diff_nb301(self):
-
         m = DiffNASBench301Network()
         v = DiffMutator(with_alias=True)
         v.prepare_from_supernet(m)
@@ -126,6 +129,7 @@ class TestNB301(TestCase):
 
     def test_nb301_api(self):
         from piconas.utils.get_dataset_api import get_dataset_api
+
         api = get_dataset_api('nasbench301', dataset='cifar10')
         api = api['nb301_model']
 

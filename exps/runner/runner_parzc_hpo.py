@@ -14,8 +14,7 @@ from piconas.core.losses.diffkd import diffkendall
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
 from piconas.predictor.pinat.model_factory import create_model_hpo
-from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
-                                 to_cuda)
+from piconas.utils.utils import AverageMeterGroup, accuracy_mse, set_seed, to_cuda
 
 parser = ArgumentParser()
 # exp and dataset
@@ -47,7 +46,8 @@ logging.basicConfig(
     filename=os.path.join(log_dir, 'training_hpo_parzc_main_4nb101.log'),
     level=logging.INFO,
     format=log_format,
-    datefmt='%m/%d %I:%M:%S %p')
+    datefmt='%m/%d %I:%M:%S %p',
+)
 logging.info(args)
 
 # set cpu/gpu device
@@ -100,8 +100,16 @@ def pair_loss(outputs, labels):
     return loss
 
 
-def train(train_set, train_loader, model, optimizer, lr_scheduler,
-          criterion1: nn.MSELoss, criterion2: PairwiseRankLoss, epoch):
+def train(
+    train_set,
+    train_loader,
+    model,
+    optimizer,
+    lr_scheduler,
+    criterion1: nn.MSELoss,
+    criterion2: PairwiseRankLoss,
+    epoch,
+):
     model.train()
     for epoch in range(epoch):
         lr = optimizer.param_groups[0]['lr']
@@ -139,16 +147,18 @@ def train(train_set, train_loader, model, optimizer, lr_scheduler,
 
             # For logging, we can compute MSE or other metrics if desired.
             mse = accuracy_mse(predict.squeeze(), target.squeeze(), train_set)
-            meters.update({
-                'loss': loss.item(),
-                'mse': mse.item()
-            },
-                          n=target.size(0))
+            meters.update({'loss': loss.item(), 'mse': mse.item()}, n=target.size(0))
 
             if step % args.train_print_freq == 0:
-                logging.info('Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
-                             epoch + 1, args.epochs, step + 1,
-                             len(train_loader), lr, meters)
+                logging.info(
+                    'Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
+                    epoch + 1,
+                    args.epochs,
+                    step + 1,
+                    len(train_loader),
+                    lr,
+                    meters,
+                )
 
         lr_scheduler.step()
     return model
@@ -167,17 +177,17 @@ def evaluate(test_set, test_loader, model, criterion):
             targets.append(target.cpu().numpy())
             meters.update(
                 {
-                    'loss':
-                    criterion(predict, target).item(),
-                    'mse':
-                    accuracy_mse(predict.squeeze(), target.squeeze(),
-                                 test_set).item()
+                    'loss': criterion(predict, target).item(),
+                    'mse': accuracy_mse(
+                        predict.squeeze(), target.squeeze(), test_set
+                    ).item(),
                 },
-                n=target.size(0))
-            if step % args.eval_print_freq == 0 or step + 1 == len(
-                    test_loader):
-                logging.info('Evaluation Step [%d/%d]  %s', step + 1,
-                             len(test_loader), meters)
+                n=target.size(0),
+            )
+            if step % args.eval_print_freq == 0 or step + 1 == len(test_loader):
+                logging.info(
+                    'Evaluation Step [%d/%d]  %s', step + 1, len(test_loader), meters
+                )
             # make np.array to str
             adj = batch['adjacency'].cpu().numpy()
             adj_str = np.array2string(adj)
@@ -189,11 +199,8 @@ def evaluate(test_set, test_loader, model, criterion):
     import matplotlib.pyplot as plt
 
     plt.scatter(
-        predicts,
-        targets,
-        alpha=0.3,
-        s=5,
-        label='kendall_tau: %.4f' % kendall_tau)
+        predicts, targets, alpha=0.3, s=5, label='kendall_tau: %.4f' % kendall_tau
+    )
 
     # Label and title
     plt.xlabel('Predicted Performance')
@@ -212,6 +219,7 @@ def evaluate(test_set, test_loader, model, criterion):
 
     # save it as csv or json
     import pandas as pd
+
     df = pd.DataFrame({'predicts': predicts, 'targets': targets})
     df.to_csv('predicts_targets.csv', index=False)
 
@@ -228,8 +236,9 @@ def objective_function(hyperparameters):
     d_inner = hyperparameters['d_inner']
     epoch = hyperparameters['epoch']
 
-    model = create_model_hpo(n_layers, n_head, pine_hidden, linear_hidden,
-                             d_word_model, d_k_v, d_inner)
+    model = create_model_hpo(
+        n_layers, n_head, pine_hidden, linear_hidden, d_word_model, d_k_v, d_inner
+    )
 
     model = model.to(device)
 
@@ -237,8 +246,7 @@ def objective_function(hyperparameters):
     criterion1 = nn.MSELoss()
     criterion2 = PairwiseRankLoss()
 
-    optimizer = optim.Adam(
-        model.parameters(), lr=args.lr, weight_decay=args.wd)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
     lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     # train and evaluate predictor
@@ -250,9 +258,11 @@ def objective_function(hyperparameters):
         lr_scheduler,
         criterion1,
         criterion2,
-        epoch=epoch)
-    kendall_tau, predict_all, target_all = evaluate(test_set, test_loader,
-                                                    model, criterion1)
+        epoch=epoch,
+    )
+    kendall_tau, predict_all, target_all = evaluate(
+        test_set, test_loader, model, criterion1
+    )
 
     return kendall_tau
 
@@ -278,7 +288,8 @@ def main():
 
     # Setup the Optuna study, which will conduct the Bayesian optimization
     study = optuna.create_study(
-        direction='maximize')  # or 'minimize' if you're minimizing a loss
+        direction='maximize'
+    )  # or 'minimize' if you're minimizing a loss
     study.optimize(objective, n_trials=100)
 
     # After the study is completed, you can get the best parameters and the best value (e.g., kendall tau)

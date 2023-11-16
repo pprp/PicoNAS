@@ -45,14 +45,16 @@ class GATSetConv(MessagePassing):
             an additive bias. (default: :obj:`True`)
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 heads=1,
-                 concat=True,
-                 negative_slope=0.2,
-                 dropout=0,
-                 bias=True):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        heads=1,
+        concat=True,
+        negative_slope=0.2,
+        dropout=0,
+        bias=True,
+    ):
         super(GATSetConv, self).__init__('add')
 
         self.in_channels = in_channels
@@ -66,8 +68,7 @@ class GATSetConv(MessagePassing):
         self.a = Parameter(torch.Tensor(in_channels, heads * out_channels))
         self.b = Parameter(torch.Tensor(1, out_channels, self.heads_2))
         self.e = Parameter(torch.Tensor(1, out_channels, self.heads_2))
-        self.w = Parameter(
-            torch.Tensor(self.heads, out_channels, self.heads_2))
+        self.w = Parameter(torch.Tensor(self.heads, out_channels, self.heads_2))
         self.h = Parameter(torch.Tensor(self.heads, out_channels))
         self.c = Parameter(torch.Tensor(self.heads, out_channels))
 
@@ -102,16 +103,15 @@ class GATSetConv(MessagePassing):
         #     alpha = F.dropout(alpha, p=self.dropout, training=True)
 
         # return x_j * alpha.view(-1, self.heads, 1)
-        """ x_j_repeat = x_j.unsqueeze(-1).repeat(1, 1, 1, self.heads_2)
+        """x_j_repeat = x_j.unsqueeze(-1).repeat(1, 1, 1, self.heads_2)
 
 
         out = x_j_repeat * self.b + self.e
 
-        out = F.leaky_relu(out, negative_slope=self.negative_slope) """
+        out = F.leaky_relu(out, negative_slope=self.negative_slope)"""
         return x_j
 
     def update(self, aggr_out):
-
         out = self.w * aggr_out
 
         out = out.sum(-1) + self.h
@@ -126,9 +126,9 @@ class GATSetConv(MessagePassing):
         return out
 
     def __repr__(self):
-        return '{}({}, {}, heads={})'.format(self.__class__.__name__,
-                                             self.in_channels,
-                                             self.out_channels, self.heads)
+        return '{}({}, {}, heads={})'.format(
+            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+        )
 
 
 class GATSetConv_v4(MessagePassing):
@@ -168,14 +168,16 @@ class GATSetConv_v4(MessagePassing):
             an additive bias. (default: :obj:`True`)
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 heads=1,
-                 concat=True,
-                 negative_slope=0.2,
-                 dropout=0,
-                 bias=True):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        heads=1,
+        concat=True,
+        negative_slope=0.2,
+        dropout=0,
+        bias=True,
+    ):
         super(GATSetConv_v4, self).__init__('add')
 
         self.in_channels = in_channels
@@ -219,18 +221,17 @@ class GATSetConv_v4(MessagePassing):
         x_j = x_j.unsqueeze(-1).repeat(1, 1, self.t2)
 
         x_j = x_j * self.u + self.v
-        x_j = F.leaky_relu(
-            x_j,
-            negative_slope=self.negative_slope).view(-1, self.t * self.t2)
+        x_j = F.leaky_relu(x_j, negative_slope=self.negative_slope).view(
+            -1, self.t * self.t2
+        )
 
         return x_j
 
     def update(self, aggr_out):
         out = self.wb(aggr_out)
-        out = F.leaky_relu(
-            out,
-            negative_slope=self.negative_slope).view(-1, self.out_channels,
-                                                     self.t3)
+        out = F.leaky_relu(out, negative_slope=self.negative_slope).view(
+            -1, self.out_channels, self.t3
+        )
         out = out * self.c
         if self.concat is True:
             out = out.view(-1, self.t3 * self.out_channels)
@@ -239,9 +240,9 @@ class GATSetConv_v4(MessagePassing):
         return out
 
     def __repr__(self):
-        return '{}({}, {}, t={})'.format(self.__class__.__name__,
-                                         self.in_channels, self.out_channels,
-                                         self.t)
+        return '{}({}, {}, t={})'.format(
+            self.__class__.__name__, self.in_channels, self.out_channels, self.t
+        )
 
 
 class GATSetConv_v5(MessagePassing):
@@ -281,14 +282,16 @@ class GATSetConv_v5(MessagePassing):
             an additive bias. (default: :obj:`True`)
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 heads=1,
-                 concat=True,
-                 negative_slope=0.2,
-                 dropout=0,
-                 bias=True):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        heads=1,
+        concat=True,
+        negative_slope=0.2,
+        dropout=0,
+        bias=True,
+    ):
         super(GATSetConv_v5, self).__init__('add')
 
         self.in_channels = in_channels
@@ -304,8 +307,7 @@ class GATSetConv_v5(MessagePassing):
         self.v = Parameter(torch.Tensor(out_channels, 1, self.t2))
 
         # self.wb = nn.Linear(self.t * self.t2, out_channels * self.t3)
-        self.w = Parameter(
-            torch.Tensor(out_channels, self.t, self.t2, self.t3))
+        self.w = Parameter(torch.Tensor(out_channels, self.t, self.t2, self.t3))
         self.b = Parameter(torch.Tensor(out_channels, self.t3))
         # self.c = nn.Linear(self.t3, out_channels, bias=False)
         self.c = Parameter(torch.Tensor(1, self.out_channels, self.t3))
@@ -325,14 +327,14 @@ class GATSetConv_v5(MessagePassing):
         """"""
         edge_index, _ = remove_self_loops(edge_index)
         edge_index, _ = add_self_loops(edge_index, num_nodes=x.size(0))
-        x = torch.mm(x, self.a).view(-1, self.out_channels,
-                                     self.t)  # n x in_c => n x out_c x t1
+        x = torch.mm(x, self.a).view(
+            -1, self.out_channels, self.t
+        )  # n x in_c => n x out_c x t1
         x = x.unsqueeze(-1)  # n x out_c x t1 x 1
         x = x * self.u + self.v  # out_c x 1 x t2
-        x = F.leaky_relu(
-            x, negative_slope=self.negative_slope).view(
-                -1,
-                self.out_channels * self.t * self.t2)  # n x out_c x t1 x t2
+        x = F.leaky_relu(x, negative_slope=self.negative_slope).view(
+            -1, self.out_channels * self.t * self.t2
+        )  # n x out_c x t1 x t2
         out = self.propagate(edge_index, x=x, num_nodes=x.size(0))
         return out
 
@@ -349,9 +351,7 @@ class GATSetConv_v5(MessagePassing):
         return x_j
 
     def update(self, aggr_out):
-
-        aggr_out = aggr_out.view(-1, self.out_channels, self.t,
-                                 self.t2).unsqueeze(-1)
+        aggr_out = aggr_out.view(-1, self.out_channels, self.t, self.t2).unsqueeze(-1)
 
         out = aggr_out * self.w
         out = out.sum(2).sum(2)
@@ -375,9 +375,9 @@ class GATSetConv_v5(MessagePassing):
         return out
 
     def __repr__(self):
-        return '{}({}, {}, t={})'.format(self.__class__.__name__,
-                                         self.in_channels, self.out_channels,
-                                         self.t)
+        return '{}({}, {}, t={})'.format(
+            self.__class__.__name__, self.in_channels, self.out_channels, self.t
+        )
 
 
 class GATSetConv_v2(MessagePassing):
@@ -417,14 +417,16 @@ class GATSetConv_v2(MessagePassing):
             an additive bias. (default: :obj:`True`)
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 heads=1,
-                 concat=True,
-                 negative_slope=0.2,
-                 dropout=0,
-                 bias=True):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        heads=1,
+        concat=True,
+        negative_slope=0.2,
+        dropout=0,
+        bias=True,
+    ):
         super(GATSetConv_v2, self).__init__('add')
 
         self.in_channels = in_channels
@@ -442,15 +444,13 @@ class GATSetConv_v2(MessagePassing):
         self.a = Parameter(torch.Tensor(in_channels, heads * out_channels))
         self.b = Parameter(torch.Tensor(1, out_channels, self.heads_2))
         self.e = Parameter(torch.Tensor(1, out_channels, self.heads_2))
-        self.w = Parameter(
-            torch.Tensor(self.heads, out_channels, self.heads_2))
+        self.w = Parameter(torch.Tensor(self.heads, out_channels, self.heads_2))
         self.h = Parameter(torch.Tensor(self.heads, out_channels))
         self.c = Parameter(torch.Tensor(self.heads, out_channels))
         if concat:
             self.lin = nn.Linear(in_channels, heads * out_channels)
         else:
-            self.lin = nn.Linear(
-                in_features=in_channels, out_features=out_channels)
+            self.lin = nn.Linear(in_features=in_channels, out_features=out_channels)
 
         # if bias and concat:
         #     self.bias = Parameter(torch.Tensor(heads * out_channels))
@@ -479,8 +479,7 @@ class GATSetConv_v2(MessagePassing):
 
         cpx = F.relu(self.lin(x))
         # edge_index = add_self_loops(edge_index, num_nodes=x.size(0))
-        edge_index, norm = GCNConv.norm(
-            edge_index, x.size(0), None, dtype=x.dtype)
+        edge_index, norm = GCNConv.norm(edge_index, x.size(0), None, dtype=x.dtype)
         # x = torch.mm(x, self.weight).view(-1, self.heads, self.out_channels)
         x = torch.mm(x, self.a).view(-1, self.heads, self.out_channels)
 
@@ -494,7 +493,6 @@ class GATSetConv_v2(MessagePassing):
         hidden = x.clone()
         alpha = 0.1
         for _ in range(10):
-
             x = self.propagate(edge_index, x=x, norm=norm, num_nodes=x.size(0))
             x = x * (1 - alpha)
             x = x + alpha * hidden
@@ -514,7 +512,6 @@ class GATSetConv_v2(MessagePassing):
 
     # def message(self, x_i, x_j, edge_index, num_nodes):
     def message(self, x_j, norm):
-
         # exit(0)
 
         x_j = norm.view(-1, 1, 1) * x_j
@@ -538,7 +535,6 @@ class GATSetConv_v2(MessagePassing):
         return x_j
 
     def update(self, aggr_out):
-
         # out = self.w * aggr_out
         #
         # out = out.sum(-1) + self.h
@@ -562,9 +558,9 @@ class GATSetConv_v2(MessagePassing):
         return aggr_out
 
     def __repr__(self):
-        return '{}({}, {}, heads={})'.format(self.__class__.__name__,
-                                             self.in_channels,
-                                             self.out_channels, self.heads)
+        return '{}({}, {}, heads={})'.format(
+            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+        )
 
 
 class GATSetConv_v3(MessagePassing):
@@ -586,14 +582,16 @@ class GATSetConv_v3(MessagePassing):
             an additive bias. (default: :obj:`True`)
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 heads=1,
-                 concat=True,
-                 negative_slope=0.2,
-                 dropout=0,
-                 bias=True):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        heads=1,
+        concat=True,
+        negative_slope=0.2,
+        dropout=0,
+        bias=True,
+    ):
         super(GATSetConv_v3, self).__init__('add')
 
         self.in_channels = in_channels
@@ -611,15 +609,13 @@ class GATSetConv_v3(MessagePassing):
         self.a = Parameter(torch.Tensor(out_channels, heads * out_channels))
         self.b = Parameter(torch.Tensor(1, out_channels, self.heads_2))
         self.e = Parameter(torch.Tensor(1, out_channels, self.heads_2))
-        self.w = Parameter(
-            torch.Tensor(self.heads, out_channels, self.heads_2))
+        self.w = Parameter(torch.Tensor(self.heads, out_channels, self.heads_2))
         self.h = Parameter(torch.Tensor(self.heads, out_channels))
         self.c = Parameter(torch.Tensor(self.heads, out_channels))
         if concat:
             self.lin = nn.Linear(in_channels, heads * out_channels)
         else:
-            self.lin = nn.Linear(
-                in_features=in_channels, out_features=out_channels)
+            self.lin = nn.Linear(in_features=in_channels, out_features=out_channels)
 
         # if bias and concat:
         #     self.bias = Parameter(torch.Tensor(heads * out_channels))
@@ -648,15 +644,12 @@ class GATSetConv_v3(MessagePassing):
 
         cpx = self.lin(x)
         edge_index = add_self_loops(edge_index, num_nodes=x.size(0))
-        edge_index, norm = GCNConv.norm(
-            edge_index, x.size(0), None, dtype=x.dtype)
+        edge_index, norm = GCNConv.norm(edge_index, x.size(0), None, dtype=x.dtype)
         # x = torch.mm(x, self.weight).view(-1, self.heads, self.out_channels)
         hidden = cpx.clone()
         alpha = 0.1
         for _ in range(2):
-
-            cpx = self.propagate(
-                edge_index, x=cpx, norm=norm, num_nodes=x.size(0))
+            cpx = self.propagate(edge_index, x=cpx, norm=norm, num_nodes=x.size(0))
             cpx = cpx * (1 - alpha)
             cpx = cpx + alpha * hidden
 
@@ -672,7 +665,6 @@ class GATSetConv_v3(MessagePassing):
 
     # def message(self, x_i, x_j, edge_index, num_nodes):
     def message(self, x_j, norm):
-
         # exit(0)
 
         x_j = torch.mm(x_j, self.a).view(-1, self.heads, self.out_channels)
@@ -685,7 +677,6 @@ class GATSetConv_v3(MessagePassing):
         return x_j
 
     def update(self, aggr_out):
-
         aggr_out = F.leaky_relu(aggr_out, self.negative_slope)
         aggr_out = self.c * aggr_out
         if self.concat is True:
@@ -695,9 +686,9 @@ class GATSetConv_v3(MessagePassing):
         return aggr_out
 
     def __repr__(self):
-        return '{}({}, {}, heads={})'.format(self.__class__.__name__,
-                                             self.in_channels,
-                                             self.out_channels, self.heads)
+        return '{}({}, {}, heads={})'.format(
+            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+        )
 
 
 class GCNConv(MessagePassing):
@@ -727,16 +718,18 @@ class GCNConv(MessagePassing):
             an additive bias. (default: :obj:`True`)
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 heads=1,
-                 concat=True,
-                 negative_slope=0.2,
-                 dropout=0,
-                 improved=False,
-                 cached=False,
-                 bias=True):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        heads=1,
+        concat=True,
+        negative_slope=0.2,
+        dropout=0,
+        improved=False,
+        cached=False,
+        bias=True,
+    ):
         super(GCNConv, self).__init__('add')
 
         self.in_channels = in_channels
@@ -762,18 +755,20 @@ class GCNConv(MessagePassing):
     @staticmethod
     def norm(edge_index, num_nodes, edge_weight, improved=False, dtype=None):
         if edge_weight is None:
-            edge_weight = torch.ones((edge_index.size(1), ),
-                                     dtype=dtype,
-                                     device=edge_index.device)
+            edge_weight = torch.ones(
+                (edge_index.size(1),), dtype=dtype, device=edge_index.device
+            )
         edge_weight = edge_weight.view(-1)
         assert edge_weight.size(0) == edge_index.size(1)
 
         edge_index, edge_weight = remove_self_loops(edge_index, edge_weight)
         edge_index = add_self_loops(edge_index, num_nodes)
-        loop_weight = torch.full((num_nodes, ),
-                                 1 if not improved else 2,
-                                 dtype=edge_weight.dtype,
-                                 device=edge_weight.device)
+        loop_weight = torch.full(
+            (num_nodes,),
+            1 if not improved else 2,
+            dtype=edge_weight.dtype,
+            device=edge_weight.device,
+        )
         edge_weight = torch.cat([edge_weight, loop_weight], dim=0)
 
         row, col = edge_index
@@ -789,8 +784,9 @@ class GCNConv(MessagePassing):
         print(x.shape, self.weight.shape)
 
         if not self.cached or self.cached_result is None:
-            edge_index, norm = GCNConv.norm(edge_index, x.size(0), edge_weight,
-                                            self.improved, x.dtype)
+            edge_index, norm = GCNConv.norm(
+                edge_index, x.size(0), edge_weight, self.improved, x.dtype
+            )
             self.cached_result = edge_index, norm
         edge_index, norm = self.cached_result
 
@@ -799,7 +795,6 @@ class GCNConv(MessagePassing):
         return self.propagate(edge_index, x=x, norm=norm)
 
     def message(self, x_j, norm):
-
         # exit(0)
         return norm.view(-1, 1) * x_j
 
@@ -809,5 +804,6 @@ class GCNConv(MessagePassing):
         return aggr_out
 
     def __repr__(self):
-        return '{}({}, {})'.format(self.__class__.__name__, self.in_channels,
-                                   self.out_channels)
+        return '{}({}, {})'.format(
+            self.__class__.__name__, self.in_channels, self.out_channels
+        )

@@ -8,9 +8,7 @@ _zc_candidates_impls = {}
 
 
 def zc_candidates(name, bn=True, copy_net=True, force_clean=True, **impl_args):
-
     def make_impl(func):
-
         def zc_candidates_impl(net, device, *args, **kwargs):
             if copy_net:
                 net = copy.copy(net)
@@ -22,6 +20,7 @@ def zc_candidates(name, bn=True, copy_net=True, force_clean=True, **impl_args):
                 import gc
 
                 import torch
+
                 del net
                 torch.cuda.empty_cache()
                 gc.collect()

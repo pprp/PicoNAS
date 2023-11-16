@@ -4,6 +4,7 @@ import time
 import torch
 import torch.nn as nn
 from thop import profile
+
 # from torchsummary import summary
 from tqdm import tqdm
 
@@ -22,60 +23,54 @@ def get_args():
         help='experiment name',
     )
     parser.add_argument(
-        '--data_dir', type=str, default='./data/', help='path to the dataset')
-    parser.add_argument(
-        '--classes', type=int, default=10, help='dataset classes')
+        '--data_dir', type=str, default='./data/', help='path to the dataset'
+    )
+    parser.add_argument('--classes', type=int, default=10, help='dataset classes')
     parser.add_argument('--layers', type=int, default=20, help='batch size')
     parser.add_argument(
-        '--num_choices', type=int, default=4, help='number choices per layer')
-    parser.add_argument(
-        '--batch_size', type=int, default=96, help='batch size')
+        '--num_choices', type=int, default=4, help='number choices per layer'
+    )
+    parser.add_argument('--batch_size', type=int, default=96, help='batch size')
     parser.add_argument('--epochs', type=int, default=600, help='batch size')
     parser.add_argument(
-        '--learning_rate',
-        type=float,
-        default=0.025,
-        help='initial learning rate')
+        '--learning_rate', type=float, default=0.025, help='initial learning rate'
+    )
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
+    parser.add_argument('--weight-decay', type=float, default=3e-4, help='weight decay')
     parser.add_argument(
-        '--weight-decay', type=float, default=3e-4, help='weight decay')
+        '--val_interval', type=int, default=5, help='validate and save frequency'
+    )
     parser.add_argument(
-        '--val_interval',
-        type=int,
-        default=5,
-        help='validate and save frequency')
-    parser.add_argument(
-        '--random_search',
-        type=int,
-        default=1000,
-        help='validate and save frequency')
+        '--random_search', type=int, default=1000, help='validate and save frequency'
+    )
     # ******************************* dataset *******************************#
     parser.add_argument(
-        '--dataset', type=str, default='cifar10', help='path to the dataset')
+        '--dataset', type=str, default='cifar10', help='path to the dataset'
+    )
     parser.add_argument('--cutout', action='store_true', help='use cutout')
+    parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
     parser.add_argument(
-        '--cutout_length', type=int, default=16, help='cutout length')
+        '--auto_aug', action='store_true', default=False, help='use auto augmentation'
+    )
     parser.add_argument(
-        '--auto_aug',
-        action='store_true',
-        default=False,
-        help='use auto augmentation')
-    parser.add_argument(
-        '--resize', action='store_true', default=False, help='use resize')
+        '--resize', action='store_true', default=False, help='use resize'
+    )
     args = parser.parse_args()
     print(args)
     return args
 
 
-def train(args, epoch, train_data, device, model, criterion, optimizer,
-          scheduler, supernet):
+def train(
+    args, epoch, train_data, device, model, criterion, optimizer, scheduler, supernet
+):
     model.train()
     train_loss = 0.0
     top1 = utils.AvgrageMeter()
     train_data = tqdm(train_data)
     train_data.set_description(
-        '[%s%04d/%04d %s%f]' %
-        ('Epoch:', epoch + 1, args.epochs, 'lr:', scheduler.get_lr()[0]))
+        '[%s%04d/%04d %s%f]'
+        % ('Epoch:', epoch + 1, args.epochs, 'lr:', scheduler.get_lr()[0])
+    )
     for step, (inputs, targets) in enumerate(train_data):
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
@@ -102,14 +97,7 @@ def train(args, epoch, train_data, device, model, criterion, optimizer,
         train_data.set_postfix(log=postfix)
 
 
-def validate(args,
-             epoch,
-             val_data,
-             device,
-             model,
-             criterion,
-             supernet,
-             choice=None):
+def validate(args, epoch, val_data, device, model, criterion, supernet, choice=None):
     model.eval()
     val_loss = 0.0
     val_top1 = utils.AvgrageMeter()
@@ -127,8 +115,10 @@ def validate(args,
             prec1, prec5 = utils.accuracy(outputs, targets, topk=(1, 5))
             n = inputs.size(0)
             val_top1.update(prec1.item(), n)
-        print('[Val_Accuracy epoch:%d] val_loss:%f, val_acc:%f' %
-              (epoch + 1, val_loss / (step + 1), val_top1.avg))
+        print(
+            '[Val_Accuracy epoch:%d] val_loss:%f, val_acc:%f'
+            % (epoch + 1, val_loss / (step + 1), val_top1.avg)
+        )
         return val_top1.avg
 
 
@@ -148,21 +138,26 @@ def main():
     # SinglePath_OneShot
     model = SearchableMobileNet()
     criterion = nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.SGD(model.parameters(), args.learning_rate,
-                                args.momentum, args.weight_decay)
+    optimizer = torch.optim.SGD(
+        model.parameters(), args.learning_rate, args.momentum, args.weight_decay
+    )
     scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, lambda epoch: 1 - (epoch / args.epochs))
+        optimizer, lambda epoch: 1 - (epoch / args.epochs)
+    )
 
     # flops & params & structure
     flops, params = profile(
         model,
-        inputs=(torch.randn(1, 3, 32, 32), ) if args.dataset == 'cifar10' else
-        (torch.randn(1, 3, 224, 224), ),
+        inputs=(torch.randn(1, 3, 32, 32),)
+        if args.dataset == 'cifar10'
+        else (torch.randn(1, 3, 224, 224),),
         verbose=False,
     )
     # print(model)
-    print('Random Path of the Supernet: Params: %.2fM, Flops:%.2fM' %
-          ((params / 1e6), (flops / 1e6)))
+    print(
+        'Random Path of the Supernet: Params: %.2fM, Flops:%.2fM'
+        % ((params / 1e6), (flops / 1e6))
+    )
     model = model.to(device)
     # summary(model, (3, 32, 32) if args.dataset == 'cifar10'
     # else (3, 224, 224))
@@ -183,14 +178,7 @@ def main():
         )
         scheduler.step()
         if (epoch + 1) % args.val_interval == 0:
-            validate(
-                args,
-                epoch,
-                val_loader,
-                device,
-                model,
-                criterion,
-                supernet=True)
+            validate(args, epoch, val_loader, device, model, criterion, supernet=True)
 
             utils.save_checkpoint(
                 {

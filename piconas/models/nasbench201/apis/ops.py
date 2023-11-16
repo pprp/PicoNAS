@@ -6,17 +6,16 @@ import torch.nn as nn
 __all__ = ['OPS', 'ResNetBasicblock', 'SearchSpaceNames']
 
 OPS = {
-    'none':
-    lambda C_in, C_out, stride, affine, track_running_stats: Zero(
-        C_in, C_out, stride),
-    'avg_pool_3x3':
-    lambda C_in, C_out, stride, affine, track_running_stats: POOLING(
-        C_in, C_out, stride, 'avg', affine, track_running_stats),
-    'max_pool_3x3':
-    lambda C_in, C_out, stride, affine, track_running_stats: POOLING(
-        C_in, C_out, stride, 'max', affine, track_running_stats),
-    'nor_conv_7x7':
-    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+    'none': lambda C_in, C_out, stride, affine, track_running_stats: Zero(
+        C_in, C_out, stride
+    ),
+    'avg_pool_3x3': lambda C_in, C_out, stride, affine, track_running_stats: POOLING(
+        C_in, C_out, stride, 'avg', affine, track_running_stats
+    ),
+    'max_pool_3x3': lambda C_in, C_out, stride, affine, track_running_stats: POOLING(
+        C_in, C_out, stride, 'max', affine, track_running_stats
+    ),
+    'nor_conv_7x7': lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
         C_in,
         C_out,
         (7, 7),
@@ -26,8 +25,7 @@ OPS = {
         affine,
         track_running_stats,
     ),
-    'nor_conv_3x3':
-    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+    'nor_conv_3x3': lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
         C_in,
         C_out,
         (3, 3),
@@ -37,8 +35,7 @@ OPS = {
         affine,
         track_running_stats,
     ),
-    'nor_conv_1x1':
-    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+    'nor_conv_1x1': lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
         C_in,
         C_out,
         (1, 1),
@@ -48,8 +45,7 @@ OPS = {
         affine,
         track_running_stats,
     ),
-    'dua_sepc_3x3':
-    lambda C_in, C_out, stride, affine, track_running_stats: DualSepConv(
+    'dua_sepc_3x3': lambda C_in, C_out, stride, affine, track_running_stats: DualSepConv(
         C_in,
         C_out,
         (3, 3),
@@ -59,8 +55,7 @@ OPS = {
         affine,
         track_running_stats,
     ),
-    'dua_sepc_5x5':
-    lambda C_in, C_out, stride, affine, track_running_stats: DualSepConv(
+    'dua_sepc_5x5': lambda C_in, C_out, stride, affine, track_running_stats: DualSepConv(
         C_in,
         C_out,
         (5, 5),
@@ -70,8 +65,7 @@ OPS = {
         affine,
         track_running_stats,
     ),
-    'dil_sepc_3x3':
-    lambda C_in, C_out, stride, affine, track_running_stats: SepConv(
+    'dil_sepc_3x3': lambda C_in, C_out, stride, affine, track_running_stats: SepConv(
         C_in,
         C_out,
         (3, 3),
@@ -81,8 +75,7 @@ OPS = {
         affine,
         track_running_stats,
     ),
-    'dil_sepc_5x5':
-    lambda C_in, C_out, stride, affine, track_running_stats: SepConv(
+    'dil_sepc_5x5': lambda C_in, C_out, stride, affine, track_running_stats: SepConv(
         C_in,
         C_out,
         (5, 5),
@@ -92,22 +85,25 @@ OPS = {
         affine,
         track_running_stats,
     ),
-    'skip_connect':
-    lambda C_in, C_out, stride, affine, track_running_stats: Identity()
-    if stride == 1 and C_in == C_out else FactorizedReduce(
-        C_in, C_out, stride, affine, track_running_stats),
+    'skip_connect': lambda C_in, C_out, stride, affine, track_running_stats: Identity()
+    if stride == 1 and C_in == C_out
+    else FactorizedReduce(C_in, C_out, stride, affine, track_running_stats),
 }
 
 NON_PARAMETER_OP = ['none', 'avg_pool_3x3', 'max_pool_3x3', 'skip_connect']
 PARAMETER_OP = [
-    'sep_conv_3x3', 'sep_conv_5x5', 'sep_conv_7x7', 'dil_conv_3x3',
-    'dil_conv_5x5', 'conv_7x1_1x7', 'nor_conv_3x3', 'nor_conv_1x1'
+    'sep_conv_3x3',
+    'sep_conv_5x5',
+    'sep_conv_7x7',
+    'dil_conv_3x3',
+    'dil_conv_5x5',
+    'conv_7x1_1x7',
+    'nor_conv_3x3',
+    'nor_conv_1x1',
 ]
 
 CONNECT_NAS_BENCHMARK = ['none', 'skip_connect', 'nor_conv_3x3']
-NAS_BENCH_201 = [
-    'none', 'skip_connect', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3'
-]
+NAS_BENCH_201 = ['none', 'skip_connect', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3']
 DARTS_SPACE = [
     'none',
     'skip_connect',
@@ -135,7 +131,6 @@ def get_op_index(op_list, parameter_list):
 
 
 class ReLUConvBN(nn.Module):
-
     def __init__(
         self,
         C_in,
@@ -160,7 +155,8 @@ class ReLUConvBN(nn.Module):
                 bias=False,
             ),
             nn.BatchNorm2d(
-                C_out, affine=affine, track_running_stats=track_running_stats),
+                C_out, affine=affine, track_running_stats=track_running_stats
+            ),
         )
 
     def forward(self, x):
@@ -177,7 +173,6 @@ class ReLUConvBN(nn.Module):
 
 
 class SepConv(nn.Module):
-
     def __init__(
         self,
         C_in,
@@ -204,7 +199,8 @@ class SepConv(nn.Module):
             ),
             nn.Conv2d(C_in, C_out, kernel_size=1, padding=0, bias=False),
             nn.BatchNorm2d(
-                C_out, affine=affine, track_running_stats=track_running_stats),
+                C_out, affine=affine, track_running_stats=track_running_stats
+            ),
         )
 
     def forward(self, x):
@@ -212,7 +208,6 @@ class SepConv(nn.Module):
 
 
 class DualSepConv(nn.Module):
-
     def __init__(
         self,
         C_in,
@@ -235,8 +230,9 @@ class DualSepConv(nn.Module):
             affine,
             track_running_stats,
         )
-        self.op_b = SepConv(C_in, C_out, kernel_size, 1, padding, dilation,
-                            affine, track_running_stats)
+        self.op_b = SepConv(
+            C_in, C_out, kernel_size, 1, padding, dilation, affine, track_running_stats
+        )
 
     def forward(self, x):
         x = self.op_a(x)
@@ -245,7 +241,6 @@ class DualSepConv(nn.Module):
 
 
 class ResNetBasicblock(nn.Module):
-
     def __init__(self, inplanes, planes, stride, affine=True):
         super(ResNetBasicblock, self).__init__()
         assert stride == 1 or stride == 2, 'invalid stride {:}'.format(stride)
@@ -255,12 +250,8 @@ class ResNetBasicblock(nn.Module):
             self.downsample = nn.Sequential(
                 nn.AvgPool2d(kernel_size=2, stride=2, padding=0),
                 nn.Conv2d(
-                    inplanes,
-                    planes,
-                    kernel_size=1,
-                    stride=1,
-                    padding=0,
-                    bias=False),
+                    inplanes, planes, kernel_size=1, stride=1, padding=0, bias=False
+                ),
             )
         elif inplanes != planes:
             self.downsample = ReLUConvBN(inplanes, planes, 1, 1, 0, 1, affine)
@@ -273,11 +264,11 @@ class ResNetBasicblock(nn.Module):
 
     def extra_repr(self):
         string = '{name}(inC={in_dim}, outC={out_dim}, stride={stride})'.format(
-            name=self.__class__.__name__, **self.__dict__)
+            name=self.__class__.__name__, **self.__dict__
+        )
         return string
 
     def forward(self, inputs):
-
         basicblock = self.conv_a(inputs)
         basicblock = self.conv_b(basicblock)
 
@@ -289,23 +280,18 @@ class ResNetBasicblock(nn.Module):
 
 
 class POOLING(nn.Module):
-
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 stride,
-                 mode,
-                 affine=True,
-                 track_running_stats=True):
+    def __init__(
+        self, C_in, C_out, stride, mode, affine=True, track_running_stats=True
+    ):
         super(POOLING, self).__init__()
         if C_in == C_out:
             self.preprocess = None
         else:
-            self.preprocess = ReLUConvBN(C_in, C_out, 1, 1, 0, affine,
-                                         track_running_stats)
+            self.preprocess = ReLUConvBN(
+                C_in, C_out, 1, 1, 0, affine, track_running_stats
+            )
         if mode == 'avg':
-            self.op = nn.AvgPool2d(
-                3, stride=stride, padding=1, count_include_pad=False)
+            self.op = nn.AvgPool2d(3, stride=stride, padding=1, count_include_pad=False)
         elif mode == 'max':
             self.op = nn.MaxPool2d(3, stride=stride, padding=1)
         else:
@@ -324,7 +310,6 @@ class POOLING(nn.Module):
 
 
 class Identity(nn.Module):
-
     def __init__(self):
         super(Identity, self).__init__()
 
@@ -336,7 +321,6 @@ class Identity(nn.Module):
 
 
 class Zero(nn.Module):
-
     def __init__(self, C_in, C_out, stride):
         super(Zero, self).__init__()
         self.C_in = C_in
@@ -349,7 +333,7 @@ class Zero(nn.Module):
             if self.stride == 1:
                 return x.mul(0.0)
             else:
-                return x[:, :, ::self.stride, ::self.stride].mul(0.0)
+                return x[:, :, :: self.stride, :: self.stride].mul(0.0)
         else:
             shape = list(x.shape)
             shape[1] = self.C_out
@@ -357,15 +341,13 @@ class Zero(nn.Module):
             return zeros
 
     def extra_repr(self):
-        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(
-            **self.__dict__)
+        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(**self.__dict__)
 
     def wider(self, new_C_in, new_C_out):
         pass
 
 
 class FactorizedReduce(nn.Module):
-
     def __init__(self, C_in, C_out, stride, affine, track_running_stats):
         super(FactorizedReduce, self).__init__()
         self.stride = stride
@@ -378,47 +360,39 @@ class FactorizedReduce(nn.Module):
             self.convs = nn.ModuleList()
             for i in range(2):
                 self.convs.append(
-                    nn.Conv2d(
-                        C_in,
-                        C_outs[i],
-                        1,
-                        stride=stride,
-                        padding=0,
-                        bias=False))
+                    nn.Conv2d(C_in, C_outs[i], 1, stride=stride, padding=0, bias=False)
+                )
             self.pad = nn.ConstantPad2d((0, 1, 0, 1), 0)
         elif stride == 1:
-            self.conv = nn.Conv2d(
-                C_in, C_out, 1, stride=stride, padding=0, bias=False)
+            self.conv = nn.Conv2d(C_in, C_out, 1, stride=stride, padding=0, bias=False)
         else:
             raise ValueError('Invalid stride : {:}'.format(stride))
         self.bn = nn.BatchNorm2d(
-            C_out, affine=affine, track_running_stats=track_running_stats)
+            C_out, affine=affine, track_running_stats=track_running_stats
+        )
 
     def forward(self, x):
         if self.stride == 2:
             x = self.relu(x)
             y = self.pad(x)
-            out = torch.cat([self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])],
-                            dim=1)
+            out = torch.cat([self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])], dim=1)
         else:
             out = self.conv(x)
         out = self.bn(out)
         return out
 
     def extra_repr(self):
-        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(
-            **self.__dict__)
+        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(**self.__dict__)
 
     def wider(self, new_C_in, new_C_out):
         if self.stride == 2:
             self.convs[0], _ = InChannelWider(self.convs[0], new_C_in)
-            self.convs[0], index1 = OutChannelWider(self.convs[0],
-                                                    new_C_out // 2)
+            self.convs[0], index1 = OutChannelWider(self.convs[0], new_C_out // 2)
             self.convs[1], _ = InChannelWider(self.convs[1], new_C_in)
-            self.convs[1], index2 = OutChannelWider(self.convs[1],
-                                                    new_C_out - new_C_out // 2)
-            self.bn, _ = BNWider(
-                self.bn, new_C_out, index=torch.cat([index1, index2]))
+            self.convs[1], index2 = OutChannelWider(
+                self.convs[1], new_C_out - new_C_out // 2
+            )
+            self.bn, _ = BNWider(self.bn, new_C_out, index=torch.cat([index1, index2]))
         elif self.stride == 1:
             self.conv, _ = InChannelWider(self.conv, new_C_in)
             self.conv, index = OutChannelWider(self.conv, new_C_out)
@@ -443,18 +417,18 @@ def InChannelWider(module, new_channels, index=None):
 
     if index is None:
         index = torch.randint(
-            low=0, high=in_channels, size=(new_channels - in_channels, ))
+            low=0, high=in_channels, size=(new_channels - in_channels,)
+        )
     module.weight = nn.Parameter(
-        torch.cat([weight, weight[:, index, :, :].clone()], dim=1),
-        requires_grad=True)
+        torch.cat([weight, weight[:, index, :, :].clone()], dim=1), requires_grad=True
+    )
 
     module.in_channels = new_channels
     module.weight.in_index = index
     module.weight.t = 'conv'
     if hasattr(weight, 'out_index'):
         module.weight.out_index = weight.out_index
-    module.weight.raw_id = weight.raw_id if hasattr(weight,
-                                                    'raw_id') else id(weight)
+    module.weight.raw_id = weight.raw_id if hasattr(weight, 'raw_id') else id(weight)
     return module, index
 
 
@@ -465,18 +439,18 @@ def OutChannelWider(module, new_channels, index=None):
 
     if index is None:
         index = torch.randint(
-            low=0, high=out_channels, size=(new_channels - out_channels, ))
+            low=0, high=out_channels, size=(new_channels - out_channels,)
+        )
     module.weight = nn.Parameter(
-        torch.cat([weight, weight[index, :, :, :].clone()], dim=0),
-        requires_grad=True)
+        torch.cat([weight, weight[index, :, :, :].clone()], dim=0), requires_grad=True
+    )
 
     module.out_channels = new_channels
     module.weight.out_index = index
     module.weight.t = 'conv'
     if hasattr(weight, 'in_index'):
         module.weight.in_index = weight.in_index
-    module.weight.raw_id = weight.raw_id if hasattr(weight,
-                                                    'raw_id') else id(weight)
+    module.weight.raw_id = weight.raw_id if hasattr(weight, 'raw_id') else id(weight)
     return module, index
 
 
@@ -490,24 +464,25 @@ def BNWider(module, new_features, index=None):
 
     if index is None:
         index = torch.randint(
-            low=0, high=num_features, size=(new_features - num_features, ))
-    module.running_mean = torch.cat(
-        [running_mean, running_mean[index].clone()])
+            low=0, high=num_features, size=(new_features - num_features,)
+        )
+    module.running_mean = torch.cat([running_mean, running_mean[index].clone()])
     module.running_var = torch.cat([running_var, running_var[index].clone()])
     if module.affine:
         module.weight = nn.Parameter(
-            torch.cat([weight, weight[index].clone()], dim=0),
-            requires_grad=True)
+            torch.cat([weight, weight[index].clone()], dim=0), requires_grad=True
+        )
         module.bias = nn.Parameter(
-            torch.cat([bias, bias[index].clone()], dim=0), requires_grad=True)
+            torch.cat([bias, bias[index].clone()], dim=0), requires_grad=True
+        )
 
         module.weight.out_index = index
         module.bias.out_index = index
         module.weight.t = 'bn'
         module.bias.t = 'bn'
         module.weight.raw_id = (
-            weight.raw_id if hasattr(weight, 'raw_id') else id(weight))
-        module.bias.raw_id = bias.raw_id if hasattr(bias,
-                                                    'raw_id') else id(bias)
+            weight.raw_id if hasattr(weight, 'raw_id') else id(weight)
+        )
+        module.bias.raw_id = bias.raw_id if hasattr(bias, 'raw_id') else id(bias)
     module.num_features = new_features
-    return module,
+    return (module,)

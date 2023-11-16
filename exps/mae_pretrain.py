@@ -56,7 +56,8 @@ if __name__ == '__main__':
         transform=Compose([ToTensor(), Normalize(0.5, 0.5)]),
     )
     dataloader = torch.utils.data.DataLoader(
-        train_dataset, load_batch_size, shuffle=True, num_workers=4)
+        train_dataset, load_batch_size, shuffle=True, num_workers=4
+    )
     writer = SummaryWriter(os.path.join('logdir', 'cifar10', 'mae-pretrain'))
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -75,7 +76,8 @@ if __name__ == '__main__':
         )
 
     lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optim, lr_lambda=lr_func, verbose=True)
+        optim, lr_lambda=lr_func, verbose=True
+    )
 
     step_count = 0
     optim.zero_grad()
@@ -86,8 +88,7 @@ if __name__ == '__main__':
             step_count += 1
             img = img.to(device)
             predicted_img, mask = model(img)
-            loss = torch.mean(
-                (predicted_img - img)**2 * mask) / args.mask_ratio
+            loss = torch.mean((predicted_img - img) ** 2 * mask) / args.mask_ratio
             loss.backward()
             if step_count % steps_per_update == 0:
                 optim.step()
@@ -104,10 +105,8 @@ if __name__ == '__main__':
             val_img = val_img.to(device)
             predicted_val_img, mask = model(val_img)
             predicted_val_img = predicted_val_img * mask + val_img * (1 - mask)
-            img = torch.cat([val_img * (1 - mask), predicted_val_img, val_img],
-                            dim=0)
-            img = rearrange(
-                img, '(v h1 w1) c h w -> c (h1 h) (w1 v w)', w1=2, v=3)
+            img = torch.cat([val_img * (1 - mask), predicted_val_img, val_img], dim=0)
+            img = rearrange(img, '(v h1 w1) c h w -> c (h1 h) (w1 v w)', w1=2, v=3)
             writer.add_image('mae_image', (img + 1) / 2, global_step=e)
         """ save model """
         torch.save(model, args.model_path)

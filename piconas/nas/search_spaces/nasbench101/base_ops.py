@@ -6,23 +6,13 @@ import torch.nn as nn
 
 
 class ConvBnRelu(nn.Module):
-
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size=1,
-                 stride=1,
-                 padding=0):
+    def __init__(self, in_channels, out_channels, kernel_size=1, stride=1, padding=0):
         super(ConvBnRelu, self).__init__()
 
         self.conv_bn_relu = nn.Sequential(
             nn.Conv2d(
-                in_channels,
-                out_channels,
-                kernel_size,
-                stride,
-                padding,
-                bias=False),
+                in_channels, out_channels, kernel_size, stride, padding, bias=False
+            ),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
         )
@@ -60,12 +50,7 @@ class Conv1x1BnRelu(nn.Module):
 class MaxPool3x3(nn.Module):
     """3x3 max pool with no subsampling."""
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size=3,
-                 stride=1,
-                 padding=1):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1):
         super(MaxPool3x3, self).__init__()
 
         self.maxpool = nn.MaxPool2d(kernel_size, stride, padding)

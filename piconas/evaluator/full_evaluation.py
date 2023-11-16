@@ -48,14 +48,13 @@ def full_evaluate_predictor(
 
             # Get benchmark API and search space graph
             dataset_api = get_dataset_api(search_space_name, dataset)
-            search_space = get_search_space(
-                name=search_space_name, dataset=dataset)
+            search_space = get_search_space(name=search_space_name, dataset=dataset)
 
             # Initialize and adapt the ZeroCostPredictorEvaluator to the search space
-            predictor_evaluator = ZeroCostPredictorEvaluator(
-                predictor, config=config)
+            predictor_evaluator = ZeroCostPredictorEvaluator(predictor, config=config)
             predictor_evaluator.adapt_search_space(
-                search_space, dataset_api=dataset_api)
+                search_space, dataset_api=dataset_api
+            )
 
             # Evaluate the predictor
             predictor_evaluator.evaluate()

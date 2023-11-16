@@ -12,7 +12,6 @@ from piconas.nas.mutators import OneShotMutator
 
 
 class TestMacroBench(TestCase):
-
     def test_calculate_distance(self):
         model = MacroBenchmarkSuperNet()
 
@@ -52,6 +51,7 @@ class TestMacroBench(TestCase):
             dst_list.append(dst)
 
         import matplotlib.pyplot as plt
+
         fig, axes = plt.subplots()
         ax1 = sns.scatterplot(x=list(range(len(dst_list))), y=dst_list)
         plt.savefig('./test_dis2.png')

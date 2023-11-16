@@ -1,8 +1,8 @@
 import numpy as np
 
 nb201_dict = np.load(
-    '/data/lujunl/pprp/bench/nasbench201/nasbench201_dict.npy',
-    allow_pickle=True).item()
+    '/data/lujunl/pprp/bench/nasbench201/nasbench201_dict.npy', allow_pickle=True
+).item()
 
 best_cifar10_valid_acc = 0.0
 best_cifar10_test_acc = 0.0
@@ -14,7 +14,6 @@ best_imagenet_valid_acc = 0.0
 best_imagenet_test_acc = 0.0
 
 for idx, _dict in nb201_dict.items():
-
     if _dict['cifar10_valid'] > best_cifar10_valid_acc:
         best_cifar10_valid_acc = _dict['cifar10_valid']
 

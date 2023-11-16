@@ -8,27 +8,35 @@ from piconas.nas.mutators import OneShotMutator
 
 
 class OneShotMutableModel(nn.Module):
-
     def __init__(self):
         super().__init__()
         self.op1 = OneShotOP(
-            candidate_ops=nn.ModuleDict({
-                'cand1': nn.Conv2d(32, 32, 3, 1, 1),
-                'cand2': nn.Conv2d(32, 32, 5, 1, 2),
-                'cand3': nn.Conv2d(32, 32, 7, 1, 3),
-            }))
+            candidate_ops=nn.ModuleDict(
+                {
+                    'cand1': nn.Conv2d(32, 32, 3, 1, 1),
+                    'cand2': nn.Conv2d(32, 32, 5, 1, 2),
+                    'cand3': nn.Conv2d(32, 32, 7, 1, 3),
+                }
+            )
+        )
         self.op2 = OneShotOP(
-            candidate_ops=nn.ModuleDict({
-                'cand1': nn.Conv2d(32, 32, 3, 1, 1),
-                'cand2': nn.Conv2d(32, 32, 5, 1, 2),
-                'cand3': nn.Conv2d(32, 32, 7, 1, 3),
-            }))
+            candidate_ops=nn.ModuleDict(
+                {
+                    'cand1': nn.Conv2d(32, 32, 3, 1, 1),
+                    'cand2': nn.Conv2d(32, 32, 5, 1, 2),
+                    'cand3': nn.Conv2d(32, 32, 7, 1, 3),
+                }
+            )
+        )
         self.op3 = OneShotOP(
-            candidate_ops=nn.ModuleDict({
-                'cand1': nn.Conv2d(32, 32, 3, 1, 1),
-                'cand2': nn.Conv2d(32, 32, 5, 1, 2),
-                'cand3': nn.Conv2d(32, 32, 7, 1, 3),
-            }))
+            candidate_ops=nn.ModuleDict(
+                {
+                    'cand1': nn.Conv2d(32, 32, 3, 1, 1),
+                    'cand2': nn.Conv2d(32, 32, 5, 1, 2),
+                    'cand3': nn.Conv2d(32, 32, 7, 1, 3),
+                }
+            )
+        )
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.op1(x)
@@ -37,7 +45,6 @@ class OneShotMutableModel(nn.Module):
 
 
 class TestOneShot(TestCase):
-
     def test_case1(self):
         supernet = OneShotMutableModel()
 

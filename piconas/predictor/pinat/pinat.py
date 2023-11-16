@@ -19,7 +19,7 @@ def graph_pooling(inputs, num_vertices):
 
 
 class ScaledDotProductAttention(nn.Module):
-    """ Scaled Dot-Product Attention """
+    """Scaled Dot-Product Attention"""
 
     def __init__(self, temperature, attn_dropout=0.1):
         super().__init__()
@@ -38,17 +38,19 @@ class ScaledDotProductAttention(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    """ Multi-Head Attention module """
+    """Multi-Head Attention module"""
 
-    def __init__(self,
-                 sa_heads,
-                 d_model,
-                 d_k,
-                 d_v,
-                 pine_hidden=256,
-                 dropout=0.1,
-                 pine_heads=2,
-                 bench='101'):
+    def __init__(
+        self,
+        sa_heads,
+        d_model,
+        d_k,
+        d_v,
+        pine_hidden=256,
+        dropout=0.1,
+        pine_heads=2,
+        bench='101',
+    ):
         super().__init__()
 
         sa_heads = 2
@@ -67,15 +69,11 @@ class MultiHeadAttention(nn.Module):
         # pine structure
         self.conv1 = GATConv(d_model, pine_hidden, heads=pine_heads)
         self.lin1 = torch.nn.Linear(d_model, pine_heads * pine_hidden)
-        self.conv2 = GATConv(
-            pine_heads * pine_hidden, pine_hidden, heads=pine_heads)
-        self.lin2 = torch.nn.Linear(pine_heads * pine_hidden,
-                                    pine_heads * pine_hidden)
+        self.conv2 = GATConv(pine_heads * pine_hidden, pine_hidden, heads=pine_heads)
+        self.lin2 = torch.nn.Linear(pine_heads * pine_hidden, pine_heads * pine_hidden)
         self.conv3 = GATConv(
-            pine_heads * pine_hidden,
-            pine_heads * d_k,
-            heads=pine_heads,
-            concat=False)
+            pine_heads * pine_hidden, pine_heads * d_k, heads=pine_heads, concat=False
+        )
         self.lin3 = torch.nn.Linear(pine_heads * pine_hidden, pine_heads * d_k)
 
         self.dropout = nn.Dropout(dropout)
@@ -99,8 +97,8 @@ class MultiHeadAttention(nn.Module):
         bs = x.shape[0]
         pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
         x = F.elu(
-            self.conv1(pyg_batch.x, pyg_batch.edge_index) +
-            self.lin1(pyg_batch.x))
+            self.conv1(pyg_batch.x, pyg_batch.edge_index) + self.lin1(pyg_batch.x)
+        )
         x = F.elu(self.conv2(x, pyg_batch.edge_index) + self.lin2(x))
         x = self.conv3(x, pyg_batch.edge_index) + self.lin3(x)
         x = x.view(bs, -1, x.shape[-1])
@@ -132,7 +130,7 @@ class MultiHeadAttention(nn.Module):
 
 
 class PositionwiseFeedForward(nn.Module):
-    """ A two-feed-forward-layer module """
+    """A two-feed-forward-layer module"""
 
     def __init__(self, d_in, d_hid, dropout=0.1):
         super().__init__()
@@ -154,74 +152,61 @@ class PositionwiseFeedForward(nn.Module):
 
 
 class EncoderLayer(nn.Module):
-    """ Compose with two layers """
+    """Compose with two layers"""
 
-    def __init__(self,
-                 d_model,
-                 d_inner,
-                 n_head,
-                 d_k,
-                 d_v,
-                 pine_hidden,
-                 dropout=0.1,
-                 bench='101'):
+    def __init__(
+        self, d_model, d_inner, n_head, d_k, d_v, pine_hidden, dropout=0.1, bench='101'
+    ):
         super(EncoderLayer, self).__init__()
         self.slf_attn = MultiHeadAttention(
-            n_head,
-            d_model,
-            d_k,
-            d_v,
-            pine_hidden,
-            dropout=dropout,
-            bench=bench)
-        self.pos_ffn = PositionwiseFeedForward(
-            d_model, d_inner, dropout=dropout)
+            n_head, d_model, d_k, d_v, pine_hidden, dropout=dropout, bench=bench
+        )
+        self.pos_ffn = PositionwiseFeedForward(d_model, d_inner, dropout=dropout)
 
-    def forward(self,
-                enc_input,
-                edge_index_list,
-                num_nodes,
-                slf_attn_mask=None):
+    def forward(self, enc_input, edge_index_list, num_nodes, slf_attn_mask=None):
         enc_output, enc_slf_attn = self.slf_attn(
             enc_input,
             enc_input,
             enc_input,
             edge_index_list,
             num_nodes,
-            mask=slf_attn_mask)
+            mask=slf_attn_mask,
+        )
         enc_output = self.pos_ffn(enc_output)
         return enc_output, enc_slf_attn
 
 
 class Encoder(nn.Module):
-    """ An encoder model with self attention mechanism. """
+    """An encoder model with self attention mechanism."""
 
-    def __init__(self,
-                 n_src_vocab,
-                 d_word_vec,
-                 n_layers,
-                 n_head,
-                 d_k,
-                 d_v,
-                 d_model,
-                 d_inner,
-                 pad_idx,
-                 pos_enc_dim=7,
-                 dropout=0.1,
-                 n_position=200,
-                 bench='101',
-                 in_features=5,
-                 pine_hidden=256,
-                 heads=6,
-                 linear_input=80):
+    def __init__(
+        self,
+        n_src_vocab,
+        d_word_vec,
+        n_layers,
+        n_head,
+        d_k,
+        d_v,
+        d_model,
+        d_inner,
+        pad_idx,
+        pos_enc_dim=7,
+        dropout=0.1,
+        n_position=200,
+        bench='101',
+        in_features=5,
+        pine_hidden=256,
+        heads=6,
+        linear_input=80,
+    ):
         super().__init__()
 
-        self.src_word_emb = nn.Embedding(
-            n_src_vocab, d_word_vec, padding_idx=pad_idx)
+        self.src_word_emb = nn.Embedding(n_src_vocab, d_word_vec, padding_idx=pad_idx)
         self.bench = bench
         if self.bench == '101':
             self.embedding_lap_pos_enc = nn.Linear(
-                pos_enc_dim, d_word_vec)  # position embedding
+                pos_enc_dim, d_word_vec
+            )  # position embedding
         elif self.bench == '201':
             self.pos_map = nn.Linear(pos_enc_dim, n_src_vocab + 1)
             self.embedding_lap_pos_enc = nn.Linear(pos_enc_dim, d_word_vec)
@@ -234,22 +219,25 @@ class Encoder(nn.Module):
         self.lin1 = torch.nn.Linear(in_features, heads * pine_hidden)
         self.conv2 = GATConv(heads * pine_hidden, pine_hidden, heads=heads)
         self.lin2 = torch.nn.Linear(heads * pine_hidden, heads * pine_hidden)
-        self.conv3 = GATConv(
-            heads * pine_hidden, linear_input, heads=6, concat=False)
+        self.conv3 = GATConv(heads * pine_hidden, linear_input, heads=6, concat=False)
         self.lin3 = torch.nn.Linear(heads * pine_hidden, linear_input)
 
         self.dropout = nn.Dropout(p=dropout)
-        self.layer_stack = nn.ModuleList([
-            EncoderLayer(
-                d_model,
-                d_inner,
-                n_head,
-                d_k,
-                d_v,
-                dropout=dropout,
-                pine_hidden=pine_hidden,
-                bench=bench) for _ in range(n_layers)
-        ])
+        self.layer_stack = nn.ModuleList(
+            [
+                EncoderLayer(
+                    d_model,
+                    d_inner,
+                    n_head,
+                    d_k,
+                    d_v,
+                    dropout=dropout,
+                    pine_hidden=pine_hidden,
+                    bench=bench,
+                )
+                for _ in range(n_layers)
+            ]
+        )
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
 
     def to_pyg_batch(self, xs, edge_index_list, num_nodes):
@@ -262,20 +250,21 @@ class Encoder(nn.Module):
         return batch
 
     def forward(
-            self,
-            src_seq,  # features: bs, 7
-            pos_seq,  # lapla: bs, 7, 7
-            operations,  # operations: bs, 7, 5 -> bs, 35
-            edge_index_list,  # list with different length tensor
-            num_nodes,  # num of node: bs
-            src_mask=None):
+        self,
+        src_seq,  # features: bs, 7
+        pos_seq,  # lapla: bs, 7, 7
+        operations,  # operations: bs, 7, 5 -> bs, 35
+        edge_index_list,  # list with different length tensor
+        num_nodes,  # num of node: bs
+        src_mask=None,
+    ):
         import pdb
+
         pdb.set_trace()
         # op emb and pos emb
         enc_output = self.src_word_emb(src_seq)
         if self.bench == '101':
-            pos_output = self.embedding_lap_pos_enc(
-                pos_seq)  # positional embedding
+            pos_output = self.embedding_lap_pos_enc(pos_seq)  # positional embedding
             enc_output += pos_output  # bs, 7, 80
             # enc_output = pos_output
             enc_output = self.dropout(enc_output)
@@ -292,8 +281,8 @@ class Encoder(nn.Module):
         bs = operations.shape[0]
         pyg_batch = self.to_pyg_batch(x, edge_index_list, num_nodes)
         x = F.elu(
-            self.conv1(pyg_batch.x, pyg_batch.edge_index) +
-            self.lin1(pyg_batch.x))
+            self.conv1(pyg_batch.x, pyg_batch.edge_index) + self.lin1(pyg_batch.x)
+        )
         x = F.elu(self.conv2(x, pyg_batch.edge_index) + self.lin2(x))
         x = self.conv3(x, pyg_batch.edge_index) + self.lin3(x)
         x = x.view(bs, -1, x.shape[-1])
@@ -307,31 +296,34 @@ class Encoder(nn.Module):
         # backone forward for n_layers (3)
         for enc_layer in self.layer_stack:
             enc_output, enc_slf_attn = enc_layer(
-                enc_output, edge_index_list, num_nodes, slf_attn_mask=src_mask)
+                enc_output, edge_index_list, num_nodes, slf_attn_mask=src_mask
+            )
 
         return enc_output
 
 
 class PINATModel(nn.Module):
     """
-        PINATModel: Concat(2 self-attention heads, 2 pine heads)
+    PINATModel: Concat(2 self-attention heads, 2 pine heads)
     """
 
-    def __init__(self,
-                 adj_type,
-                 n_src_vocab,
-                 d_word_vec,
-                 n_layers,
-                 n_head,
-                 d_k,
-                 d_v,
-                 d_model,
-                 d_inner,
-                 pad_idx=None,
-                 pos_enc_dim=7,
-                 linear_hidden=80,
-                 pine_hidden=256,
-                 bench='101'):
+    def __init__(
+        self,
+        adj_type,
+        n_src_vocab,
+        d_word_vec,
+        n_layers,
+        n_head,
+        d_k,
+        d_v,
+        d_model,
+        d_inner,
+        pad_idx=None,
+        pos_enc_dim=7,
+        linear_hidden=80,
+        pine_hidden=256,
+        bench='101',
+    ):
         super(PINATModel, self).__init__()
 
         # backone
@@ -350,7 +342,8 @@ class PINATModel(nn.Module):
             pos_enc_dim=pos_enc_dim,
             dropout=0.1,
             pine_hidden=pine_hidden,
-            bench=bench)
+            bench=bench,
+        )
 
         # regressor
         self.dropout = nn.Dropout(0.1)
@@ -364,8 +357,8 @@ class PINATModel(nn.Module):
         adj_matrix = inputs['lapla'].float()  # bs, 7, 7
         edge_index_list = []
         for edge_num, edge_index in zip(
-                inputs['edge_num'],  # bs
-                inputs['edge_index_list']):  # bs, 2, 9
+            inputs['edge_num'], inputs['edge_index_list']  # bs
+        ):  # bs, 2, 9
             edge_index_list.append(edge_index[:, :edge_num])
 
         # backone feature
@@ -374,7 +367,8 @@ class PINATModel(nn.Module):
             pos_seq=adj_matrix.float(),  # bs, 7, 7
             operations=inputs['operations'].squeeze(0),  # bs, 7, 5
             num_nodes=numv,
-            edge_index_list=edge_index_list)
+            edge_index_list=edge_index_list,
+        )
 
         # regressor forward
         out = graph_pooling(out, numv)

@@ -12,9 +12,7 @@ zc_name_list = [
 zc_name_legend = ['plain', 'gradnorm', 'fisher']
 # grasp_layerwise
 # Define a list of custom colors suitable for scientific figures with higher opacity
-custom_colors = [
-    '#e377c2', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'
-]
+custom_colors = ['#e377c2', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
 custom_marker = ['o', '*', 'D', '^', 'D', 'P']
 
 # Create a single figure using "ggplot" style
@@ -29,19 +27,21 @@ with plt.style.context('default'):
 
     for i, zc_name in enumerate(zc_name_list):
         data = np.loadtxt(
-            f'./exps/insights/gbdt_{zc_name}.csv', delimiter=',', skiprows=1)
+            f'./exps/insights/gbdt_{zc_name}.csv', delimiter=',', skiprows=1
+        )
         feature_importance = data[:, 1]
         pos = data[:, 0]
 
         # Normalize feature importance to enhance discriminability
         scaler = MinMaxScaler()
         feature_importance_normalized = scaler.fit_transform(
-            feature_importance.reshape(-1, 1)).flatten()
+            feature_importance.reshape(-1, 1)
+        ).flatten()
 
         # Store data in the dictionary
         data_dict[zc_name] = {
             'pos': pos,
-            'feature_importance_normalized': feature_importance_normalized
+            'feature_importance_normalized': feature_importance_normalized,
         }
 
     # Create corresponding color map for data_dict
@@ -49,13 +49,15 @@ with plt.style.context('default'):
 
     # Calculate the sorted order of bars based on their values
     sorted_order = np.argsort(
-        -data_dict[zc_name_list[0]]['feature_importance_normalized'])
+        -data_dict[zc_name_list[0]]['feature_importance_normalized']
+    )
 
     # Plot the bars in the sorted order
     for i, zc_name in enumerate(zc_name_list):
         pos = data_dict[zc_name]['pos'][sorted_order]
         feature_importance_normalized = data_dict[zc_name][
-            'feature_importance_normalized'][sorted_order]
+            'feature_importance_normalized'
+        ][sorted_order]
 
         plt.scatter(
             pos[::-1],

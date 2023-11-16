@@ -9,6 +9,7 @@ from tqdm import tqdm
 if True:
     import matplotlib.ticker as ticker
     import seaborn as sns
+
     sns.set_palette('tab10')
     plt.rcParams['text.usetex'] = False
     plt.rcParams['mathtext.fontset'] = 'cm'
@@ -16,8 +17,10 @@ if True:
 
 # 1. Load the dictionary
 data_dict = torch.load(
-    os.environ['PROJ_BPATH'] + '/' +
-    '/nas_embedding_suite/embedding_datasets/cate_all_ss.pt')
+    os.environ['PROJ_BPATH']
+    + '/'
+    + '/nas_embedding_suite/embedding_datasets/cate_all_ss.pt'
+)
 # 2. Prepare your data and labels for the T-SNE
 ranges = {
     0: 'nb101',
@@ -57,8 +60,7 @@ sampled_labels = []
 
 for unique_label in np.unique(labels):
     indices = np.where(labels == unique_label)[0]
-    sampled_indices = np.random.choice(
-        indices, min(5000, len(indices)), replace=False)
+    sampled_indices = np.random.choice(indices, min(5000, len(indices)), replace=False)
     sampled_features.extend(features[sampled_indices])
     sampled_labels.extend(labels[sampled_indices])
 
@@ -86,11 +88,8 @@ plt.legend(
     loc='center left',
     bbox_to_anchor=(1, 0.5),
     handles=[
-        plt.Line2D([0], [0],
-                   marker='o',
-                   color='w',
-                   markerfacecolor=c,
-                   markersize=10) for c in colors
+        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=c, markersize=10)
+        for c in colors
     ],
     labels=list(ranges.values()),
 )

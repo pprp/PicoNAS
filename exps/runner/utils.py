@@ -10,56 +10,70 @@ from torch.utils.data import DataLoader, Dataset
 
 def get_tagates_sample_indices(args):
     import os
+
     BASE_PATH = '/data/lujunl/pprp/bench/'
-    BASE_PATH2 = '/data2/dongpeijie/share/bench/predictor_embeddings/correlation_trainer'
+    BASE_PATH2 = (
+        '/data2/dongpeijie/share/bench/predictor_embeddings/correlation_trainer'
+    )
     if args.space == 'nb101' and args.test_tagates:
         print('Explicit TAGATES comparision')
         # Check if nb101_train_tagates.npy and nb101_test_tagates.npy exist
         if not os.path.exists(
-                BASE_PATH2 + '/tagates_replication/nb101_train_tagates.npy'
-        ) or not os.path.exists(BASE_PATH2 +
-                                '/tagates_replication/nb101_test_tagates.npy'):
+            BASE_PATH2 + '/tagates_replication/nb101_train_tagates.npy'
+        ) or not os.path.exists(
+            BASE_PATH2 + '/tagates_replication/nb101_test_tagates.npy'
+        ):
             import pickle
 
             from nasbench import api as NB1API
 
-            from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.cell_101 import \
-                Cell101
-            BASE_PATH = os.environ[
-                'PROJ_BPATH'] + '/' + 'nas_embedding_suite/embedding_datasets/'
-            nb1_api = NB1API.NASBench(BASE_PATH +
-                                      'nasbench_only108_caterec.tfrecord')
+            from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.cell_101 import (
+                Cell101,
+            )
+
+            BASE_PATH = (
+                os.environ['PROJ_BPATH']
+                + '/'
+                + 'nas_embedding_suite/embedding_datasets/'
+            )
+            nb1_api = NB1API.NASBench(BASE_PATH + 'nasbench_only108_caterec.tfrecord')
             hash_to_idx = {
-                v: idx
-                for idx, v in enumerate(list(nb1_api.hash_iterator()))
+                v: idx for idx, v in enumerate(list(nb1_api.hash_iterator()))
             }
             with open(
-                    os.environ['PROJ_BPATH'] + '/' +
-                    '/correlation_trainer/tagates_replication/nb101_hash.txt',
-                    'rb') as fp:
+                os.environ['PROJ_BPATH']
+                + '/'
+                + '/correlation_trainer/tagates_replication/nb101_hash.txt',
+                'rb',
+            ) as fp:
                 nb101_hash = pickle.load(fp)
-            nb101_tagates_sample_indices = [
-                hash_to_idx[hash_] for hash_ in nb101_hash
-            ]
+            nb101_tagates_sample_indices = [hash_to_idx[hash_] for hash_ in nb101_hash]
             with open(
-                    os.environ['PROJ_BPATH'] + '/' +
-                    '/correlation_trainer/tagates_replication/nb101_hash_train.txt',
-                    'rb') as fp:
+                os.environ['PROJ_BPATH']
+                + '/'
+                + '/correlation_trainer/tagates_replication/nb101_hash_train.txt',
+                'rb',
+            ) as fp:
                 nb101_train_hash = pickle.load(fp)
             nb101_train_tagates_sample_indices = [
                 hash_to_idx[hash_] for hash_ in nb101_train_hash
             ]
-            np.save(BASE_PATH2 + '/tagates_replication/nb101_test_tagates.npy',
-                    nb101_tagates_sample_indices)
+            np.save(
+                BASE_PATH2 + '/tagates_replication/nb101_test_tagates.npy',
+                nb101_tagates_sample_indices,
+            )
             np.save(
                 BASE_PATH2 + '/tagates_replication/nb101_train_tagates.npy',
-                nb101_train_tagates_sample_indices)
+                nb101_train_tagates_sample_indices,
+            )
         else:
             print('Loading from npy')
             nb101_tagates_sample_indices = np.load(
-                BASE_PATH2 + '/tagates_replication/nb101_test_tagates.npy')
+                BASE_PATH2 + '/tagates_replication/nb101_test_tagates.npy'
+            )
             nb101_train_tagates_sample_indices = np.load(
-                BASE_PATH2 + '/tagates_replication/nb101_train_tagates.npy')
+                BASE_PATH2 + '/tagates_replication/nb101_train_tagates.npy'
+            )
         return nb101_train_tagates_sample_indices, nb101_tagates_sample_indices
     # if args.space == 'nb201' and args.test_tagates:
     #     print("Explicit TAGATES comparision")
@@ -72,7 +86,6 @@ def get_tagates_sample_indices(args):
 
 
 class AverageMeter(object):
-
     def __init__(self):
         self.reset()
 
@@ -80,8 +93,8 @@ class AverageMeter(object):
         return self.cnt == 0
 
     def reset(self):
-        self.avg = 0.
-        self.sum = 0.
+        self.avg = 0.0
+        self.sum = 0.0
         self.cnt = 0
 
     def update(self, val, n=1):
@@ -91,7 +104,6 @@ class AverageMeter(object):
 
 
 class CustomDataset(Dataset):
-
     def __init__(self, representations, accuracies):
         self.representations = representations
         self.accuracies = accuracies
@@ -139,8 +151,9 @@ def save_checkpoint(model, optimizer, epoch, loss, dim, name, dropout, seed):
     torch.save(checkpoint, f_path)
 
 
-def save_checkpoint_vae(model, optimizer, text_signature, epoch, loss, dim,
-                        name, dropout, seed):
+def save_checkpoint_vae(
+    model, optimizer, text_signature, epoch, loss, dim, name, dropout, seed
+):
     """Saves a checkpoint."""
     # Record the state
     checkpoint = {
@@ -231,17 +244,16 @@ def get_accuracy(inputs, targets):
     ops, adj = targets[0], targets[1]
     # post processing, assume non-symmetric
     adj_recon, adj = adj_recon.triu(1), adj.triu(1)
-    correct_ops = ops_recon.argmax(dim=-1).eq(
-        ops.argmax(dim=-1)).float().mean().item()
+    correct_ops = ops_recon.argmax(dim=-1).eq(ops.argmax(dim=-1)).float().mean().item()
     mean_correct_adj = adj_recon[adj.type(torch.bool)].sum().item() / adj.sum()
     mean_false_positive_adj = adj_recon[
-        (~adj.type(torch.bool)).triu(1)].sum().item() / (
-            N * I * (I - 1) / 2.0 - adj.sum())
+        (~adj.type(torch.bool)).triu(1)
+    ].sum().item() / (N * I * (I - 1) / 2.0 - adj.sum())
     threshold = 0.5  # hard threshold
     adj_recon_thre = adj_recon > threshold
-    correct_adj = adj_recon_thre.eq(adj.type(
-        torch.bool)).float().triu(1).sum().item() / (
-            N * I * (I - 1) / 2.0)
+    correct_adj = adj_recon_thre.eq(adj.type(torch.bool)).float().triu(
+        1
+    ).sum().item() / (N * I * (I - 1) / 2.0)
 
     ops_correct = ops_recon.argmax(dim=-1).eq(ops.argmax(dim=-1)).float()
     adj_correct = adj_recon_thre.eq(adj.type(torch.bool)).float()
@@ -251,28 +263,43 @@ def get_accuracy(inputs, targets):
 def get_train_acc(inputs, targets):
     acc_train = get_accuracy(inputs, targets)
     return 'training batch: acc_ops:{0:.4f}, mean_corr_adj:{1:.4f}, mean_fal_pos_adj:{2:.4f}, acc_adj:{3:.4f}'.format(
-        *acc_train)
+        *acc_train
+    )
 
 
 def get_train_NN_accuracy_str(inputs, targets, decoderNN, inds):
     acc_train = get_accuracy(inputs, targets)
     acc_val = get_NN_acc(decoderNN, targets, inds)
     return 'acc_ops:{0:.4f}({4:.4f}), mean_corr_adj:{1:.4f}({5:.4f}), mean_fal_pos_adj:{2:.4f}({6:.4f}), acc_adj:{3:.4f}({7:.4f}), top-{8} index acc {9:.4f}'.format(
-        *acc_train, *acc_val)
+        *acc_train, *acc_val
+    )
 
 
 def get_NN_acc(decoderNN, targets, inds):
     ops, adj = targets[0], targets[1]
     op_recon, adj_recon, op_recon_tk, adj_recon_tk, _, ind_tk_list = decoderNN.find_NN(
-        ops, adj, inds)
-    correct_ops, mean_correct_adj, mean_false_positive_adj, correct_adj, acc = get_accuracy(
-        (op_recon, adj_recon), targets)
+        ops, adj, inds
+    )
+    (
+        correct_ops,
+        mean_correct_adj,
+        mean_false_positive_adj,
+        correct_adj,
+        acc,
+    ) = get_accuracy((op_recon, adj_recon), targets)
     pred_k = torch.tensor(ind_tk_list, dtype=torch.int)
     correct = pred_k.eq(
-        torch.tensor(inds, dtype=torch.int).view(-1, 1).expand_as(pred_k))
+        torch.tensor(inds, dtype=torch.int).view(-1, 1).expand_as(pred_k)
+    )
     topk_acc = correct.sum(dtype=torch.float) / len(inds)
-    return correct_ops, mean_correct_adj, mean_false_positive_adj, correct_adj, pred_k.shape[
-        1], topk_acc.item()
+    return (
+        correct_ops,
+        mean_correct_adj,
+        mean_false_positive_adj,
+        correct_adj,
+        pred_k.shape[1],
+        topk_acc.item(),
+    )
 
 
 def get_val_acc(model, cfg, X_adj, X_ops, indices):
@@ -284,9 +311,14 @@ def get_val_acc(model, cfg, X_adj, X_ops, indices):
     X_adj_split = torch.split(X_adj, bs, dim=0)
     X_ops_split = torch.split(X_ops, bs, dim=0)
     indices_split = torch.split(indices, bs, dim=0)
-    correct_ops_ave, mean_correct_adj_ave, mean_false_positive_adj_ave, correct_adj_ave, acc_ave = 0, 0, 0, 0, 0
-    for i, (adj, ops,
-            ind) in enumerate(zip(X_adj_split, X_ops_split, indices_split)):
+    (
+        correct_ops_ave,
+        mean_correct_adj_ave,
+        mean_false_positive_adj_ave,
+        correct_adj_ave,
+        acc_ave,
+    ) = (0, 0, 0, 0, 0)
+    for i, (adj, ops, ind) in enumerate(zip(X_adj_split, X_ops_split, indices_split)):
         adj, ops = adj.cuda(), ops.cuda()
         # preprocessing
         adj, ops, prep_reverse = preprocessing(adj, ops, **cfg['prep'])
@@ -295,15 +327,23 @@ def get_val_acc(model, cfg, X_adj, X_ops, indices):
         # reverse preprocessing
         adj_recon, ops_recon = prep_reverse(adj_recon, ops_recon)
         adj, ops = prep_reverse(adj, ops)
-        correct_ops, mean_correct_adj, mean_false_positive_adj, correct_adj = get_accuracy(
-            (ops_recon, adj_recon), (ops, adj))
+        (
+            correct_ops,
+            mean_correct_adj,
+            mean_false_positive_adj,
+            correct_adj,
+        ) = get_accuracy((ops_recon, adj_recon), (ops, adj))
         correct_ops_ave += correct_ops * len(ind) / len(indices)
         mean_correct_adj_ave += mean_correct_adj * len(ind) / len(indices)
-        mean_false_positive_adj_ave += mean_false_positive_adj * len(
-            ind) / len(indices)
+        mean_false_positive_adj_ave += mean_false_positive_adj * len(ind) / len(indices)
         correct_adj_ave += correct_adj * len(ind) / len(indices)
 
-    return correct_ops_ave, mean_correct_adj_ave, mean_false_positive_adj_ave, correct_adj_ave
+    return (
+        correct_ops_ave,
+        mean_correct_adj_ave,
+        mean_false_positive_adj_ave,
+        correct_adj_ave,
+    )
 
 
 def get_val_acc_vae(model, cfg, X_adj, X_ops, indices):
@@ -315,9 +355,14 @@ def get_val_acc_vae(model, cfg, X_adj, X_ops, indices):
     X_adj_split = torch.split(X_adj, bs, dim=0)
     X_ops_split = torch.split(X_ops, bs, dim=0)
     indices_split = torch.split(indices, bs, dim=0)
-    correct_ops_ave, mean_correct_adj_ave, mean_false_positive_adj_ave, correct_adj_ave, acc_ave = 0, 0, 0, 0, 0
-    for i, (adj, ops,
-            ind) in enumerate(zip(X_adj_split, X_ops_split, indices_split)):
+    (
+        correct_ops_ave,
+        mean_correct_adj_ave,
+        mean_false_positive_adj_ave,
+        correct_adj_ave,
+        acc_ave,
+    ) = (0, 0, 0, 0, 0)
+    for i, (adj, ops, ind) in enumerate(zip(X_adj_split, X_ops_split, indices_split)):
         adj, ops = adj.cuda(), ops.cuda()
         # preprocessing
         adj, ops, prep_reverse = preprocessing(adj, ops, **cfg['prep'])
@@ -326,15 +371,23 @@ def get_val_acc_vae(model, cfg, X_adj, X_ops, indices):
         # reverse preprocessing
         adj_recon, ops_recon = prep_reverse(adj_recon, ops_recon)
         adj, ops = prep_reverse(adj, ops)
-        correct_ops, mean_correct_adj, mean_false_positive_adj, correct_adj = get_accuracy(
-            (ops_recon, adj_recon), (ops, adj))
+        (
+            correct_ops,
+            mean_correct_adj,
+            mean_false_positive_adj,
+            correct_adj,
+        ) = get_accuracy((ops_recon, adj_recon), (ops, adj))
         correct_ops_ave += correct_ops * len(ind) / len(indices)
         mean_correct_adj_ave += mean_correct_adj * len(ind) / len(indices)
-        mean_false_positive_adj_ave += mean_false_positive_adj * len(
-            ind) / len(indices)
+        mean_false_positive_adj_ave += mean_false_positive_adj * len(ind) / len(indices)
         correct_adj_ave += correct_adj * len(ind) / len(indices)
 
-    return correct_ops_ave, mean_correct_adj_ave, mean_false_positive_adj_ave, correct_adj_ave
+    return (
+        correct_ops_ave,
+        mean_correct_adj_ave,
+        mean_false_positive_adj_ave,
+        correct_adj_ave,
+    )
 
 
 def stacked_mm(A, B):
@@ -361,7 +414,7 @@ def to_operations_darts(ops):
         'sep_conv_5x5': 7,
         'dil_conv_3x3': 8,
         'dil_conv_5x5': 9,
-        'output': 10
+        'output': 10,
     }
 
     ops_array = np.zeros([11, 11], dtype='int8')
@@ -382,7 +435,7 @@ def one_hot_darts(ops):
         'sep_conv_5x5': 7,
         'dil_conv_3x3': 8,
         'dil_conv_5x5': 9,
-        'output': 10
+        'output': 10,
     }
 
     ops_array = np.zeros([11, 11], dtype='int8')
@@ -403,7 +456,7 @@ def to_ops_darts(idx):
         7: 'sep_conv_5x5',
         8: 'dil_conv_3x3',
         9: 'dil_conv_5x5',
-        10: 'output'
+        10: 'output',
     }
     ops = []
     for id in idx:
@@ -419,7 +472,7 @@ def to_ops_nasbench201(idx):
         3: 'avg_pool_3x3',
         4: 'skip_connect',
         5: 'none',
-        6: 'output'
+        6: 'output',
     }
     ops = []
     for id in idx:
@@ -432,8 +485,11 @@ def is_valid_nasbench201(adj, ops):
         return False
     for i in range(2, len(ops) - 1):
         if ops[i] not in [
-                'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3', 'skip_connect',
-                'none'
+            'nor_conv_1x1',
+            'nor_conv_3x3',
+            'avg_pool_3x3',
+            'skip_connect',
+            'none',
         ]:
             return False
     return True
@@ -444,27 +500,33 @@ def is_valid_darts(adj, ops):
         return False
     for i in range(2, len(ops) - 1):
         if ops[i] not in [
-                'none', 'max_pool_3x3', 'avg_pool_3x3', 'skip_connect',
-                'sep_conv_3x3', 'sep_conv_5x5', 'dil_conv_3x3', 'dil_conv_5x5'
+            'none',
+            'max_pool_3x3',
+            'avg_pool_3x3',
+            'skip_connect',
+            'sep_conv_3x3',
+            'sep_conv_5x5',
+            'dil_conv_3x3',
+            'dil_conv_5x5',
         ]:
             return False
     adj = np.array(adj)
-    #B0
+    # B0
     if sum(adj[:2, 2]) == 0 or sum(adj[:2, 3]) == 0:
         return False
     if sum(adj[4:, 2]) > 0 or sum(adj[4:, 3]) > 0:
         return False
-    #B1:
+    # B1:
     if sum(adj[:4, 4]) == 0 or sum(adj[:4, 5]) == 0:
         return False
     if sum(adj[6:, 4]) > 0 or sum(adj[6:, 5]) > 0:
         return False
-    #B2:
+    # B2:
     if sum(adj[:6, 6]) == 0 or sum(adj[:6, 7]) == 0:
         return False
     if sum(adj[8:, 6]) > 0 or sum(adj[8:, 7]) > 0:
         return False
-    #B3:
+    # B3:
     if sum(adj[:8, 8]) == 0 or sum(adj[:8, 9]) == 0:
         return False
     return True

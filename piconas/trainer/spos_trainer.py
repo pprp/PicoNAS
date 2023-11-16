@@ -11,7 +11,6 @@ from .registry import register_trainer
 
 @register_trainer
 class SPOSTrainer(BaseTrainer):
-
     def __init__(
         self,
         model: nn.Module,
@@ -37,7 +36,8 @@ class SPOSTrainer(BaseTrainer):
             searching=searching,
             print_freq=print_freq,
             dataset=dataset,
-            **kwargs)
+            **kwargs,
+        )
         if self.mutator is None:
             self.mutator = OneShotMutator()
             self.mutator.prepare_from_supernet(model)

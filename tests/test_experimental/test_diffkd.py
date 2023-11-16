@@ -23,16 +23,19 @@ def diffkendall(x, y, alpha=0.5):
     y_diff = y[:, None, :] - y[:, :, None]
 
     # Numerator
-    num = (torch.sigmoid(alpha*x_diff) - torch.sigmoid(-alpha*x_diff)) * \
-          (torch.sigmoid(alpha*y_diff) - torch.sigmoid(-alpha*y_diff))
+    num = (torch.sigmoid(alpha * x_diff) - torch.sigmoid(-alpha * x_diff)) * (
+        torch.sigmoid(alpha * y_diff) - torch.sigmoid(-alpha * y_diff)
+    )
 
     # Denominator
-    den = (torch.sigmoid(alpha*x_diff) + torch.sigmoid(-alpha*x_diff)) * \
-          (torch.sigmoid(alpha*y_diff) + torch.sigmoid(-alpha*y_diff))
+    den = (torch.sigmoid(alpha * x_diff) + torch.sigmoid(-alpha * x_diff)) * (
+        torch.sigmoid(alpha * y_diff) + torch.sigmoid(-alpha * y_diff)
+    )
 
     # DiffKendall
-    diffkendall = (num.sum(-1).sum(-1) - num.diagonal(dim1=-2, dim2=-1).sum(-1)) / \
-                  ((D-1) * D / 2)
+    diffkendall = (num.sum(-1).sum(-1) - num.diagonal(dim1=-2, dim2=-1).sum(-1)) / (
+        (D - 1) * D / 2
+    )
 
     return diffkendall
 

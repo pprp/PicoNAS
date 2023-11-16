@@ -36,12 +36,7 @@ class FFDecoder(nn.Module):
 
 
 class SegmentationDecoder(nn.Module):
-
-    def __init__(self,
-                 in_dim,
-                 target_dim,
-                 target_num_channel=3,
-                 norm=nn.BatchNorm2d):
+    def __init__(self, in_dim, target_dim, target_num_channel=3, norm=nn.BatchNorm2d):
         """
         8-Layer Conv & Deconv Decoder for Segmentation task
         :param in_dim: input feature map dimension
@@ -53,32 +48,29 @@ class SegmentationDecoder(nn.Module):
         in_channel, in_width = in_dim[0], in_dim[1]  # (512, 14)
         out_width = target_dim[0]  # 256
         num_upsample = int(math.log2(out_width / in_width))
-        assert num_upsample in [2, 3, 4, 5,
-                                6], f'invalid num_upsample: {num_upsample}'
+        assert num_upsample in [2, 3, 4, 5, 6], f'invalid num_upsample: {num_upsample}'
 
-        model = [
-            ConvLayer(in_channel, 1024, 3, 1, 1, nn.LeakyReLU(0.2, False),
-                      norm)
-        ]
+        model = [ConvLayer(in_channel, 1024, 3, 1, 1, nn.LeakyReLU(0.2, False), norm)]
 
         tmp_in_C = 1024
         for i in range(6 - num_upsample):  # add non-upsampling layers
             model += [
-                ConvLayer(tmp_in_C, tmp_in_C // 2, 3, 1, 1,
-                          nn.LeakyReLU(0.2, False), norm)
+                ConvLayer(
+                    tmp_in_C, tmp_in_C // 2, 3, 1, 1, nn.LeakyReLU(0.2, False), norm
+                )
             ]
             tmp_in_C = tmp_in_C // 2
 
         for i in range(num_upsample - 1):  # add upsampling layers
             model += [
-                DeconvLayer(tmp_in_C, tmp_in_C // 2, 3, 2, 1,
-                            nn.LeakyReLU(0.2, False), norm)
+                DeconvLayer(
+                    tmp_in_C, tmp_in_C // 2, 3, 2, 1, nn.LeakyReLU(0.2, False), norm
+                )
             ]
             tmp_in_C = tmp_in_C // 2
 
         model += [
-            DeconvLayer(tmp_in_C, tmp_in_C, 3, 2, 1, nn.LeakyReLU(0.2, False),
-                        norm)
+            DeconvLayer(tmp_in_C, tmp_in_C, 3, 2, 1, nn.LeakyReLU(0.2, False), norm)
         ]
 
         model += [ConvLayer(tmp_in_C, target_num_channel, 3, 1, 1, None, None)]
@@ -89,12 +81,7 @@ class SegmentationDecoder(nn.Module):
 
 
 class GenerativeDecoder(nn.Module):
-
-    def __init__(self,
-                 in_dim,
-                 target_dim,
-                 target_num_channel=3,
-                 norm=nn.BatchNorm2d):
+    def __init__(self, in_dim, target_dim, target_num_channel=3, norm=nn.BatchNorm2d):
         """
         8-Layer Conv & Deconv Decoder for Image Translation (Pix2Pix) task
         :param in_dim: input feature map dimension
@@ -107,23 +94,19 @@ class GenerativeDecoder(nn.Module):
         in_channel, in_width = in_dim[0], in_dim[1]  # (512, 14)
         out_width = target_dim[0]  # 256
         num_upsample = int(math.log2(out_width / in_width))
-        assert num_upsample in [2, 3, 4, 5,
-                                6], f'invalid num_upsample: {num_upsample}'
+        assert num_upsample in [2, 3, 4, 5, 6], f'invalid num_upsample: {num_upsample}'
 
-        self.conv1 = ConvLayer(in_channel, 1024, 3, 1, 1, nn.LeakyReLU(0.2),
-                               norm)
+        self.conv1 = ConvLayer(in_channel, 1024, 3, 1, 1, nn.LeakyReLU(0.2), norm)
 
         self.conv2 = ConvLayer(1024, 1024, 3, 1, 1, nn.LeakyReLU(0.2), norm)
         if num_upsample == 6:
-            self.conv3 = DeconvLayer(1024, 512, 3, 2, 1, nn.LeakyReLU(0.2),
-                                     norm)
+            self.conv3 = DeconvLayer(1024, 512, 3, 2, 1, nn.LeakyReLU(0.2), norm)
         else:
             self.conv3 = ConvLayer(1024, 512, 3, 1, 1, nn.LeakyReLU(0.2), norm)
 
         self.conv4 = ConvLayer(512, 512, 3, 1, 1, nn.LeakyReLU(0.2), norm)
         if num_upsample >= 5:
-            self.conv5 = DeconvLayer(512, 256, 3, 2, 1, nn.LeakyReLU(0.2),
-                                     norm)
+            self.conv5 = DeconvLayer(512, 256, 3, 2, 1, nn.LeakyReLU(0.2), norm)
         else:
             self.conv5 = ConvLayer(512, 256, 3, 1, 1, nn.LeakyReLU(0.2), norm)
 
@@ -145,8 +128,7 @@ class GenerativeDecoder(nn.Module):
         self.conv12 = ConvLayer(16, 32, 3, 1, 1, nn.LeakyReLU(0.2), norm)
         self.conv13 = DeconvLayer(32, 16, 3, 2, 1, nn.LeakyReLU(0.2), norm)
 
-        self.conv14 = ConvLayer(16, target_num_channel, 3, 1, 1, nn.Tanh(),
-                                None)
+        self.conv14 = ConvLayer(16, target_num_channel, 3, 1, 1, nn.Tanh(), None)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -168,6 +150,5 @@ class GenerativeDecoder(nn.Module):
 
 
 if __name__ == '__main__':
-    net = GenerativeDecoder((512, 16, 16), (256, 256),
-                            target_num_channel=3).cuda()
+    net = GenerativeDecoder((512, 16, 16), (256, 256), target_num_channel=3).cuda()
     # summary(net, (512, 16, 16))

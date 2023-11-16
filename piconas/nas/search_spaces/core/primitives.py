@@ -73,12 +73,9 @@ class EdgeNormalizationCombOp(AbstractCombOp):
     """
 
     def __call__(self, tensors, edges_data):
-        weights = [
-            edge_data.edge_normalization_beta for edge_data in edges_data
-        ]
+        weights = [edge_data.edge_normalization_beta for edge_data in edges_data]
         weighted_tensors = [
-            t * w for t, w in zip(tensors,
-                                  torch.softmax(torch.Tensor(weights), dim=-1))
+            t * w for t, w in zip(tensors, torch.softmax(torch.Tensor(weights), dim=-1))
         ]
         return super(EdgeNormalizationCombOp, self).__call__(weighted_tensors)
 
@@ -121,7 +118,7 @@ class Zero(AbstractPrimitive):
             if self.stride == 1:
                 return x.mul(0.0)
             else:
-                return x[:, :, ::self.stride, ::self.stride].mul(0.0)
+                return x[:, :, :: self.stride, :: self.stride].mul(0.0)
         else:
             shape = list(x.shape)
             shape[1], shape[2], shape[3] = (
@@ -159,7 +156,7 @@ class Zero1x1(AbstractPrimitive):
         if self.stride == 1:
             return x.mul(0.0)
         else:
-            x = x[:, :, ::self.stride, ::self.stride].mul(0.0)
+            x = x[:, :, :: self.stride, :: self.stride].mul(0.0)
             return torch.cat([x, x], dim=1)  # double the channels
 
     forward_beforeGP = forward
@@ -177,14 +174,9 @@ class SepConv(AbstractPrimitive):
     in the DARTS paper, i.e. 2 sepconv directly after another.
     """
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_size,
-                 stride,
-                 padding,
-                 affine=False,
-                 **kwargs):
+    def __init__(
+        self, C_in, C_out, kernel_size, stride, padding, affine=False, **kwargs
+    ):
         super().__init__(locals())
         self.kernel_size = kernel_size
         self.op = nn.Sequential(
@@ -235,15 +227,17 @@ class DilConv(AbstractPrimitive):
     used in the DARTS paper.
     """
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_size,
-                 stride,
-                 padding,
-                 dilation,
-                 affine=False,
-                 **kwargs):
+    def __init__(
+        self,
+        C_in,
+        C_out,
+        kernel_size,
+        stride,
+        padding,
+        dilation,
+        affine=False,
+        **kwargs,
+    ):
         super().__init__(locals())
         self.kernel_size = kernel_size
         self.op = nn.Sequential(
@@ -286,8 +280,8 @@ class Stem(AbstractPrimitive):
     def __init__(self, C_in=3, C_out=64, **kwargs):
         super().__init__(locals())
         self.seq = nn.Sequential(
-            nn.Conv2d(C_in, C_out, 3, padding=1, bias=False),
-            nn.BatchNorm2d(C_out))
+            nn.Conv2d(C_in, C_out, 3, padding=1, bias=False), nn.BatchNorm2d(C_out)
+        )
 
     def forward(self, x, edge_data=None):
         return self.seq(x)
@@ -319,7 +313,6 @@ class Sequential(AbstractPrimitive):
 
 
 class MaxPool(AbstractPrimitive):
-
     def __init__(self, C_in, kernel_size, stride, use_bn=True, **kwargs):
         super().__init__(locals())
         self.kernel_size = kernel_size
@@ -349,20 +342,15 @@ class MaxPool1x1(AbstractPrimitive):
     the number of channels.
     """
 
-    def __init__(self,
-                 kernel_size,
-                 stride,
-                 C_in=None,
-                 C_out=None,
-                 affine=False,
-                 **kwargs):
+    def __init__(
+        self, kernel_size, stride, C_in=None, C_out=None, affine=False, **kwargs
+    ):
         super().__init__(locals())
         self.stride = stride
         self.maxpool = nn.MaxPool2d(kernel_size, stride=stride, padding=1)
         if stride > 1:
             assert C_in is not None and C_out is not None
-            self.conv = nn.Conv2d(
-                C_in, C_out, 1, stride=1, padding=0, bias=False)
+            self.conv = nn.Conv2d(C_in, C_out, 1, stride=1, padding=0, bias=False)
             self.bn = nn.BatchNorm2d(C_out, affine=affine)
 
     def forward(self, x, edge_data):
@@ -388,13 +376,13 @@ class AvgPool(AbstractPrimitive):
 
         if use_bn:
             self.avgpool = nn.Sequential(
-                nn.AvgPool2d(
-                    3, stride=stride, padding=1, count_include_pad=False),
+                nn.AvgPool2d(3, stride=stride, padding=1, count_include_pad=False),
                 nn.BatchNorm2d(C_in, affine=False),
             )
         else:
             self.avgpool = nn.AvgPool2d(
-                3, stride=stride, padding=1, count_include_pad=False)
+                3, stride=stride, padding=1, count_include_pad=False
+            )
 
     def forward(self, x, edge_data):
         x = self.avgpool(x)
@@ -413,21 +401,17 @@ class AvgPool1x1(AbstractPrimitive):
     to increase the number of channels if stride > 1.
     """
 
-    def __init__(self,
-                 kernel_size,
-                 stride,
-                 C_in=None,
-                 C_out=None,
-                 affine=False,
-                 **kwargs):
+    def __init__(
+        self, kernel_size, stride, C_in=None, C_out=None, affine=False, **kwargs
+    ):
         super().__init__(locals())
         self.stride = stride
         self.avgpool = nn.AvgPool2d(
-            3, stride=stride, padding=1, count_include_pad=False)
+            3, stride=stride, padding=1, count_include_pad=False
+        )
         if stride > 1:
             assert C_in is not None and C_out is not None
-            self.conv = nn.Conv2d(
-                C_in, C_out, 1, stride=1, padding=0, bias=False)
+            self.conv = nn.Conv2d(C_in, C_out, 1, stride=1, padding=0, bias=False)
             self.bn = nn.BatchNorm2d(C_out, affine=affine)
 
     def forward(self, x, edge_data):
@@ -481,15 +465,10 @@ class ReLUConvBN(AbstractPrimitive):
         pad = 0 if kernel_size == 1 else 1
         self.op = nn.Sequential(
             nn.ReLU(inplace=False),
-            nn.Conv2d(
-                C_in,
-                C_out,
-                kernel_size,
-                stride=stride,
-                padding=pad,
-                bias=bias),
+            nn.Conv2d(C_in, C_out, kernel_size, stride=stride, padding=pad, bias=bias),
             nn.BatchNorm2d(
-                C_out, affine=affine, track_running_stats=track_running_stats),
+                C_out, affine=affine, track_running_stats=track_running_stats
+            ),
         )
 
     def forward(self, x, edge_data=None):
@@ -512,24 +491,12 @@ class ConvBnReLU(AbstractPrimitive):
     Implementation of 2d convolution, followed by 2d batch normalization and ReLU activation.
     """
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_size,
-                 stride=1,
-                 affine=False,
-                 **kwargs):
+    def __init__(self, C_in, C_out, kernel_size, stride=1, affine=False, **kwargs):
         super().__init__(locals())
         self.kernel_size = kernel_size
         pad = 0 if stride == 1 and kernel_size == 1 else 1
         self.op = nn.Sequential(
-            nn.Conv2d(
-                C_in,
-                C_out,
-                kernel_size,
-                stride=stride,
-                padding=pad,
-                bias=False),
+            nn.Conv2d(C_in, C_out, kernel_size, stride=stride, padding=pad, bias=False),
             nn.BatchNorm2d(C_out, affine=affine),
             nn.ReLU(inplace=False),
         )
@@ -592,12 +559,8 @@ class Concat1x1(nn.Module):
     def __init__(self, num_in_edges, C_out, affine=False, **kwargs):
         super().__init__()
         self.conv = nn.Conv2d(
-            num_in_edges * C_out,
-            C_out,
-            kernel_size=1,
-            stride=1,
-            padding=0,
-            bias=False)
+            num_in_edges * C_out, C_out, kernel_size=1, stride=1, padding=0, bias=False
+        )
         self.bn = nn.BatchNorm2d(C_out, affine=affine)
 
     def forward(self, x):
@@ -622,8 +585,8 @@ class StemJigsaw(AbstractPrimitive):
     def __init__(self, C_in=3, C_out=64, **kwargs):
         super().__init__(locals())
         self.seq = nn.Sequential(
-            nn.Conv2d(C_in, C_out, 3, padding=1, bias=False),
-            nn.BatchNorm2d(C_out))
+            nn.Conv2d(C_in, C_out, 3, padding=1, bias=False), nn.BatchNorm2d(C_out)
+        )
         # self.seq = nn.Sequential(*list(models.resnet50().children())[:-2])
 
     def forward(self, x, edge_data=None):
@@ -664,35 +627,26 @@ class SequentialJigsaw(AbstractPrimitive):
 
 
 class GenerativeDecoder(AbstractPrimitive):
-
-    def __init__(self,
-                 in_dim,
-                 target_dim,
-                 target_num_channel=3,
-                 norm=nn.BatchNorm2d):
+    def __init__(self, in_dim, target_dim, target_num_channel=3, norm=nn.BatchNorm2d):
         super(GenerativeDecoder, self).__init__(locals())
 
         in_channel, in_width = in_dim[0], in_dim[1]
         out_width = target_dim[0]
         num_upsample = int(math.log2(out_width / in_width))
-        assert num_upsample in [2, 3, 4, 5,
-                                6], f'invalid num_upsample: {num_upsample}'
+        assert num_upsample in [2, 3, 4, 5, 6], f'invalid num_upsample: {num_upsample}'
 
-        self.conv1 = ConvLayer(in_channel, 1024, 3, 1, 1, nn.LeakyReLU(0.2),
-                               norm)
+        self.conv1 = ConvLayer(in_channel, 1024, 3, 1, 1, nn.LeakyReLU(0.2), norm)
         self.conv2 = ConvLayer(1024, 1024, 3, 2, 1, nn.LeakyReLU(0.2), norm)
 
         if num_upsample == 6:
-            self.conv3 = DeconvLayer(1024, 512, 3, 2, 1, nn.LeakyReLU(0.2),
-                                     norm)
+            self.conv3 = DeconvLayer(1024, 512, 3, 2, 1, nn.LeakyReLU(0.2), norm)
         else:
             self.conv3 = ConvLayer(1024, 512, 3, 1, 1, nn.LeakyReLU(0.2), norm)
 
         self.conv4 = ConvLayer(512, 512, 3, 1, 1, nn.LeakyReLU(0.2), norm)
 
         if num_upsample >= 5:
-            self.conv5 = DeconvLayer(512, 256, 3, 2, 1, nn.LeakyReLU(0.2),
-                                     norm)
+            self.conv5 = DeconvLayer(512, 256, 3, 2, 1, nn.LeakyReLU(0.2), norm)
         else:
             self.conv5 = ConvLayer(512, 256, 3, 1, 1, nn.LeakyReLU(0.2), norm)
 
@@ -716,8 +670,7 @@ class GenerativeDecoder(AbstractPrimitive):
         self.conv12 = ConvLayer(16, 32, 3, 1, 1, nn.LeakyReLU(0.2), norm)
         self.conv13 = DeconvLayer(32, 16, 3, 2, 1, nn.LeakyReLU(0.2), norm)
 
-        self.conv14 = ConvLayer(16, target_num_channel, 3, 1, 1, nn.Tanh(),
-                                norm)
+        self.conv14 = ConvLayer(16, target_num_channel, 3, 1, 1, nn.Tanh(), norm)
 
     def forward(self, x, edge_data):
         x = self.conv1(x)
@@ -743,13 +696,14 @@ class GenerativeDecoder(AbstractPrimitive):
 
 
 class ConvLayer(nn.Module):
-
-    def __init__(self, in_channel, out_channel, kernel, stride, padding,
-                 activation, norm):
+    def __init__(
+        self, in_channel, out_channel, kernel, stride, padding, activation, norm
+    ):
         super(ConvLayer, self).__init__()
 
         self.conv = nn.Conv2d(
-            in_channel, out_channel, kernel, stride=stride, padding=padding)
+            in_channel, out_channel, kernel, stride=stride, padding=padding
+        )
         self.activation = activation
         if norm:
             if norm == nn.BatchNorm2d:
@@ -772,9 +726,9 @@ class ConvLayer(nn.Module):
 
 
 class DeconvLayer(nn.Module):
-
-    def __init__(self, in_channel, out_channel, kernel, stride, padding,
-                 activation, norm):
+    def __init__(
+        self, in_channel, out_channel, kernel, stride, padding, activation, norm
+    ):
         super(DeconvLayer, self).__init__()
 
         self.conv = nn.ConvTranspose2d(

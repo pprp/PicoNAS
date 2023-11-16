@@ -8,10 +8,17 @@ import torch
 from tqdm import tqdm
 
 # define a adjacent matrix of straight networks
-s0_adj = torch.LongTensor([[0, 1, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0],
-                           [0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 1, 0, 0],
-                           [0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 1],
-                           [0, 0, 0, 0, 0, 0, 0]])
+s0_adj = torch.LongTensor(
+    [
+        [0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0],
+    ]
+)
 
 
 def read_feature(emb_path):
@@ -45,12 +52,14 @@ def adj2graph(ops, adj):
             node_num[i],
             torch.nonzero(adj[i]).tolist(),
             vertex_attrs={'operation': node_ops_nonzero[i]},
-            directed=True) for i in range(batch_size)
+            directed=True,
+        )
+        for i in range(batch_size)
     ]
     return G
 
 
-'''Network visualization'''
+"""Network visualization"""
 
 
 def plot_DAG(g, res_dir, name, data_type, backbone=False):
@@ -62,7 +71,8 @@ def plot_DAG(g, res_dir, name, data_type, backbone=False):
 
 def draw_network(g, path, data_type, backbone=False):
     graph = pgv.AGraph(
-        directed=True, strict=True, fontname='Helvetica', arrowtype='open')
+        directed=True, strict=True, fontname='Helvetica', arrowtype='open'
+    )
     if g is None:
         add_node(graph, 0, 0)
         graph.layout(prog='dot')
@@ -89,12 +99,9 @@ def draw_network(g, path, data_type, backbone=False):
     graph.draw(path)
 
 
-def add_node(graph,
-             node_id,
-             label,
-             data_type='nasbench101',
-             shape='box',
-             style='filled'):
+def add_node(
+    graph, node_id, label, data_type='nasbench101', shape='box', style='filled'
+):
     if data_type == 'nasbench101':
         if label == 0:
             label = 'in'
@@ -146,14 +153,14 @@ def add_node(graph,
         fillcolor=color,
         shape=shape,
         style=style,
-        fontsize=24)
+        fontsize=24,
+    )
 
 
 def get_straight(dataset, num=1):
     # find a straight network
     idx = []
-    for i in tqdm(
-            range(len(dataset)), desc='find {} straight nets'.format(num)):
+    for i in tqdm(range(len(dataset)), desc='find {} straight nets'.format(num)):
         tmp = torch.LongTensor(dataset[str(i)]['module_adjacency'])
         if torch.all(s0_adj == tmp):
             idx.append(i)
@@ -165,7 +172,6 @@ def get_straight(dataset, num=1):
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser('Visualize Networks (Graph)')
     parser.add_argument(
         '--data_type',
@@ -173,37 +179,43 @@ if __name__ == '__main__':
         default='nasbench101',
         help='benchmark type (default: nasbench101)',
         choices=['nasbench101', 'nasbench201', 'darts'],
-        metavar='TYPE')
+        metavar='TYPE',
+    )
     parser.add_argument(
         '--data_path',
         type=str,
         default=None,
         help='data *.json file (default: None)',
-        metavar='PATH')
+        metavar='PATH',
+    )
     parser.add_argument(
         '--output_path',
         type=str,
         default='./output',
         help='output path (default: None)',
-        metavar='PATH')
+        metavar='PATH',
+    )
     parser.add_argument(
         '--random_path',
         type=int,
         default=50,
         help='num of paths to visualization (default: 50)',
-        metavar='N')
+        metavar='N',
+    )
     parser.add_argument(
         '--path_step',
         type=int,
         default=10,
         help='num of points of each visualization (default: 10)',
-        metavar='N')
+        metavar='N',
+    )
     parser.add_argument(
         '--straight_path',
         type=int,
         default=10,
         help='num of paths starting at a straight networks (default: 10)',
-        metavar='N')
+        metavar='N',
+    )
     parser.add_argument('--seed', type=int, default=0)
 
     args = parser.parse_args()
@@ -214,23 +226,39 @@ if __name__ == '__main__':
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
 
-    output_path = os.path.join(args.output_path, args.data_type,
-                               '{}steps'.format(args.path_step))
+    output_path = os.path.join(
+        args.output_path, args.data_type, '{}steps'.format(args.path_step)
+    )
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     if not os.path.exists(os.path.join(output_path, 'compare')):
         os.makedirs(os.path.join(output_path, 'compare'))
 
     adj = torch.tensor(
-        [[0, 1, 0, 0, 0, 0, 1], [0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 1],
-         [0, 0, 0, 0, 1, 1, 0], [0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 1],
-         [0, 0, 0, 0, 0, 0, 0]],
-        dtype=torch.int32)
+        [
+            [0, 1, 0, 0, 0, 0, 1],
+            [0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 1],
+            [0, 0, 0, 0, 1, 1, 0],
+            [0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0],
+        ],
+        dtype=torch.int32,
+    )
 
     ops = torch.tensor(
-        [[1, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 1, 0, 0, 0], [0, 0, 1, 0, 0],
-         [0, 1, 0, 0, 0], [0, 0, 0, 1, 0], [0, 0, 0, 0, 1]],
-        dtype=torch.int32)
+        [
+            [1, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 1],
+        ],
+        dtype=torch.int32,
+    )
 
     G = adj2graph(ops, adj)
     file_name = plot_DAG(G[0], os.path.curdir, 'example', 'nasbench201')

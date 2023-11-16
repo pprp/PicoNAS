@@ -12,12 +12,14 @@ pos = data[:, 0]
 # Normalize feature importance to enhance discriminability
 scaler = MinMaxScaler()
 feature_importance_normalized = scaler.fit_transform(
-    feature_importance.reshape(-1, 1)).flatten()
+    feature_importance.reshape(-1, 1)
+).flatten()
 
 # Apply Mean Filter to feature importance
 smooth_filter = np.ones(3) / 3
 feature_importance_normalized = np.convolve(
-    feature_importance_normalized, smooth_filter, mode='same')
+    feature_importance_normalized, smooth_filter, mode='same'
+)
 
 # Create a figure with adjusted colors and styles
 plt.figure(figsize=(14, 7))
@@ -25,7 +27,8 @@ plt.stackplot(
     pos,
     feature_importance_normalized,
     baseline='wiggle',
-    colors=cmap(np.linspace(0.2, 0.8, len(pos))))
+    colors=cmap(np.linspace(0.2, 0.8, len(pos))),
+)
 
 plt.yticks(fontsize=14)
 plt.xlabel('Layer Index', fontsize=18)
@@ -39,10 +42,13 @@ plt.colorbar(
     plt.cm.ScalarMappable(
         norm=plt.Normalize(
             vmin=min(feature_importance_normalized),
-            vmax=max(feature_importance_normalized)),
-        cmap=cmap),
+            vmax=max(feature_importance_normalized),
+        ),
+        cmap=cmap,
+    ),
     orientation='vertical',
-    pad=0.02)
+    pad=0.02,
+)
 
 plt.tight_layout()
 plt.savefig('./gbdt_streamgraph_normalized.png')

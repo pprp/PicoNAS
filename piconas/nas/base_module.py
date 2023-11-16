@@ -18,10 +18,9 @@ def update_init_info(module, init_info):
         init_info (str): The string that describes the initialization.
     """
     assert hasattr(
-        module,
-        '_params_init_info'), f'Can not find `_params_init_info` in {module}'
+        module, '_params_init_info'
+    ), f'Can not find `_params_init_info` in {module}'
     for name, param in module.named_parameters():
-
         assert param in module._params_init_info, (
             f'Find a new :obj:`Parameter` '
             f'named `{name}` during executing the '
@@ -29,7 +28,8 @@ def update_init_info(module, init_info):
             f'`{module.__class__.__name__}`. '
             f'Please do not add or '
             f'replace parameters during executing '
-            f'the `init_weights`. ')
+            f'the `init_weights`. '
+        )
 
         # The parameter has been changed during executing the
         # `init_weights` of module
@@ -85,8 +85,10 @@ def initialize(module, init_cfg):
                 checkpoint=url, prefix='backbone.')
     """
     if not isinstance(init_cfg, (dict, list)):
-        raise TypeError(f'init_cfg must be a dict or a list of dict, \
-                but got {type(init_cfg)}')
+        raise TypeError(
+            f'init_cfg must be a dict or a list of dict, \
+                but got {type(init_cfg)}'
+        )
 
     if isinstance(init_cfg, dict):
         init_cfg = [init_cfg]
@@ -178,12 +180,14 @@ class BaseModule(nn.Module, metaclass=ABCMeta):
             # the corresponding parameter is changed, update related
             # initialization information
             for name, param in self.named_parameters():
+                self._params_init_info[param]['init_info'] = (
+                    f'The value is the same before and '
+                    f'after calling `init_weights` '
+                    f'of {self.__class__.__name__} '
+                )
                 self._params_init_info[param][
-                    'init_info'] = f'The value is the same before and ' \
-                                   f'after calling `init_weights` ' \
-                                   f'of {self.__class__.__name__} '
-                self._params_init_info[param][
-                    'tmp_mean_value'] = param.data.mean().cpu()
+                    'tmp_mean_value'
+                ] = param.data.mean().cpu()
 
             # pass `params_init_info` to all submodules
             # All submodules share the same `params_init_info`,
@@ -215,15 +219,15 @@ class BaseModule(nn.Module, metaclass=ABCMeta):
                 initialize(self, other_cfgs)
 
             for m in self.children():
-                if hasattr(m, 'init_weights') and not getattr(
-                        m, 'is_init', False):
+                if hasattr(m, 'init_weights') and not getattr(m, 'is_init', False):
                     m.init_weights()
                     # users may overload the `init_weights`
                     update_init_info(
                         m,
                         init_info=f'Initialized by '
                         f'user-defined `init_weights`'
-                        f' in {m.__class__.__name__} ')
+                        f' in {m.__class__.__name__} ',
+                    )
             if self.init_cfg and pretrained_cfg:
                 initialize(self, pretrained_cfg)
             self._is_init = True
@@ -267,9 +271,9 @@ class ModuleList(BaseModule, nn.ModuleList):
         init_cfg (dict, optional): Initialization config dict.
     """
 
-    def __init__(self,
-                 modules: Optional[Iterable] = None,
-                 init_cfg: Optional[dict] = None):
+    def __init__(
+        self, modules: Optional[Iterable] = None, init_cfg: Optional[dict] = None
+    ):
         BaseModule.__init__(self, init_cfg)
         nn.ModuleList.__init__(self, modules)
 
@@ -286,8 +290,6 @@ class ModuleDict(BaseModule, nn.ModuleDict):
         init_cfg (dict, optional): Initialization config dict.
     """
 
-    def __init__(self,
-                 modules: Optional[dict] = None,
-                 init_cfg: Optional[dict] = None):
+    def __init__(self, modules: Optional[dict] = None, init_cfg: Optional[dict] = None):
         BaseModule.__init__(self, init_cfg)
         nn.ModuleDict.__init__(self, modules)

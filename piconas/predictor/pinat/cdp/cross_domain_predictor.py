@@ -28,40 +28,38 @@ def graph_pooling(inputs, num_vertices):
     return torch.div(out, num_vertices.unsqueeze(-1).expand_as(out))
 
 
-def get_train_dataloader(normal_layer,
-                         train_batch_size,
-                         percentile=False,
-                         using_dataset='all'):
+def get_train_dataloader(
+    normal_layer, train_batch_size, percentile=False, using_dataset='all'
+):
     train_dataloader_set = []
     for i in range(4):
         train_dataset = Dataset_Train(
             split_type=i,
             normal_layer=normal_layer,
             percentile=percentile,
-            using_dataset=using_dataset)
+            using_dataset=using_dataset,
+        )
         train_dataloader = DataLoader(
-            train_dataset, batch_size=train_batch_size, shuffle=True)
+            train_dataset, batch_size=train_batch_size, shuffle=True
+        )
         train_dataloader_set.append(train_dataloader)
     if percentile:
         return train_dataloader_set, train_dataset.percentile
     return train_dataloader_set
 
 
-def get_target_train_dataloader(train_batch_size,
-                                dataset_num=None,
-                                dataset=None):
+def get_target_train_dataloader(train_batch_size, dataset_num=None, dataset=None):
     Darts = Dataset_Darts(dataset_num, dataset)
-    dataloader_darts = DataLoader(
-        Darts, batch_size=train_batch_size, shuffle=True)
+    dataloader_darts = DataLoader(Darts, batch_size=train_batch_size, shuffle=True)
     return dataloader_darts
 
 
 class DirectedGraphConvolution(nn.Module):
-    '''
+    """
     Wei Wen, Hanxiao Liu, Hai Li, Yiran Chen, Gabriel Bender, Pieter-Jan Kindermans. "Neural Predictor for Neural
     Architecture Search". arXiv:1912.00848.
     https://github.com/ultmaster/neuralpredictor.pytorch
-    '''
+    """
 
     def __init__(self, in_features, out_features):
         super().__init__()
@@ -78,37 +76,40 @@ class DirectedGraphConvolution(nn.Module):
 
     def forward(self, inputs, adj):
         norm_adj = normalize_adj(adj)
-        output1 = F.relu(
-            torch.matmul(norm_adj, torch.matmul(inputs, self.weight1)))
+        output1 = F.relu(torch.matmul(norm_adj, torch.matmul(inputs, self.weight1)))
         inv_norm_adj = normalize_adj(adj.transpose(1, 2))
-        output2 = F.relu(
-            torch.matmul(inv_norm_adj, torch.matmul(inputs, self.weight2)))
+        output2 = F.relu(torch.matmul(inv_norm_adj, torch.matmul(inputs, self.weight2)))
         out = (output1 + output2) / 2
         out = self.dropout(out)
         return out
 
     def __repr__(self):
-        return self.__class__.__name__ + ' (' \
-               + str(self.in_features) + ' -> ' \
-               + str(self.out_features) + ')'
+        return (
+            self.__class__.__name__
+            + ' ('
+            + str(self.in_features)
+            + ' -> '
+            + str(self.out_features)
+            + ')'
+        )
 
 
 class NeuralPredictor(nn.Module):
-    '''
+    """
     Wei Wen, Hanxiao Liu, Hai Li, Yiran Chen, Gabriel Bender, Pieter-Jan Kindermans. "Neural Predictor for Neural
     Architecture Search". arXiv:1912.00848.
     https://github.com/ultmaster/neuralpredictor.pytorch
-    '''
+    """
 
-    def __init__(self,
-                 initial_hidden=6,
-                 gcn_hidden=144,
-                 gcn_layers=5,
-                 linear_hidden=128):
+    def __init__(
+        self, initial_hidden=6, gcn_hidden=144, gcn_layers=5, linear_hidden=128
+    ):
         super().__init__()
         self.gcn = [
-            DirectedGraphConvolution(initial_hidden if i == 0 else gcn_hidden,
-                                     gcn_hidden) for i in range(gcn_layers)
+            DirectedGraphConvolution(
+                initial_hidden if i == 0 else gcn_hidden, gcn_hidden
+            )
+            for i in range(gcn_layers)
         ]
         self.gcn = nn.ModuleList(self.gcn)
         self.dropout = nn.Dropout(0.1)
@@ -116,12 +117,15 @@ class NeuralPredictor(nn.Module):
         self.fc2 = nn.Linear(linear_hidden, 1, bias=False)
 
     def forward(self, inputs):
-        numv, adj, out = inputs['num_vertices'], inputs['adjacency'], inputs[
-            'operations']
+        numv, adj, out = (
+            inputs['num_vertices'],
+            inputs['adjacency'],
+            inputs['operations'],
+        )
         gs = adj.size(1)  # graph node number
         adj_with_diag = normalize_adj(
-            adj +
-            torch.eye(gs, device=adj.device))  # assuming diagonal is not 1
+            adj + torch.eye(gs, device=adj.device)
+        )  # assuming diagonal is not 1
         for layer in self.gcn:
             out = layer(out, adj_with_diag)
         out = graph_pooling(out, numv)
@@ -132,7 +136,6 @@ class NeuralPredictor(nn.Module):
 
 
 class DomainAdaptationPredictor(nn.Module):
-
     def __init__(self, percentile, gcn_hidden):
         super(DomainAdaptationPredictor, self).__init__()
         self.NeuralPredictor = NeuralPredictor(gcn_hidden=gcn_hidden)
@@ -140,13 +143,7 @@ class DomainAdaptationPredictor(nn.Module):
         self.fc = nn.Linear(128, 1, bias=False)
         self.percentile = percentile
 
-    def forward(self,
-                source,
-                target,
-                s_label,
-                K,
-                kernel_type='rbf',
-                loss_type='lmmd'):
+    def forward(self, source, target, s_label, K, kernel_type='rbf', loss_type='lmmd'):
         loss = 0
         source = self.NeuralPredictor(source)
         if self.training == True:
@@ -175,7 +172,6 @@ class DomainAdaptationPredictor(nn.Module):
         return source, loss
 
     def one_hot_classification(self, K_percentile, labels):
-
         def classification(label, K_percentile):
             for j, percentile in enumerate(K_percentile):
                 if j == len(K_percentile) - 1:
@@ -192,7 +188,6 @@ class DomainAdaptationPredictor(nn.Module):
 
 
 class AdvDomainAdaptationPredictor(nn.Module):
-
     def __init__(self, percentile, gcn_hidden):
         super(AdvDomainAdaptationPredictor, self).__init__()
         self.NeuralPredictor = NeuralPredictor(gcn_hidden=gcn_hidden)
@@ -235,33 +230,35 @@ class AdvDomainAdaptationPredictor(nn.Module):
         return source, loss
 
 
-class GCN_predictor():
-
-    def __init__(self,
-                 percentile,
-                 gcn_hidden=144,
-                 speed='cos',
-                 K=3,
-                 is_adv=False):
+class GCN_predictor:
+    def __init__(self, percentile, gcn_hidden=144, speed='cos', K=3, is_adv=False):
         if is_adv == False:
             self.normal_predictor0 = DomainAdaptationPredictor(
-                percentile, gcn_hidden=gcn_hidden)
+                percentile, gcn_hidden=gcn_hidden
+            )
             self.normal_predictor1 = DomainAdaptationPredictor(
-                percentile, gcn_hidden=gcn_hidden)
+                percentile, gcn_hidden=gcn_hidden
+            )
             self.reduction_predictor0 = DomainAdaptationPredictor(
-                percentile, gcn_hidden=gcn_hidden)
+                percentile, gcn_hidden=gcn_hidden
+            )
             self.reduction_predictor1 = DomainAdaptationPredictor(
-                percentile, gcn_hidden=gcn_hidden)
+                percentile, gcn_hidden=gcn_hidden
+            )
         else:
             # using Adversarial loss
             self.normal_predictor0 = AdvDomainAdaptationPredictor(
-                percentile, gcn_hidden=gcn_hidden)
+                percentile, gcn_hidden=gcn_hidden
+            )
             self.normal_predictor1 = AdvDomainAdaptationPredictor(
-                percentile, gcn_hidden=gcn_hidden)
+                percentile, gcn_hidden=gcn_hidden
+            )
             self.reduction_predictor0 = AdvDomainAdaptationPredictor(
-                percentile, gcn_hidden=gcn_hidden)
+                percentile, gcn_hidden=gcn_hidden
+            )
             self.reduction_predictor1 = AdvDomainAdaptationPredictor(
-                percentile, gcn_hidden=gcn_hidden)
+                percentile, gcn_hidden=gcn_hidden
+            )
         self.speed = speed
         self._K = K
         self._is_adv = is_adv
@@ -272,25 +269,29 @@ class GCN_predictor():
         num_vertices = batch['num_vertices']
         operations = batch['operations']
         for i in range(4):
-            batch_set.append({
-                'adjacency': adjacency[i],
-                'num_vertices': num_vertices[i],
-                'operations': operations[i]
-            })
+            batch_set.append(
+                {
+                    'adjacency': adjacency[i],
+                    'num_vertices': num_vertices[i],
+                    'operations': operations[i],
+                }
+            )
 
         return batch_set
 
-    def train(self,
-              data_loader_set,
-              target_data_loader,
-              assistant_data_loader,
-              epochs=50,
-              init_lr=2e-3,
-              wd=1e-3,
-              train_print_freq=10,
-              assistant_rate=0.15,
-              loss_type='lmmd',
-              kernel_type='rbf'):
+    def train(
+        self,
+        data_loader_set,
+        target_data_loader,
+        assistant_data_loader,
+        epochs=50,
+        init_lr=2e-3,
+        wd=1e-3,
+        train_print_freq=10,
+        assistant_rate=0.15,
+        loss_type='lmmd',
+        kernel_type='rbf',
+    ):
         logger = get_logger()
         # assign K
         K = self._K
@@ -302,8 +303,10 @@ class GCN_predictor():
             assistant_data_loader = target_data_loader
 
         net_set = [
-            self.normal_predictor0, self.normal_predictor1,
-            self.reduction_predictor0, self.reduction_predictor1
+            self.normal_predictor0,
+            self.normal_predictor1,
+            self.reduction_predictor0,
+            self.reduction_predictor1,
         ]
         assert len(net_set) == len(data_loader_set)
         i = -1
@@ -311,21 +314,21 @@ class GCN_predictor():
             i += 1
             criterion = nn.MSELoss()
             net.cuda()
-            optimizer = optim.Adam(
-                net.parameters(), lr=init_lr, weight_decay=wd)
-            lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, epochs)
+            optimizer = optim.Adam(net.parameters(), lr=init_lr, weight_decay=wd)
+            lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, epochs)
             net.train()
             for epoch in range(epochs):
                 # calculate k first
                 # k = 2
                 if self.speed == 'cos':
-                    k = K - math.floor(
-                        math.cos((epoch + 1) / epochs * math.pi / 2) * K)
+                    k = K - math.floor(math.cos((epoch + 1) / epochs * math.pi / 2) * K)
                 elif self.speed == 'sin':
-                    k = math.floor(
-                        math.cos((epochs -
-                                  (epoch + 1)) / epochs * math.pi / 2) * K) + 1
+                    k = (
+                        math.floor(
+                            math.cos((epochs - (epoch + 1)) / epochs * math.pi / 2) * K
+                        )
+                        + 1
+                    )
                 else:
                     # linear
                     k = math.floor((epoch + 1) / epochs * K) + 1
@@ -360,7 +363,8 @@ class GCN_predictor():
                             s_label,
                             k,
                             loss_type=loss_type,
-                            kernel_type=kernel_type)
+                            kernel_type=kernel_type,
+                        )
                         mmd_loss = mmd_loss[0]
                     else:
                         # using Adversarial loss
@@ -380,27 +384,31 @@ class GCN_predictor():
                     loss.backward()
                     optimizer.step()
 
-                    meters.update({
-                        'loss': loss.item(),
-                        'DA_loss': mmd_loss
-                    },
-                                  n=s_label.size(0))
-                    if (train_print_freq and step % train_print_freq == 0) or \
-                            step + 1 == len(data_loader):
-                        logger.info('Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
-                                    epoch + 1, epochs, step + 1,
-                                    len(data_loader), lr, meters)
+                    meters.update(
+                        {'loss': loss.item(), 'DA_loss': mmd_loss}, n=s_label.size(0)
+                    )
+                    if (
+                        train_print_freq and step % train_print_freq == 0
+                    ) or step + 1 == len(data_loader):
+                        logger.info(
+                            'Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
+                            epoch + 1,
+                            epochs,
+                            step + 1,
+                            len(data_loader),
+                            lr,
+                            meters,
+                        )
                 lr_scheduler.step()
 
-    def train_without_domain_adaptation(self,
-                                        data_loader_set,
-                                        label,
-                                        epochs=50,
-                                        init_lr=5e-1,
-                                        wd=1e-3):
+    def train_without_domain_adaptation(
+        self, data_loader_set, label, epochs=50, init_lr=5e-1, wd=1e-3
+    ):
         net_set = [
-            self.normal_predictor0, self.normal_predictor1,
-            self.reduction_predictor0, self.reduction_predictor1
+            self.normal_predictor0,
+            self.normal_predictor1,
+            self.reduction_predictor0,
+            self.reduction_predictor1,
         ]
         label = torch.tensor(label)
         label = label.cuda()
@@ -412,13 +420,10 @@ class GCN_predictor():
             i += 1
             criterion = nn.MSELoss()
             net.cuda()
-            optimizer = optim.Adam(
-                net.parameters(), lr=init_lr, weight_decay=wd)
-            lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, epochs)
+            optimizer = optim.Adam(net.parameters(), lr=init_lr, weight_decay=wd)
+            lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, epochs)
             net.train()
             for epoch in range(epochs):
-
                 meters = AverageMeterGroup()
                 lr = optimizer.param_groups[0]['lr']
 
@@ -453,8 +458,10 @@ class GCN_predictor():
     def predict(self, pred_data_loader, normal_layer):
         normal_rate = normal_layer / (normal_layer + 2)
         net_set = [
-            self.normal_predictor0, self.normal_predictor1,
-            self.reduction_predictor0, self.reduction_predictor1
+            self.normal_predictor0,
+            self.normal_predictor1,
+            self.reduction_predictor0,
+            self.reduction_predictor1,
         ]
         predict_ = []
 
@@ -472,8 +479,7 @@ class GCN_predictor():
                     # no target in evaluation stage
                     target, s_label, K = None, None, None
                     if self._is_adv == False:
-                        predict, mmd_loss = net(batch_set[j], target, s_label,
-                                                K)
+                        predict, mmd_loss = net(batch_set[j], target, s_label, K)
                     else:
                         # using adversarial network
                         predict, _ = net(batch_set[j], target)
@@ -481,10 +487,14 @@ class GCN_predictor():
                     predict_list.append(predict)
 
                 # weighted sum
-                weighted_sum_y = normal_rate * (np.array(
-                    predict_list[0]) + np.array(predict_list[1])) / 2 + (
-                        1 - normal_rate) * (np.array(predict_list[2]) +
-                                            np.array(predict_list[3])) / 2
+                weighted_sum_y = (
+                    normal_rate
+                    * (np.array(predict_list[0]) + np.array(predict_list[1]))
+                    / 2
+                    + (1 - normal_rate)
+                    * (np.array(predict_list[2]) + np.array(predict_list[3]))
+                    / 2
+                )
                 predict_.extend(weighted_sum_y)
 
         assert len(predict_) == len(pred_data_loader.dataset)
@@ -498,7 +508,8 @@ if __name__ == '__main__':
         type=str,
         default='cifar',
         choices=['cifar', 'image'],
-        help='search for cells on cifar10 or on imagenet')
+        help='search for cells on cifar10 or on imagenet',
+    )
     parser.add_argument('--train_batch_size', default=1000, type=int)
     parser.add_argument('--test_batch_size', default=100000, type=int)
     parser.add_argument('--gpu_id', default='0', type=str)
@@ -514,10 +525,10 @@ if __name__ == '__main__':
     elif args.cifarORimage == 'image':
         normal_layer = 12
     else:
-        raise ValueError(
-            'the normal_type should be chosen from [\'cifar\', \'image\']')
+        raise ValueError("the normal_type should be chosen from ['cifar', 'image']")
     train_dataloader_set, percentile = get_train_dataloader(
-        normal_layer, args.train_batch_size, percentile=True)
+        normal_layer, args.train_batch_size, percentile=True
+    )
     # darts_save_path = 'path/darts_dataset.pkl'
     # if os.path.exists(darts_save_path):
     #     print('load dataset.')
@@ -527,26 +538,26 @@ if __name__ == '__main__':
     # else:
     Darts = Dataset_Darts()
     target_dataloader = DataLoader(
-        Darts, batch_size=args.train_batch_size, shuffle=True)
+        Darts, batch_size=args.train_batch_size, shuffle=True
+    )
     # assistant dataloader
     ### Maybe need to add a function saving tiny darts
     Tiny_darts = Dataset_Darts(dataset_num=5e4, dataset_type='tiny')
     assistant_dataloader = DataLoader(
-        Tiny_darts, batch_size=args.train_batch_size, shuffle=True)
+        Tiny_darts, batch_size=args.train_batch_size, shuffle=True
+    )
     predictor = GCN_predictor(percentile)
 
     localtime = time.asctime(time.localtime(time.time()))
     print('end loading training data, start training:{}'.format(localtime))
     # If you do not want to use the assistant dataloader
-    predictor.train(train_dataloader_set, target_dataloader,
-                    assistant_dataloader)
+    predictor.train(train_dataloader_set, target_dataloader, assistant_dataloader)
 
     # prediction
     localtime = time.asctime(time.localtime(time.time()))
     print('start loading darts data:{}'.format(localtime))
     # Darts = Dataset_Darts()
-    dataloader_darts = DataLoader(
-        Darts, batch_size=args.test_batch_size, shuffle=False)
+    dataloader_darts = DataLoader(Darts, batch_size=args.test_batch_size, shuffle=False)
 
     localtime = time.asctime(time.localtime(time.time()))
     print('start predicting:{}'.format(localtime))

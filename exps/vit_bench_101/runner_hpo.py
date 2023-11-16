@@ -23,10 +23,12 @@ os.makedirs(log_dir, exist_ok=True)
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
     filename=os.path.join(
-        log_dir, 'training_hpo_vit_bench_101.log'),  # Save logs to a file
+        log_dir, 'training_hpo_vit_bench_101.log'
+    ),  # Save logs to a file
     level=logging.INFO,
     format=log_format,
-    datefmt='%m/%d %I:%M:%S %p')
+    datefmt='%m/%d %I:%M:%S %p',
+)
 
 # Create a console handler to print logs to the console
 console_handler = logging.StreamHandler(sys.stdout)
@@ -43,8 +45,9 @@ def objective(trial):
     # Sample hyperparameters to optimize
     patch_size = 16
     max_sequence_length = 1024  # Maximum sequence length
-    sequence_length = trial.suggest_int('sequence_length', patch_size,
-                                        max_sequence_length)
+    sequence_length = trial.suggest_int(
+        'sequence_length', patch_size, max_sequence_length
+    )
     # Ensure sequence_length is divisible by patch_size
     sequence_length -= sequence_length % patch_size
     dim = trial.suggest_int('dim', 256, 2048)
@@ -61,13 +64,12 @@ def objective(trial):
     train_size = int(0.5 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = torch.utils.data.random_split(
-        dataset, [train_size, test_size])
+        dataset, [train_size, test_size]
+    )
 
     # Create data loaders for batch processing
-    train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(
-        test_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     # Create an instance of the MLP model and define the loss function and optimizer
     mlp_model = BaysianMLPMixer(
@@ -79,7 +81,8 @@ def objective(trial):
         emb_out_dim=1,
         expansion_factor=4,
         expansion_factor_token=0.5,
-        dropout=dropout)
+        dropout=dropout,
+    )
 
     loss_function = pair_loss
     optimizer = optim.Adam(mlp_model.parameters(), lr=learning_rate)
@@ -103,8 +106,7 @@ def objective(trial):
             optimizer.step()
 
         if (epoch + 1) % 2 == 0:
-            logging.info(
-                f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+            logging.info(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
     logging.info('Training completed!')
 

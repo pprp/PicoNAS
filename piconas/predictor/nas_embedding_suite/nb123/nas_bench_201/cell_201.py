@@ -17,8 +17,7 @@ def adj_distance(cell_1, cell_2):
     by comparing their adjacency matrices and op lists
     (edit distance)
     """
-    graph_dist = np.sum(
-        np.array(cell_1.get_matrix()) != np.array(cell_2.get_matrix()))
+    graph_dist = np.sum(np.array(cell_1.get_matrix()) != np.array(cell_2.get_matrix()))
     ops_dist = np.sum(np.array(cell_1.get_ops()) != np.array(cell_2.get_ops()))
     return graph_dist + ops_dist
 
@@ -31,11 +30,14 @@ def path_distance(cell_1, cell_2, cutoff=None):
     if cutoff:
         return np.sum(
             np.array(
-                cell_1.encode('trunc_path', cutoff=cutoff) != np.array(
-                    cell_2.encode('trunc_path', cutoff=cutoff))))
+                cell_1.encode('trunc_path', cutoff=cutoff)
+                != np.array(cell_2.encode('trunc_path', cutoff=cutoff))
+            )
+        )
     else:
         return np.sum(
-            np.array(cell_1.encode('path') != np.array(cell_2.encode('path'))))
+            np.array(cell_1.encode('path') != np.array(cell_2.encode('path')))
+        )
 
 
 def nasbot_distance(cell_1, cell_2):
@@ -43,9 +45,9 @@ def nasbot_distance(cell_1, cell_2):
     def adj_distance(cell_1, cell_2):
         cell_1_ops = cell_1.get_op_list()
         cell_2_ops = cell_2.get_op_list()
-        return np.sum([
-            1 for i in range(len(cell_1_ops)) if cell_1_ops[i] != cell_2_ops[i]
-        ])
+        return np.sum(
+            [1 for i in range(len(cell_1_ops)) if cell_1_ops[i] != cell_2_ops[i]]
+        )
 
     cell_1_ops = cell_1.get_op_list()
     cell_2_ops = cell_2.get_op_list()
@@ -68,7 +70,6 @@ LONGEST_PATH_LENGTH = 3
 
 
 class Cell201:
-
     def __init__(self, string):
         self.string = string
 
@@ -79,13 +80,15 @@ class Cell201:
         return {'string': self.string}
 
     @classmethod
-    def random_cell(cls,
-                    nasbench,
-                    max_nodes=None,
-                    max_edges=None,
-                    cutoff=None,
-                    index_hash=None,
-                    random_encoding=None):
+    def random_cell(
+        cls,
+        nasbench,
+        max_nodes=None,
+        max_edges=None,
+        cutoff=None,
+        index_hash=None,
+        random_encoding=None,
+    ):
         """
         From the AutoDL-Projects repository
         """
@@ -95,12 +98,9 @@ class Cell201:
             ops.append(op)
         return {'string': cls.get_string_from_ops(ops)}
 
-    def encode(self,
-               predictor_encoding,
-               nasbench=None,
-               deterministic=True,
-               cutoff=None):
-
+    def encode(
+        self, predictor_encoding, nasbench=None, deterministic=True, cutoff=None
+    ):
         if predictor_encoding == 'adj':
             return self.encode_standard()
         elif predictor_encoding == 'path':
@@ -112,12 +112,10 @@ class Cell201:
         elif predictor_encoding == 'gcn':
             return self.gcn_encoding(nasbench, deterministic=deterministic)
         else:
-            print('{} is an invalid predictor encoding'.format(
-                predictor_encoding))
+            print('{} is an invalid predictor encoding'.format(predictor_encoding))
             raise NotImplementedError()
 
     def gcn_encoding(self, nasbench, deterministic):
-
         def loss_to_normalized_acc(loss):
             MEAN = 0.908192
             STD = 0.023961
@@ -129,15 +127,23 @@ class Cell201:
         ops = self.get_op_list()
         ops = [INPUT, *ops, OUTPUT]
         ops_onehot = np.array(
-            [[i == op_map.index(op) for i in range(len(op_map))]
-             for op in ops],
-            dtype=np.float32)
+            [[i == op_map.index(op) for i in range(len(op_map))] for op in ops],
+            dtype=np.float32,
+        )
         val_loss = self.get_val_loss(nasbench, deterministic=deterministic)
         test_loss = self.get_test_loss(nasbench)
-        matrix = np.array([[0, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 1, 1, 0, 0],
-                           [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
-                           [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1],
-                           [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0]])
+        matrix = np.array(
+            [
+                [0, 1, 1, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 0, 0],
+                [0, 0, 0, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ]
+        )
 
         dic = {
             'num_vertices': 8,
@@ -145,14 +151,13 @@ class Cell201:
             'operations': ops_onehot,
             'mask': np.array([i < 8 for i in range(8)], dtype=np.float32),
             'val_acc': loss_to_normalized_acc(val_loss),
-            'test_acc': loss_to_normalized_acc(test_loss)
+            'test_acc': loss_to_normalized_acc(test_loss),
         }
 
         return dic
 
     def get_runtime(self, nasbench, dataset='cifar100'):
-        return nasbench.query_by_index(index,
-                                       dataset).get_eval('x-valid')['time']
+        return nasbench.query_by_index(index, dataset).get_eval('x-valid')['time']
 
     def get_val_loss(self, nasbench, deterministic=1, dataset='cifar100'):
         index = nasbench.query_index_by_arch(self.string)
@@ -187,10 +192,7 @@ class Cell201:
         # given a string, get the list of operations
 
         tokens = self.string.split('|')
-        ops = [
-            t.split('~')[0] for i, t in enumerate(tokens)
-            if i not in [0, 2, 5, 9]
-        ]
+        ops = [t.split('~')[0] for i, t in enumerate(tokens) if i not in [0, 2, 5, 9]]
         return ops
 
     def get_num(self):
@@ -230,13 +232,15 @@ class Cell201:
                 new_ops.append(op)
         return {'string': self.get_string_from_ops(new_ops)}
 
-    def mutate(self,
-               nasbench,
-               mutation_rate=1.0,
-               mutate_encoding='adj',
-               index_hash=None,
-               cutoff=30,
-               patience=5000):
+    def mutate(
+        self,
+        nasbench,
+        mutation_rate=1.0,
+        mutate_encoding='adj',
+        index_hash=None,
+        cutoff=30,
+        patience=5000,
+    ):
         p = 0
         if mutate_encoding == 'adj':
             ops = self.get_op_list()
@@ -335,9 +339,8 @@ class Cell201:
         return tuple(path_indices)
 
     def encode_paths(self):
-        """ output one-hot encoding of paths """
-        num_paths = sum(
-            [NUM_OPS**i for i in range(1, LONGEST_PATH_LENGTH + 1)])
+        """output one-hot encoding of paths"""
+        num_paths = sum([NUM_OPS**i for i in range(1, LONGEST_PATH_LENGTH + 1)])
         path_indices = self.get_path_indices()
         encoding = np.zeros(num_paths)
         for index in path_indices:
@@ -346,8 +349,7 @@ class Cell201:
 
     def encode_freq_paths(self, cutoff=30):
         # natural cutoffs 5, 30, 155 (last)
-        num_paths = sum(
-            [NUM_OPS**i for i in range(1, LONGEST_PATH_LENGTH + 1)])
+        num_paths = sum([NUM_OPS**i for i in range(1, LONGEST_PATH_LENGTH + 1)])
         path_indices = self.get_path_indices()
         encoding = np.zeros(cutoff)
         for index in range(min(num_paths, cutoff)):
@@ -383,7 +385,6 @@ class Cell201:
                     nbhd.append(new_arch)
 
         elif mutate_encoding in ['path', 'trunc_path']:
-
             if mutate_encoding == 'trunc_path':
                 path_blueprints = [[3], [0, 4], [1, 5]]
             else:
@@ -403,9 +404,7 @@ class Cell201:
                             if ops[j] != new_ops[j]:
                                 same = False
                         if not same:
-                            new_arch = {
-                                'string': self.get_string_from_ops(new_ops)
-                            }
+                            new_arch = {'string': self.get_string_from_ops(new_ops)}
                             nbhd.append(new_arch)
         else:
             print('{} is an invalid mutate encoding'.format(mutate_encoding))

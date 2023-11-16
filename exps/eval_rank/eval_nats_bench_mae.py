@@ -56,13 +56,10 @@ if __name__ == '__main__':
     dataloader = build_loader_simmim(is_train=False)
 
     # get trainer
-    trainer = MAENATSTrainer(
-        supernet, mutator=None, device=device, criterion=criterion)
+    trainer = MAENATSTrainer(supernet, mutator=None, device=device, criterion=criterion)
 
     evaluator = NATSEvaluator(
-        trainer,
-        dataloader,
-        bench_path=args.bench_path,
-        num_sample=args.num_sample)
+        trainer, dataloader, bench_path=args.bench_path, num_sample=args.num_sample
+    )
 
     evaluator.compute_rank_consistency()

@@ -1,9 +1,12 @@
 from .nasbench101.graph import NasBench101SearchSpace
 from .nasbench201.graph import NasBench201SearchSpace
 from .nasbench301.graph import NasBench301SearchSpace
+
 # from .transbench101.api import TransNASBenchAPI
-from .transbench101.graph import (TransBench101SearchSpaceMacro,
-                                  TransBench101SearchSpaceMicro)
+from .transbench101.graph import (
+    TransBench101SearchSpaceMacro,
+    TransBench101SearchSpaceMicro,
+)
 
 supported_search_spaces = {
     'nasbench101': NasBench101SearchSpace,
@@ -58,7 +61,8 @@ def get_search_space(name, dataset):
     elif name == 'nasbench301':
         auxiliary = dataset.lower() == 'cifar10'
         return search_space_cls(
-            n_classes=n_classes, in_channels=in_channels, auxiliary=auxiliary)
+            n_classes=n_classes, in_channels=in_channels, auxiliary=auxiliary
+        )
     elif name == 'nasbench201':
         return search_space_cls(n_classes=n_classes, in_channels=in_channels)
     elif name == 'nasbench101':

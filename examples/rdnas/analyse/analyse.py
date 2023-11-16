@@ -25,10 +25,8 @@ model.load_state_dict(torch.load(ckpt_path)['state_dict'])
 mutator = OneShotMutator(with_alias=True)
 mutator.prepare_from_supernet(model)
 
-dataloader = build_dataloader(
-    'cifar10', 'train', data_dir='../../../data/cifar')
-val_dataloader = build_dataloader(
-    'cifar10', 'val', data_dir='../../../data/cifar')
+dataloader = build_dataloader('cifar10', 'train', data_dir='../../../data/cifar')
+val_dataloader = build_dataloader('cifar10', 'val', data_dir='../../../data/cifar')
 trainer = NB201Trainer(model=model, mutator=None, device=torch.device('cpu'))
 evaluator = NB201Evaluator(trainer, 50)
 
@@ -45,9 +43,11 @@ def flops_dist(dct1, dct2):
 
 def calc_gt_list(dct1, dct2):
     results1 = evaluator.query_result(
-        evaluator.generate_genotype(dct1, trainer.mutator))
+        evaluator.generate_genotype(dct1, trainer.mutator)
+    )
     results2 = evaluator.query_result(
-        evaluator.generate_genotype(dct2, trainer.mutator))
+        evaluator.generate_genotype(dct2, trainer.mutator)
+    )
     return results1 - results2
 
 
@@ -78,7 +78,8 @@ def calc_zerocost_dist(dct1, dct2, zc_proxy='zen'):
         dataload_info=dataload_info,
         measure_names=[zc_proxy],
         loss_fn=F.cross_entropy,
-        device=device)
+        device=device,
+    )
 
     current_mutator.set_subnet(dct2)
     zc2 = find_measures(
@@ -87,7 +88,8 @@ def calc_zerocost_dist(dct1, dct2, zc_proxy='zen'):
         dataload_info=dataload_info,
         measure_names=[zc_proxy],
         loss_fn=F.cross_entropy,
-        device=device)
+        device=device,
+    )
     return zc1 - zc2
 
 
@@ -132,7 +134,9 @@ def calculate_rk(list1, list2, name1: str, name2: str):
     ps = pearson(list1, list2)
     sp = spearman(list1, list2)
 
-    res = f'RK of {name1} and {name2} is (kendall tau: {kt} pearson: {ps} spearman: {sp})'
+    res = (
+        f'RK of {name1} and {name2} is (kendall tau: {kt} pearson: {ps} spearman: {sp})'
+    )
     print(res)
     return res
 
@@ -199,9 +203,7 @@ def measure_one_shot_concordant(num_samples=200):
 
 
 def measure_concordant(dist_type: str = None, threshold=None, num_samples=200):
-    print(
-        f'Current distance type is: {dist_type}, current threshold is: {threshold}'
-    )
+    print(f'Current distance type is: {dist_type}, current threshold is: {threshold}')
     hm_dst_list = []
     ad_dst_list = []
     gt_list = []

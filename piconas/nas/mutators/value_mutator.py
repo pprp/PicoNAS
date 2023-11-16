@@ -14,9 +14,11 @@ class ValueMutator(ArchitectureMutator[MutableValue]):
             grouped separately.
     """
 
-    def __init__(self,
-                 custom_group: Optional[List[List[str]]] = None,
-                 init_cfg: Optional[Dict] = None) -> None:
+    def __init__(
+        self,
+        custom_group: Optional[List[List[str]]] = None,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
         super().__init__(init_cfg)
 
         if custom_group is None:
@@ -45,5 +47,6 @@ class ValueMutator(ArchitectureMutator[MutableValue]):
         """
         if self._search_groups is None:
             raise RuntimeError(
-                'Call `prepare_from_supernet` before access search group!')
+                'Call `prepare_from_supernet` before access search group!'
+            )
         return self._search_groups

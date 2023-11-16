@@ -10,38 +10,45 @@ NDS_DPATH = '/data/lujunl/pprp/bench/nds_adj_encoding/'
 
 
 class NDS:
-
-    def __init__(self,
-                 path=None,
-                 zcp_dict=False,
-                 normalize_zcp=True,
-                 log_synflow=True,
-                 embedding_list=[
-                     'adj', 'adj_op', 'path', 'one_hot', 'path_indices', 'zcp'
-                 ]):
+    def __init__(
+        self,
+        path=None,
+        zcp_dict=False,
+        normalize_zcp=True,
+        log_synflow=True,
+        embedding_list=['adj', 'adj_op', 'path', 'one_hot', 'path_indices', 'zcp'],
+    ):
         adj_path = BASE_PATH + 'nds_adj_encoding/'
         # self.spaces = ['Amoeba.json', 'NASNet.json','DARTS.json','ENAS.json','PNAS.json']
         self.spaces = [
-            'Amoeba.json', 'PNAS_fix-w-d.json', 'ENAS_fix-w-d.json',
-            'NASNet.json', 'DARTS.json', 'ENAS.json', 'PNAS.json',
-            'DARTS_lr-wd.json', 'DARTS_fix-w-d.json'
+            'Amoeba.json',
+            'PNAS_fix-w-d.json',
+            'ENAS_fix-w-d.json',
+            'NASNet.json',
+            'DARTS.json',
+            'ENAS.json',
+            'PNAS.json',
+            'DARTS_lr-wd.json',
+            'DARTS_fix-w-d.json',
         ]
         self.cate_embeddings = {
-            k.replace('.json', ''):
-            torch.load(BASE_PATH + 'cate_embeddings/cate_nds_{}.pt'.format(
-                k.replace('.json', '')))
+            k.replace('.json', ''): torch.load(
+                BASE_PATH
+                + 'cate_embeddings/cate_nds_{}.pt'.format(k.replace('.json', ''))
+            )
             for k in self.spaces
         }
         self.arch2vec_embeddings = {
             k.replace('.json', ''): torch.load(
-                BASE_PATH +
-                'arch2vec_embeddings/arch2vec-model-dim_32_search_space_{}-nds.pt'
-                .format(k.replace('.json', '')))
+                BASE_PATH
+                + 'arch2vec_embeddings/arch2vec-model-dim_32_search_space_{}-nds.pt'.format(
+                    k.replace('.json', '')
+                )
+            )
             for k in self.spaces
         }
         self.space_dicts = {
-            space.replace('.json', ''):
-            json.load(open(NDS_DPATH + space, 'r'))
+            space.replace('.json', ''): json.load(open(NDS_DPATH + space, 'r'))
             for space in self.spaces
         }
         self.space_adj_mats = {
@@ -60,8 +67,19 @@ class NDS:
         #     for kx in self.spaces[task_].keys():
         #         self.spaces[task_][kx] = adj_mat_list[kx].tolist()
         self.zcps = [
-            'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
-            'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen'
+            'epe_nas',
+            'fisher',
+            'flops',
+            'grad_norm',
+            'grasp',
+            'jacov',
+            'l2_norm',
+            'nwot',
+            'params',
+            'plain',
+            'snip',
+            'synflow',
+            'zen',
         ]
         self.normalize_zcp = normalize_zcp
         self.zcp_nds_norm = {}
@@ -69,40 +87,40 @@ class NDS:
             for task_ in self.spaces:
                 print('normalizing task: ', task_)
                 self.norm_zcp = pd.read_csv(
-                    BASE_PATH + 'nds_zcps/' + task_.replace('.json', '') +
-                    '_zcps.csv',
-                    index_col=0)
+                    BASE_PATH + 'nds_zcps/' + task_.replace('.json', '') + '_zcps.csv',
+                    index_col=0,
+                )
                 self.norm_zcp = self.norm_zcp[self.zcps]
                 minfinite = self.norm_zcp['zen'].replace(-np.inf, 1000).min()
-                self.norm_zcp['zen'] = self.norm_zcp['zen'].replace(
-                    -np.inf, minfinite)
+                self.norm_zcp['zen'] = self.norm_zcp['zen'].replace(-np.inf, minfinite)
                 if log_synflow:
-                    self.norm_zcp['synflow'] = self.norm_zcp[
-                        'synflow'].replace(0, 1e-2)
-                    self.norm_zcp['synflow'] = np.log10(
-                        self.norm_zcp['synflow'])
+                    self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(0, 1e-2)
+                    self.norm_zcp['synflow'] = np.log10(self.norm_zcp['synflow'])
                 else:
                     print(
                         'WARNING: Not taking log of synflow values for normalization results in very small synflow inputs'
                     )
-                minfinite = self.norm_zcp['synflow'].replace(-np.inf,
-                                                             1000).min()
+                minfinite = self.norm_zcp['synflow'].replace(-np.inf, 1000).min()
                 self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(
-                    -np.inf, minfinite)
+                    -np.inf, minfinite
+                )
                 min_max_scaler = preprocessing.QuantileTransformer()
                 self.norm_zcp = pd.DataFrame(
                     min_max_scaler.fit_transform(self.norm_zcp),
                     columns=self.zcps,
-                    index=self.norm_zcp.index)
-                self.zcp_nds_norm[task_.replace(
-                    '.json', '')] = self.norm_zcp.T.to_dict()
+                    index=self.norm_zcp.index,
+                )
+                self.zcp_nds_norm[
+                    task_.replace('.json', '')
+                ] = self.norm_zcp.T.to_dict()
         for task_ in self.spaces:
             # normalize cate_embeddings[space]['embeddings']
             min_max_scaler = preprocessing.MinMaxScaler()
-            self.cate_embeddings[task_.replace(
-                '.json', '')]['embeddings'] = min_max_scaler.fit_transform(
-                    self.cate_embeddings[task_.replace('.json',
-                                                       '')]['embeddings'])
+            self.cate_embeddings[task_.replace('.json', '')][
+                'embeddings'
+            ] = min_max_scaler.fit_transform(
+                self.cate_embeddings[task_.replace('.json', '')]['embeddings']
+            )
         self.all_accs = {}
         self.unnorm_all_accs = {}
         self.minmax_sc = {}
@@ -112,19 +130,23 @@ class NDS:
             for idx in range(len(self.space_dicts[space])):
                 try:
                     self.all_accs[space].append(
-                        float(
-                            100. -
-                            self.space_dicts[space][idx]['test_ep_top1'][-1]))
+                        float(100.0 - self.space_dicts[space][idx]['test_ep_top1'][-1])
+                    )
                 except:
                     self.all_accs[space].append(
-                        float(100. - self.space_dicts[space][str(idx)]
-                              ['test_ep_top1'][-1]))
+                        float(
+                            100.0
+                            - self.space_dicts[space][str(idx)]['test_ep_top1'][-1]
+                        )
+                    )
             # RobustScaler normalize this space
             min_max_scaler = preprocessing.QuantileTransformer()
             self.all_accs[space] = min_max_scaler.fit_transform(
-                np.array(self.all_accs[space]).reshape(-1, 1)).flatten()
-            self.unnorm_all_accs[space] = np.array(
-                self.all_accs[space]).reshape(-1, 1).flatten().tolist()
+                np.array(self.all_accs[space]).reshape(-1, 1)
+            ).flatten()
+            self.unnorm_all_accs[space] = (
+                np.array(self.all_accs[space]).reshape(-1, 1).flatten().tolist()
+            )
             self.all_accs[space] = self.all_accs[space].tolist()
             self.minmax_sc[space] = min_max_scaler
         self.unnorm_accs = self.all_accs  # need to comment out this line.
@@ -133,18 +155,27 @@ class NDS:
     # Key Functions Begin
     def get_adjmlp_zcp(self, idx, space='Amoeba'):
         adj_mat_norm, op_mat_norm, adj_mat_red, op_mat_red = self.get_adj_op(
-            idx, space=space).values()
+            idx, space=space
+        ).values()
         adj_mat_norm = np.asarray(adj_mat_norm).flatten()
         adj_mat_red = np.asarray(adj_mat_red).flatten()
-        op_mat_norm = torch.Tensor(np.asarray(op_mat_norm)).argmax(
-            dim=1).numpy().flatten()  # Careful here.
-        op_mat_red = torch.Tensor(np.asarray(op_mat_red)).argmax(
-            dim=1).numpy().flatten()  # Careful here.
+        op_mat_norm = (
+            torch.Tensor(np.asarray(op_mat_norm)).argmax(dim=1).numpy().flatten()
+        )  # Careful here.
+        op_mat_red = (
+            torch.Tensor(np.asarray(op_mat_red)).argmax(dim=1).numpy().flatten()
+        )  # Careful here.
         op_mat_norm = op_mat_norm / np.max(op_mat_norm)
         op_mat_red = op_mat_red / np.max(op_mat_red)
         return np.concatenate(
-            (adj_mat_norm, op_mat_norm, adj_mat_red, op_mat_red,
-             np.asarray(self.get_zcp(idx, space)).flatten())).tolist()
+            (
+                adj_mat_norm,
+                op_mat_norm,
+                adj_mat_red,
+                op_mat_red,
+                np.asarray(self.get_zcp(idx, space)).flatten(),
+            )
+        ).tolist()
 
     def get_a2vcatezcp(self, idx, space='Amoeba', joint=None):
         a2v = self.get_arch2vec(idx, joint=joint, space=space)
@@ -178,11 +209,14 @@ class NDS:
 
     def get_norm_w_d(self, idx, space='Amoeba'):
         try:
-            return [self.space_dicts[space][idx]['net']['width'] / 32., \
-                    self.space_dicts[space][idx]['net']['depth'] / 20.]
+            return [
+                self.space_dicts[space][idx]['net']['width'] / 32.0,
+                self.space_dicts[space][idx]['net']['depth'] / 20.0,
+            ]
         except:
-            print('WARNING: No width/depth information found for idx: ', idx,
-                  ',', space)
+            print(
+                'WARNING: No width/depth information found for idx: ', idx, ',', space
+            )
             exit(0)
 
     # Key Functions End #

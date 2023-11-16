@@ -23,9 +23,11 @@ class FactorizedReduce(AbstractPrimitive):
             assert C_out % 2 == 0
             self.relu = nn.ReLU(inplace=False)
             self.conv_1 = nn.Conv2d(
-                C_in, C_out // 2, 1, stride=2, padding=0, bias=False)
+                C_in, C_out // 2, 1, stride=2, padding=0, bias=False
+            )
             self.conv_2 = nn.Conv2d(
-                C_in, C_out // 2, 1, stride=2, padding=0, bias=False)
+                C_in, C_out // 2, 1, stride=2, padding=0, bias=False
+            )
             self.bn = nn.BatchNorm2d(C_out, affine=affine)
 
     def forward(self, x, edge_data):
@@ -33,8 +35,7 @@ class FactorizedReduce(AbstractPrimitive):
             return x
         else:
             x = self.relu(x)
-            out = torch.cat(
-                [self.conv_1(x), self.conv_2(x[:, :, 1:, 1:])], dim=1)
+            out = torch.cat([self.conv_1(x), self.conv_2(x[:, :, 1:, 1:])], dim=1)
             out = self.bn(out)
             return out
 

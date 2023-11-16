@@ -13,9 +13,7 @@ CONV3X3 = 'conv3x3-bn-relu'
 MAXPOOL3X3 = 'maxpool3x3'
 NUM_VERTICES = 7
 
-all_ops = [
-    'input', 'output', 'maxpool3x3', 'conv1x1-bn-relu', 'conv3x3-bn-relu'
-]
+all_ops = ['input', 'output', 'maxpool3x3', 'conv1x1-bn-relu', 'conv3x3-bn-relu']
 
 
 def get_children(model):
@@ -38,7 +36,8 @@ def convert_spec_to_model(spec):
 
     all_leaf_modules = get_children(model)
     inplace_relus = [
-        module for module in all_leaf_modules
+        module
+        for module in all_leaf_modules
         if (isinstance(module, nn.ReLU) and module.inplace)
     ]
 

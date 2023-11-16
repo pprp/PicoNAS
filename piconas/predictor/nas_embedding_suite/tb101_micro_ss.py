@@ -10,43 +10,59 @@ BASE_PATH = '/data/lujunl/pprp/bench/'
 
 
 class TransNASBench101Micro:
-
-    def __init__(self,
-                 path=None,
-                 zcp_dict=False,
-                 normalize_zcp=True,
-                 log_synflow=True,
-                 embedding_list=[
-                     'adj', 'adj_op', 'path', 'one_hot', 'path_indices', 'zcp'
-                 ]):
+    def __init__(
+        self,
+        path=None,
+        zcp_dict=False,
+        normalize_zcp=True,
+        log_synflow=True,
+        embedding_list=['adj', 'adj_op', 'path', 'one_hot', 'path_indices', 'zcp'],
+    ):
         if path is None:
             path = ''
         sspaces = [
-            'autoencoder', 'class_object', 'class_scene', 'jigsaw',
-            'room_layout', 'segmentsemantic'
+            'autoencoder',
+            'class_object',
+            'class_scene',
+            'jigsaw',
+            'room_layout',
+            'segmentsemantic',
         ]
         self.cate_embeddings = {
-            k:
-            torch.load(BASE_PATH +
-                       'cate_embeddings/cate_transnasbench101_{}.pt'.format(k))
+            k: torch.load(
+                BASE_PATH + 'cate_embeddings/cate_transnasbench101_{}.pt'.format(k)
+            )
             for k in sspaces
         }
         self.arch2vec_embeddings = {
             k: torch.load(
-                BASE_PATH +
-                'arch2vec_embeddings/arch2vec-model-dim_32_search_space_transnasbench101_task_{}-tb101.pt'
-                .format(k))
+                BASE_PATH
+                + 'arch2vec_embeddings/arch2vec-model-dim_32_search_space_transnasbench101_task_{}-tb101.pt'.format(
+                    k
+                )
+            )
             for k in sspaces
         }
         # self.cate_embeddings = {}
         self.zcps = [
-            'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
-            'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen'
+            'epe_nas',
+            'fisher',
+            'flops',
+            'grad_norm',
+            'grasp',
+            'jacov',
+            'l2_norm',
+            'nwot',
+            'params',
+            'plain',
+            'snip',
+            'synflow',
+            'zen',
         ]
-        self.zcp_tb101 = json.load(
-            open(BASE_PATH + 'zc_transbench101_micro.json', 'r'))
+        self.zcp_tb101 = json.load(open(BASE_PATH + 'zc_transbench101_micro.json', 'r'))
         self.unnorm_zcp_tb101 = json.load(
-            open(BASE_PATH + 'zc_transbench101_micro.json', 'r'))
+            open(BASE_PATH + 'zc_transbench101_micro.json', 'r')
+        )
         self.valaccs = {}
         self.unnorm_valaccs = {}
         for task_ in self.zcp_tb101.keys():
@@ -55,13 +71,15 @@ class TransNASBench101Micro:
                     vec: self.zcp_tb101[task_][vec]['val_accuracy']
                     for vec in self.zcp_tb101[task_].keys()
                 },
-                index=[0]).T
+                index=[0],
+            ).T
             # MinMax normalize the valacc_frame using sklearn preprocessing
             self.unnorm_valaccs[task_] = valacc_frame.to_dict()[0]
             valacc_frame_norm = pd.DataFrame(
                 preprocessing.minmax_scale(valacc_frame),
                 index=valacc_frame.index,
-                columns=valacc_frame.columns)
+                columns=valacc_frame.columns,
+            )
             valacc_frame_norm = valacc_frame_norm.to_dict()[0]
             self.valaccs[task_] = valacc_frame_norm
         self.normalize_zcp = normalize_zcp
@@ -70,32 +88,34 @@ class TransNASBench101Micro:
             print('Normalizing ZCP dict')
             for task_ in self.zcp_tb101.keys():
                 print('normalizing task: ', task_)
-                self.norm_zcp = pd.DataFrame({
-                    k0: {
-                        k1: v1['score']
-                        for k1, v1 in v0.items() if v1.__class__() == {}
+                self.norm_zcp = pd.DataFrame(
+                    {
+                        k0: {
+                            k1: v1['score']
+                            for k1, v1 in v0.items()
+                            if v1.__class__() == {}
+                        }
+                        for k0, v0 in self.zcp_tb101[task_].items()
                     }
-                    for k0, v0 in self.zcp_tb101[task_].items()
-                }).T
+                ).T
                 if log_synflow:
-                    self.norm_zcp['synflow'] = self.norm_zcp[
-                        'synflow'].replace(0, 1e-2)
-                    self.norm_zcp['synflow'] = np.log10(
-                        self.norm_zcp['synflow'])
+                    self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(0, 1e-2)
+                    self.norm_zcp['synflow'] = np.log10(self.norm_zcp['synflow'])
                 else:
                     print(
                         'WARNING: Not taking log of synflow values for normalization results in very small synflow inputs'
                     )
-                minfinite = self.norm_zcp['synflow'].replace(-np.inf,
-                                                             1000).min()
+                minfinite = self.norm_zcp['synflow'].replace(-np.inf, 1000).min()
                 self.norm_zcp['synflow'] = self.norm_zcp['synflow'].replace(
-                    -np.inf, minfinite + 1e-2)
+                    -np.inf, minfinite + 1e-2
+                )
                 # Normalize each column of self.norm_zcp
                 min_max_scaler = preprocessing.MinMaxScaler()
                 self.norm_zcp = pd.DataFrame(
                     min_max_scaler.fit_transform(self.norm_zcp),
                     columns=self.norm_zcp.columns,
-                    index=self.norm_zcp.index)
+                    index=self.norm_zcp.index,
+                )
                 self.zcp_tb101_norm[task_] = self.norm_zcp.T.to_dict()
             self.zcp_tb101 = self.zcp_tb101_norm
         self.INPUT = 'input'
@@ -110,18 +130,15 @@ class TransNASBench101Micro:
             'conv1x1': 2,
             'conv3x3': 3,
             'input': 4,
-            'output': 5
+            'output': 5,
         }
-        self._index_to_opname = {
-            v: k
-            for k, v in self._opname_to_index.items()
-        }
+        self._index_to_opname = {v: k for k, v in self._opname_to_index.items()}
         self.OPS = [self.ZEROIZE, self.SKIP, self.CONV1X1, self.CONV3X3]
         self.init_op_map = {
             0: self.ZEROIZE,
             1: self.SKIP,
             2: self.CONV1X1,
-            3: self.CONV3X3
+            3: self.CONV3X3,
         }
         self.hash_iterator_list = list(self.zcp_tb101['normal'].keys())
 
@@ -129,22 +146,21 @@ class TransNASBench101Micro:
     def get_adjmlp_zcp(self, idx, task=None):
         adj_mat, op_mat = self.get_adj_op(idx, task).values()
         adj_mat = np.asarray(adj_mat).flatten()
-        op_mat = torch.Tensor(
-            np.asarray(op_mat)).argmax(dim=1).numpy().flatten()
+        op_mat = torch.Tensor(np.asarray(op_mat)).argmax(dim=1).numpy().flatten()
         op_mat = op_mat / np.max(op_mat)
         return np.concatenate(
-            [adj_mat, op_mat,
-             np.asarray(self.get_zcp(idx, task))]).tolist()
+            [adj_mat, op_mat, np.asarray(self.get_zcp(idx, task))]
+        ).tolist()
 
     def get_adj_op(self, idx, task=None, space=None, bin_space=None):
         task = 'class_scene' if task is None else task
         hash = self.hash_iterator_list[idx]
         ops = self.opslist_onehot(eval(hash))
         return {
-            'module_adjacency':
-            self.get_matrix_and_ops(eval(self.hash_iterator_list[idx]))[0],
-            'module_operations':
-            ops.tolist()
+            'module_adjacency': self.get_matrix_and_ops(
+                eval(self.hash_iterator_list[idx])
+            )[0],
+            'module_operations': ops.tolist(),
         }
 
     def get_a2vcatezcp(self, idx, task=None, joint=None, space=None):
@@ -190,19 +206,19 @@ class TransNASBench101Micro:
         ops_ = [self.init_op_map[x] for x in op_list]
         ops_ = [self.INPUT, *ops_, self.OUTPUT]
         ops_onehot = np.array(
-            [[i == op_map.index(op) for i in range(len(op_map))]
-             for op in ops_],
-            dtype=np.float32)
+            [[i == op_map.index(op) for i in range(len(op_map))] for op in ops_],
+            dtype=np.float32,
+        )
         return ops_onehot
 
     def get_matrix_and_ops(self, g, prune=True, keep_dims=True):
-        ''' Return the adjacency matrix and label vector.
+        """Return the adjacency matrix and label vector.
 
-            Args:
-                g : should be a point from Nasbench201 search space
-                prune : remove dangling nodes that only connected to zero ops
-                keep_dims : keep the original matrix size after pruning
-        '''
+        Args:
+            g : should be a point from Nasbench201 search space
+            prune : remove dangling nodes that only connected to zero ops
+            keep_dims : keep the original matrix size after pruning
+        """
         n_nodes = 8
         zero_id = 0
         skip_id = 1
@@ -252,8 +268,7 @@ class TransNASBench101Micro:
                             vis[other] = True
 
             bfs(0, visited_fw, lambda src, dst: matrix[src][dst])  # forward
-            bfs(n_nodes - 1, visited_bw,
-                lambda src, dst: matrix[dst][src])  # backward
+            bfs(n_nodes - 1, visited_bw, lambda src, dst: matrix[dst][src])  # backward
             for v in range(n_nodes - 1, -1, -1):
                 if not visited_fw[v] or not visited_bw[v]:
                     labels[v] = None
@@ -279,5 +294,7 @@ class TransNASBench101Micro:
     def get_params(self, idx, task=None):
         if task is None:
             task = 'class_scene'
-        return self.unnorm_zcp_tb101[task][
-            self.hash_iterator_list[idx]]['params']['score'] * 1e5
+        return (
+            self.unnorm_zcp_tb101[task][self.hash_iterator_list[idx]]['params']['score']
+            * 1e5
+        )

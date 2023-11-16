@@ -72,8 +72,7 @@ class ModelSpec(object):
         while frontier:
             top = frontier.pop()
             for v in range(top + 1, num_vertices):
-                if self.original_matrix[top,
-                                        v] and v not in visited_from_input:
+                if self.original_matrix[top, v] and v not in visited_from_input:
                     visited_from_input.add(v)
                     frontier.append(v)
 
@@ -83,15 +82,15 @@ class ModelSpec(object):
         while frontier:
             top = frontier.pop()
             for v in range(0, top):
-                if self.original_matrix[v,
-                                        top] and v not in visited_from_output:
+                if self.original_matrix[v, top] and v not in visited_from_output:
                     visited_from_output.add(v)
                     frontier.append(v)
 
         # Any vertex that isn't connected to both input and output is extraneous to
         # the computation graph.
         extraneous = set(range(num_vertices)).difference(
-            visited_from_input.intersection(visited_from_output))
+            visited_from_input.intersection(visited_from_output)
+        )
 
         # If the non-extraneous graph is less than 2 vertices, the input is not
         # connected to the output and the spec is invalid.
@@ -115,8 +114,7 @@ class ModelSpec(object):
           MD5 hash of this spec which can be used to query the dataset.
         """
         # Invert the operations back to integer label indices used in graph gen.
-        labeling = [-1] + [canonical_ops.index(op)
-                           for op in self.ops[1:-1]] + [-2]
+        labeling = [-1] + [canonical_ops.index(op) for op in self.ops[1:-1]] + [-2]
         return hash_module(self.matrix, labeling)
 
     def visualize(self):

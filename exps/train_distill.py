@@ -19,26 +19,20 @@ from piconas.utils import set_random_seed
 def get_args():
     parser = argparse.ArgumentParser('train macro benchmark')
     parser.add_argument(
-        '--work_dir', type=str, default='./work_dir', help='experiment name')
+        '--work_dir', type=str, default='./work_dir', help='experiment name'
+    )
     parser.add_argument(
-        '--data_dir',
-        type=str,
-        default='./data/cifar',
-        help='path to the dataset')
+        '--data_dir', type=str, default='./data/cifar', help='path to the dataset'
+    )
+
+    parser.add_argument('--seed', type=int, default=42, help='seed of experiments')
 
     parser.add_argument(
-        '--seed', type=int, default=42, help='seed of experiments')
-
+        '--model_name', type=str, default='DiffNASBench201Network', help='name of model'
+    )
     parser.add_argument(
-        '--model_name',
-        type=str,
-        default='DiffNASBench201Network',
-        help='name of model')
-    parser.add_argument(
-        '--trainer_name',
-        type=str,
-        default='Darts_Trainer',
-        help='name of trainer')
+        '--trainer_name', type=str, default='Darts_Trainer', help='name of trainer'
+    )
     parser.add_argument(
         '--log_name',
         type=str,
@@ -48,55 +42,46 @@ def get_args():
 
     # ******************************* settings *******************************#
 
+    parser.add_argument('--crit', type=str, default='ce', help='decide the criterion')
     parser.add_argument(
-        '--crit', type=str, default='ce', help='decide the criterion')
+        '--optims', type=str, default='sgd', help='decide the optimizer'
+    )
     parser.add_argument(
-        '--optims', type=str, default='sgd', help='decide the optimizer')
-    parser.add_argument(
-        '--sched', type=str, default='cosine', help='decide the scheduler')
+        '--sched', type=str, default='cosine', help='decide the scheduler'
+    )
 
-    parser.add_argument(
-        '--classes', type=int, default=10, help='dataset classes')
+    parser.add_argument('--classes', type=int, default=10, help='dataset classes')
     parser.add_argument('--layers', type=int, default=20, help='batch size')
     parser.add_argument(
-        '--num_choices', type=int, default=4, help='number choices per layer')
-    parser.add_argument(
-        '--batch_size', type=int, default=64, help='batch size')
+        '--num_choices', type=int, default=4, help='number choices per layer'
+    )
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size')
     parser.add_argument('--epochs', type=int, default=100, help='batch size')
-    parser.add_argument(
-        '--lr', type=float, default=0.025, help='initial learning rate')
+    parser.add_argument('--lr', type=float, default=0.025, help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
+    parser.add_argument('--weight-decay', type=float, default=5e-4, help='weight decay')
     parser.add_argument(
-        '--weight-decay', type=float, default=5e-4, help='weight decay')
+        '--val_interval', type=int, default=5, help='validate and save frequency'
+    )
     parser.add_argument(
-        '--val_interval',
-        type=int,
-        default=5,
-        help='validate and save frequency')
-    parser.add_argument(
-        '--random_search',
-        type=int,
-        default=1000,
-        help='validate and save frequency')
+        '--random_search', type=int, default=1000, help='validate and save frequency'
+    )
     # ******************************* dataset *******************************#
     parser.add_argument(
-        '--dataset', type=str, default='simmim', help='path to the dataset')
+        '--dataset', type=str, default='simmim', help='path to the dataset'
+    )
     parser.add_argument('--cutout', action='store_true', help='use cutout')
+    parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
     parser.add_argument(
-        '--cutout_length', type=int, default=16, help='cutout length')
+        '--auto_aug', action='store_true', default=False, help='use auto augmentation'
+    )
     parser.add_argument(
-        '--auto_aug',
-        action='store_true',
-        default=False,
-        help='use auto augmentation')
-    parser.add_argument(
-        '--train_portion',
-        type=float,
-        default=0.5,
-        help='portion of training data')
+        '--train_portion', type=float, default=0.5, help='portion of training data'
+    )
 
     parser.add_argument(
-        '--resize', action='store_true', default=False, help='use resize')
+        '--resize', action='store_true', default=False, help='use resize'
+    )
     return parser.parse_args()
 
 
@@ -104,19 +89,23 @@ def data_transforms_cifar10(cfg):
     CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
     CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
 
-    train_transform = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
-    ])
+    train_transform = transforms.Compose(
+        [
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
+        ]
+    )
     if cfg.cutout:
         train_transform.transforms.append(Cutout(length=cfg.cutout_length))
 
-    valid_transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
-    ])
+    valid_transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
+        ]
+    )
     return train_transform, valid_transform
 
 
@@ -143,10 +132,8 @@ def main():
 
     train_transform, valid_transform = data_transforms_cifar10(cfg)
     train_data = dset.CIFAR10(
-        root=cfg.data_dir,
-        train=True,
-        download=True,
-        transform=train_transform)
+        root=cfg.data_dir, train=True, download=True, transform=train_transform
+    )
 
     num_train = len(train_data)
     indices = list(range(num_train))
@@ -157,14 +144,16 @@ def main():
         batch_size=cfg.batch_size,
         sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
         pin_memory=True,
-        num_workers=2)
+        num_workers=2,
+    )
 
     val_loader = torch.utils.data.DataLoader(
         train_data,
         batch_size=cfg.batch_size,
         sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:]),
         pin_memory=True,
-        num_workers=2)
+        num_workers=2,
+    )
 
     model_s = resnet20()
     model_t = resnet56()

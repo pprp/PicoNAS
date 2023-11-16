@@ -4,8 +4,9 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 # Load data from a CSV file
-df = pd.read_csv('./examples/rdnas/visual/predicts_targets.csv'
-                 )  # Replace 'your_data.csv' with your CSV file path
+df = pd.read_csv(
+    './examples/rdnas/visual/predicts_targets.csv'
+)  # Replace 'your_data.csv' with your CSV file path
 x_label = 'ParZC score'
 y_label = 'Ground Truth'
 
@@ -23,13 +24,8 @@ correlation_coefficient, p_value = spearmanr(data1, data2)
 # Create a scatter plot with increased transparency (alpha=0.5)
 plt.figure(figsize=(8, 6))
 plt.scatter(
-    data1,
-    data2,
-    color='blue',
-    marker='o',
-    s=100,
-    alpha=0.5,
-    label='Data Points')
+    data1, data2, color='blue', marker='o', s=100, alpha=0.5, label='Data Points'
+)
 
 # Add labels and title
 plt.xlabel(x_label, fontsize=14)
@@ -37,7 +33,9 @@ plt.ylabel(y_label, fontsize=14)
 plt.title('Spearman Rank Correlation', fontsize=16)
 
 # Add correlation coefficient and p-value to the plot
-textstr = f'Spearman Rank Correlation: {correlation_coefficient:.2f}\np-value: {p_value:.4f}'
+textstr = (
+    f'Spearman Rank Correlation: {correlation_coefficient:.2f}\np-value: {p_value:.4f}'
+)
 plt.text(
     0.05,
     0.95,
@@ -45,7 +43,8 @@ plt.text(
     transform=plt.gca().transAxes,
     fontsize=12,
     verticalalignment='bottom',
-    bbox=dict(boxstyle='round, pad=0.5', facecolor='white', alpha=0.8))
+    bbox=dict(boxstyle='round, pad=0.5', facecolor='white', alpha=0.8),
+)
 
 # Customize axis ticks and legend
 plt.xticks(fontsize=12)

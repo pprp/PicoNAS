@@ -11,9 +11,15 @@ from piconas.evaluator.base import Evaluator
 from piconas.nas.mutators import DiffMutator, OneShotMutator
 from piconas.predictor.pinat.model_factory import create_best_nb201_model
 from piconas.predictor.pruners.predictive import find_measures
-from piconas.utils.rank_consistency import (concordant_pair_ratio, kendalltau,
-                                            minmax_n_at_k, p_at_tb_k, pearson,
-                                            rank_difference, spearman)
+from piconas.utils.rank_consistency import (
+    concordant_pair_ratio,
+    kendalltau,
+    minmax_n_at_k,
+    p_at_tb_k,
+    pearson,
+    rank_difference,
+    spearman,
+)
 
 
 class NB201Evaluator(Evaluator):
@@ -27,13 +33,15 @@ class NB201Evaluator(Evaluator):
         type (str, optional): _description_. Defaults to 'eval_acc1es'.
     """
 
-    def __init__(self,
-                 trainer,
-                 num_sample: int = 50,
-                 dataset: str = 'cifar10',
-                 type: str = 'eval_acc1es',
-                 is_predictor=False,
-                 **kwargs):
+    def __init__(
+        self,
+        trainer,
+        num_sample: int = 50,
+        dataset: str = 'cifar10',
+        type: str = 'eval_acc1es',
+        is_predictor=False,
+        **kwargs,
+    ):
         super().__init__(trainer=trainer, dataset=dataset)
         self.trainer = trainer
         self.num_sample = num_sample
@@ -49,9 +57,13 @@ class NB201Evaluator(Evaluator):
             self.num_classes = 120
             self.dataset = 'ImageNet16-120'
 
-        assert type in ['train_losses', 'eval_losses',
-                        'train_acc1es', 'eval_acc1es', 'cost_info'], \
-            f'Not support type {type}.'
+        assert type in [
+            'train_losses',
+            'eval_losses',
+            'train_acc1es',
+            'eval_acc1es',
+            'cost_info',
+        ], f'Not support type {type}.'
         """
         The key of api is the genotype of nb201
             such as '|avg_pool_3x3~0|+
@@ -63,8 +75,8 @@ class NB201Evaluator(Evaluator):
                          eval_acc1es, cost_info
         """
         self.api = API(
-            '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth',
-            verbose=False)
+            '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth', verbose=False
+        )
 
         if is_predictor is not None:
             # build dataloader for predictor
@@ -73,9 +85,11 @@ class NB201Evaluator(Evaluator):
             self.predictor = create_best_nb201_model()
             ckpt_dir = '/data/lujunl/pprp/PicoNAS/checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
             self.predictor.load_state_dict(
-                torch.load(ckpt_dir, map_location=torch.device('cpu')))
+                torch.load(ckpt_dir, map_location=torch.device('cpu'))
+            )
             self.predictor_dataset = Nb201DatasetPINAT(
-                split='all', data_type='test', data_set='cifar10')
+                split='all', data_type='test', data_set='cifar10'
+            )
 
     def get_predictor_score(self, genotype):
         """get predictor score for a subnet."""
@@ -84,12 +98,11 @@ class NB201Evaluator(Evaluator):
         # ss_index = self.generate_genotype(subnet_dict, self.trainer.mutator)
         input = self.predictor_dataset.get_batch(ss_index)
 
-        key_list = [
-            'num_vertices', 'lapla', 'edge_num', 'features', 'zcp_layerwise'
-        ]
+        key_list = ['num_vertices', 'lapla', 'edge_num', 'features', 'zcp_layerwise']
         input['edge_index_list'] = [input['edge_index_list']]
-        input['operations'] = torch.tensor(
-            input['operations']).unsqueeze(0).unsqueeze(0)
+        input['operations'] = (
+            torch.tensor(input['operations']).unsqueeze(0).unsqueeze(0)
+        )
 
         for _key in key_list:
             if isinstance(input[_key], (list, float, int)):
@@ -102,13 +115,15 @@ class NB201Evaluator(Evaluator):
                 input[_key] = torch.unsqueeze(input[_key], dim=0)
             else:
                 raise NotImplementedError(
-                    f'key: {_key} is not list, is a {type(input[_key])}')
+                    f'key: {_key} is not list, is a {type(input[_key])}'
+                )
             input[_key] = input[_key]
         score = self.predictor(input)
         return score.item()
 
-    def generate_genotype(self, subnet_dict: dict,
-                          mutator: Union[OneShotMutator, DiffMutator]) -> str:
+    def generate_genotype(
+        self, subnet_dict: dict, mutator: Union[OneShotMutator, DiffMutator]
+    ) -> str:
         """subnet_dict represent the subnet dict of mutator."""
         # Please make sure that the mutator have been called the
         # `prepare_from_supernet` function.
@@ -149,8 +164,7 @@ class NB201Evaluator(Evaluator):
         """query the index by genotype."""
         return self.api.query_index_by_arch(genotype)
 
-    def compute_rank_consistency(self, dataloader,
-                                 mutator: OneShotMutator) -> List:
+    def compute_rank_consistency(self, dataloader, mutator: OneShotMutator) -> List:
         """compute rank consistency of different types of indicators."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
@@ -187,17 +201,20 @@ class NB201Evaluator(Evaluator):
             # sample another subnet pair for cpr
             random_subnet_dict2 = self.trainer.mutator.random_subnet
             self.trainer.mutator.set_subnet(random_subnet_dict2)
-            genotype = self.generate_genotype(random_subnet_dict,
-                                              self.trainer.mutator)
+            genotype = self.generate_genotype(random_subnet_dict, self.trainer.mutator)
             results2 = self.query_result(genotype)  # type is eval_acc1es
             subtract_true_list.append(results - results2)
 
             score2 = self.trainer.metric_score(dataloader, random_subnet_dict)
             subtract_indicator_list.append(score - score2)
 
-        return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 flops_indicator_list, subtract_true_list,
-                                 subtract_indicator_list)
+        return self.calc_results(
+            true_indicator_list,
+            generated_indicator_list,
+            flops_indicator_list,
+            subtract_true_list,
+            subtract_indicator_list,
+        )
 
     def compute_overall_rank_consistency(self, dataloader) -> List:
         """compute rank consistency of all search space."""
@@ -225,18 +242,20 @@ class NB201Evaluator(Evaluator):
             flops_result = self.query_result(genotype, cost_key='flops')
             flops_indicator_list.append(flops_result)
 
-        return self.calc_results(true_indicator_list, generated_indicator_list,
-                                 flops_indicator_list)
+        return self.calc_results(
+            true_indicator_list, generated_indicator_list, flops_indicator_list
+        )
 
-    def compute_rank_by_predictive(self,
-                                   dataloader=None,
-                                   measure_name: List = ['flops']) -> List:
+    def compute_rank_by_predictive(
+        self, dataloader=None, measure_name: List = ['flops']
+    ) -> List:
         """compute rank consistency by zero cost metric."""
         true_indicator_list: List[float] = []
         generated_indicator_list: List[float] = []
 
         if dataloader is None:
             from piconas.datasets import build_dataloader
+
             dataloader = build_dataloader('cifar10', 'train')
 
         num_sample = 50 if self.num_sample is None else self.num_sample
@@ -247,14 +266,14 @@ class NB201Evaluator(Evaluator):
             self.trainer.mutator.set_subnet(random_subnet_dict)
 
             # get true indictor by query nb201 api
-            genotype = self.generate_genotype(random_subnet_dict,
-                                              self.trainer.mutator)
+            genotype = self.generate_genotype(random_subnet_dict, self.trainer.mutator)
             results = self.query_result(genotype)  # type is eval_acc1es
             true_indicator_list.append(results)
 
-            assert isinstance(measure_name, list) and len(measure_name) == 1, \
-                f'The measure name should be a list but got {type(measure_name)}' \
+            assert isinstance(measure_name, list) and len(measure_name) == 1, (
+                f'The measure name should be a list but got {type(measure_name)}'
                 f' and the lenght should be 1 but got {len(measure_name)}'
+            )
 
             dataload_info = ['random', 3, self.num_classes]
 
@@ -265,30 +284,29 @@ class NB201Evaluator(Evaluator):
                 dataload_info=dataload_info,
                 measure_names=measure_name,
                 loss_fn=F.cross_entropy,
-                device=self.trainer.device)
+                device=self.trainer.device,
+            )
             generated_indicator_list.append(score)
 
-        return self.calc_simple_results(true_indicator_list,
-                                        generated_indicator_list)
+        return self.calc_simple_results(true_indicator_list, generated_indicator_list)
 
-    def calc_results(self,
-                     true_indicator_list,
-                     generated_indicator_list,
-                     flops_indicator_list=None,
-                     subtract_true_list=None,
-                     subtract_indicator_list=None):
-
+    def calc_results(
+        self,
+        true_indicator_list,
+        generated_indicator_list,
+        flops_indicator_list=None,
+        subtract_true_list=None,
+        subtract_indicator_list=None,
+    ):
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)
-        minn_at_ks = minmax_n_at_k(true_indicator_list,
-                                   generated_indicator_list)
+        minn_at_ks = minmax_n_at_k(true_indicator_list, generated_indicator_list)
         patks = p_at_tb_k(true_indicator_list, generated_indicator_list)
 
         cpr = -1
         if subtract_indicator_list is not None:
-            cpr = concordant_pair_ratio(true_indicator_list,
-                                        generated_indicator_list)
+            cpr = concordant_pair_ratio(true_indicator_list, generated_indicator_list)
 
         if flops_indicator_list is not None:
             # calculate rank difference by range.
@@ -299,11 +317,11 @@ class NB201Evaluator(Evaluator):
             # compute splited index by flops
             range_length = len(sorted_idx_by_flops) // 5
             splited_idx_by_flops = [
-                sorted_idx_by_flops[i * range_length:(i + 1) * range_length]
-                for i in range(
-                    int(len(sorted_idx_by_flops) / range_length) + 1)
-                if (sorted_idx_by_flops[i * range_length:(i + 1) *
-                                        range_length]).any()
+                sorted_idx_by_flops[i * range_length : (i + 1) * range_length]
+                for i in range(int(len(sorted_idx_by_flops) / range_length) + 1)
+                if (
+                    sorted_idx_by_flops[i * range_length : (i + 1) * range_length]
+                ).any()
             ]
 
             true_indicator_list = np.array(true_indicator_list)
@@ -312,8 +330,10 @@ class NB201Evaluator(Evaluator):
             rd_list = []
             for splited_idx_by_flop in splited_idx_by_flops:
                 current_idx = np.array(splited_idx_by_flop)
-                tmp_rd = rank_difference(true_indicator_list[current_idx],
-                                         generated_indicator_list[current_idx])
+                tmp_rd = rank_difference(
+                    true_indicator_list[current_idx],
+                    generated_indicator_list[current_idx],
+                )
                 rd_list.append(tmp_rd)
 
         print(
@@ -322,9 +342,7 @@ class NB201Evaluator(Evaluator):
 
         return kt, ps, sp, rd_list, minn_at_ks, patks, cpr
 
-    def calc_simple_results(self, true_indicator_list,
-                            generated_indicator_list):
-
+    def calc_simple_results(self, true_indicator_list, generated_indicator_list):
         kt = kendalltau(true_indicator_list, generated_indicator_list)
         ps = pearson(true_indicator_list, generated_indicator_list)
         sp = spearman(true_indicator_list, generated_indicator_list)

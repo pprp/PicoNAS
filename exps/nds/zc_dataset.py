@@ -7,7 +7,6 @@ from piconas.utils.get_dataset_api import NDS
 
 
 class ZcDataset(Dataset):
-
     def __init__(self, search_space, json_path):
         # Load data from json file
         with open(json_path, 'r') as file:
@@ -32,8 +31,7 @@ class ZcDataset(Dataset):
         for uid in range(1000):
             sample = self.data[str(uid)]
             for key in sample:
-                sample[key] = sample[key] + [0] * (
-                    max_length - len(sample[key]))
+                sample[key] = sample[key] + [0] * (max_length - len(sample[key]))
 
     def __getitem__(self, index):
         assert index < 1000, 'Index out of range'

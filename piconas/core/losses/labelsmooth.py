@@ -5,7 +5,6 @@ import torch
 
 
 class CrossEntropyLossSmooth(torch.nn.modules.loss._Loss):
-
     def __init__(self, label_smoothing=0.1):
         super(CrossEntropyLossSmooth, self).__init__()
         self.eps = label_smoothing

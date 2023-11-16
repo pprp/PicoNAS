@@ -10,7 +10,6 @@ from piconas.utils.angle.weight_vector import get_mb_arch_vector
 
 
 class TestAngle(TestCase):
-
     def test_mb_angle(self):
         model = SearchableMobileNet()
         mutator = OneShotMutator()
@@ -19,10 +18,12 @@ class TestAngle(TestCase):
         random_dict = mutator.random_subnet
 
         arch_vector1 = get_mb_arch_vector(
-            supernet=model, mutator=mutator, subnet_dict=random_dict)
+            supernet=model, mutator=mutator, subnet_dict=random_dict
+        )
 
         arch_vector2 = get_mb_arch_vector(
-            supernet=model, mutator=mutator, subnet_dict=random_dict)
+            supernet=model, mutator=mutator, subnet_dict=random_dict
+        )
 
         assert arch_vector1 is not None
         assert arch_vector2 is not None

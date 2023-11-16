@@ -7,13 +7,17 @@ from . import measure
 
 
 def count_parameters_in_MB(model):
-    return np.sum(
-        np.prod(v.size()) for name, v in model.named_parameters()
-        if 'auxiliary' not in name) / 1e6
+    return (
+        np.sum(
+            np.prod(v.size())
+            for name, v in model.named_parameters()
+            if 'auxiliary' not in name
+        )
+        / 1e6
+    )
 
 
 def cal_regular_factor(model, mu, sigma):
-
     model_params = torch.as_tensor(count_parameters_in_MB(model) * 1e3)
     regular_factor = torch.exp(-(torch.pow((model_params - mu), 2) / sigma))
 
@@ -21,7 +25,6 @@ def cal_regular_factor(model, mu, sigma):
 
 
 class SampleWiseActivationPatterns(object):
-
     def __init__(self, device):
         self.swap = -1
         self.activations = None
@@ -39,8 +42,9 @@ class SampleWiseActivationPatterns(object):
 
     @torch.no_grad()
     def calSWAP(self, regular_factor):
-
-        self.activations = self.activations.T  # transpose the activation matrix: (samples, neurons) to (neurons, samples)
+        self.activations = (
+            self.activations.T
+        )  # transpose the activation matrix: (samples, neurons) to (neurons, samples)
         self.swap = torch.unique(self.activations, dim=0).size(0)
 
         del self.activations
@@ -51,15 +55,16 @@ class SampleWiseActivationPatterns(object):
 
 
 class SWAP:
-
-    def __init__(self,
-                 model=None,
-                 inputs=None,
-                 device='cpu',
-                 seed=0,
-                 regular=True,
-                 mu=None,
-                 sigma=None):
+    def __init__(
+        self,
+        model=None,
+        inputs=None,
+        device='cpu',
+        seed=0,
+        regular=True,
+        mu=None,
+        sigma=None,
+    ):
         self.model = model
         self.interFeature = []
         self.seed = seed
@@ -78,7 +83,8 @@ class SWAP:
             self.swap = SampleWiseActivationPatterns(self.device)
             if self.regular and self.mu is not None and self.sigma is not None:
                 self.regular_factor = cal_regular_factor(
-                    self.model, self.mu, self.sigma).item()
+                    self.model, self.mu, self.sigma
+                ).item()
 
         if seed is not None and seed != self.seed:
             self.seed = seed
@@ -107,25 +113,28 @@ class SWAP:
         self.interFeature = []
         with torch.no_grad():
             self.model.forward(self.inputs.to(self.device))
-            if len(self.interFeature) == 0: return
+            if len(self.interFeature) == 0:
+                return
             activtions = torch.cat(
-                [f.view(self.inputs.size(0), -1) for f in self.interFeature],
-                1)
+                [f.view(self.inputs.size(0), -1) for f in self.interFeature], 1
+            )
             self.swap.collect_activations(activtions)
 
             return self.swap.calSWAP(self.regular_factor)
 
 
 @measure('swap', bn=True)
-def compute_swap(net,
-                 inputs,
-                 targets,
-                 split_data=1,
-                 loss_fn=None,
-                 seed=0,
-                 regular=True,
-                 mu=None,
-                 sigma=None):
+def compute_swap(
+    net,
+    inputs,
+    targets,
+    split_data=1,
+    loss_fn=None,
+    seed=0,
+    regular=True,
+    mu=None,
+    sigma=None,
+):
     model_params = count_parameters_in_MB(net) * 1e3
     model_params = pd.Series(model_params)
     # Automatically set mu and sigma, also can be set manually
@@ -139,6 +148,7 @@ def compute_swap(net,
         seed=seed,
         regular=regular,
         mu=mu,
-        sigma=sigma)
+        sigma=sigma,
+    )
 
     return swap.forward()

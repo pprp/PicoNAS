@@ -68,6 +68,7 @@ class Graph(torch.nn.Module, nx.DiGraph):
     **Interface to tabular benchmarks**
     TODO
     """
+
     """
     Usually the optimizer does not operate on the whole graph, e.g. preprocessing
     and post-processing are excluded. Scope can be used to define that or to
@@ -126,18 +127,14 @@ class Graph(torch.nn.Module, nx.DiGraph):
         # `input` is required for storing the results of incoming edges.
 
         # self._nxgraph.node_attr_dict_factory = lambda: dict({'input': {}, 'comb_op': sum})
-        self.node_attr_dict_factory = lambda: dict({
-            'input': {},
-            'comb_op': sum
-        })
+        self.node_attr_dict_factory = lambda: dict({'input': {}, 'comb_op': sum})
 
         # remember to add all members also in `unparse()`
         self.name = name
         self.scope = scope
         self.input_node_idxs = None
         self.is_parsed = False
-        self._id = random.random(
-        )  # pytorch expects unique modules in `add_module()`
+        self._id = random.random()  # pytorch expects unique modules in `add_module()`
 
     def __eq__(self, other):
         return self.name == other.name and self.scope == other.scope
@@ -158,7 +155,8 @@ class Graph(torch.nn.Module, nx.DiGraph):
 
     def __repr__(self):
         return 'Graph {}-{:.07f}, scope {}, {} nodes'.format(
-            self.name, self._id, self.scope, self.number_of_nodes())
+            self.name, self._id, self.scope, self.number_of_nodes()
+        )
 
     def modules_str(self):
         """
@@ -168,7 +166,8 @@ class Graph(torch.nn.Module, nx.DiGraph):
             result = ''
             for g in self._get_child_graphs(single_instances=True) + [self]:
                 result += 'Graph {}:\n {}\n==========\n'.format(
-                    g.name, torch.nn.Module.__repr__(g))
+                    g.name, torch.nn.Module.__repr__(g)
+                )
             return result
         else:
             return self.__repr__()
@@ -224,17 +223,18 @@ class Graph(torch.nn.Module, nx.DiGraph):
                     copied_dict[k] = [
                         i.copy() if isinstance(i, Graph) else i for i in v
                     ]
-                elif isinstance(v, torch.nn.Module) or isinstance(
-                        v, AbstractPrimitive):
+                elif isinstance(v, torch.nn.Module) or isinstance(v, AbstractPrimitive):
                     copied_dict[k] = copy.deepcopy(v)
             return copied_dict
 
         G = self.__class__()
         G.graph.update(self.graph)
         G.add_nodes_from((n, copy_dict(d)) for n, d in self._node.items())
-        G.add_edges_from((u, v, datadict.copy())
-                         for u, nbrs in self._adj.items()
-                         for v, datadict in nbrs.items())
+        G.add_edges_from(
+            (u, v, datadict.copy())
+            for u, nbrs in self._adj.items()
+            for v, datadict in nbrs.items()
+        )
         G.scope = self.scope
         G.name = self.name
         return G
@@ -270,7 +270,8 @@ class Graph(torch.nn.Module, nx.DiGraph):
         assert num_innodes == len(
             node_idxs
         ), 'Expecting node index for every input node. Excpected {}, got {}'.format(
-            num_innodes, len(node_idxs))
+            num_innodes, len(node_idxs)
+        )
         self.input_node_idxs = node_idxs
         return self
 
@@ -301,8 +302,9 @@ class Graph(torch.nn.Module, nx.DiGraph):
             assert (
                 self.num_input_nodes() == 1
             ), 'There are more than one input nodes but input indeces are not defined.'
-            assert (len(list(self.predecessors(1))) == 0
-                    ), 'Expecting node 1 to be the parent.'
+            assert (
+                len(list(self.predecessors(1))) == 0
+            ), 'Expecting node 1 to be the parent.'
             assert (
                 'subgraph' not in self.nodes[1].keys()
             ), 'Expecting node 1 not to have a subgraph as it serves as input node.'
@@ -310,22 +312,23 @@ class Graph(torch.nn.Module, nx.DiGraph):
             self.nodes[1]['input'] = {0: x}
         else:
             # assign the input to the corresponding nodes
-            assert all([i in x.keys() for i in self.input_node_idxs
-                        ]), 'got x from an unexpected input edge'
+            assert all(
+                [i in x.keys() for i in self.input_node_idxs]
+            ), 'got x from an unexpected input edge'
             if self.num_input_nodes() > len(x):
                 # here is the case where the same input is assigned to more than one node
                 # this can happen when there are cells with two inputs but at the very first
                 # layer of the network, there is just one output (i.e. the data inputed to the
                 # makro input node). Handle it and log a Info. This should happen only rarly
                 logger.debug(
-                    'We are using the same x for two inputs in graph {}'.
-                    format(self.name))
+                    'We are using the same x for two inputs in graph {}'.format(
+                        self.name
+                    )
+                )
             input_node_iterator = iter(self.input_node_idxs)
             for node_idx in lexicographical_topological_sort(self):
                 if self.in_degree(node_idx) == 0:
-                    self.nodes[node_idx]['input'] = {
-                        0: x[next(input_node_iterator)]
-                    }
+                    self.nodes[node_idx]['input'] = {0: x[next(input_node_iterator)]}
 
     def forward(self, x, *args):
         """
@@ -340,8 +343,7 @@ class Graph(torch.nn.Module, nx.DiGraph):
             args: This is only required to handle cases where the graph sits
                 on an edge and receives an EdgeData object which will be ignored
         """
-        logger.debug('Graph {} called. Input {}.'.format(
-            self.name, log_formats(x)))
+        logger.debug('Graph {} called. Input {}.'.format(self.name, log_formats(x)))
 
         # Assign x to the corresponding input nodes
         self._assign_x_to_nodes(x)
@@ -350,7 +352,9 @@ class Graph(torch.nn.Module, nx.DiGraph):
             node = self.nodes[node_idx]
             logger.debug(
                 'Node {}-{}, current data {}, start processing...'.format(
-                    self.name, node_idx, log_formats(node)))
+                    self.name, node_idx, log_formats(node)
+                )
+            )
 
             # node internal: process input if necessary
             # if ("subgraph" in node and "comb_op" not in node) or (
@@ -374,22 +378,28 @@ class Graph(torch.nn.Module, nx.DiGraph):
 
                     if isinstance(comb_op, AbstractCombOp):
                         in_edges = [
-                            self.get_edge_data(u, v) for u, v in sorted(
-                                self.in_edges(node_idx), key=lambda x: x[0])
+                            self.get_edge_data(u, v)
+                            for u, v in sorted(
+                                self.in_edges(node_idx), key=lambda x: x[0]
+                            )
                         ]
                         x = comb_op(input_tensors, in_edges)
                     else:
                         x = comb_op(input_tensors)
             node['input'] = {}  # clear the input as we have processed it
 
-            if (len(list(self.neighbors(node_idx))) == 0 and node_idx < list(
-                    lexicographical_topological_sort(self))[-1]):
+            if (
+                len(list(self.neighbors(node_idx))) == 0
+                and node_idx < list(lexicographical_topological_sort(self))[-1]
+            ):
                 # We have more than one output node. This is e.g. the case for
                 # auxillary losses. Attach them to the graph, handling must done
                 # by the user.
                 logger.debug(
-                    'Graph {} has more then one output node. Storing output of non-maximum index node {} at graph dict'
-                    .format(self, node_idx))
+                    'Graph {} has more then one output node. Storing output of non-maximum index node {} at graph dict'.format(
+                        self, node_idx
+                    )
+                )
                 self.graph['out_from_{}'.format(node_idx)] = x
             else:
                 # outgoing edges: process all outgoing edges
@@ -399,23 +409,24 @@ class Graph(torch.nn.Module, nx.DiGraph):
                     if isinstance(edge_data.op, Graph):
                         edge_output = edge_data.op.forward(x)
                     elif isinstance(edge_data.op, AbstractPrimitive):
-                        logger.debug('Processing op {} at edge {}-{}'.format(
-                            edge_data.op, node_idx, neigbor_idx))
+                        logger.debug(
+                            'Processing op {} at edge {}-{}'.format(
+                                edge_data.op, node_idx, neigbor_idx
+                            )
+                        )
 
-                        edge_output = edge_data.op.forward(
-                            x, edge_data=edge_data)
+                        edge_output = edge_data.op.forward(x, edge_data=edge_data)
                     else:
                         raise ValueError(
-                            'Unknown class as op: {}. Expected either Graph or AbstactPrimitive'
-                            .format(edge_data.op))
-                    self.nodes[neigbor_idx]['input'].update(
-                        {node_idx: edge_output})
+                            'Unknown class as op: {}. Expected either Graph or AbstactPrimitive'.format(
+                                edge_data.op
+                            )
+                        )
+                    self.nodes[neigbor_idx]['input'].update({node_idx: edge_output})
 
-            logger.debug('Node {}-{}, processing done.'.format(
-                self.name, node_idx))
+            logger.debug('Node {}-{}, processing done.'.format(self.name, node_idx))
 
-        logger.debug('Graph {} exiting. Output {}.'.format(
-            self.name, log_formats(x)))
+        logger.debug('Graph {} exiting. Output {}.'.format(self.name, log_formats(x)))
         return x
 
     def forward_beforeGP(self, x, *args):
@@ -431,8 +442,7 @@ class Graph(torch.nn.Module, nx.DiGraph):
             args: This is only required to handle cases where the graph sits
                 on an edge and receives an EdgeData object which will be ignored
         """
-        logger.debug('Graph {} called. Input {}.'.format(
-            self.name, log_formats(x)))
+        logger.debug('Graph {} called. Input {}.'.format(self.name, log_formats(x)))
 
         # Assign x to the corresponding input nodes
         self._assign_x_to_nodes(x)
@@ -441,7 +451,9 @@ class Graph(torch.nn.Module, nx.DiGraph):
             node = self.nodes[node_idx]
             logger.debug(
                 'Node {}-{}, current data {}, start processing...'.format(
-                    self.name, node_idx, log_formats(node)))
+                    self.name, node_idx, log_formats(node)
+                )
+            )
 
             # node internal: process input if necessary
             # if ("subgraph" in node and "comb_op" not in node) or (
@@ -464,22 +476,28 @@ class Graph(torch.nn.Module, nx.DiGraph):
 
                     if isinstance(comb_op, AbstractCombOp):
                         in_edges = [
-                            self.get_edge_data(u, v) for u, v in sorted(
-                                self.in_edges(node_idx), key=lambda x: x[0])
+                            self.get_edge_data(u, v)
+                            for u, v in sorted(
+                                self.in_edges(node_idx), key=lambda x: x[0]
+                            )
                         ]
                         x = comb_op(input_tensors, in_edges)
                     else:
                         x = comb_op(input_tensors)
             node['input'] = {}  # clear the input as we have processed it
 
-            if (len(list(self.neighbors(node_idx))) == 0 and node_idx < list(
-                    lexicographical_topological_sort(self))[-1]):
+            if (
+                len(list(self.neighbors(node_idx))) == 0
+                and node_idx < list(lexicographical_topological_sort(self))[-1]
+            ):
                 # We have more than one output node. This is e.g. the case for
                 # auxillary losses. Attach them to the graph, handling must done
                 # by the user.
                 logger.debug(
-                    'Graph {} has more then one output node. Storing output of non-maximum index node {} at graph dict'
-                    .format(self, node_idx))
+                    'Graph {} has more then one output node. Storing output of non-maximum index node {} at graph dict'.format(
+                        self, node_idx
+                    )
+                )
                 self.graph['out_from_{}'.format(node_idx)] = x
             else:
                 # outgoing edges: process all outgoing edges
@@ -489,45 +507,44 @@ class Graph(torch.nn.Module, nx.DiGraph):
                     if isinstance(edge_data.op, Graph):
                         edge_output = edge_data.op.forward_beforeGP(x)
                     elif isinstance(edge_data.op, AbstractPrimitive):
-                        logger.debug('Processing op {} at edge {}-{}'.format(
-                            edge_data.op, node_idx, neigbor_idx))
+                        logger.debug(
+                            'Processing op {} at edge {}-{}'.format(
+                                edge_data.op, node_idx, neigbor_idx
+                            )
+                        )
 
                         if edge_data.op.get_embedded_ops() is not None:
                             for i, basic_op in enumerate(
-                                    edge_data.op.get_embedded_ops()):
-                                if isinstance(basic_op,
-                                              torch.nn.AdaptiveAvgPool2d):
+                                edge_data.op.get_embedded_ops()
+                            ):
+                                if isinstance(basic_op, torch.nn.AdaptiveAvgPool2d):
                                     return_id = i
-                                    ops = edge_data.op.get_embedded_ops(
-                                    )[:return_id]
+                                    ops = edge_data.op.get_embedded_ops()[:return_id]
                                     if len(ops) == 0:
                                         return x
                                     else:
                                         return torch.nn.Sequential(*ops)(x)
                         # case for the nb101 graph
                         elif isinstance(
-                                edge_data.op,
-                                nl.search_spaces.nasbench101.primitives.
-                                ModelWrapper,
+                            edge_data.op,
+                            nl.search_spaces.nasbench101.primitives.ModelWrapper,
                         ):
-                            return torch.nn.Sequential(
-                                *edge_data.op.model.layers)(
-                                    x)
+                            return torch.nn.Sequential(*edge_data.op.model.layers)(x)
 
                         edge_output = edge_data.op.forward_beforeGP(
-                            x, edge_data=edge_data)
+                            x, edge_data=edge_data
+                        )
                     else:
                         raise ValueError(
-                            'Unknown class as op: {}. Expected either Graph or AbstactPrimitive'
-                            .format(edge_data.op))
-                    self.nodes[neigbor_idx]['input'].update(
-                        {node_idx: edge_output})
+                            'Unknown class as op: {}. Expected either Graph or AbstactPrimitive'.format(
+                                edge_data.op
+                            )
+                        )
+                    self.nodes[neigbor_idx]['input'].update({node_idx: edge_output})
 
-            logger.debug('Node {}-{}, processing done.'.format(
-                self.name, node_idx))
+            logger.debug('Node {}-{}, processing done.'.format(self.name, node_idx))
 
-        logger.debug('Graph {} exiting. Output {}.'.format(
-            self.name, log_formats(x)))
+        logger.debug('Graph {} exiting. Output {}.'.format(self.name, log_formats(x)))
         return x
 
     def parse(self):
@@ -543,8 +560,7 @@ class Graph(torch.nn.Module, nx.DiGraph):
                     self.nodes[node_idx]['subgraph'],
                 )
             else:
-                if isinstance(self.nodes[node_idx]['comb_op'],
-                              torch.nn.Module):
+                if isinstance(self.nodes[node_idx]['comb_op'], torch.nn.Module):
                     self.add_module(
                         '{}-comb_op_at({})'.format(self.name, node_idx),
                         self.nodes[node_idx]['comb_op'],
@@ -645,15 +661,17 @@ class Graph(torch.nn.Module, nx.DiGraph):
                                 graphs.append(child_op._get_child_graphs())
                     else:
                         logger.debug(
-                            'Got embedded op, but is neither a graph nor a list: {}'
-                            .format(embedded_ops))
+                            'Got embedded op, but is neither a graph nor a list: {}'.format(
+                                embedded_ops
+                            )
+                        )
             elif inspect.isclass(edge_data.op):
                 assert not issubclass(
-                    edge_data.op, Graph), 'Found non-initialized graph. Abort.'
+                    edge_data.op, Graph
+                ), 'Found non-initialized graph. Abort.'
                 pass  # we look at an uncomiled op
             else:
-                raise ValueError('Unknown format of op: {}'.format(
-                    edge_data.op))
+                raise ValueError('Unknown format of op: {}'.format(edge_data.op))
 
         graphs = [g for g in iter_flatten(graphs)]
 
@@ -666,10 +684,9 @@ class Graph(torch.nn.Module, nx.DiGraph):
         else:
             return sorted(graphs, key=lambda g: g.name)
 
-    def get_all_edge_data(self,
-                          key: str,
-                          scope='all',
-                          private_edge_data: bool = False) -> list:
+    def get_all_edge_data(
+        self, key: str, scope='all', private_edge_data: bool = False
+    ) -> list:
         """
         Get edge attributes of this graph and all child graphs in one go.
 
@@ -684,10 +701,14 @@ class Graph(torch.nn.Module, nx.DiGraph):
         """
         assert scope is not None
         result = []
-        for graph in self._get_child_graphs(
-                single_instances=not private_edge_data) + [self]:
-            if (scope == 'all' or graph.scope == scope
-                    or (isinstance(scope, list) and graph.scope in scope)):
+        for graph in self._get_child_graphs(single_instances=not private_edge_data) + [
+            self
+        ]:
+            if (
+                scope == 'all'
+                or graph.scope == scope
+                or (isinstance(scope, list) and graph.scope in scope)
+            ):
                 for u, v, edge_data in graph.edges.data():
                     if edge_data.has(key):
                         result.append(edge_data[key])
@@ -727,14 +748,12 @@ class Graph(torch.nn.Module, nx.DiGraph):
                                 compiled_ops.append(o(**a))
                             else:
                                 logger.debug(
-                                    'op {} already compiled. Skipping'.format(
-                                        o))
+                                    'op {} already compiled. Skipping'.format(o)
+                                )
                         edge_data.set('op', compiled_ops)
                     elif isinstance(op, AbstractPrimitive):
-                        logger.debug(
-                            'op {} already compiled. Skipping'.format(op))
-                    elif inspect.isclass(op) and issubclass(
-                            op, AbstractPrimitive):
+                        logger.debug('op {} already compiled. Skipping'.format(op))
+                    elif inspect.isclass(op) and issubclass(op, AbstractPrimitive):
                         # Init the class
                         edge_data.set('op', op(**attr))
                     elif isinstance(op, Graph):
@@ -742,8 +761,7 @@ class Graph(torch.nn.Module, nx.DiGraph):
                     else:
                         raise ValueError('Unkown format of op: {}'.format(op))
 
-    def _verify_update_function(update_func: callable,
-                                private_edge_data: bool):
+    def _verify_update_function(update_func: callable, private_edge_data: bool):
         """
         Verify that the update function actually modifies only
         shared/private edge data attributes based on setting of
@@ -774,8 +792,8 @@ class Graph(torch.nn.Module, nx.DiGraph):
             return
 
         assert isinstance(
-            result,
-            EdgeData), 'Update function does not return the edge data object.'
+            result, EdgeData
+        ), 'Update function does not return the edge data object.'
 
         if private_edge_data:
             assert result._shared == test._shared, (
@@ -783,19 +801,20 @@ class Graph(torch.nn.Module, nx.DiGraph):
                 '`private_edge_data` set to True. '
                 'This is not the indended use of `update_edges`.'
                 ' The update function should only modify '
-                'private edge data.')
+                'private edge data.'
+            )
         else:
             assert result._private == test._private, (
                 'The update function changes private data although '
                 '`private_edge_data` set to False. '
                 'This is not the indended use of `update_edges`. '
                 'The update function should only modify '
-                'shared edge data.')
+                'shared edge data.'
+            )
 
-    def update_edges(self,
-                     update_func: callable,
-                     scope='all',
-                     private_edge_data: bool = False):
+    def update_edges(
+        self, update_func: callable, scope='all', private_edge_data: bool = False
+    ):
         """
         This updates the edge data of this graph and all child graphs.
         This is the preferred way to manipulate the edges after the definition
@@ -821,10 +840,14 @@ class Graph(torch.nn.Module, nx.DiGraph):
         """
         # Graph._verify_update_function(update_func, private_edge_data)
         assert scope is not None
-        for graph in self._get_child_graphs(
-                single_instances=not private_edge_data) + [self]:
-            if (scope == 'all' or scope == graph.scope
-                    or (isinstance(scope, list) and graph.scope in scope)):
+        for graph in self._get_child_graphs(single_instances=not private_edge_data) + [
+            self
+        ]:
+            if (
+                scope == 'all'
+                or scope == graph.scope
+                or (isinstance(scope, list) and graph.scope in scope)
+            ):
                 logger.debug('Updating edges of graph {}'.format(graph.name))
                 for u, v, edge_data in graph.edges.data():
                     if not edge_data.is_final():
@@ -832,10 +855,9 @@ class Graph(torch.nn.Module, nx.DiGraph):
                         update_func(edge=edge)
         self._delete_flagged_edges()
 
-    def update_nodes(self,
-                     update_func: callable,
-                     scope='all',
-                     single_instances: bool = True):
+    def update_nodes(
+        self, update_func: callable, scope='all', single_instances: bool = True
+    ):
         """
         Update the nodes of the graph and its incoming and outgoing edges by
         iterating over the graph and applying `update_func` to each of it.
@@ -869,21 +891,25 @@ class Graph(torch.nn.Module, nx.DiGraph):
         """
         assert scope is not None
         for graph in self._get_child_graphs(single_instances) + [self]:
-            if (scope == 'all' or graph.scope == scope
-                    or (isinstance(scope, list) and graph.scope in scope)):
+            if (
+                scope == 'all'
+                or graph.scope == scope
+                or (isinstance(scope, list) and graph.scope in scope)
+            ):
                 logger.debug('Updating nodes of graph {}'.format(graph.name))
                 for node_idx in lexicographical_topological_sort(graph):
                     node = (node_idx, graph.nodes[node_idx])
-                    in_edges = list(graph.in_edges(node_idx,
-                                                   data=True))  # (v, u, data)
-                    in_edges = [(v, data) for v, u, data in in_edges
-                                if not data.is_final()]  # u is same for all
-                    out_edges = list(graph.out_edges(
-                        node_idx, data=True))  # (v, u, data)
-                    out_edges = [(u, data) for v, u, data in out_edges
-                                 if not data.is_final()]  # v is same for all
-                    update_func(
-                        node=node, in_edges=in_edges, out_edges=out_edges)
+                    in_edges = list(graph.in_edges(node_idx, data=True))  # (v, u, data)
+                    in_edges = [
+                        (v, data) for v, u, data in in_edges if not data.is_final()
+                    ]  # u is same for all
+                    out_edges = list(
+                        graph.out_edges(node_idx, data=True)
+                    )  # (v, u, data)
+                    out_edges = [
+                        (u, data) for v, u, data in out_edges if not data.is_final()
+                    ]  # v is same for all
+                    update_func(node=node, in_edges=in_edges, out_edges=out_edges)
         self._delete_flagged_edges()
 
     def _delete_flagged_edges(self):
@@ -891,7 +917,7 @@ class Graph(torch.nn.Module, nx.DiGraph):
         Delete edges which associated EdgeData is flagged as deleted.
         """
         for graph in self._get_child_graphs(single_instances=False) + [
-                self
+            self
         ]:  # we operate on shallow copies
             to_remove = []
             for u, v, edge_data in graph.edges.data():
@@ -981,7 +1007,8 @@ class Graph(torch.nn.Module, nx.DiGraph):
             )
         else:
             raise NotImplementedError(
-                'This function should not be used if QUERYABLE is False')
+                'This function should not be used if QUERYABLE is False'
+            )
 
     def get_dense_edges(self):
         """
@@ -1077,7 +1104,8 @@ class EdgeData:
             return self._shared[key]
         else:
             raise AttributeError(
-                "Cannot find field '{}' in the given EdgeData!".format(key))
+                "Cannot find field '{}' in the given EdgeData!".format(key)
+            )
 
     def __setattr__(self, name: str, val):
         if name.startswith('_'):
@@ -1087,7 +1115,8 @@ class EdgeData:
 
     def __str__(self):
         return 'private: <{}>, shared: <{}>'.format(
-            str(self._private), str(self._shared))
+            str(self._private), str(self._shared)
+        )
 
     def __repr__(self):
         return self.__str__()
@@ -1166,9 +1195,9 @@ class EdgeData:
                 be a shallow copy between different instances of EdgeData
                 (and consequently between different instances of Graph).
         """
-        assert isinstance(key,
-                          str), 'Accepting only string keys, got {}'.format(
-                              type(key))
+        assert isinstance(key, str), 'Accepting only string keys, got {}'.format(
+            type(key)
+        )
         assert not key.startswith('_'), 'Access to private keys not allowed!'
         assert not self.is_final(), 'Trying to change finalized edge!'
         if shared:
@@ -1222,15 +1251,9 @@ class EdgeData:
 
     def to_dict(self, subset='all'):
         if subset == 'shared':
-            return {
-                k: v
-                for k, v in self._shared.items() if not k.startswith('_')
-            }
+            return {k: v for k, v in self._shared.items() if not k.startswith('_')}
         elif subset == 'private':
-            return {
-                k: v
-                for k, v in self._private.items() if not k.startswith('_')
-            }
+            return {k: v for k, v in self._private.items() if not k.startswith('_')}
         elif subset == 'all':
             d = self.to_dict('private')
             d.update(self.to_dict('shared'))

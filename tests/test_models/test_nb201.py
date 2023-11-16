@@ -12,7 +12,6 @@ from piconas.utils.get_dataset_api import get_dataset_api
 
 
 class TestNasBench201(TestCase):
-
     def test_generate_arch(self):
         model = OneShotNASBench201Network(16, 5)
         osmutator = OneShotMutator(with_alias=True)
@@ -64,11 +63,10 @@ class TestNasBench201(TestCase):
         dfmutator = DiffMutator(with_alias=True)
         dfmutator.prepare_from_supernet(model)
 
-        for param1, param2 in zip(dfmutator.parameters(),
-                                  dfmutator.arch_params.values()):
-            print(
-                f'param1 shape: {param1.shape} ==> param2 shape: {param2.shape}'
-            )
+        for param1, param2 in zip(
+            dfmutator.parameters(), dfmutator.arch_params.values()
+        ):
+            print(f'param1 shape: {param1.shape} ==> param2 shape: {param2.shape}')
 
         print(dfmutator.search_group.keys())
 
@@ -90,9 +88,11 @@ class TestNasBench201(TestCase):
 
         def calc_eval_dist(dct1, dct2):
             results1 = evaluator.query_result(
-                evaluator.generate_genotype(dct1, trainer.mutator))
+                evaluator.generate_genotype(dct1, trainer.mutator)
+            )
             results2 = evaluator.query_result(
-                evaluator.generate_genotype(dct2, trainer.mutator))
+                evaluator.generate_genotype(dct2, trainer.mutator)
+            )
             return int(abs(results1 - results2))
 
         # mean 4.5 std 1.06
@@ -138,8 +138,8 @@ class TestNasBench201(TestCase):
             true_list.append(calc_eval_dist(sg1, sg2))
 
         print('=' * 20)
-        from piconas.utils.rank_consistency import (kendalltau, pearson,
-                                                    spearman)
+        from piconas.utils.rank_consistency import kendalltau, pearson, spearman
+
         kt = kendalltau(dst_list, true_list)
         ps = pearson(dst_list, true_list)
         sp = spearman(dst_list, true_list)
@@ -147,6 +147,7 @@ class TestNasBench201(TestCase):
         print('=' * 20)
 
         import matplotlib.pyplot as plt
+
         fig, axes = plt.subplots()
         ax1 = sns.scatterplot(x=list(range(len(dst_list))), y=dst_list)
         plt.savefig('./test_dis_flops.png')
@@ -175,14 +176,17 @@ class TestNasBench201(TestCase):
 
         def calc_eval_dist(dct1, dct2):
             results1 = evaluator.query_result(
-                evaluator.generate_genotype(dct1, trainer.mutator))
+                evaluator.generate_genotype(dct1, trainer.mutator)
+            )
             results2 = evaluator.query_result(
-                evaluator.generate_genotype(dct2, trainer.mutator))
+                evaluator.generate_genotype(dct2, trainer.mutator)
+            )
             return int(abs(results1 - results2))
 
         def calc_zerocost_dist(dct1, dct2):
             import torch
             import torch.nn.functional as F
+
             dataload_info = ['random', 1, 10]
             device = torch.device('cuda')
 
@@ -193,7 +197,8 @@ class TestNasBench201(TestCase):
                 dataload_info=dataload_info,
                 measure_names=['zen'],
                 loss_fn=F.cross_entropy,
-                device=device)
+                device=device,
+            )
 
             mutator.set_subnet(dct2)
             zc2 = find_measures(
@@ -202,7 +207,8 @@ class TestNasBench201(TestCase):
                 dataload_info=dataload_info,
                 measure_names=['zen'],
                 loss_fn=F.cross_entropy,
-                device=device)
+                device=device,
+            )
             return abs(zc1 - zc2)
 
         # mean 4.5 std 1.06
@@ -245,6 +251,7 @@ class TestNasBench201(TestCase):
         zc_list = []
 
         from tqdm import tqdm
+
         for i in tqdm(range(100)):
             sg1 = mutator.random_subnet
             sg2 = mutator.random_subnet
@@ -253,8 +260,8 @@ class TestNasBench201(TestCase):
             zc_list.append(calc_zerocost_dist(sg1, sg2))
 
         print('=' * 20)
-        from piconas.utils.rank_consistency import (kendalltau, pearson,
-                                                    spearman)
+        from piconas.utils.rank_consistency import kendalltau, pearson, spearman
+
         kt = kendalltau(dst_list, zc_list)
         ps = pearson(dst_list, zc_list)
         sp = spearman(dst_list, zc_list)
@@ -262,6 +269,7 @@ class TestNasBench201(TestCase):
         print('=' * 20)
 
         import matplotlib.pyplot as plt
+
         fig, axes = plt.subplots()
         # ax1 = sns.scatterplot(x=list(range(len(dst_list))), y=dst_list)
         # ax2 = sns.scatterplot(x=list(range(len(dst_list))), y=zc_list)

@@ -16,15 +16,10 @@ class GradualWarmupScheduler(_LRScheduler):
         after_scheduler: after target_epoch, use this scheduler(eg. ReduceLROnPlateau)
     """
 
-    def __init__(self,
-                 optimizer,
-                 multiplier,
-                 total_epoch,
-                 after_scheduler=None):
+    def __init__(self, optimizer, multiplier, total_epoch, after_scheduler=None):
         self.multiplier = multiplier
         if self.multiplier < 1.0:
-            raise ValueError(
-                'multiplier should be greater thant or equal to 1.')
+            raise ValueError('multiplier should be greater thant or equal to 1.')
         self.total_epoch = total_epoch
         self.after_scheduler = after_scheduler
         self.finished = False
@@ -48,9 +43,9 @@ class GradualWarmupScheduler(_LRScheduler):
             ]
         else:
             return [
-                base_lr *
-                ((self.multiplier - 1.0) * self.last_epoch / self.total_epoch +
-                 1.0) for base_lr in self.base_lrs
+                base_lr
+                * ((self.multiplier - 1.0) * self.last_epoch / self.total_epoch + 1.0)
+                for base_lr in self.base_lrs
             ]
 
     def step_ReduceLROnPlateau(self, metrics, epoch=None):
@@ -60,9 +55,9 @@ class GradualWarmupScheduler(_LRScheduler):
         self.last_epoch = epoch if epoch != 0 else 1
         if self.last_epoch <= self.total_epoch:
             warmup_lr = [
-                base_lr *
-                ((self.multiplier - 1.0) * self.last_epoch / self.total_epoch +
-                 1.0) for base_lr in self.base_lrs
+                base_lr
+                * ((self.multiplier - 1.0) * self.last_epoch / self.total_epoch + 1.0)
+                for base_lr in self.base_lrs
             ]
             for param_group, lr in zip(self.optimizer.param_groups, warmup_lr):
                 param_group['lr'] = lr
@@ -87,7 +82,6 @@ class GradualWarmupScheduler(_LRScheduler):
 
 
 class StepLR:
-
     def __init__(self, optimizer, learning_rate: float, total_epochs: int):
         self.optimizer = optimizer
         self.total_epochs = total_epochs
@@ -111,7 +105,6 @@ class StepLR:
 
 
 class model(nn.Module):
-
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3)
@@ -121,7 +114,6 @@ class model(nn.Module):
 
 
 class CustomScheduler:
-
     def __init__(self, optimizer, learning_rate: float, total_epochs: int):
         self.optimizer = optimizer
         self.total_epochs = total_epochs
@@ -145,7 +137,6 @@ class CustomScheduler:
 
 
 class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
-
     def __init__(
         self,
         optimizer,
@@ -158,8 +149,7 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
     ):
         if list(milestones) != sorted(milestones):
             raise ValueError(
-                'Milestones should be a list of'
-                ' increasing integers. Got {}',
+                'Milestones should be a list of' ' increasing integers. Got {}',
                 milestones,
             )
 
@@ -184,8 +174,9 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
                 alpha = self.last_epoch / self.warmup_epochs
                 warmup_factor = self.warmup_factor * (1 - alpha) + alpha
         return [
-            base_lr * warmup_factor *
-            self.gamma**bisect_right(self.milestones, self.last_epoch)
+            base_lr
+            * warmup_factor
+            * self.gamma ** bisect_right(self.milestones, self.last_epoch)
             for base_lr in self.base_lrs
         ]
 
@@ -213,7 +204,8 @@ if __name__ == '__main__':
     # scheduler = WarmupMultiStepLR(optimizer, [100,150], gamma=0.5)
     # scheduler = CyclicLR(optimizer, base_lr=0, max_lr=0.1, step_size_up=15, step_size_down=20)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-        optimizer, T_0=10, T_mult=2, eta_min=0.0001)
+        optimizer, T_0=10, T_mult=2, eta_min=0.0001
+    )
     # scheduler = LambdaLR(optimizer, lambda step : (1.0-step/total_epoch) if step > 15 else (step/total_epoch), last_epoch=-1)
     # scheduler = GradualWarmupScheduler(
     #     optimizer, 1, total_epoch=15, after_scheduler=a_scheduler

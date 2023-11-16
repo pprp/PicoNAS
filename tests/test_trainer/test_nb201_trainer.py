@@ -9,7 +9,6 @@ from piconas.structures.sucessive_halving import Brick, Level
 
 
 class TestNB201Trainer(TestCase):
-
     def test_level(self):
         level = Level()
 
@@ -18,7 +17,8 @@ class TestNB201Trainer(TestCase):
                 subnet_cfg={'test': 1},
                 num_iters=random.randint(0, 10),
                 prior_score=random.randint(0, 10),
-                val_acc=random.random())
+                val_acc=random.random(),
+            )
             level.append(b)
 
         print('=' * 10)

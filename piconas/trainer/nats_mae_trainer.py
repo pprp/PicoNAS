@@ -80,8 +80,10 @@ class NATSMAETrainer(NATSTrainer):
             forward_op_list = self.model.set_forward_cfg(self.method)
         else:
             forward_op_list = (
-                current_op_list if current_op_list is not None else
-                self.model.set_forward_cfg(self.method))
+                current_op_list
+                if current_op_list is not None
+                else self.model.set_forward_cfg(self.method)
+            )
         outputs, feat = self.model(inputs, mask, forward_op_list)
         return outputs, inputs
 
@@ -142,9 +144,7 @@ class NATSMAETrainer(NATSTrainer):
         t_loss.backward(retain_graph=True)
 
         # middle supernet
-        mid_forward_lists = [
-            self.model.set_forward_cfg('uni') for _ in range(2)
-        ]
+        mid_forward_lists = [self.model.set_forward_cfg('uni') for _ in range(2)]
         for mid_forward_list in mid_forward_lists:
             output, s_feat = self.model(inputs, mask, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
@@ -173,9 +173,7 @@ class NATSMAETrainer(NATSTrainer):
         mse_loss_list.append(t_loss)
 
         # middle supernet
-        mid_forward_lists = [
-            self.model.set_forward_cfg('uni') for _ in range(2)
-        ]
+        mid_forward_lists = [self.model.set_forward_cfg('uni') for _ in range(2)]
         for mid_forward_list in mid_forward_lists:
             output, feat_s = self.model(inputs, mask, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
@@ -279,11 +277,14 @@ class NATSMAETrainer(NATSTrainer):
                 else:
                     kt, ps, sp = self.evaluator.compute_rank_consistency()
                     self.writer.add_scalar(
-                        'RANK/kendall_tau', kt, global_step=self.current_epoch)
+                        'RANK/kendall_tau', kt, global_step=self.current_epoch
+                    )
                     self.writer.add_scalar(
-                        'RANK/pearson', ps, global_step=self.current_epoch)
+                        'RANK/pearson', ps, global_step=self.current_epoch
+                    )
                     self.writer.add_scalar(
-                        'RANK/spearman', sp, global_step=self.current_epoch)
+                        'RANK/spearman', sp, global_step=self.current_epoch
+                    )
 
             self.train_loss_.append(tr_loss)
             self.val_loss_.append(val_loss)
@@ -295,13 +296,11 @@ class NATSMAETrainer(NATSTrainer):
             )
 
             self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss', tr_loss, global_step=self.current_epoch
+            )
             self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss', val_loss, global_step=self.current_epoch
+            )
 
             self.scheduler.step()
 
@@ -341,7 +340,8 @@ class NATSMAETrainer(NATSTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
     def _validate(self, loader):
         self.model.eval()
@@ -360,8 +360,7 @@ class NATSMAETrainer(NATSTrainer):
 
                 # print every 20 iter
                 if step % self.print_freq == 0:
-                    self.logger.info(
-                        f'Step: {step} \t Val loss: {loss.item()}')
+                    self.logger.info(f'Step: {step} \t Val loss: {loss.item()}')
                     self.writer.add_scalar(
                         'STEP_LOSS/valid_step_loss',
                         loss.item(),

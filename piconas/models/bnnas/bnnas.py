@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
 
-from piconas.models.bnnas.bn_blocks import (InvertedResidual, blocks_dict,
-                                            conv_bn)
+from piconas.models.bnnas.bn_blocks import InvertedResidual, blocks_dict, conv_bn
 from piconas.nas.mutables.oneshot_mutable import OneShotOP
 from ..registry import register_model
 
@@ -10,7 +9,6 @@ from ..registry import register_model
 @register_model
 # This is a comment.
 class BNNAS(nn.Module):
-
     def __init__(
         self,
         first_stride: int = 1,
@@ -47,8 +45,7 @@ class BNNAS(nn.Module):
             self.layers.append(layer)
 
         self.avgpool = nn.AdaptiveAvgPool2d(1)
-        self.classifier = nn.Sequential(
-            nn.Linear(self.last_channels, num_classes))
+        self.classifier = nn.Sequential(nn.Linear(self.last_channels, num_classes))
 
         if is_only_train_bn:
             print('Only train BN.')
@@ -72,20 +69,16 @@ class BNNAS(nn.Module):
             else:
                 inp, outp, stride = self.in_channels, out_channels, 1
             stride = 2 if stride == 2 and i == 0 else 1
-            candidate_ops = nn.ModuleDict({
-                'bn_k3r3':
-                blocks_dict['k3r3'](inp, outp, stride),
-                'bn_k3r6':
-                blocks_dict['k3r6'](inp, outp, stride),
-                'bn_k5r3':
-                blocks_dict['k5r3'](inp, outp, stride),
-                'bn_k5r6':
-                blocks_dict['k5r6'](inp, outp, stride),
-                'bn_k7r3':
-                blocks_dict['k7r3'](inp, outp, stride),
-                'bn_k7r6':
-                blocks_dict['k7r6'](inp, outp, stride),
-            })
+            candidate_ops = nn.ModuleDict(
+                {
+                    'bn_k3r3': blocks_dict['k3r3'](inp, outp, stride),
+                    'bn_k3r6': blocks_dict['k3r6'](inp, outp, stride),
+                    'bn_k5r3': blocks_dict['k5r3'](inp, outp, stride),
+                    'bn_k5r6': blocks_dict['k5r6'](inp, outp, stride),
+                    'bn_k7r3': blocks_dict['k7r3'](inp, outp, stride),
+                    'bn_k7r6': blocks_dict['k7r6'](inp, outp, stride),
+                }
+            )
             layers.append(OneShotOP(candidate_ops=candidate_ops))
             self.in_channels = out_channels
         return nn.Sequential(*layers)

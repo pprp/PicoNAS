@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+
 """
 These are the encoding methods for DARTS.
 The plan is to unify encodings across all search spaces.
@@ -119,9 +120,7 @@ def encode_adj(arch):
         matrices.append(matrix)
         ops.append(op_list)
 
-    encoding = [
-        *matrices[0].flatten(), *ops[0], *matrices[1].flatten(), *ops[1]
-    ]
+    encoding = [*matrices[0].flatten(), *ops[0], *matrices[1].flatten(), *ops[1]]
     return np.array(encoding)
 
 
@@ -149,8 +148,7 @@ def encode_bonas(arch):
     for col in range(mat_length):
         for row in range(col):
             matrix_final[row, col] = matrices[0][row, col]
-            matrix_final[row + mat_length, col + mat_length] = matrices[1][row,
-                                                                           col]
+            matrix_final[row + mat_length, col + mat_length] = matrices[1][row, col]
 
     ops_onehot = np.concatenate((ops[0], ops[1]), axis=0)
 
@@ -224,8 +222,7 @@ def encode_seminas(arch):
     for col in range(mat_length):
         for row in range(col):
             matrix_final[row, col] = matrices[0][row, col]
-            matrix_final[row + mat_length, col + mat_length] = matrices[1][row,
-                                                                           col]
+            matrix_final[row + mat_length, col + mat_length] = matrices[1][row, col]
 
     ops_onehot = np.concatenate((ops[0], ops[1]), axis=0)
 
@@ -256,8 +253,7 @@ def encode_gcn(arch):
     for col in range(mat_length):
         for row in range(col):
             matrix_final[row, col] = matrices[0][row, col]
-            matrix_final[row + mat_length, col + mat_length] = matrices[1][row,
-                                                                           col]
+            matrix_final[row + mat_length, col + mat_length] = matrices[1][row, col]
 
     ops_onehot = np.concatenate((ops[0], ops[1]), axis=0)
 
@@ -293,8 +289,12 @@ def encode_darts_compact(compact, encoding_type='path'):
         return encode_gcn(arch=compact)
 
     else:
-        print('{} is not yet implemented as an encoding type \
-         for darts'.format(encoding_type))
+        print(
+            '{} is not yet implemented as an encoding type \
+         for darts'.format(
+                encoding_type
+            )
+        )
         raise NotImplementedError()
 
 

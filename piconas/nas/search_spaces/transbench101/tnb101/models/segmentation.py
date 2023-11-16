@@ -17,10 +17,8 @@ class Segmentation(nn.Module):
         self.device_list = device_list
         if len(self.device_list) > 1:
             if ddp:
-                self.encoder = nn.SyncBatchNorm.convert_sync_batchnorm(
-                    self.encoder)
-                self.decoder = nn.SyncBatchNorm.convert_sync_batchnorm(
-                    self.decoder)
+                self.encoder = nn.SyncBatchNorm.convert_sync_batchnorm(self.encoder)
+                self.decoder = nn.SyncBatchNorm.convert_sync_batchnorm(self.decoder)
                 self.encoder = DDP(
                     self.encoder.to(rank),
                     device_ids=[rank],
@@ -33,10 +31,8 @@ class Segmentation(nn.Module):
                 )
                 self.rank = rank
             else:
-                self.encoder = nn.DataParallel(self.encoder).to(
-                    self.device_list[0])
-                self.decoder = nn.DataParallel(self.decoder).to(
-                    self.device_list[0])
+                self.encoder = nn.DataParallel(self.encoder).to(self.device_list[0])
+                self.decoder = nn.DataParallel(self.decoder).to(self.device_list[0])
                 self.rank = rank
         else:
             self.rank = self.device_list[0]

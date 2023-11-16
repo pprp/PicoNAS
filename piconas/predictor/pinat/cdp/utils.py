@@ -27,28 +27,29 @@ def delete_margin(matrix):
 # output: the metrics after padding
 def padding_zero_in_matrix(important_metrics, max_length=PADDING_MAX_LENGTH):
     for i in important_metrics:
-        len_operations = len(
-            important_metrics[i]['fixed_metrics']['module_operations'])
+        len_operations = len(important_metrics[i]['fixed_metrics']['module_operations'])
         if len_operations != max_length:
             # if the operations is less than max_length
             for j in range(len_operations, max_length):
-                important_metrics[i]['fixed_metrics'][
-                    'module_operations'].insert(-1, 'null')
+                important_metrics[i]['fixed_metrics']['module_operations'].insert(
+                    -1, 'null'
+                )
             # print(important_metrics[i]['fixed_metrics']['module_operations'])
 
-            adjecent_matrix = important_metrics[i]['fixed_metrics'][
-                'module_adjacency']
+            adjecent_matrix = important_metrics[i]['fixed_metrics']['module_adjacency']
             padding_matrix = np.insert(
                 adjecent_matrix,
                 len_operations - 1,
                 np.zeros([max_length - len_operations, len_operations]),
-                axis=0)
+                axis=0,
+            )
             padding_matrix = np.insert(
-                padding_matrix, [len_operations - 1],
+                padding_matrix,
+                [len_operations - 1],
                 np.zeros([max_length, max_length - len_operations]),
-                axis=1)
-            important_metrics[i]['fixed_metrics'][
-                'module_adjacency'] = padding_matrix
+                axis=1,
+            )
+            important_metrics[i]['fixed_metrics']['module_adjacency'] = padding_matrix
     return important_metrics
 
 
@@ -64,29 +65,31 @@ def padding_zeros(matrix, op_list, max_length=PADDING_MAX_LENGTH):
             adjecent_matrix,
             len_operations - 1,
             np.zeros([max_length - len_operations, len_operations]),
-            axis=0)
+            axis=0,
+        )
         padding_matrix = np.insert(
-            padding_matrix, [len_operations - 1],
+            padding_matrix,
+            [len_operations - 1],
             np.zeros([max_length, max_length - len_operations]),
-            axis=1)
+            axis=1,
+        )
 
     return padding_matrix, op_list
 
 
 def padding_zeros_darts(matrixes, ops, max_length=PADDING_MAX_LENGTH):
-    '''
+    """
     input darts cell matrix and ops
     :param matrixes: len=2
     :param ops: len=2
     :return: the matrix and ops after padding
-    '''
+    """
     padding_matrixes = []
     padding_ops = []
     for matrix, op in zip(matrixes, ops):
         if op is None:
             # matrix is None this case
-            padding_matrix = np.zeros(
-                shape=[max_length, max_length], dtype='int8')
+            padding_matrix = np.zeros(shape=[max_length, max_length], dtype='int8')
             tmp_op = np.zeros(shape=max_length, dtype='int8')
 
             padding_matrixes.append(padding_matrix)
@@ -104,11 +107,14 @@ def padding_zeros_darts(matrixes, ops, max_length=PADDING_MAX_LENGTH):
                 padding_matrix,
                 len_operations - 1,
                 np.zeros([max_length - len_operations, len_operations]),
-                axis=0)
+                axis=0,
+            )
             padding_matrix = np.insert(
-                padding_matrix, [len_operations - 1],
+                padding_matrix,
+                [len_operations - 1],
                 np.zeros([max_length, max_length - len_operations]),
-                axis=1)
+                axis=1,
+            )
         padding_matrixes.append(padding_matrix)
         padding_ops.append(tmp_op)
     return padding_matrixes, padding_ops
@@ -200,7 +206,7 @@ def convert_to_genotype(arch):
         4: 'dil_conv_3x3',
         5: 'max_pool_3x3',
         6: 'avg_pool_3x3',
-        7: 'skip_connect'
+        7: 'skip_connect',
     }
     darts_arch = [[], []]
     i = 0
@@ -212,23 +218,24 @@ def convert_to_genotype(arch):
         normal=darts_arch[0],
         normal_concat=[2, 3, 4, 5],
         reduce=darts_arch[1],
-        reduce_concat=[2, 3, 4, 5])
+        reduce_concat=[2, 3, 4, 5],
+    )
     return geno
 
 
 # below is from DARTS code
 def drop_path(x, drop_prob):
-    if drop_prob > 0.:
-        keep_prob = 1. - drop_prob
+    if drop_prob > 0.0:
+        keep_prob = 1.0 - drop_prob
         mask = Variable(
-            torch.cuda.FloatTensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob))
+            torch.cuda.FloatTensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob)
+        )
         x.div_(keep_prob)
         x.mul_(mask)
     return x
 
 
 class AvgrageMeter(object):
-
     def __init__(self):
         self.reset()
 
@@ -306,7 +313,7 @@ class AverageMeterGroup:
         return '  '.join(v.summary() for v in self.meters.values())
 
 
-def accuracy(output, target, topk=(1, )):
+def accuracy(output, target, topk=(1,)):
     maxk = max(topk)
     batch_size = target.size(0)
 
@@ -322,7 +329,6 @@ def accuracy(output, target, topk=(1, )):
 
 
 class Cutout(object):
-
     def __init__(self, length):
         self.length = length
 
@@ -337,7 +343,7 @@ class Cutout(object):
         x1 = np.clip(x - self.length // 2, 0, w)
         x2 = np.clip(x + self.length // 2, 0, w)
 
-        mask[y1:y2, x1:x2] = 0.
+        mask[y1:y2, x1:x2] = 0.0
         mask = torch.from_numpy(mask)
         mask = mask.expand_as(img)
         img *= mask
@@ -348,26 +354,35 @@ def _data_transforms_cifar10(args):
     CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
     CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
 
-    train_transform = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
-    ])
+    train_transform = transforms.Compose(
+        [
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
+        ]
+    )
     if args.cutout:
         train_transform.transforms.append(Cutout(args.cutout_length))
 
-    valid_transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
-    ])
+    valid_transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
+        ]
+    )
     return train_transform, valid_transform
 
 
 def count_parameters_in_MB(model):
-    return np.sum(
-        np.prod(v.size()) for name, v in model.named_parameters()
-        if 'auxiliary' not in name) / 1e6
+    return (
+        np.sum(
+            np.prod(v.size())
+            for name, v in model.named_parameters()
+            if 'auxiliary' not in name
+        )
+        / 1e6
+    )
 
 
 def save_checkpoint(state, is_best, save):

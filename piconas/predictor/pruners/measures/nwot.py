@@ -26,7 +26,6 @@ from . import measure
 
 @measure('nwot', bn=True)
 def compute_nwot(net, inputs, targets, split_data=1, loss_fn=None):
-
     batch_size = len(targets)
 
     def counting_forward_hook(module, inp, out):
@@ -42,7 +41,7 @@ def compute_nwot(net, inputs, targets, split_data=1, loss_fn=None):
     net.K = np.zeros((batch_size, batch_size))
     for name, module in net.named_modules():
         module_type = str(type(module))
-        if ('ReLU' in module_type):
+        if 'ReLU' in module_type:
             # module.register_full_backward_hook(counting_backward_hook)
             module.register_forward_hook(counting_forward_hook)
 

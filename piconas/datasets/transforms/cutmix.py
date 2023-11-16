@@ -3,7 +3,6 @@ import torch
 
 
 class CutMix(object):
-
     def __init__(self, size, beta):
         self.size = size
         self.beta = beta

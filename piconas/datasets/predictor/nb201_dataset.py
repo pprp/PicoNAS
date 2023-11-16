@@ -9,8 +9,7 @@ import torch
 from nas_201_api import NASBench201API as NB2API
 from torch.utils.data import Dataset
 
-from piconas.predictor.nas_embedding_suite.nb123.nas_bench_201.cell_201 import \
-    Cell201
+from piconas.predictor.nas_embedding_suite.nb123.nas_bench_201.cell_201 import Cell201
 
 BASE_PATH = '/data/lujunl/pprp/bench/'
 
@@ -18,29 +17,27 @@ BASE_PATH = '/data/lujunl/pprp/bench/'
 class Nb201DatasetPINAT(Dataset):
     CACHE_FILE_PATH = BASE_PATH + '/nb201_cellobj_cache.pkl'
 
-    def __init__(self,
-                 split,
-                 candidate_ops=5,
-                 data_type='train',
-                 data_set='cifar10'):
-        assert data_set in [
-            'cifar10', 'cifar100', 'ImageNet16-120', 'imagenet16'
-        ]
+    def __init__(self, split, candidate_ops=5, data_type='train', data_set='cifar10'):
+        assert data_set in ['cifar10', 'cifar100', 'ImageNet16-120', 'imagenet16']
 
         self.nb2_api = NB2API(
-            BASE_PATH + 'NAS-Bench-201-v1_1-096897.pth', verbose=False)
+            BASE_PATH + 'NAS-Bench-201-v1_1-096897.pth', verbose=False
+        )
         self.nasbench201_dict = np.load(
             '/data/lujunl/pprp/bench/nasbench201/nasbench201_dict.npy',
-            allow_pickle=True).item()
+            allow_pickle=True,
+        ).item()
 
         self.sample_range = list()
         self.candidate_ops = candidate_ops
         if data_type == 'train':
             self.sample_range = random.sample(
-                range(0, len(self.nasbench201_dict)), int(split))
+                range(0, len(self.nasbench201_dict)), int(split)
+            )
         elif data_type == 'valid':
             self.sample_range = random.sample(
-                range(0, len(self.nasbench201_dict)), int(split))
+                range(0, len(self.nasbench201_dict)), int(split)
+            )
         elif data_type == 'test':
             self.sample_range = range(0, len(self.nasbench201_dict))
         else:
@@ -66,10 +63,10 @@ class Nb201DatasetPINAT(Dataset):
 
         # self.preprocess_sample_range()
 
-        self.zcp_nb201 = json.load(
-            open(BASE_PATH + 'zc_nasbench201.json', 'r'))
+        self.zcp_nb201 = json.load(open(BASE_PATH + 'zc_nasbench201.json', 'r'))
         self.zcp_nb201_layerwise = json.load(
-            open(BASE_PATH + 'zc_nasbench201_layerwise.json', 'r'))
+            open(BASE_PATH + 'zc_nasbench201_layerwise.json', 'r')
+        )
 
         self._opname_to_index = {
             'none': 0,
@@ -79,17 +76,32 @@ class Nb201DatasetPINAT(Dataset):
             'avg_pool_3x3': 4,
             'input': 5,
             'output': 6,
-            'global': 7
+            'global': 7,
         }
         self.zcps = [
-            'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
-            'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen'
+            'epe_nas',
+            'fisher',
+            'flops',
+            'grad_norm',
+            'grasp',
+            'jacov',
+            'l2_norm',
+            'nwot',
+            'params',
+            'plain',
+            'snip',
+            'synflow',
+            'zen',
         ]
 
         self.lw_zcps = [
-            'fisher_layerwise', 'grad_norm_layerwise', 'grasp_layerwise',
-            'l2_norm_layerwise', 'snip_layerwise', 'synflow_layerwise',
-            'plain_layerwise'
+            'fisher_layerwise',
+            'grad_norm_layerwise',
+            'grasp_layerwise',
+            'l2_norm_layerwise',
+            'snip_layerwise',
+            'synflow_layerwise',
+            'plain_layerwise',
         ]
         self.lw_zcps_selected = 'synflow_layerwise'
 
@@ -139,10 +151,8 @@ class Nb201DatasetPINAT(Dataset):
         # filter the model that can not converge
         filtered_sample_range = []
         for index in self.sample_range:
-            val_acc = self.nasbench201_dict[str(index)]['%s_valid' %
-                                                        idx_data_set]
-            test_acc = self.nasbench201_dict[str(index)]['%s_test' %
-                                                         idx_data_set]
+            val_acc = self.nasbench201_dict[str(index)]['%s_valid' % idx_data_set]
+            test_acc = self.nasbench201_dict[str(index)]['%s_test' % idx_data_set]
             if val_acc > 12 and test_acc > 12:
                 filtered_sample_range.append(index)
         self.sample_range = filtered_sample_range
@@ -150,42 +160,45 @@ class Nb201DatasetPINAT(Dataset):
     def normalize_and_process_zcp(self, normalize_zcp, log_synflow):
         if normalize_zcp:
             print('Normalizing ZCP dict')
-            self.norm_zcp = pd.DataFrame({
-                k0: {
-                    k1: v1['score']
-                    for k1, v1 in v0.items() if v1.__class__() == {}
+            self.norm_zcp = pd.DataFrame(
+                {
+                    k0: {
+                        k1: v1['score'] for k1, v1 in v0.items() if v1.__class__() == {}
+                    }
+                    for k0, v0 in self.zcp_nb201[self.data_set].items()
                 }
-                for k0, v0 in self.zcp_nb201[self.data_set].items()
-            }).T
+            ).T
 
             # Add normalization code here
-            self.norm_zcp['epe_nas'] = self.min_max_scaling(
-                self.norm_zcp['epe_nas'])
+            self.norm_zcp['epe_nas'] = self.min_max_scaling(self.norm_zcp['epe_nas'])
             self.norm_zcp['fisher'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['fisher']))
+                self.log_transform(self.norm_zcp['fisher'])
+            )
             self.norm_zcp['flops'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['flops']))
+                self.log_transform(self.norm_zcp['flops'])
+            )
             self.norm_zcp['grad_norm'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['grad_norm']))
-            self.norm_zcp['grasp'] = self.standard_scaling(
-                self.norm_zcp['grasp'])
-            self.norm_zcp['jacov'] = self.min_max_scaling(
-                self.norm_zcp['jacov'])
-            self.norm_zcp['l2_norm'] = self.min_max_scaling(
-                self.norm_zcp['l2_norm'])
+                self.log_transform(self.norm_zcp['grad_norm'])
+            )
+            self.norm_zcp['grasp'] = self.standard_scaling(self.norm_zcp['grasp'])
+            self.norm_zcp['jacov'] = self.min_max_scaling(self.norm_zcp['jacov'])
+            self.norm_zcp['l2_norm'] = self.min_max_scaling(self.norm_zcp['l2_norm'])
             self.norm_zcp['nwot'] = self.min_max_scaling(self.norm_zcp['nwot'])
             self.norm_zcp['params'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['params']))
-            self.norm_zcp['plain'] = self.min_max_scaling(
-                self.norm_zcp['plain'])
+                self.log_transform(self.norm_zcp['params'])
+            )
+            self.norm_zcp['plain'] = self.min_max_scaling(self.norm_zcp['plain'])
             self.norm_zcp['snip'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['snip']))
+                self.log_transform(self.norm_zcp['snip'])
+            )
             if log_synflow:
                 self.norm_zcp['synflow'] = self.min_max_scaling(
-                    self.log_transform(self.norm_zcp['synflow']))
+                    self.log_transform(self.norm_zcp['synflow'])
+                )
             else:
                 self.norm_zcp['synflow'] = self.min_max_scaling(
-                    self.norm_zcp['synflow'])
+                    self.norm_zcp['synflow']
+                )
             self.norm_zcp['zen'] = self.min_max_scaling(self.norm_zcp['zen'])
             # self.norm_zcp['val_accuracy'] = self.min_max_scaling(self.norm_zcp['val_accuracy'])
 
@@ -310,18 +323,17 @@ class Nb201DatasetPINAT(Dataset):
         else:
             idx_data_set = self.data_set
 
-        val_acc = self.nasbench201_dict[str(ss_index)]['%s_valid' %
-                                                       idx_data_set]
-        test_acc = self.nasbench201_dict[str(ss_index)]['%s_test' %
-                                                        idx_data_set]
+        val_acc = self.nasbench201_dict[str(ss_index)]['%s_valid' % idx_data_set]
+        test_acc = self.nasbench201_dict[str(ss_index)]['%s_test' % idx_data_set]
         adjacency = self.nasbench201_dict[str(ss_index)]['adj_matrix']
         lapla = self._generate_lapla_matrix(adj_matrix=adjacency)
         operation = np.array(
-            self.nasbench201_dict[str(ss_index)]['operation'],
-            dtype=np.float32)
-        ops_onehot = np.array([[i == k for i in range(self.candidate_ops)]
-                               for k in operation],
-                              dtype=np.float32)
+            self.nasbench201_dict[str(ss_index)]['operation'], dtype=np.float32
+        )
+        ops_onehot = np.array(
+            [[i == k for i in range(self.candidate_ops)] for k in operation],
+            dtype=np.float32,
+        )
         n = np.linalg.matrix_rank(adjacency) + 1
 
         seq = self._convert_arch_to_seq(adjacency, operation)
@@ -344,9 +356,11 @@ class Nb201DatasetPINAT(Dataset):
         pad_num = self.max_edge_num - edge_num
         if pad_num > 0:
             edge_index = np.pad(
-                np.array(edge_index), ((0, pad_num), (0, 0)),
+                np.array(edge_index),
+                ((0, pad_num), (0, 0)),
                 'constant',
-                constant_values=(0, 0))
+                constant_values=(0, 0),
+            )
         edge_index = torch.tensor(edge_index, dtype=torch.int64)
         edge_index = edge_index.transpose(1, 0)
 
@@ -361,49 +375,35 @@ class Nb201DatasetPINAT(Dataset):
         key = str(ss_index)
         # zcp_layerwise = self.zcp_nb201_layerwise[self.data_set][key][self.lw_zcps_selected]
         # Use combination of grad_norm, snip, synflow:
-        combinations = [
-            'grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise'
-        ]
+        combinations = ['grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise']
 
         idx_dataset = self.data_set if self.data_set != 'ImageNet16-120' else 'cifar10'
 
-        zcp_layerwise = self.zcp_nb201_layerwise[idx_dataset][key][combinations[0]] + \
-                 self.zcp_nb201_layerwise[idx_dataset][key][combinations[1]] + \
-                    self.zcp_nb201_layerwise[idx_dataset][key][combinations[2]]
+        zcp_layerwise = (
+            self.zcp_nb201_layerwise[idx_dataset][key][combinations[0]]
+            + self.zcp_nb201_layerwise[idx_dataset][key][combinations[1]]
+            + self.zcp_nb201_layerwise[idx_dataset][key][combinations[2]]
+        )
         zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
 
         result = {
-            'num_vertices':
-            4,
-            'edge_num':
-            edge_num,
-            'adjacency':
-            np.array(adjacency, dtype=np.float32),
-            'lapla':
-            lapla,
-            'operations':
-            ops_onehot,
-            'features':
-            torch.from_numpy(operation).long(),
-            'val_acc':
-            torch.tensor(self.normalize(val_acc / 100), dtype=torch.float32),
-            'test_acc':
-            torch.tensor(self.normalize(test_acc / 100), dtype=torch.float32),
-            'test_acc_wo_normalize':
-            torch.tensor(test_acc / 100, dtype=torch.float32),
-            'val_acc_wo_normalize':
-            torch.tensor(val_acc / 100, dtype=torch.float32),
-            'encoder_input':
-            torch.LongTensor(encoder_input),
-            'decoder_input':
-            torch.LongTensor(decoder_input),
-            'decoder_target':
-            torch.LongTensor(encoder_input),
-            'edge_index_list':
-            edge_index,
-            'zcp':
-            zcp,
-            'zcp_layerwise':
-            zcp_layerwise,
+            'num_vertices': 4,
+            'edge_num': edge_num,
+            'adjacency': np.array(adjacency, dtype=np.float32),
+            'lapla': lapla,
+            'operations': ops_onehot,
+            'features': torch.from_numpy(operation).long(),
+            'val_acc': torch.tensor(self.normalize(val_acc / 100), dtype=torch.float32),
+            'test_acc': torch.tensor(
+                self.normalize(test_acc / 100), dtype=torch.float32
+            ),
+            'test_acc_wo_normalize': torch.tensor(test_acc / 100, dtype=torch.float32),
+            'val_acc_wo_normalize': torch.tensor(val_acc / 100, dtype=torch.float32),
+            'encoder_input': torch.LongTensor(encoder_input),
+            'decoder_input': torch.LongTensor(decoder_input),
+            'decoder_target': torch.LongTensor(encoder_input),
+            'edge_index_list': edge_index,
+            'zcp': zcp,
+            'zcp_layerwise': zcp_layerwise,
         }
         return result

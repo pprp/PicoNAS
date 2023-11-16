@@ -3,26 +3,22 @@ import torch.nn as nn
 
 # OPS defines operations for micro cell structures
 OPS = {
-    '0':
-    lambda C_in, C_out, stride, affine, track_running_stats: Zero(
-        C_in, C_out, stride),
-    '1':
-    lambda C_in, C_out, stride, affine, track_running_stats: Identity()
-    if (stride == 1 and C_in == C_out) else FactorizedReduce(
-        C_in, C_out, stride, affine, track_running_stats),
-    '2':
-    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
-        C_in, C_out, (1, 1), stride, (0, 0),
-        (1, 1), affine, track_running_stats),
-    '3':
-    lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
-        C_in, C_out, (3, 3), stride, (1, 1),
-        (1, 1), affine, track_running_stats),
+    '0': lambda C_in, C_out, stride, affine, track_running_stats: Zero(
+        C_in, C_out, stride
+    ),
+    '1': lambda C_in, C_out, stride, affine, track_running_stats: Identity()
+    if (stride == 1 and C_in == C_out)
+    else FactorizedReduce(C_in, C_out, stride, affine, track_running_stats),
+    '2': lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+        C_in, C_out, (1, 1), stride, (0, 0), (1, 1), affine, track_running_stats
+    ),
+    '3': lambda C_in, C_out, stride, affine, track_running_stats: ReLUConvBN(
+        C_in, C_out, (3, 3), stride, (1, 1), (1, 1), affine, track_running_stats
+    ),
 }
 
 
 class ReLUConvBN(nn.Module):
-
     def __init__(
         self,
         C_in,
@@ -53,7 +49,8 @@ class ReLUConvBN(nn.Module):
                 bias=False,
             ),
             nn.BatchNorm2d(
-                C_out, affine=affine, track_running_stats=track_running_stats),
+                C_out, affine=affine, track_running_stats=track_running_stats
+            ),
         ]
         self.ops = nn.Sequential(*ops)
         self.C_in = C_in
@@ -64,12 +61,10 @@ class ReLUConvBN(nn.Module):
         return self.ops(x)
 
     def extra_repr(self):
-        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(
-            **self.__dict__)
+        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(**self.__dict__)
 
 
 class Identity(nn.Module):
-
     def __init__(self):
         super(Identity, self).__init__()
 
@@ -78,7 +73,6 @@ class Identity(nn.Module):
 
 
 class Zero(nn.Module):
-
     def __init__(self, C_in, C_out, stride):
         super(Zero, self).__init__()
         self.C_in = C_in
@@ -91,7 +85,7 @@ class Zero(nn.Module):
             if self.stride == 1:
                 return x.mul(0.0)
             else:
-                return x[:, :, ::self.stride, ::self.stride].mul(0.0)
+                return x[:, :, :: self.stride, :: self.stride].mul(0.0)
         else:
             shape = list(x.shape)
             shape[1], shape[2], shape[3] = (
@@ -103,12 +97,10 @@ class Zero(nn.Module):
             return zeros
 
     def extra_repr(self):
-        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(
-            **self.__dict__)
+        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(**self.__dict__)
 
 
 class FactorizedReduce(nn.Module):
-
     def __init__(self, C_in, C_out, stride, affine, track_running_stats):
         super(FactorizedReduce, self).__init__()
         self.stride = stride
@@ -120,17 +112,17 @@ class FactorizedReduce(nn.Module):
         self.convs = nn.ModuleList()
         for i in range(2):
             self.convs.append(
-                nn.Conv2d(
-                    C_in, C_outs[i], 1, stride=stride, padding=0, bias=False))
+                nn.Conv2d(C_in, C_outs[i], 1, stride=stride, padding=0, bias=False)
+            )
         self.pad = nn.ConstantPad2d((0, 1, 0, 1), 0)
         self.bn = nn.BatchNorm2d(
-            C_out, affine=affine, track_running_stats=track_running_stats)
+            C_out, affine=affine, track_running_stats=track_running_stats
+        )
 
     def forward(self, x):
         x = self.relu(x)
         y = self.pad(x)
-        out = torch.cat([self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])],
-                        dim=1)
+        out = torch.cat([self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])], dim=1)
         # print(self.convs[0](x).shape, self.convs[1](y[:,:,1:,1:]).shape)
         # print(out.shape)
 
@@ -138,17 +130,17 @@ class FactorizedReduce(nn.Module):
         return out
 
     def extra_repr(self):
-        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(
-            **self.__dict__)
+        return 'C_in={C_in}, C_out={C_out}, stride={stride}'.format(**self.__dict__)
 
 
 class ConvLayer(nn.Module):
-
-    def __init__(self, in_channel, out_channel, kernel, stride, padding,
-                 activation, norm):
+    def __init__(
+        self, in_channel, out_channel, kernel, stride, padding, activation, norm
+    ):
         super(ConvLayer, self).__init__()
         self.conv = nn.Conv2d(
-            in_channel, out_channel, kernel, stride=stride, padding=padding)
+            in_channel, out_channel, kernel, stride=stride, padding=padding
+        )
         self.activation = activation
         if norm:
             if norm == nn.BatchNorm2d:
@@ -169,9 +161,9 @@ class ConvLayer(nn.Module):
 
 
 class DeconvLayer(nn.Module):
-
-    def __init__(self, in_channel, out_channel, kernel, stride, padding,
-                 activation, norm):
+    def __init__(
+        self, in_channel, out_channel, kernel, stride, padding, activation, norm
+    ):
         super(DeconvLayer, self).__init__()
         self.conv = nn.ConvTranspose2d(
             in_channel,

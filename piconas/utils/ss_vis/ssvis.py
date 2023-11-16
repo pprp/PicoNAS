@@ -9,6 +9,7 @@ from tqdm import tqdm
 if True:
     import matplotlib.ticker as ticker
     import seaborn as sns
+
     sns.set_palette('tab10')
     plt.rcParams['text.usetex'] = False
     plt.rcParams['mathtext.fontset'] = 'cm'
@@ -38,7 +39,7 @@ name_map = {
     'nb': 'NASBench-',
     '_fix-w-d': '$_{FixWD}$',
     '_lr-wd': '$_{LRWD}$',
-    'tb': 'TransNASBench-'
+    'tb': 'TransNASBench-',
 }
 
 
@@ -79,7 +80,8 @@ def load_and_prepare_data(data_dict, ranges):
     for unique_label in np.unique(labels):
         indices = np.where(labels == unique_label)[0]
         sampled_indices = np.random.choice(
-            indices, min(5000, len(indices)), replace=False)
+            indices, min(5000, len(indices)), replace=False
+        )
         sampled_features.extend(features[sampled_indices])
         sampled_labels.extend(labels[sampled_indices])
 
@@ -104,28 +106,28 @@ def visualize_tsne(X_2d, sampled_labels, ranges, ax, title, name_map, pl):
             X_2d[idx, 1],
             color=c,
             label=replace_name(label, name_map),
-            s=4)  # s is the marker size
+            s=4,
+        )  # s is the marker size
     ax.set_xlim(X_2d[:, 0].min(), X_2d[:, 0].max())
     ax.set_ylim(X_2d[:, 1].min(), X_2d[:, 1].max())
 
     # Replacing ax.set_title with ax.text
     ax.text(
         0.98,
-        .05,
+        0.05,
         f'{title}',
         fontsize=16,
         horizontalalignment='right',
-        bbox=dict(
-            facecolor='white', edgecolor='gray', boxstyle='round,pad=0.3'),
-        transform=ax.transAxes)
+        bbox=dict(facecolor='white', edgecolor='gray', boxstyle='round,pad=0.3'),
+        transform=ax.transAxes,
+    )
 
     if pl:
         ax.legend(loc='upper right', framealpha=1)
 
 
 # Load the first dictionary and prepare data
-data_dict1 = torch.load(BASE_PATH + '/' +
-                        'model-dim_32_search_space_all_ss-all_ss.pt')
+data_dict1 = torch.load(BASE_PATH + '/' + 'model-dim_32_search_space_all_ss-all_ss.pt')
 sampled_features1, sampled_labels1 = load_and_prepare_data(data_dict1, ranges)
 
 # Load the second dictionary and prepare data
@@ -146,13 +148,13 @@ if True:
         'nb': 'NASBench-',
         '_fix-w-d': '$_{FixWD}$',
         '_lr-wd': '$_{LRWD}$',
-        'tb': 'TransNASBench-'
+        'tb': 'TransNASBench-',
     }  # Example name_map, replace with your actual mapping
     handles, labels = [], []
     visualize_tsne(
-        X_2d1, sampled_labels1, ranges, axs[0], 'Arch2Vec', name_map, pl=False)
-    visualize_tsne(
-        X_2d2, sampled_labels2, ranges, axs[1], 'CATE', name_map, pl=False)
+        X_2d1, sampled_labels1, ranges, axs[0], 'Arch2Vec', name_map, pl=False
+    )
+    visualize_tsne(X_2d2, sampled_labels2, ranges, axs[1], 'CATE', name_map, pl=False)
     for ax in axs:
         h, l = ax.get_legend_handles_labels()
         handles.extend(h)
@@ -166,7 +168,8 @@ if True:
         loc='upper center',
         ncol=7,
         bbox_to_anchor=(0.5, 1.01),
-        fontsize=16)
+        fontsize=16,
+    )
     for handle in lgnd.legendHandles:
         handle.set_sizes([35.0])
     plt.savefig('tsne_combined_5000_nums.png', dpi=500)
@@ -177,9 +180,9 @@ if True:
     fig, axs = plt.subplots(1, 2, figsize=(20, 5))  # Adjust as needed
     handles, labels = [], []
     visualize_tsne(
-        X_2d1, sampled_labels1, ranges, axs[0], 'Arch2Vec', name_map, pl=False)
-    visualize_tsne(
-        X_2d2, sampled_labels2, ranges, axs[1], 'CATE', name_map, pl=False)
+        X_2d1, sampled_labels1, ranges, axs[0], 'Arch2Vec', name_map, pl=False
+    )
+    visualize_tsne(X_2d2, sampled_labels2, ranges, axs[1], 'CATE', name_map, pl=False)
     for ax in axs:
         h, l = ax.get_legend_handles_labels()
         handles.extend(h)
@@ -192,8 +195,7 @@ if True:
     legend_ax = fig.add_axes([0.82, 0.1, 0.1, 0.8])
     legend_ax.axis('off')
 
-    lgnd = legend_ax.legend(
-        handles, labels, loc='center left', ncol=2, fontsize=16)
+    lgnd = legend_ax.legend(handles, labels, loc='center left', ncol=2, fontsize=16)
     for handle in lgnd.legendHandles:
         handle.set_sizes([35.0])
     plt.savefig('tsne_combined_5000_nums_legside.png', dpi=500)

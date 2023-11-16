@@ -25,13 +25,12 @@ def convert_to_float(input):
 
 @measure('eznas-a')
 def compute_eznas_a(
-        net,
-        inputs,
-        targets,
-        loss_fn=nn.CrossEntropyLoss(),
-        split_data=1,
+    net,
+    inputs,
+    targets,
+    loss_fn=nn.CrossEntropyLoss(),
+    split_data=1,
 ):
-
     def compute_t3g_gradient(net, inputs, targets, loss_fn, split_data=1):
         t3g_list = []  # before relu
 

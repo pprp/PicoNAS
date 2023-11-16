@@ -14,13 +14,9 @@ from models.net_ops.cell_ops import OPS, ReLUConvBN
 class MicroCell(nn.Module):
     expansion = 1
 
-    def __init__(self,
-                 cell_code,
-                 C_in,
-                 C_out,
-                 stride,
-                 affine=False,
-                 track_running_stats=True):
+    def __init__(
+        self, cell_code, C_in, C_out, stride, affine=False, track_running_stats=True
+    ):
         """
         initialize a cell
         Args:
@@ -37,23 +33,23 @@ class MicroCell(nn.Module):
         self.edges = nn.ModuleList()
         self.nodes = list(range(len(cell_code)))  # e.g. [0, 1, 2, 3]
         assert self.nodes == list(map(len, cell_code))
-        self.from_nodes = [list(range(i)) for i in self.nodes
-                           ]  # e.g. [[], [0], [0, 1], [0, 1, 2]]
+        self.from_nodes = [
+            list(range(i)) for i in self.nodes
+        ]  # e.g. [[], [0], [0, 1], [0, 1, 2]]
         self.from_ops = [
-            list(range(n * (n - 1) // 2,
-                       n * (n - 1) // 2 + n)) for n in range(self.node_num)
+            list(range(n * (n - 1) // 2, n * (n - 1) // 2 + n))
+            for n in range(self.node_num)
         ]  # e.g. [[], [0], [1, 2], [3, 4, 5]]
         self.stride = stride
 
         for node in self.nodes:
-            for op_idx, from_node in zip(cell_code[node],
-                                         self.from_nodes[node]):
+            for op_idx, from_node in zip(cell_code[node], self.from_nodes[node]):
                 if from_node == 0:
-                    edge = OPS[op_idx](C_in, C_out, self.stride, affine,
-                                       track_running_stats)
+                    edge = OPS[op_idx](
+                        C_in, C_out, self.stride, affine, track_running_stats
+                    )
                 else:
-                    edge = OPS[op_idx](C_out, C_out, 1, affine,
-                                       track_running_stats)
+                    edge = OPS[op_idx](C_out, C_out, 1, affine, track_running_stats)
                 self.edges.append(edge)
 
         self.cell_code = cell_code
@@ -68,8 +64,9 @@ class MicroCell(nn.Module):
                 continue
             node_feature_list = [
                 self.edges[from_op](node_features[from_node])
-                for from_op, from_node in zip(self.from_ops[node_idx],
-                                              self.from_nodes[node_idx])
+                for from_op, from_node in zip(
+                    self.from_ops[node_idx], self.from_nodes[node_idx]
+                )
             ]
             # for i, nf in enumerate(node_feature_list):
             #     print(node_idx, self.from_nodes[node_idx][i], self.cell_code[node_idx][i], nf.shape)
@@ -134,12 +131,10 @@ class ResNetBasicblock(nn.Module):
                     padding=0,
                     bias=False,
                 ),
-                nn.BatchNorm2d(planes * self.expansion, affine,
-                               track_running_stats),
+                nn.BatchNorm2d(planes * self.expansion, affine, track_running_stats),
             )
 
     def forward(self, inputs):
-
         feature = self.conv_a(inputs)
         feature = self.conv_b(feature)
 

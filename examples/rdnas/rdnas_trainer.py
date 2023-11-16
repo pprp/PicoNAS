@@ -8,8 +8,7 @@ import torch.nn.functional as F
 
 import piconas.utils.utils as utils
 from piconas.core.losses import KLDivergence, PairwiseRankLoss, pair_loss
-from piconas.datasets.predictor.nb201_dataset import \
-    Nb201DatasetPINAT  # noqa: E501
+from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT  # noqa: E501
 from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models.nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
@@ -23,7 +22,6 @@ from piconas.utils.utils import AvgrageMeter, accuracy
 
 @register_trainer
 class PGONASTrainer(BaseTrainer):
-
     def __init__(
         self,
         model: OneShotNASBench201Network,
@@ -47,7 +45,8 @@ class PGONASTrainer(BaseTrainer):
             log_name=log_name,
             searching=searching,
             dataset=dataset,
-            **kwargs)
+            **kwargs,
+        )
 
         if self.mutator is None:
             # Note: use alias to build search group
@@ -59,8 +58,7 @@ class PGONASTrainer(BaseTrainer):
         self._init_flops()
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(
-            num_sample=20, dataset=self.dataset)
+        self.evaluator = self._build_evaluator(num_sample=20, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -79,7 +77,7 @@ class PGONASTrainer(BaseTrainer):
             2: 'nor_conv_3x3',
             3: 'nor_conv_3x3',
             4: 'nor_conv_3x3',
-            5: 'nor_conv_3x3'
+            5: 'nor_conv_3x3',
         }
 
         self.min_subnet = {
@@ -88,14 +86,19 @@ class PGONASTrainer(BaseTrainer):
             2: 'skip_connect',
             3: 'skip_connect',
             4: 'skip_connect',
-            5: 'skip_connect'
+            5: 'skip_connect',
         }
 
         # type from kwargs can be random, hamming, adaptive
         if 'type' in kwargs:
             self.type = kwargs['type']
             assert self.type in {
-                'random', 'hamming', 'adaptive', 'uniform', 'fair', 'sandwich'
+                'random',
+                'hamming',
+                'adaptive',
+                'uniform',
+                'fair',
+                'sandwich',
             }
         else:
             self.type = None
@@ -106,11 +109,11 @@ class PGONASTrainer(BaseTrainer):
         # load model for predictor
         p_model = create_best_nb201_model()
         ckpt_dir = '/data/lujunl/pprp/PicoNAS/checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
-        p_model.load_state_dict(
-            torch.load(ckpt_dir, map_location=torch.device('cpu')))
+        p_model.load_state_dict(torch.load(ckpt_dir, map_location=torch.device('cpu')))
         self.predictor = p_model
         self.predictor_datasets = Nb201DatasetPINAT(
-            split=78, data_type='test', data_set='cifar10')
+            split=78, data_type='test', data_set='cifar10'
+        )
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return NB201Evaluator(self, num_sample, dataset)
@@ -177,8 +180,7 @@ class PGONASTrainer(BaseTrainer):
             subnet2 = self.mutator.random_subnet
 
             # 调参，调大或者调小 (1) 6.7 (2) 5 (3) 11
-            while adaptive_hamming_dist(subnet1,
-                                        subnet2) < 6.7 and max_iter > 0:
+            while adaptive_hamming_dist(subnet1, subnet2) < 6.7 and max_iter > 0:
                 subnet2 = self.mutator.random_subnet
             if max_iter > 0:
                 return subnet1, subnet2
@@ -344,7 +346,8 @@ class PGONASTrainer(BaseTrainer):
                 #     )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg}'
-                f' Top5 acc: {top5_vacc.avg}')
+                f' Top5 acc: {top5_vacc.avg}'
+            )
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def fit(self, train_loader, val_loader, epochs):
@@ -391,8 +394,15 @@ class PGONASTrainer(BaseTrainer):
             if (epoch + 1) % 25 == 0:
                 assert self.evaluator is not None
                 # BWR@K, P@tbk
-                kt, ps, sp, rd, minn_at_ks, patks, cpr = self.evaluator.compute_rank_consistency(
-                    val_loader, self.mutator)
+                (
+                    kt,
+                    ps,
+                    sp,
+                    rd,
+                    minn_at_ks,
+                    patks,
+                    cpr,
+                ) = self.evaluator.compute_rank_consistency(val_loader, self.mutator)
 
                 self.logger.info(
                     f'Kendall tau: {kt} Pearson: {ps} Spearman: {sp} CPR: {cpr}'
@@ -461,7 +471,8 @@ class PGONASTrainer(BaseTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         # self.model.eval()
@@ -473,8 +484,7 @@ class PGONASTrainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 # move to device
-                outputs, labels = self._predict(
-                    batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
@@ -528,8 +538,7 @@ class PGONASTrainer(BaseTrainer):
         for k, v in self.mutator.search_group.items():
             current_choice = subnet_dict[k]  # '1' or '2' or 'I'
             choice_flops = 0
-            for _, module in v[0]._candidate_ops[current_choice].named_modules(
-            ):
+            for _, module in v[0]._candidate_ops[current_choice].named_modules():
                 flops = getattr(module, '__flops__', 0)
                 if flops > 0:
                     choice_flops += flops
@@ -538,37 +547,36 @@ class PGONASTrainer(BaseTrainer):
         return subnet_flops
 
     def get_subnet_predictor(self, subnet_dict) -> float:
-        assert isinstance(self.evaluator,
-                          NB201Evaluator), f'evaluator is not NB201Evaluator'
+        assert isinstance(
+            self.evaluator, NB201Evaluator
+        ), f'evaluator is not NB201Evaluator'
         _genotype = self.evaluator.generate_genotype(subnet_dict, self.mutator)
         _idx = self.evaluator.query_index(_genotype)
         samples = self.predictor_datasets.get_batch(_idx)
         # keys = num_vertices, lapla, edge_numm, edge_index_list, features, operations, zcp_layerwise
         # convert samples with keys to batch_inputs
-        key_list = [
-            'num_vertices', 'lapla', 'edge_num', 'features', 'zcp_layerwise'
-        ]
+        key_list = ['num_vertices', 'lapla', 'edge_num', 'features', 'zcp_layerwise']
         # convert to batch-like
-        samples['edge_index_list'] = [
-            samples['edge_index_list'].to(self.device)
-        ]
-        samples['operations'] = torch.tensor(samples['operations']).unsqueeze(
-            dim=0).unsqueeze(0).to(self.device)
+        samples['edge_index_list'] = [samples['edge_index_list'].to(self.device)]
+        samples['operations'] = (
+            torch.tensor(samples['operations'])
+            .unsqueeze(dim=0)
+            .unsqueeze(0)
+            .to(self.device)
+        )
         for _key in key_list:
             if isinstance(samples[_key], (list, float, int)):
                 samples[_key] = torch.tensor(samples[_key])
-                samples[_key] = torch.unsqueeze(
-                    samples[_key], dim=0).to(self.device)
+                samples[_key] = torch.unsqueeze(samples[_key], dim=0).to(self.device)
             elif isinstance(samples[_key], np.ndarray):
                 samples[_key] = torch.from_numpy(samples[_key])
-                samples[_key] = torch.unsqueeze(
-                    samples[_key], dim=0).to(self.device)
+                samples[_key] = torch.unsqueeze(samples[_key], dim=0).to(self.device)
             elif isinstance(samples[_key], torch.Tensor):
-                samples[_key] = torch.unsqueeze(
-                    samples[_key], dim=0).to(self.device)
+                samples[_key] = torch.unsqueeze(samples[_key], dim=0).to(self.device)
             else:
                 raise NotImplementedError(
-                    f'key: {_key} is not list, is a {type(samples[_key])}')
+                    f'key: {_key} is not list, is a {type(samples[_key])}'
+                )
             samples[_key] = samples[_key].to(self.device)
 
         self.predictor.eval()
@@ -576,12 +584,12 @@ class PGONASTrainer(BaseTrainer):
         out = self.predictor.forward(samples)
         return out.item()  # to verify
 
-    def get_subnet_predictive(self,
-                              subnet_dict,
-                              dataloader,
-                              measure_name='nwot') -> float:
+    def get_subnet_predictive(
+        self, subnet_dict, dataloader, measure_name='nwot'
+    ) -> float:
         """Calculate zenscore based on subnet dict."""
         import copy
+
         m = copy.deepcopy(self.model)
         o = OneShotMutator(with_alias=True)
         o.prepare_from_supernet(m)
@@ -596,16 +604,16 @@ class PGONASTrainer(BaseTrainer):
             dataload_info=dataload_info,
             measure_names=measure_name,
             loss_fn=F.cross_entropy,
-            device=self.trainer.device)
+            device=self.trainer.device,
+        )
 
         del m
         del o
         return score
 
-    def get_subnet_error(self,
-                         subnet_dict: Dict,
-                         train_loader=None,
-                         val_loader=None) -> float:
+    def get_subnet_error(
+        self, subnet_dict: Dict, train_loader=None, val_loader=None
+    ) -> float:
         """Calculate the subnet of validation error.
         Including:
         1. BN calibration
@@ -716,8 +724,9 @@ class PGONASTrainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = min(2, self.current_epoch / 10.) * self.pairwise_rankloss(
-            predictor_score1, predictor_score2, loss1, loss2)
+        loss3 = min(2, self.current_epoch / 10.0) * self.pairwise_rankloss(
+            predictor_score1, predictor_score2, loss1, loss2
+        )
         loss3.backward()
 
         return loss2, outputs
@@ -743,16 +752,15 @@ class PGONASTrainer(BaseTrainer):
             loss = self._compute_loss(outputs, labels)
             loss.backward(retain_graph=True)
             # prior = torch.tensor([self.get_subnet_predictor(subnet)]).to(self.device)
-            prior = torch.tensor([self.get_subnet_flops(subnet)
-                                  ]).to(self.device)
+            prior = torch.tensor([self.get_subnet_flops(subnet)]).to(self.device)
 
             loss_list.append(loss)
             prior_list.append(prior)
 
-        loss_tensor, prior_tensor = torch.tensor(loss_list), torch.tensor(
-            prior_list)
-        loss_tensor, prior_tensor = loss_tensor.to(
-            self.device), prior_tensor.to(self.device)
+        loss_tensor, prior_tensor = torch.tensor(loss_list), torch.tensor(prior_list)
+        loss_tensor, prior_tensor = loss_tensor.to(self.device), prior_tensor.to(
+            self.device
+        )
         # loss_tensor = torch.stack(loss_list).to(self.device).requires_grad_()
         # prior_tensor = torch.stack(prior_list).to(self.device).requires_grad_()
 
@@ -793,17 +801,18 @@ class PGONASTrainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) * \
-            self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+        loss3 = (
+            2
+            * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+            * self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+        )
         loss_list.append(loss3)
 
         # distill loss
         if loss2 > loss1:
-            loss4 = self.distill_loss(
-                feat_s=feat2, feat_t=feat1) * self.lambda_kd
+            loss4 = self.distill_loss(feat_s=feat2, feat_t=feat1) * self.lambda_kd
         else:
-            loss4 = self.distill_loss(
-                feat_s=feat1, feat_t=feat2) * self.lambda_kd
+            loss4 = self.distill_loss(feat_s=feat1, feat_t=feat2) * self.lambda_kd
         loss_list.append(loss4)
 
         loss = sum(loss_list)
@@ -846,8 +855,7 @@ class PGONASTrainer(BaseTrainer):
             for j in range(i):
                 flops1, flops2 = flops_list[i], flops_list[j]
                 loss1, loss2 = loss_list[i], loss_list[j]
-                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1,
-                                                       loss2)
+                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1, loss2)
 
                 rank_loss_list.append(tmp_rank_loss)
 

@@ -15,7 +15,6 @@ from .nats_supernet import SupernetNATS
 
 @register_model
 class MAESupernetNATS(SupernetNATS):
-
     def __init__(self, target='cifar10') -> None:
         super().__init__(target=target)
 
@@ -52,12 +51,8 @@ class MAESupernetNATS(SupernetNATS):
             # x32
             nn.Upsample(scale_factor=2),
             nn.Conv2d(
-                self.last_channel // 2,
-                3,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=True),
+                self.last_channel // 2, 3, kernel_size=3, stride=1, padding=1, bias=True
+            ),
             nn.BatchNorm2d(3),
             nn.ReLU(inplace=True),
         )
@@ -65,10 +60,8 @@ class MAESupernetNATS(SupernetNATS):
     def process_mask(self, x: Tensor, mask: Tensor, num_patch=16):
         # process masked image
         x = rearrange(
-            x,
-            'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)',
-            p1=num_patch,
-            p2=num_patch)
+            x, 'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)', p1=num_patch, p2=num_patch
+        )
         mask = rearrange(mask, 'b h w -> b (h w)')
         mask = mask.unsqueeze(-1).repeat(1, 1, 12)
         x = x * mask
@@ -83,10 +76,7 @@ class MAESupernetNATS(SupernetNATS):
         )
         return x
 
-    def forward(self,
-                x: Tensor,
-                mask: Tensor,
-                forward_op: List = None) -> Tensor:
+    def forward(self, x: Tensor, mask: Tensor, forward_op: List = None) -> Tensor:
         # process mask
         x = self.process_mask(x, mask)
 
@@ -98,14 +88,13 @@ class MAESupernetNATS(SupernetNATS):
         x = self.stem[1](x, idx)
         # blocks
         for i, block in enumerate(self._blocks):
-            pre_op = forward_op[sum(self._op_layers_list[:i]) -
-                                1] if i > 0 else -1
+            pre_op = forward_op[sum(self._op_layers_list[:i]) - 1] if i > 0 else -1
             x = block(
                 x,
                 i,
-                forward_list=forward_op[sum(self._op_layers_list[:i]
-                                            ):sum(self._op_layers_list[:(i +
-                                                                         1)])],
+                forward_list=forward_op[
+                    sum(self._op_layers_list[:i]) : sum(self._op_layers_list[: (i + 1)])
+                ],
                 pre_op=pre_op,
             )
 

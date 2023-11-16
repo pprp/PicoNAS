@@ -4,23 +4,26 @@ from piconas.predictor.pinat.gcn_bayesian import NeuralPredictorBayesian
 from piconas.predictor.pinat.gcn_mlpmixer import NeuralPredictorMLPMixer
 from piconas.predictor.pinat.mlp import MLP
 from piconas.predictor.pinat.mlpmixer import MLPMixer
-from piconas.predictor.pinat.pinat_model import (ParZCBMM, ParZCBMM2,
-                                                 PINATModel1, PINATModel2,
-                                                 PINATModel3, PINATModel4,
-                                                 PINATModel5, PINATModel6,
-                                                 PINATModel7)
+from piconas.predictor.pinat.pinat_model import (
+    ParZCBMM,
+    ParZCBMM2,
+    PINATModel1,
+    PINATModel2,
+    PINATModel3,
+    PINATModel4,
+    PINATModel5,
+    PINATModel6,
+    PINATModel7,
+)
 
 _name2model = {
     'PINATModel1': PINATModel1,  # PINAT + ZCP
     'PINATModel2': PINATModel2,  # ZCP only
     'PINATModel3': PINATModel3,  # PINAT + ZCP + BN
     'PINATModel4': PINATModel4,  # PINAT + ZCP Layerwise + Gating
-    'PINATModel5':
-    PINATModel5,  # PINAT + ZCP Layerwise + Gating + Larger Model
-    'PINATModel6':
-    PINATModel6,  # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder
-    'PINATModel7':
-    PINATModel7,  # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder + bayesian network
+    'PINATModel5': PINATModel5,  # PINAT + ZCP Layerwise + Gating + Larger Model
+    'PINATModel6': PINATModel6,  # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder
+    'PINATModel7': PINATModel7,  # PINAT + ZCP Layerwise + Gating + Larger Model Modify Encoder + bayesian network
     'ParZCBMM': ParZCBMM,  # ZCP + BMM
     'ParZCBMM2': ParZCBMM2,
     # ablation study
@@ -51,13 +54,15 @@ def create_ablation_model(args):
             expansion_factor=4,
             expansion_factor_token=0.5,
             emb_out_dim=1,
-            dropout=0.1)
+            dropout=0.1,
+        )
     elif args.model_name == 'NeuralPredictorModel':
         net = NeuralPredictorModel(
             initial_hidden=initial_hidden,
             gcn_hidden=144,
             gcn_layers=4,
-            linear_hidden=128)
+            linear_hidden=128,
+        )
     elif args.model_name == 'MLP':
         net = MLP(input_dim=input_dim)
     elif args.model_name == 'NeuralPredictorMLPMixer':
@@ -71,14 +76,16 @@ def create_ablation_model(args):
             depth=4,
             expansion_factor=4,
             expansion_factor_token=0.5,
-            dropout=0.1)
+            dropout=0.1,
+        )
     elif args.model_name == 'NeuralPredictorBayesian':
         net = NeuralPredictorBayesian(
             initial_hidden=initial_hidden,
             gcn_hidden=144,
             gcn_layers=4,
             linear_hidden=128,
-            layer_sizes=[input_dim, 160, 64])
+            layer_sizes=[input_dim, 160, 64],
+        )
     else:
         raise NotImplementedError(f'Unknown model name: {args.model_name}')
 
@@ -122,7 +129,8 @@ def create_best_nb201_model():
         d_k=100,
         d_v=100,
         d_model=765,  # 80
-        d_inner=338)
+        d_inner=338,
+    )
     return net
 
 
@@ -141,12 +149,14 @@ def create_best_nb101_model():
         d_k=48,  # 100
         d_v=48,  # 100
         d_model=708,  # 80
-        d_inner=530)
+        d_inner=530,
+    )
     return net
 
 
-def create_model_hpo(n_layers, n_head, pine_hidden, linear_hidden,
-                     d_word_model, d_k_v, d_inner):
+def create_model_hpo(
+    n_layers, n_head, pine_hidden, linear_hidden, d_word_model, d_k_v, d_inner
+):
     pos_enc_dim_dict = {'101': 7, '201': 4}
     net = ParZCBMM(
         bench='101',
@@ -161,7 +171,8 @@ def create_model_hpo(n_layers, n_head, pine_hidden, linear_hidden,
         d_k=d_k_v,
         d_v=d_k_v,
         d_model=d_word_model,  # 80
-        d_inner=d_inner)
+        d_inner=d_inner,
+    )
     return net
 
 

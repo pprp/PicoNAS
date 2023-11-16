@@ -12,7 +12,6 @@ from .registry import register_trainer
 
 @register_trainer
 class MAETrainer(BaseTrainer):
-
     def __init__(
         self,
         model: nn.Module,
@@ -140,11 +139,13 @@ class MAETrainer(BaseTrainer):
             self.writer.add_scalar(
                 'EPOCH_LOSS/train_epoch_loss',
                 tr_loss.item(),
-                global_step=self.current_epoch)
+                global_step=self.current_epoch,
+            )
             self.writer.add_scalar(
                 'EPOCH_LOSS/valid_epoch_loss',
                 val_loss.item(),
-                global_step=self.current_epoch)
+                global_step=self.current_epoch,
+            )
 
             self.scheduler.step()
 
@@ -173,4 +174,5 @@ class MAETrainer(BaseTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )

@@ -23,15 +23,9 @@ from . import measure
 
 
 @measure('grasp', bn=True, mode='param')
-def compute_grasp_per_weight(net,
-                             inputs,
-                             targets,
-                             mode,
-                             loss_fn,
-                             T=1,
-                             num_iters=1,
-                             split_data=1):
-
+def compute_grasp_per_weight(
+    net, inputs, targets, mode, loss_fn, T=1, num_iters=1, split_data=1
+):
     # get all applicable weights
     weights = []
     for layer in net.modules():
@@ -73,8 +67,7 @@ def compute_grasp_per_weight(net,
             outputs = outputs[0]
         outputs /= T
         loss = loss_fn(outputs, targets[st:en])
-        grad_f = autograd.grad(
-            loss, weights, create_graph=True, allow_unused=True)
+        grad_f = autograd.grad(loss, weights, create_graph=True, allow_unused=True)
 
         # accumulate gradients computed in previous step and call backwards
         z, count = 0, 0

@@ -1,14 +1,16 @@
 import torch.nn as nn
-from timm.models.efficientnet_blocks import (SqueezeExcite, make_divisible,
-                                             resolve_se_args)
+from timm.models.efficientnet_blocks import (
+    SqueezeExcite,
+    make_divisible,
+    resolve_se_args,
+)
 from timm.models.layers import create_conv2d, drop_path
 
 BN_ARGS = dict(momentum=0.1, eps=1e-5)
 
 OPS = {
     # MBConv
-    'MB6_3x3_se0.25':
-    lambda in_channels, out_channels, stride, downsample: InvertedResidual(
+    'MB6_3x3_se0.25': lambda in_channels, out_channels, stride, downsample: InvertedResidual(
         in_channels,
         out_channels,
         3,
@@ -19,8 +21,7 @@ OPS = {
         se_ratio=0.25,
         norm_kwargs=BN_ARGS,
     ),
-    'MB6_5x5_se0.25':
-    lambda in_channels, out_channels, stride, downsample: InvertedResidual(
+    'MB6_5x5_se0.25': lambda in_channels, out_channels, stride, downsample: InvertedResidual(
         in_channels,
         out_channels,
         5,
@@ -31,8 +32,7 @@ OPS = {
         se_ratio=0.25,
         norm_kwargs=BN_ARGS,
     ),
-    'MB3_3x3_se0.25':
-    lambda in_channels, out_channels, stride, downsample: InvertedResidual(
+    'MB3_3x3_se0.25': lambda in_channels, out_channels, stride, downsample: InvertedResidual(
         in_channels,
         out_channels,
         3,
@@ -43,8 +43,7 @@ OPS = {
         se_ratio=0.25,
         norm_kwargs=BN_ARGS,
     ),
-    'MB3_5x5_se0.25':
-    lambda in_channels, out_channels, stride, downsample: InvertedResidual(
+    'MB3_5x5_se0.25': lambda in_channels, out_channels, stride, downsample: InvertedResidual(
         in_channels,
         out_channels,
         5,
@@ -97,7 +96,8 @@ class InvertedResidual(nn.Module):
 
         # Point-wise expansion
         self.conv_pw = create_conv2d(
-            in_chs, mid_chs, exp_kernel_size, padding=pad_type, **conv_kwargs)
+            in_chs, mid_chs, exp_kernel_size, padding=pad_type, **conv_kwargs
+        )
         self.bn1 = norm_layer(mid_chs, **norm_kwargs)
         self.act1 = act_layer(inplace=True)
 
@@ -110,7 +110,8 @@ class InvertedResidual(nn.Module):
             dilation=dilation,
             padding=pad_type,
             depthwise=True,
-            **conv_kwargs)
+            **conv_kwargs
+        )
         self.bn2 = norm_layer(mid_chs, **norm_kwargs)
         self.act2 = act_layer(inplace=True)
 
@@ -123,7 +124,8 @@ class InvertedResidual(nn.Module):
 
         # Point-wise linear projection
         self.conv_pwl = create_conv2d(
-            mid_chs, out_chs, pw_kernel_size, padding=pad_type, **conv_kwargs)
+            mid_chs, out_chs, pw_kernel_size, padding=pad_type, **conv_kwargs
+        )
         self.bn3 = norm_layer(out_chs, **norm_kwargs)
 
     def feature_info(self, location):
@@ -135,8 +137,7 @@ class InvertedResidual(nn.Module):
                 num_chs=self.conv_pwl.in_channels,
             )
         else:  # location == 'bottleneck', block output
-            return dict(
-                module='', hook_type='', num_chs=self.conv_pwl.out_channels)
+            return dict(module='', hook_type='', num_chs=self.conv_pwl.out_channels)
 
     def forward(self, x):
         residual = x

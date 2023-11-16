@@ -5,7 +5,6 @@ from torch.utils.data import Dataset
 
 
 class ZcDataset(Dataset):
-
     def __init__(self, json_path):
         # Load data from json file
         with open(json_path, 'r') as file:

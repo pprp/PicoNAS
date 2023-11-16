@@ -36,14 +36,16 @@ def build_transforms(dataset='cifar10', type='train', config=None):
         if dataset == 'cifar10':
             post_transform = [
                 transforms.ToTensor(),
-                transforms.Normalize((0.4914, 0.4822, 0.4465),
-                                     (0.2023, 0.1994, 0.2010)),
+                transforms.Normalize(
+                    (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
+                ),
             ]
         elif dataset == 'cifar100':
             post_transform = [
                 transforms.ToTensor(),
-                transforms.Normalize([0.5071, 0.4865, 0.4409],
-                                     [0.1942, 0.1918, 0.1958]),
+                transforms.Normalize(
+                    [0.5071, 0.4865, 0.4409], [0.1942, 0.1918, 0.1958]
+                ),
             ]
         elif dataset == 'simmim':
             post_transform = [SimMIMTransform()]
@@ -54,37 +56,48 @@ def build_transforms(dataset='cifar10', type='train', config=None):
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomCrop(16, padding=2),
                 transforms.ToTensor(),
-                transforms.Normalize([0.4811, 0.4575, 0.4078],
-                                     [0.2479, 0.2402, 0.2552])
+                transforms.Normalize(
+                    [0.4811, 0.4575, 0.4078], [0.2479, 0.2402, 0.2552]
+                ),
             ]
 
         if getattr(config, 'cutout', False):
             post_transform.append(Cutout(1, 8))
 
         transform_type = transforms.Compose(
-            [*base_transform, *mid_transform, *post_transform])
+            [*base_transform, *mid_transform, *post_transform]
+        )
 
     elif type == 'val':
         if dataset == 'cifar10':
-            transform_type = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize((0.4914, 0.4822, 0.4465),
-                                     (0.2023, 0.1994, 0.2010)),
-            ])
+            transform_type = transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
+                    ),
+                ]
+            )
         elif dataset == 'cifar100':
-            transform_type = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize([0.5071, 0.4865, 0.4409],
-                                     [0.1942, 0.1918, 0.1958]),
-            ])
+            transform_type = transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        [0.5071, 0.4865, 0.4409], [0.1942, 0.1918, 0.1958]
+                    ),
+                ]
+            )
         elif dataset == 'simmim':
             transform_type = SimMIMTransform()
         elif dataset == 'ImageNet16-120':
-            transform_type = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize([0.4811, 0.4575, 0.4078],
-                                     [0.2479, 0.2402, 0.2552]),
-            ])
+            transform_type = transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        [0.4811, 0.4575, 0.4078], [0.2479, 0.2402, 0.2552]
+                    ),
+                ]
+            )
     else:
         raise 'Type Error in transforms'
 

@@ -35,12 +35,9 @@ class DiffMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         alias: Optional[str] = None,
         init_cfg: Optional[Dict] = None,
     ) -> None:
-        super().__init__(
-            module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
+        super().__init__(module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
 
-    def forward(self,
-                x: Any,
-                arch_param: Optional[nn.Parameter] = None) -> Any:
+    def forward(self, x: Any, arch_param: Optional[nn.Parameter] = None) -> Any:
         """Calls either :func:`forward_fixed` or :func:`forward_choice`
         depending on whether :func:`is_fixed` is ``True``.
 
@@ -82,9 +79,9 @@ class DiffMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         """Forward all choices."""
 
     @abstractmethod
-    def forward_arch_param(self,
-                           x: Any,
-                           arch_param: Optional[nn.Parameter] = None) -> Any:
+    def forward_arch_param(
+        self, x: Any, arch_param: Optional[nn.Parameter] = None
+    ) -> Any:
         """Forward when the mutable is not fixed.
 
         All subclasses must implement this method.
@@ -93,7 +90,8 @@ class DiffMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
     def set_forward_args(self, arch_param: nn.Parameter) -> None:
         """Interface for modifying the arch_param using partial."""
         forward_with_default_args: PartialType = partial(
-            self.forward, arch_param=arch_param)
+            self.forward, arch_param=arch_param
+        )
         setattr(self, 'forward', forward_with_default_args)
 
 
@@ -120,11 +118,11 @@ class DiffOP(DiffMutable[str, str]):
         alias: Optional[str] = None,
         init_cfg: Optional[Dict] = None,
     ) -> None:
-        super().__init__(
-            module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
+        super().__init__(module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
         assert len(candidate_ops) >= 1, (
             f'Number of candidate op must greater than or equal to 1, '
-            f'but got: {len(candidate_ops)}')
+            f'but got: {len(candidate_ops)}'
+        )
 
         self._is_fixed = False
         self._candidate_ops = self._build_ops(candidate_ops)
@@ -163,10 +161,9 @@ class DiffOP(DiffMutable[str, str]):
         assert isinstance(self._chosen, list)
         return sum(self._candidate_ops[choice](x) for choice in self._chosen)
 
-    def forward_arch_param(self,
-                           x: Any,
-                           arch_param: Optional[nn.Parameter] = None
-                           ) -> Tensor:
+    def forward_arch_param(
+        self, x: Any, arch_param: Optional[nn.Parameter] = None
+    ) -> Tensor:
         """Forward with architecture parameters.
 
         Args:
@@ -220,7 +217,8 @@ class DiffOP(DiffMutable[str, str]):
         if self.is_fixed:
             raise AttributeError(
                 'The mode of current MUTABLE is `fixed`. '
-                'Please do not call `fix_chosen` function again.')
+                'Please do not call `fix_chosen` function again.'
+            )
 
         for c in self.choices:
             if c not in chosen:
@@ -273,18 +271,19 @@ class DynaDiffOP(DiffOP):
             candidate_ops=candidate_ops,
             module_kwargs=module_kwargs,
             alias=alias,
-            init_cfg=init_cfg)
+            init_cfg=init_cfg,
+        )
 
         assert len(candidate_ops) >= 1, (
             f'Number of candidate op must greater than or equal to 1, '
-            f'but got: {len(candidate_ops)}')
+            f'but got: {len(candidate_ops)}'
+        )
 
         self.dyna_thresh = dyna_thresh
 
-    def forward_arch_param(self,
-                           x: Any,
-                           arch_param: Optional[nn.Parameter] = None
-                           ) -> Tensor:
+    def forward_arch_param(
+        self, x: Any, arch_param: Optional[nn.Parameter] = None
+    ) -> Tensor:
         """Forward with architecture parameters.
 
         Args:
@@ -305,13 +304,9 @@ class DynaDiffOP(DiffOP):
             if not self.is_fixed:
                 # if not fixed, judge whether to fix.
                 sorted_param = torch.topk(probs, 2)
-                index = (
-                    sorted_param[0][0] - sorted_param[0][1] >=
-                    self.dyna_thresh)
+                index = sorted_param[0][0] - sorted_param[0][1] >= self.dyna_thresh
                 if index:
-                    print(
-                        f'Current DynaDiffOP fix the op: {self.choices[index]}'
-                    )
+                    print(f'Current DynaDiffOP fix the op: {self.choices[index]}')
                     self.fix_chosen(self.choices[index])
             else:
                 # if fixed, query the fix operation.
@@ -333,7 +328,8 @@ class DynaDiffOP(DiffOP):
         probs = self.compute_arch_probs(arch_param=arch_param)
         sorted_param = torch.topk(probs, 2)
         chosen_list = [
-            self.choices[sorted_param[1][0]], self.choices[sorted_param[1][1]]
+            self.choices[sorted_param[1][0]],
+            self.choices[sorted_param[1][1]],
         ]
         self.fix_chosen(chosen_list)
 
@@ -388,7 +384,8 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
         super().__init__(init_cfg=init_cfg)
         assert len(edges) >= 1, (
             f'Number of edges must greater than or equal to 1, '
-            f'but got: {len(edges)}')
+            f'but got: {len(edges)}'
+        )
 
         self._with_arch_param = with_arch_param
         self._is_fixed = False
@@ -405,8 +402,9 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
         Returns:
             Tensor: the result of forward the fixed operation.
         """
-        assert (self._chosen is not None
-                ), 'Please call fix_chosen before calling `forward_fixed`.'
+        assert (
+            self._chosen is not None
+        ), 'Please call fix_chosen before calling `forward_fixed`.'
 
         outputs = list()
         for choice, x in zip(self._unfixed_choices, inputs):
@@ -414,9 +412,9 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
                 outputs.append(self._edges[choice](x))
         return sum(outputs)
 
-    def forward_arch_param(self,
-                           x: Union[List[Any], Tuple[Any]],
-                           arch_param: nn.Parameter = None) -> Tensor:
+    def forward_arch_param(
+        self, x: Union[List[Any], Tuple[Any]], arch_param: nn.Parameter = None
+    ) -> Tensor:
         """Forward with architecture parameters.
 
         Args:
@@ -430,7 +428,8 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
         """
         assert len(x) == len(self._edges), (
             f'Length of `edges` {len(self._edges)} should be same as '
-            f'the length of inputs {len(x)}.')
+            f'the length of inputs {len(x)}.'
+        )
 
         if self._with_arch_param:
             probs = self.compute_arch_probs(arch_param=arch_param)
@@ -457,7 +456,8 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
         """
         assert len(x) == len(self._edges), (
             f'Lenght of edges {len(self._edges)} should be same as '
-            f'the length of inputs {len(x)}.')
+            f'the length of inputs {len(x)}.'
+        )
 
         outputs = list()
         for op, input in zip(self._edges.values(), x):
@@ -478,7 +478,8 @@ class DiffChoiceRoute(DiffMutable[str, List[str]]):
         if self.is_fixed:
             raise AttributeError(
                 'The mode of current MUTABLE is `fixed`. '
-                'Please do not call `fix_chosen` function again.')
+                'Please do not call `fix_chosen` function again.'
+            )
 
         for c in self.choices:
             if c not in chosen:
@@ -524,14 +525,14 @@ class GumbelChoiceRoute(DiffChoiceRoute):
         init_cfg: Optional[Dict] = None,
     ) -> None:
         super().__init__(
-            edges=edges, with_arch_param=with_arch_param, init_cfg=init_cfg)
+            edges=edges, with_arch_param=with_arch_param, init_cfg=init_cfg
+        )
         self.tau = tau
         self.hard = hard
 
     def compute_arch_probs(self, arch_param: nn.Parameter) -> Tensor:
         """Compute chosen probs by Gumbel-Max trick."""
-        return F.gumbel_softmax(
-            arch_param, tau=self.tau, hard=self.hard, dim=-1)
+        return F.gumbel_softmax(arch_param, tau=self.tau, hard=self.hard, dim=-1)
 
     def set_temperature(self, tau: float) -> None:
         """Set temperature of gumbel softmax."""

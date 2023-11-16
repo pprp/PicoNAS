@@ -12,7 +12,6 @@ emqapi = EMQAPI('./checkpoints/MQ-Bench-101-PTQ-GT.pkl', verbose=False)
 
 
 def compute_synflow_per_weight(net, inputs, targets, mode='param'):
-
     device = inputs.device
 
     # convert params to their abs. Keep sign for converting it back.
@@ -68,7 +67,8 @@ if __name__ == '__main__':
         gt = emqapi.query_by_cfg(bit_cfg)
 
         layerwise_zc = compute_synflow_per_weight(
-            net=model, inputs=inputs, targets=None)[:len(bit_cfg)]
+            net=model, inputs=inputs, targets=None
+        )[: len(bit_cfg)]
 
         lw_zc_list = []
         # zip layerwise_zc and bit_cfg
@@ -78,7 +78,8 @@ if __name__ == '__main__':
         # apply min-max scale to layerwise_zc
         lw_zc_list = np.array(lw_zc_list)
         lw_zc_list = (lw_zc_list - min(lw_zc_list)) / (
-            max(lw_zc_list) - min(lw_zc_list))
+            max(lw_zc_list) - min(lw_zc_list)
+        )
         lw_zc_list = lw_zc_list.tolist()
 
         entry = {'id': i + 1, 'layerwise_zc': lw_zc_list, 'gt': gt}

@@ -29,13 +29,12 @@ def convert_to_float(input):
 
 @measure('auto-prox-A')
 def compute_score1(
-        net,
-        inputs,
-        targets,
-        loss_fn=nn.CrossEntropyLoss(),
-        split_data=None,
+    net,
+    inputs,
+    targets,
+    loss_fn=nn.CrossEntropyLoss(),
+    split_data=None,
 ):
-
     def compute_t3g(net, inputs, targets, loss_fn) -> List:
         t3g_list = []
 
@@ -86,13 +85,12 @@ def compute_score1(
 
 @measure('auto-prox-P')
 def compute_score2(
-        net,
-        inputs,
-        targets,
-        loss_fn=nn.CrossEntropyLoss(),
-        split_data=None,
+    net,
+    inputs,
+    targets,
+    loss_fn=nn.CrossEntropyLoss(),
+    split_data=None,
 ):
-
     def compute_t2(net, inputs) -> List:
         t2_list = []  # before relu
 

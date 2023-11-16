@@ -2,13 +2,11 @@ import torch.nn as nn
 
 
 class ConvBnRelu(nn.Module):
-
     def __init__(self, inplanes, outplanes, k):
         super(ConvBnRelu, self).__init__()
 
         self.op = nn.Sequential(
-            nn.Conv2d(
-                inplanes, outplanes, kernel_size=1, stride=1, bias=False),
+            nn.Conv2d(inplanes, outplanes, kernel_size=1, stride=1, bias=False),
             nn.BatchNorm2d(outplanes),
             nn.ReLU(),
             nn.Conv2d(
@@ -28,13 +26,11 @@ class ConvBnRelu(nn.Module):
 
 
 class MaxPool(nn.Module):
-
     def __init__(self, inplanes, outplanes):
         super(MaxPool, self).__init__()
 
         self.op = nn.Sequential(
-            nn.Conv2d(
-                inplanes, outplanes, kernel_size=1, stride=1, bias=False),
+            nn.Conv2d(inplanes, outplanes, kernel_size=1, stride=1, bias=False),
             nn.BatchNorm2d(outplanes),
             nn.ReLU(),
             nn.MaxPool2d(3, 1, padding=1),

@@ -4,8 +4,13 @@ from collections import namedtuple
 import numpy as np
 
 OPS = [
-    'max_pool_3x3', 'avg_pool_3x3', 'skip_connect', 'sep_conv_3x3',
-    'sep_conv_5x5', 'dil_conv_3x3', 'dil_conv_5x5'
+    'max_pool_3x3',
+    'avg_pool_3x3',
+    'skip_connect',
+    'sep_conv_3x3',
+    'sep_conv_5x5',
+    'dil_conv_3x3',
+    'dil_conv_5x5',
 ]
 NUM_VERTICES = 4
 INPUT_1 = 'c_k-2'
@@ -14,21 +19,15 @@ OUTPUT = 'c_k'
 
 
 class Cell301:
-
     def __init__(self, arch):
         self.arch = arch
 
     def serialize(self):
-        return tuple(
-            [tuple([tuple(pair) for pair in cell]) for cell in self.arch])
+        return tuple([tuple([tuple(pair) for pair in cell]) for cell in self.arch])
 
-    def get_val_loss(self,
-                     nasbench,
-                     deterministic=True,
-                     patience=50,
-                     epochs=None,
-                     dataset=None):
-
+    def get_val_loss(
+        self, nasbench, deterministic=True, patience=50, epochs=None, dataset=None
+    ):
         genotype = self.convert_to_genotype(self.arch)
         acc = nasbench[0].predict(config=genotype, representation='genotype')
         return 100 - acc
@@ -38,9 +37,7 @@ class Cell301:
         return self.get_val_loss(nasbench)
 
     def convert_to_genotype(self, arch):
-
-        Genotype = namedtuple('Genotype',
-                              'normal normal_concat reduce reduce_concat')
+        Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
         op_dict = {
             0: 'max_pool_3x3',
             1: 'avg_pool_3x3',
@@ -48,7 +45,7 @@ class Cell301:
             3: 'sep_conv_3x3',
             4: 'sep_conv_5x5',
             5: 'dil_conv_3x3',
-            6: 'dil_conv_5x5'
+            6: 'dil_conv_5x5',
         }
 
         darts_arch = [[], []]
@@ -61,7 +58,8 @@ class Cell301:
             normal=darts_arch[0],
             normal_concat=[2, 3, 4, 5],
             reduce=darts_arch[1],
-            reduce_concat=[2, 3, 4, 5])
+            reduce_concat=[2, 3, 4, 5],
+        )
         return genotype
 
     def make_mutable(self):
@@ -75,12 +73,9 @@ class Cell301:
                     arch_list[-1][-1].append(num)
         return arch_list
 
-    def encode(self,
-               predictor_encoding,
-               nasbench=None,
-               deterministic=True,
-               cutoff=None):
-
+    def encode(
+        self, predictor_encoding, nasbench=None, deterministic=True, cutoff=None
+    ):
         if predictor_encoding == 'path':
             return self.encode_paths()
         elif predictor_encoding == 'trunc_path':
@@ -91,37 +86,47 @@ class Cell301:
             return self.encode_adj()
 
         else:
-            print('{} is not yet implemented as a predictor encoding \
-             for nasbench301'.format(predictor_encoding))
+            print(
+                '{} is not yet implemented as a predictor encoding \
+             for nasbench301'.format(
+                    predictor_encoding
+                )
+            )
             raise NotImplementedError()
 
     def distance(self, other, dist_type, cutoff=None):
-
         if dist_type == 'path':
             return np.sum(
-                np.array(
-                    self.encode_paths() != np.array(other.encode_paths())))
+                np.array(self.encode_paths() != np.array(other.encode_paths()))
+            )
         elif dist_type == 'adj':
-            return np.sum(
-                np.array(self.encode_adj() != np.array(other.encode_adj())))
+            return np.sum(np.array(self.encode_adj() != np.array(other.encode_adj())))
         else:
-            print('{} is not yet implemented as a distance for nasbench301'.
-                  format(dist_type))
+            print(
+                '{} is not yet implemented as a distance for nasbench301'.format(
+                    dist_type
+                )
+            )
             raise NotImplementedError()
 
-    def mutate(self,
-               nasbench,
-               mutation_rate=1,
-               mutate_encoding='adj',
-               cutoff=None,
-               comparisons=2500,
-               patience=5000,
-               prob_wt=False,
-               index_hash=None):
-
+    def mutate(
+        self,
+        nasbench,
+        mutation_rate=1,
+        mutate_encoding='adj',
+        cutoff=None,
+        comparisons=2500,
+        patience=5000,
+        prob_wt=False,
+        index_hash=None,
+    ):
         if mutate_encoding != 'adj':
-            print('{} is not yet implemented as a mutation \
-                encoding for nasbench301'.format(mutate_encoding))
+            print(
+                '{} is not yet implemented as a mutation \
+                encoding for nasbench301'.format(
+                    mutate_encoding
+                )
+            )
             raise NotImplementedError()
         """ mutate a single arch """
         # first convert tuple to array so that it is mutable
@@ -145,20 +150,26 @@ class Cell301:
         return {'arch': mutation}
 
     @classmethod
-    def random_cell(cls,
-                    nasbench,
-                    random_encoding,
-                    cutoff=None,
-                    max_edges=10,
-                    max_nodes=8,
-                    index_hash=None):
+    def random_cell(
+        cls,
+        nasbench,
+        random_encoding,
+        cutoff=None,
+        max_edges=10,
+        max_nodes=8,
+        index_hash=None,
+    ):
         # output a uniformly random architecture spec
         # from the DARTS repository
         # https://github.com/quark0/darts
 
         if random_encoding != 'adj':
-            print('{} is not yet implemented as a mutation \
-                encoding for nasbench301'.format(random_encoding))
+            print(
+                '{} is not yet implemented as a mutation \
+                encoding for nasbench301'.format(
+                    random_encoding
+                )
+            )
             raise NotImplementedError()
 
         normal = []
@@ -171,10 +182,10 @@ class Cell301:
             # input nodes for reduce
             nodes_in_reduce = np.random.choice(range(i + 2), 2, replace=False)
 
-            normal.extend([(nodes_in_normal[0], ops[0]),
-                           (nodes_in_normal[1], ops[1])])
-            reduction.extend([(nodes_in_reduce[0], ops[2]),
-                              (nodes_in_reduce[1], ops[3])])
+            normal.extend([(nodes_in_normal[0], ops[0]), (nodes_in_normal[1], ops[1])])
+            reduction.extend(
+                [(nodes_in_reduce[0], ops[2]), (nodes_in_reduce[1], ops[3])]
+            )
 
         return {'arch': (normal, reduction)}
 
@@ -182,7 +193,7 @@ class Cell301:
         return self.mutate()
 
     def get_paths(self):
-        """ return all paths from input to output """
+        """return all paths from input to output"""
 
         path_builder = [[[], [], [], []], [[], [], [], []]]
         paths = [[], []]
@@ -274,21 +285,23 @@ class Cell301:
             matrices.append(matrix)
             ops.append(op_list)
 
-        encoding = [
-            *matrices[0].flatten(), *ops[0], *matrices[1].flatten(), *ops[1]
-        ]
+        encoding = [*matrices[0].flatten(), *ops[0], *matrices[1].flatten(), *ops[1]]
         return np.array(encoding)
 
-    def get_neighborhood(self,
-                         nasbench,
-                         mutate_encoding='adj',
-                         cutoff=None,
-                         index_hash=None,
-                         shuffle=True):
+    def get_neighborhood(
+        self,
+        nasbench,
+        mutate_encoding='adj',
+        cutoff=None,
+        index_hash=None,
+        shuffle=True,
+    ):
         if mutate_encoding != 'adj':
             print(
-                '{} is not yet implemented as a neighborhood for nasbench301'.
-                format(mutate_encoding))
+                '{} is not yet implemented as a neighborhood for nasbench301'.format(
+                    mutate_encoding
+                )
+            )
             raise NotImplementedError()
 
         op_nbhd = []
@@ -296,7 +309,6 @@ class Cell301:
 
         for i, cell in enumerate(self.arch):
             for j, pair in enumerate(cell):
-
                 # mutate the op
                 available = [op for op in range(len(OPS)) if op != pair[1]]
                 for op in available:
@@ -306,8 +318,11 @@ class Cell301:
 
                 # mutate the edge
                 other = j + 1 - 2 * (j % 2)
-                available = [edge for edge in range(j // 2 + 2) \
-                             if edge not in [cell[other][0], pair[0]]]
+                available = [
+                    edge
+                    for edge in range(j // 2 + 2)
+                    if edge not in [cell[other][0], pair[0]]
+                ]
 
                 for edge in available:
                     new_arch = self.make_mutable()

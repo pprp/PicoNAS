@@ -46,8 +46,7 @@ class ZCTrainer(object):
         self.lightweight_output = lightweight_output
 
         # preparations
-        self.device = torch.device(
-            'cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
         # measuring stuff
         self.train_top1 = utils.AverageMeter()
@@ -59,18 +58,20 @@ class ZCTrainer(object):
 
         n_parameters = optimizer.get_model_size()
         logger.info('param size = %fMB', n_parameters)
-        self.errors_dict = utils.AttrDict({
-            'train_acc': [],
-            'train_loss': [],
-            'valid_acc': [],
-            'valid_loss': [],
-            'test_acc': [],
-            'test_loss': [],
-            'runtime': [],
-            'train_time': [],
-            'arch_eval': [],
-            'params': n_parameters,
-        })
+        self.errors_dict = utils.AttrDict(
+            {
+                'train_acc': [],
+                'train_loss': [],
+                'valid_acc': [],
+                'valid_loss': [],
+                'test_acc': [],
+                'test_loss': [],
+                'runtime': [],
+                'train_time': [],
+                'arch_eval': [],
+                'params': n_parameters,
+            }
+        )
 
     def search(
         self,
@@ -95,20 +96,21 @@ class ZCTrainer(object):
         checkpoint_freq = self.config.search.checkpoint_freq
         if self.optimizer.using_step_function:
             self.scheduler = self.build_search_scheduler(
-                self.optimizer.op_optimizer, self.config)
+                self.optimizer.op_optimizer, self.config
+            )
 
             start_epoch = self._setup_checkpointers(
-                resume_from, period=checkpoint_freq, scheduler=self.scheduler)
+                resume_from, period=checkpoint_freq, scheduler=self.scheduler
+            )
         else:
-            start_epoch = self._setup_checkpointers(
-                resume_from, period=checkpoint_freq)
+            start_epoch = self._setup_checkpointers(resume_from, period=checkpoint_freq)
 
         if self.optimizer.using_step_function:
             self.train_queue, self.valid_queue, _ = self.build_search_dataloaders(
-                self.config)
+                self.config
+            )
 
         for e in range(start_epoch, self.epochs):
-
             start_time = time.time()
             self.optimizer.new_epoch(e)
 
@@ -127,23 +129,21 @@ class ZCTrainer(object):
                     stats = self.optimizer.step(data_train, data_val)
                     logits_train, logits_val, train_loss, val_loss = stats
 
-                    self._store_accuracies(logits_train, data_train[1],
-                                           'train')
+                    self._store_accuracies(logits_train, data_train[1], 'train')
                     self._store_accuracies(logits_val, data_val[1], 'val')
 
                     log_every_n_seconds(
                         logging.INFO,
-                        'Epoch {}-{}, Train loss: {:.5f}, validation loss: {:.5f}, learning rate: {}'
-                        .format(e, step, train_loss, val_loss,
-                                self.scheduler.get_last_lr()),
+                        'Epoch {}-{}, Train loss: {:.5f}, validation loss: {:.5f}, learning rate: {}'.format(
+                            e, step, train_loss, val_loss, self.scheduler.get_last_lr()
+                        ),
                         n=5,
                     )
 
                     if torch.cuda.is_available():
                         log_first_n(
                             logging.INFO,
-                            'cuda consumption\n {}'.format(
-                                torch.cuda.memory_summary()),
+                            'cuda consumption\n {}'.format(torch.cuda.memory_summary()),
                             n=3,
                         )
 
@@ -277,10 +277,10 @@ class ZCTrainer(object):
         """
         logger.info('Start evaluation')
         if not best_arch:
-
             if not search_model:
-                search_model = os.path.join(self.config.save, 'search',
-                                            'model_final.pth')
+                search_model = os.path.join(
+                    self.config.save, 'search', 'model_final.pth'
+                )
             # required to load the architecture
             self._setup_checkpointers(search_model)
 
@@ -291,9 +291,8 @@ class ZCTrainer(object):
             if metric is None:
                 metric = Metric.TEST_ACCURACY
             result = best_arch.query(
-                metric=metric,
-                dataset=self.config.dataset,
-                dataset_api=dataset_api)
+                metric=metric, dataset=self.config.dataset, dataset_api=dataset_api
+            )
             logger.info('Queried results ({}): {}'.format(metric, result))
         else:
             best_arch.to(self.device)
@@ -307,8 +306,7 @@ class ZCTrainer(object):
                     self.test_queue,
                 ) = self.build_eval_dataloaders(self.config)
 
-                optim = self.build_eval_optimizer(best_arch.parameters(),
-                                                  self.config)
+                optim = self.build_eval_optimizer(best_arch.parameters(), self.config)
                 scheduler = self.build_eval_scheduler(optim, self.config)
 
                 start_epoch = self._setup_checkpointers(
@@ -331,8 +329,7 @@ class ZCTrainer(object):
                 # Enable drop path
                 best_arch.update_edges(
                     update_func=lambda edge: edge.data.set(
-                        'op',
-                        edge.data.op  # 3DropPathWrapper(edge.data.op)
+                        'op', edge.data.op  # 3DropPathWrapper(edge.data.op)
                     ),
                     scope=best_arch.OPTIMIZER_SCOPE,
                     private_edge_data=True,
@@ -346,8 +343,7 @@ class ZCTrainer(object):
                     if torch.cuda.is_available():
                         log_first_n(
                             logging.INFO,
-                            'cuda consumption\n {}'.format(
-                                torch.cuda.memory_summary()),
+                            'cuda consumption\n {}'.format(torch.cuda.memory_summary()),
                             n=20,
                         )
 
@@ -355,59 +351,61 @@ class ZCTrainer(object):
                     drop_path_prob = self.config.evaluation.drop_path_prob * e / epochs
                     best_arch.update_edges(
                         update_func=lambda edge: edge.data.set(
-                            'drop_path_prob', drop_path_prob),
+                            'drop_path_prob', drop_path_prob
+                        ),
                         scope=best_arch.OPTIMIZER_SCOPE,
                         private_edge_data=True,
                     )
 
                     # Train queue
-                    for i, (input_train,
-                            target_train) in enumerate(self.train_queue):
+                    for i, (input_train, target_train) in enumerate(self.train_queue):
                         input_train = input_train.to(self.device)
-                        target_train = target_train.to(
-                            self.device, non_blocking=True)
+                        target_train = target_train.to(self.device, non_blocking=True)
 
                         optim.zero_grad()
                         logits_train = best_arch(input_train)
                         train_loss = loss(logits_train, target_train)
-                        if hasattr(best_arch,
-                                   'auxilary_logits'):  # darts specific stuff
-                            log_first_n(
-                                logging.INFO, 'Auxiliary is used', n=10)
-                            auxiliary_loss = loss(best_arch.auxilary_logits(),
-                                                  target_train)
+                        if hasattr(
+                            best_arch, 'auxilary_logits'
+                        ):  # darts specific stuff
+                            log_first_n(logging.INFO, 'Auxiliary is used', n=10)
+                            auxiliary_loss = loss(
+                                best_arch.auxilary_logits(), target_train
+                            )
                             train_loss += (
-                                self.config.evaluation.auxiliary_weight *
-                                auxiliary_loss)
+                                self.config.evaluation.auxiliary_weight * auxiliary_loss
+                            )
                         train_loss.backward()
                         if grad_clip:
                             torch.nn.utils.clip_grad_norm_(
-                                best_arch.parameters(), grad_clip)
+                                best_arch.parameters(), grad_clip
+                            )
                         optim.step()
 
-                        self._store_accuracies(logits_train, target_train,
-                                               'train')
+                        self._store_accuracies(logits_train, target_train, 'train')
                         log_every_n_seconds(
                             logging.INFO,
-                            'Epoch {}-{}, Train loss: {:.5}, learning rate: {}'
-                            .format(e, i, train_loss, scheduler.get_last_lr()),
+                            'Epoch {}-{}, Train loss: {:.5}, learning rate: {}'.format(
+                                e, i, train_loss, scheduler.get_last_lr()
+                            ),
                             n=5,
                         )
 
                     # Validation queue
                     if self.valid_queue:
                         best_arch.eval()
-                        for i, (input_valid,
-                                target_valid) in enumerate(self.valid_queue):
-
+                        for i, (input_valid, target_valid) in enumerate(
+                            self.valid_queue
+                        ):
                             input_valid = input_valid.to(self.device).float()
                             target_valid = target_valid.to(self.device).float()
 
                             # just log the validation accuracy
                             with torch.no_grad():
                                 logits_valid = best_arch(input_valid)
-                                self._store_accuracies(logits_valid,
-                                                       target_valid, 'val')
+                                self._store_accuracies(
+                                    logits_valid, target_valid, 'val'
+                                )
 
                     scheduler.step()
                     # self.periodic_checkpointer.step(e)
@@ -416,7 +414,8 @@ class ZCTrainer(object):
             # Disable drop path
             best_arch.update_edges(
                 update_func=lambda edge: edge.data.set(
-                    'op', edge.data.op.get_embedded_ops()),
+                    'op', edge.data.op.get_embedded_ops()
+                ),
                 scope=best_arch.OPTIMIZER_SCOPE,
                 private_edge_data=True,
             )
@@ -437,32 +436,34 @@ class ZCTrainer(object):
                 with torch.no_grad():
                     logits = best_arch(input_test)
 
-                    prec1, prec5 = utils.accuracy(
-                        logits, target_test, topk=(1, 5))
+                    prec1, prec5 = utils.accuracy(logits, target_test, topk=(1, 5))
                     top1.update(prec1.data.item(), n)
                     top5.update(prec5.data.item(), n)
 
                 log_every_n_seconds(
                     logging.INFO,
-                    'Inference batch {} of {}.'.format(i,
-                                                       len(self.test_queue)),
+                    'Inference batch {} of {}.'.format(i, len(self.test_queue)),
                     n=5,
                 )
 
             logger.info(
-                'Evaluation finished. Test accuracies: top-1 = {:.5}, top-5 = {:.5}'
-                .format(top1.avg, top5.avg))
+                'Evaluation finished. Test accuracies: top-1 = {:.5}, top-5 = {:.5}'.format(
+                    top1.avg, top5.avg
+                )
+            )
 
     @staticmethod
     def build_search_dataloaders(config):
         train_queue, valid_queue, test_queue, _, _ = utils.get_train_val_loaders(
-            config, mode='train')
+            config, mode='train'
+        )
         return train_queue, valid_queue, _  # test_queue is not used in search currently
 
     @staticmethod
     def build_eval_dataloaders(config):
         train_queue, valid_queue, test_queue, _, _ = utils.get_train_val_loaders(
-            config, mode='val')
+            config, mode='val'
+        )
         return train_queue, valid_queue, test_queue
 
     @staticmethod
@@ -492,25 +493,21 @@ class ZCTrainer(object):
 
     def _log_and_reset_accuracies(self, epoch, writer=None):
         logger.info(
-            'Epoch {} done. Train accuracy (top1, top5): {:.5f}, {:.5f}, Validation accuracy: {:.5f}, {:.5f}'
-            .format(
+            'Epoch {} done. Train accuracy (top1, top5): {:.5f}, {:.5f}, Validation accuracy: {:.5f}, {:.5f}'.format(
                 epoch,
                 self.train_top1.avg,
                 self.train_top5.avg,
                 self.val_top1.avg,
                 self.val_top5.avg,
-            ))
+            )
+        )
 
         if writer is not None:
-            writer.add_scalar('Train accuracy (top 1)', self.train_top1.avg,
-                              epoch)
-            writer.add_scalar('Train accuracy (top 5)', self.train_top5.avg,
-                              epoch)
+            writer.add_scalar('Train accuracy (top 1)', self.train_top1.avg, epoch)
+            writer.add_scalar('Train accuracy (top 5)', self.train_top5.avg, epoch)
             writer.add_scalar('Train loss', self.train_loss.avg, epoch)
-            writer.add_scalar('Validation accuracy (top 1)', self.val_top1.avg,
-                              epoch)
-            writer.add_scalar('Validation accuracy (top 5)', self.val_top5.avg,
-                              epoch)
+            writer.add_scalar('Validation accuracy (top 1)', self.val_top1.avg, epoch)
+            writer.add_scalar('Validation accuracy (top 5)', self.val_top5.avg, epoch)
             writer.add_scalar('Validation loss', self.val_loss.avg, epoch)
 
         self.train_top1.reset()
@@ -534,8 +531,7 @@ class ZCTrainer(object):
             self.val_top1.update(prec1.data.item(), n)
             self.val_top5.update(prec5.data.item(), n)
         else:
-            raise ValueError(
-                "Unknown split: {}. Expected either 'train' or 'val'")
+            raise ValueError("Unknown split: {}. Expected either 'train' or 'val'")
 
     def _prepare_dataloaders(self, config, mode='train'):
         """
@@ -545,16 +541,15 @@ class ZCTrainer(object):
             config (AttrDict): config from config file.
         """
         train_queue, valid_queue, test_queue, _, _ = utils.get_train_val_loaders(
-            config, mode)
+            config, mode
+        )
         self.train_queue = train_queue
         self.valid_queue = valid_queue
         self.test_queue = test_queue
 
-    def _setup_checkpointers(self,
-                             resume_from='',
-                             search=True,
-                             period=1,
-                             **add_checkpointables):
+    def _setup_checkpointers(
+        self, resume_from='', search=True, period=1, **add_checkpointables
+    ):
         """
         Sets up a periodic chechkpointer which can be used to save checkpoints
         at every epoch. It will call optimizer's `get_checkpointables()` as objects
@@ -571,8 +566,9 @@ class ZCTrainer(object):
 
         checkpointer = utils.Checkpointer(
             model=checkpointables.pop('model'),
-            save_dir=self.config.save +
-            '/search' if search else self.config.save + '/eval',
+            save_dir=self.config.save + '/search'
+            if search
+            else self.config.save + '/eval',
             # **checkpointables # NOTE: this is throwing an Error
         )
 
@@ -580,7 +576,8 @@ class ZCTrainer(object):
             checkpointer,
             period=period,
             max_iter=self.config.search.epochs
-            if search else self.config.evaluation.epochs,
+            if search
+            else self.config.evaluation.epochs,
         )
 
         if resume_from:
@@ -596,20 +593,14 @@ class ZCTrainer(object):
             os.makedirs(self.config.save)
         if not self.lightweight_output:
             with codecs.open(
-                    os.path.join(self.config.save, 'errors.json'),
-                    'w',
-                    encoding='utf-8') as file:
+                os.path.join(self.config.save, 'errors.json'), 'w', encoding='utf-8'
+            ) as file:
                 json.dump(self.errors_dict, file, separators=(',', ':'))
         else:
             with codecs.open(
-                    os.path.join(self.config.save, 'errors.json'),
-                    'w',
-                    encoding='utf-8') as file:
+                os.path.join(self.config.save, 'errors.json'), 'w', encoding='utf-8'
+            ) as file:
                 lightweight_dict = copy.deepcopy(self.errors_dict)
-                for key in [
-                        'arch_eval', 'train_loss', 'valid_loss', 'test_loss'
-                ]:
+                for key in ['arch_eval', 'train_loss', 'valid_loss', 'test_loss']:
                     lightweight_dict.pop(key)
-                json.dump([self.config, lightweight_dict],
-                          file,
-                          separators=(',', ':'))
+                json.dump([self.config, lightweight_dict], file, separators=(',', ':'))

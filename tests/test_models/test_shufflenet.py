@@ -8,7 +8,6 @@ from piconas.models.spos.spos_modules import ShuffleModule, ShuffleXModule
 
 
 class TestShuffleNet(TestCase):
-
     def test_shufflenetv2(self):
         model = SearchableShuffleNetV2()
         inputs = torch.randn(4, 3, 32, 32)

@@ -1,13 +1,13 @@
 import torch.nn as nn
 
 from ..core.primitives import AbstractPrimitive, ReLUConvBN
+
 """
 Code below from NASBench-201 and slightly adapted
 """
 
 
 class ResNetBasicblock(AbstractPrimitive):
-
     def __init__(self, C_in, C_out, stride, affine=False):
         super().__init__(locals())
         assert stride == 1 or stride == 2, 'invalid stride {:}'.format(stride)
@@ -16,13 +16,7 @@ class ResNetBasicblock(AbstractPrimitive):
         if stride == 2:
             self.downsample = nn.Sequential(
                 nn.AvgPool2d(kernel_size=2, stride=2, padding=0),
-                nn.Conv2d(
-                    C_in,
-                    C_out,
-                    kernel_size=1,
-                    stride=1,
-                    padding=0,
-                    bias=False),
+                nn.Conv2d(C_in, C_out, kernel_size=1, stride=1, padding=0, bias=False),
             )
         else:
             self.downsample = None

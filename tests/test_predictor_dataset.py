@@ -3,8 +3,7 @@ from argparse import ArgumentParser
 from unittest import TestCase
 
 from piconas.datasets.predictor.data_factory import create_dataloader
-from piconas.datasets.predictor.nb201_dataset import \
-    Nb201DatasetPINAT  # noqa: E501
+from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT  # noqa: E501
 
 
 class TestPredictorDataset(TestCase):
@@ -31,10 +30,10 @@ class TestPredictorDataset(TestCase):
         args = parser.parse_args()
 
         self.p_datasets = Nb201DatasetPINAT(
-            split=78, data_type='train', data_set='cifar10')
+            split=78, data_type='train', data_set='cifar10'
+        )
 
-        train_loader, test_loader, train_set, test_set = create_dataloader(
-            args)
+        train_loader, test_loader, train_set, test_set = create_dataloader(args)
 
         self.train_loader = train_loader
 

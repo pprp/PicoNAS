@@ -40,8 +40,9 @@ class BaseTransformerModel(nn.Module, metaclass=ABCMeta):
         elif isinstance(self.hidden_dim, (list, tuple)):
             assert isinstance(self.depth, (list, tuple))
             assert len(self.hidden_dim) == len(self.depth)
-            self.feature_dims = sum([[self.hidden_dim[i]] * d
-                                     for i, d in enumerate(self.depth)], [])
+            self.feature_dims = sum(
+                [[self.hidden_dim[i]] * d for i, d in enumerate(self.depth)], []
+            )
         else:
             raise ValueError
         self.features = list()
@@ -53,8 +54,7 @@ class BaseTransformerModel(nn.Module, metaclass=ABCMeta):
         """
         for layer in layers:
             layer.register_forward_hook(self._feature_hook)
-        self.register_forward_pre_hook(
-            lambda module, inp: self.features.clear())
+        self.register_forward_pre_hook(lambda module, inp: self.features.clear())
 
     @abstractmethod
     def _feature_hook(self, module, inputs, outputs):
@@ -70,33 +70,35 @@ def layernorm(w_in):
 
 
 class MultiheadAttention(nn.Module):
-
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 num_heads,
-                 qkv_bias=False,
-                 attn_drop_rate=0.,
-                 proj_drop_rate=0.,
-                 qk_scale=None):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        num_heads,
+        qkv_bias=False,
+        attn_drop_rate=0.0,
+        proj_drop_rate=0.0,
+        qk_scale=None,
+    ):
         super(MultiheadAttention, self).__init__()
         assert out_channels % num_heads == 0
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.num_heads = num_heads
 
-        self.norm_factor = qk_scale if qk_scale else (out_channels //
-                                                      num_heads)**-0.5
-        self.qkv_transform = nn.Linear(
-            in_channels, out_channels * 3, bias=qkv_bias)
+        self.norm_factor = qk_scale if qk_scale else (out_channels // num_heads) ** -0.5
+        self.qkv_transform = nn.Linear(in_channels, out_channels * 3, bias=qkv_bias)
         self.projection = nn.Linear(out_channels, out_channels)
         self.attention_dropout = nn.Dropout(attn_drop_rate)
         self.projection_dropout = nn.Dropout(proj_drop_rate)
 
     def forward(self, x):
         N, L, _ = x.shape
-        x = self.qkv_transform(x).view(N, L, 3, self.num_heads,
-                                       -1).permute(2, 0, 3, 1, 4)
+        x = (
+            self.qkv_transform(x)
+            .view(N, L, 3, self.num_heads, -1)
+            .permute(2, 0, 3, 1, 4)
+        )
         query, key, value = x[0], x[1], x[2]
 
         qk = query @ key.transpose(-1, -2) * self.norm_factor
@@ -115,12 +117,7 @@ class MultiheadAttention(nn.Module):
 
 
 class MLP(nn.Module):
-
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 drop_rate=0.,
-                 hidden_ratio=1.):
+    def __init__(self, in_channels, out_channels, drop_rate=0.0, hidden_ratio=1.0):
         super(MLP, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -139,17 +136,18 @@ class MLP(nn.Module):
 
 
 class TransformerLayer(nn.Module):
-
-    def __init__(self,
-                 in_channels,
-                 num_heads,
-                 qkv_bias=False,
-                 out_channels=None,
-                 mlp_ratio=1.,
-                 drop_rate=0.,
-                 attn_drop_rate=0.,
-                 drop_path_rate=0.,
-                 qk_scale=None):
+    def __init__(
+        self,
+        in_channels,
+        num_heads,
+        qkv_bias=False,
+        out_channels=None,
+        mlp_ratio=1.0,
+        drop_rate=0.0,
+        attn_drop_rate=0.0,
+        drop_path_rate=0.0,
+        qk_scale=None,
+    ):
         super(TransformerLayer, self).__init__()
         if out_channels is None:
             out_channels = in_channels
@@ -164,15 +162,18 @@ class TransformerLayer(nn.Module):
             qkv_bias=qkv_bias,
             attn_drop_rate=attn_drop_rate,
             proj_drop_rate=drop_rate,
-            qk_scale=qk_scale)
-        self.drop_path = DropPath(
-            drop_path_rate) if drop_path_rate > 0 else nn.Identity()
+            qk_scale=qk_scale,
+        )
+        self.drop_path = (
+            DropPath(drop_path_rate) if drop_path_rate > 0 else nn.Identity()
+        )
         self.norm2 = layernorm(out_channels)
         self.mlp = MLP(
             in_channels=out_channels,
             out_channels=out_channels,
             drop_rate=drop_rate,
-            hidden_ratio=mlp_ratio)
+            hidden_ratio=mlp_ratio,
+        )
 
     def forward(self, x):
         if self.in_channels == self.out_channels:
@@ -184,21 +185,14 @@ class TransformerLayer(nn.Module):
 
 
 class PatchEmbedding(nn.Module):
-
-    def __init__(self,
-                 img_size=224,
-                 patch_size=16,
-                 in_channels=3,
-                 out_channels=768):
+    def __init__(self, img_size=224, patch_size=16, in_channels=3, out_channels=768):
         super(PatchEmbedding, self).__init__()
         self.img_size = img_size
         self.patch_size = patch_size
-        self.num_patches = (img_size // patch_size)**2
+        self.num_patches = (img_size // patch_size) ** 2
         self.projection = nn.Conv2d(
-            in_channels,
-            out_channels,
-            kernel_size=patch_size,
-            stride=patch_size)
+            in_channels, out_channels, kernel_size=patch_size, stride=patch_size
+        )
 
     def forward(self, x):
         _, _, H, W = x.shape
@@ -216,7 +210,6 @@ def gelu(x: torch.Tensor) -> torch.Tensor:
 
 
 class AutoFormerSub(BaseTransformerModel):
-
     def __init__(self, arch_config=None, num_classes=None):
         super(AutoFormerSub, self).__init__()
         # the configs of super arch
@@ -245,14 +238,14 @@ class AutoFormerSub(BaseTransformerModel):
             img_size=self.img_size,
             patch_size=self.patch_size,
             in_channels=self.in_channels,
-            out_channels=self.hidden_dim)
+            out_channels=self.hidden_dim,
+        )
         self.num_patches = self.patch_embed.num_patches
         self.num_tokens = 1
 
         self.blocks = nn.ModuleList()
         dpr = [
-            x.item()
-            for x in torch.linspace(0, self.drop_path_rate, self.depth)
+            x.item() for x in torch.linspace(0, self.drop_path_rate, self.depth)
         ]  # stochastic depth decay rule
 
         for i in range(self.depth):
@@ -265,16 +258,17 @@ class AutoFormerSub(BaseTransformerModel):
                     drop_rate=self.drop_rate,
                     attn_drop_rate=self.attn_drop_rate,
                     drop_path_rate=dpr[i],
-                ))
+                )
+            )
 
         self.initialize_hooks(self.blocks)
         self.pos_embed = nn.Parameter(
-            torch.zeros(1, self.num_patches + self.num_tokens,
-                        self.hidden_dim))
-        trunc_normal_(self.pos_embed, std=.02)
+            torch.zeros(1, self.num_patches + self.num_tokens, self.hidden_dim)
+        )
+        trunc_normal_(self.pos_embed, std=0.02)
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, self.hidden_dim))
-        trunc_normal_(self.cls_token, std=.02)
+        trunc_normal_(self.cls_token, std=0.02)
 
         # self.pos_drop = nn.Dropout(p=drop_rate)
         self.norm = layernorm(self.hidden_dim)
@@ -291,14 +285,15 @@ class AutoFormerSub(BaseTransformerModel):
 
     def _feature_hook(self, module, inputs, outputs):
         feat_size = int(self.patch_embed.num_patches**0.5)
-        x = outputs[:, self.num_tokens:].view(
-            outputs.size(0), feat_size, feat_size, self.hidden_dim)
+        x = outputs[:, self.num_tokens :].view(
+            outputs.size(0), feat_size, feat_size, self.hidden_dim
+        )
         x = x.permute(0, 3, 1, 2).contiguous()
         self.features.append(x)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
-            trunc_normal_(m.weight, std=.02)
+            trunc_normal_(m.weight, std=0.02)
             if isinstance(m, nn.Linear) and m.bias is not None:
                 nn.init.constant_(m.bias, 0)
         elif isinstance(m, nn.LayerNorm):
@@ -306,16 +301,18 @@ class AutoFormerSub(BaseTransformerModel):
             nn.init.constant_(m.weight, 1.0)
 
     def forward_features(self, x):
-
         x = self.patch_embed(x)
         if self.num_tokens == 1:
             x = torch.cat([self.cls_token.repeat(x.size(0), 1, 1), x], dim=1)
         else:
-            x = torch.cat([
-                self.cls_token.repeat(x.size(0), 1, 1),
-                self.distill_token.repeat(x.size(0), 1, 1), x
-            ],
-                          dim=1)
+            x = torch.cat(
+                [
+                    self.cls_token.repeat(x.size(0), 1, 1),
+                    self.distill_token.repeat(x.size(0), 1, 1),
+                    x,
+                ],
+                dim=1,
+            )
 
         x = x + self.pos_embed
         x = F.dropout(x, p=self.drop_rate, training=self.training)

@@ -8,7 +8,6 @@ from ..core.primitives import AbstractPrimitive, ReLUConvBN
 
 
 class ResNetBasicblock(AbstractPrimitive):
-
     def __init__(self, C_in, C_out, stride, affine=False):
         super().__init__(locals())
         assert stride in [1, 2], 'invalid stride {:}'.format(stride)
@@ -17,13 +16,7 @@ class ResNetBasicblock(AbstractPrimitive):
         if stride == 2:
             self.downsample = nn.Sequential(
                 nn.AvgPool2d(kernel_size=2, stride=2, padding=0),
-                nn.Conv2d(
-                    C_in,
-                    C_out,
-                    kernel_size=1,
-                    stride=1,
-                    padding=0,
-                    bias=False),
+                nn.Conv2d(C_in, C_out, kernel_size=1, stride=1, padding=0, bias=False),
             )
         else:
             self.downsample = None

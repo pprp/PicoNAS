@@ -15,7 +15,7 @@ BASE_PATH = '/data/lujunl/pprp/bench/'
 
 def laplacian_positional_encoding(adj, pos_enc_dim, number_nodes=7):
     """
-        Graph positional encoding v/ Laplacian eigenvectors
+    Graph positional encoding v/ Laplacian eigenvectors
     """
 
     # Laplacian
@@ -24,12 +24,12 @@ def laplacian_positional_encoding(adj, pos_enc_dim, number_nodes=7):
     for i in range(len(adj)):
         adj_matrix = adj[i] + adj[i].T
         degree = torch.tensor(np.sum(adj_matrix, axis=1))
-        degree = sp.diags(
-            dgl.backend.asnumpy(degree).clip(1)**-0.5, dtype=float)
+        degree = sp.diags(dgl.backend.asnumpy(degree).clip(1) ** -0.5, dtype=float)
         L = sp.eye(number_nodes) - degree * adj_matrix * degree
         try:
             EigVal, EigVec = sp.linalg.eigs(
-                L, k=pos_enc_dim + 1, which='SR', tol=1e-2)  # for 40 PEs
+                L, k=pos_enc_dim + 1, which='SR', tol=1e-2
+            )  # for 40 PEs
         except:
             num += 1
             print('')
@@ -37,7 +37,7 @@ def laplacian_positional_encoding(adj, pos_enc_dim, number_nodes=7):
             print(i, num)
         EigVec = EigVec[:, EigVal.argsort()]  # increasing order
         # lap_pos_enc.append(torch.from_numpy(EigVec[:, 1:pos_enc_dim + 1].real).float())
-        lap_pos_enc.append(EigVec[:, 1:pos_enc_dim + 1].real)
+        lap_pos_enc.append(EigVec[:, 1 : pos_enc_dim + 1].real)
 
     return lap_pos_enc
 
@@ -50,10 +50,10 @@ def generate_lapla_matrix(adjacency, note):
         # normalized lapla_matrix
         adj_matrix = adjacency[index]
         degree = torch.tensor(np.sum(adj_matrix, axis=1))
-        degree = sp.diags(
-            dgl.backend.asnumpy(degree).clip(1)**-0.5, dtype=float)
+        degree = sp.diags(dgl.backend.asnumpy(degree).clip(1) ** -0.5, dtype=float)
         normalized_lapla = np.array(
-            sp.eye(adj_matrix.shape[0]) - degree * adj_matrix * degree)
+            sp.eye(adj_matrix.shape[0]) - degree * adj_matrix * degree
+        )
         normalized_lapla_matrix.append(normalized_lapla)
 
         # un-normalized lapla_matrix
@@ -66,25 +66,21 @@ def generate_lapla_matrix(adjacency, note):
             print(note, index)
 
     np.save('%s_lapla_matrix.npy' % note, np.array(unnormalized_lapla_matrix))
-    np.save('%s_lapla_nor_matrix.npy' % note,
-            np.array(normalized_lapla_matrix))
+    np.save('%s_lapla_nor_matrix.npy' % note, np.array(normalized_lapla_matrix))
 
 
 class Nb101DatasetPINAT(Dataset):
     """Generate nasbench101 data stream for PINAT."""
 
-    def __init__(self,
-                 split=None,
-                 debug=False,
-                 candidate_ops=5,
-                 pos_enc_dim=2,
-                 data_type='train'):
+    def __init__(
+        self, split=None, debug=False, candidate_ops=5, pos_enc_dim=2, data_type='train'
+    ):
         self.hash2id = dict()
         self.nb1_api = NB1API.NASBench(BASE_PATH + 'nasbench_only108.tfrecord')
         self.hash_iterator_list = list(self.nb1_api.hash_iterator())
         with h5py.File(
-                '/data/lujunl/pprp/bench/nasbench101/nasbench.hdf5',
-                mode='r') as f:
+            '/data/lujunl/pprp/bench/nasbench101/nasbench.hdf5', mode='r'
+        ) as f:
             for i, h in enumerate(f['hash'][()]):
                 self.hash2id[h.decode()] = i
             self.num_vertices = f['num_vertices'][()]
@@ -97,10 +93,10 @@ class Nb101DatasetPINAT(Dataset):
         self.debug = debug
         self.seed = 0
         self.candidate_ops = candidate_ops
-        self.lapla = np.load(
-            '/data/lujunl/pprp/bench/nasbench101/lapla_matrix.npy')
+        self.lapla = np.load('/data/lujunl/pprp/bench/nasbench101/lapla_matrix.npy')
         self.lapla_nor = np.load(
-            '/data/lujunl/pprp/bench/nasbench101/lapla_nor_matrix.npy')
+            '/data/lujunl/pprp/bench/nasbench101/lapla_nor_matrix.npy'
+        )
         self.data_type = data_type
 
         with open(BASE_PATH + 'zc_nasbench101.json', 'r') as f:
@@ -118,30 +114,51 @@ class Nb101DatasetPINAT(Dataset):
         self.split_num = split
         if self.split_num != 'all' and self.data_type == 'train':
             self.sample_range = np.load(
-                '/data/lujunl/pprp/bench/nasbench101/train_samples.npz')[str(
-                    split)]
+                '/data/lujunl/pprp/bench/nasbench101/train_samples.npz'
+            )[str(split)]
         elif self.data_type == 'test':
             # test
             if self.split_num == 'all':
                 self.sample_range = list(
-                    range(
-                        len(self.zcp_nb101_layerwise_test['cifar10'].keys())))
+                    range(len(self.zcp_nb101_layerwise_test['cifar10'].keys()))
+                )
             elif self.split_num == '100':
                 self.sample_range = list(range(100))
 
         # all
-        self.val_mean_mean, self.val_mean_std = 0.908192, 0.023961  # all val mean/std (from SemiNAS)
-        self.test_mean_mean, self.test_mean_std = 0.8967984, 0.05799569  # all test mean/std
+        self.val_mean_mean, self.val_mean_std = (
+            0.908192,
+            0.023961,
+        )  # all val mean/std (from SemiNAS)
+        self.test_mean_mean, self.test_mean_std = (
+            0.8967984,
+            0.05799569,
+        )  # all test mean/std
 
         self.max_edge_num = 9
         self.zcps = [
-            'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
-            'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen'
+            'epe_nas',
+            'fisher',
+            'flops',
+            'grad_norm',
+            'grasp',
+            'jacov',
+            'l2_norm',
+            'nwot',
+            'params',
+            'plain',
+            'snip',
+            'synflow',
+            'zen',
         ]
         self.lw_zcps = [
-            'fisher_layerwise', 'grad_norm_layerwise', 'grasp_layerwise',
-            'l2_norm_layerwise', 'snip_layerwise', 'synflow_layerwise',
-            'plain_layerwise'
+            'fisher_layerwise',
+            'grad_norm_layerwise',
+            'grasp_layerwise',
+            'l2_norm_layerwise',
+            'snip_layerwise',
+            'synflow_layerwise',
+            'plain_layerwise',
         ]
         self.lw_zcps_selected = 'synflow_layerwise'
 
@@ -150,7 +167,7 @@ class Nb101DatasetPINAT(Dataset):
             'output': 1,
             'conv3x3-bn-relu': 2,
             'conv1x1-bn-relu': 3,
-            'maxpool3x3': 4
+            'maxpool3x3': 4,
         }
 
         self.normalize_and_process_zcp(normalize_zcp=True, log_synflow=True)
@@ -173,46 +190,52 @@ class Nb101DatasetPINAT(Dataset):
         if normalize_zcp:
             print('Normalizing ZCP dict')
             try:
-                self.norm_zcp = pd.DataFrame({
-                    k0: {
-                        k1: v1['score']
-                        for k1, v1 in v0.items() if v1.__class__() == {}
+                self.norm_zcp = pd.DataFrame(
+                    {
+                        k0: {
+                            k1: v1['score']
+                            for k1, v1 in v0.items()
+                            if v1.__class__() == {}
+                        }
+                        for k0, v0 in self.zcp_nb101['cifar10'].items()
                     }
-                    for k0, v0 in self.zcp_nb101['cifar10'].items()
-                }).T
+                ).T
             except KeyError:
                 import pdb
+
                 pdb.set_trace()
 
             # Add normalization code here
-            self.norm_zcp['epe_nas'] = self.min_max_scaling(
-                self.norm_zcp['epe_nas'])
+            self.norm_zcp['epe_nas'] = self.min_max_scaling(self.norm_zcp['epe_nas'])
             self.norm_zcp['fisher'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['fisher']))
+                self.log_transform(self.norm_zcp['fisher'])
+            )
             self.norm_zcp['flops'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['flops']))
+                self.log_transform(self.norm_zcp['flops'])
+            )
             self.norm_zcp['grad_norm'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['grad_norm']))
-            self.norm_zcp['grasp'] = self.standard_scaling(
-                self.norm_zcp['grasp'])
-            self.norm_zcp['jacov'] = self.min_max_scaling(
-                self.norm_zcp['jacov'])
-            self.norm_zcp['l2_norm'] = self.min_max_scaling(
-                self.norm_zcp['l2_norm'])
+                self.log_transform(self.norm_zcp['grad_norm'])
+            )
+            self.norm_zcp['grasp'] = self.standard_scaling(self.norm_zcp['grasp'])
+            self.norm_zcp['jacov'] = self.min_max_scaling(self.norm_zcp['jacov'])
+            self.norm_zcp['l2_norm'] = self.min_max_scaling(self.norm_zcp['l2_norm'])
             self.norm_zcp['nwot'] = self.min_max_scaling(self.norm_zcp['nwot'])
             self.norm_zcp['params'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['params']))
-            self.norm_zcp['plain'] = self.min_max_scaling(
-                self.norm_zcp['plain'])
+                self.log_transform(self.norm_zcp['params'])
+            )
+            self.norm_zcp['plain'] = self.min_max_scaling(self.norm_zcp['plain'])
             self.norm_zcp['snip'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['snip']))
+                self.log_transform(self.norm_zcp['snip'])
+            )
 
             if log_synflow:
                 self.norm_zcp['synflow'] = self.min_max_scaling(
-                    self.log_transform(self.norm_zcp['synflow']))
+                    self.log_transform(self.norm_zcp['synflow'])
+                )
             else:
                 self.norm_zcp['synflow'] = self.min_max_scaling(
-                    self.norm_zcp['synflow'])
+                    self.norm_zcp['synflow']
+                )
 
             self.norm_zcp['zen'] = self.min_max_scaling(self.norm_zcp['zen'])
             # self.norm_zcp['val_accuracy'] = self.min_max_scaling(
@@ -347,13 +370,18 @@ class Nb101DatasetPINAT(Dataset):
         if self._is_acc_blow(val_acc):
             val_acc = self.resample_acc(index, 'val')
         n = self.num_vertices[index]
-        ops_onehot = np.array([[i == k + 2 for i in range(self.candidate_ops)]
-                               for k in self.operations[index]],
-                              dtype=np.float32)
+        ops_onehot = np.array(
+            [
+                [i == k + 2 for i in range(self.candidate_ops)]
+                for k in self.operations[index]
+            ],
+            dtype=np.float32,
+        )
         if n < 7:
-            ops_onehot[n:] = 0.
+            ops_onehot[n:] = 0.0
         features = np.expand_dims(
-            np.array([i for i in range(self.candidate_ops)]), axis=0)
+            np.array([i for i in range(self.candidate_ops)]), axis=0
+        )
         features = np.tile(features, (len(ops_onehot), 1))
         features = ops_onehot * features
         features = np.sum(features, axis=-1)
@@ -376,9 +404,11 @@ class Nb101DatasetPINAT(Dataset):
         pad_num = self.max_edge_num - edge_num
         if pad_num > 0:
             edge_index = np.pad(
-                np.array(edge_index), ((0, pad_num), (0, 0)),
+                np.array(edge_index),
+                ((0, pad_num), (0, 0)),
                 'constant',
-                constant_values=(0, 0))
+                constant_values=(0, 0),
+            )
         edge_index = torch.tensor(edge_index, dtype=torch.int64)
         edge_index = edge_index.transpose(1, 0)
 
@@ -393,21 +423,28 @@ class Nb101DatasetPINAT(Dataset):
         zcp = torch.tensor(zcp, dtype=torch.float32)
 
         # laod layerwise zcp
-        combinations = [
-            'grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise'
-        ]
-        if self.split_num == 'all' or (self.data_type == 'test'
-                                       and self.split_num == '100'):
-            zcp_layerwise = self.zcp_nb101_layerwise_test['cifar10'][hash][
-                combinations[0]] + self.zcp_nb101_layerwise_test['cifar10'][
-                    hash][combinations[1]] + self.zcp_nb101_layerwise_test[
-                        'cifar10'][hash][combinations[2]]
+        combinations = ['grad_norm_layerwise', 'snip_layerwise', 'synflow_layerwise']
+        if self.split_num == 'all' or (
+            self.data_type == 'test' and self.split_num == '100'
+        ):
+            zcp_layerwise = (
+                self.zcp_nb101_layerwise_test['cifar10'][hash][combinations[0]]
+                + self.zcp_nb101_layerwise_test['cifar10'][hash][combinations[1]]
+                + self.zcp_nb101_layerwise_test['cifar10'][hash][combinations[2]]
+            )
             zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
         else:
-            zcp_layerwise = self.zcp_nb101_layerwise['cifar10'][str(
-                self.split_num)][str(index)][combinations[0]] + \
-                    self.zcp_nb101_layerwise['cifar10'][str(self.split_num)][str(index)][combinations[1]] + \
-                    self.zcp_nb101_layerwise['cifar10'][str(self.split_num)][str(index)][combinations[2]]
+            zcp_layerwise = (
+                self.zcp_nb101_layerwise['cifar10'][str(self.split_num)][str(index)][
+                    combinations[0]
+                ]
+                + self.zcp_nb101_layerwise['cifar10'][str(self.split_num)][str(index)][
+                    combinations[1]
+                ]
+                + self.zcp_nb101_layerwise['cifar10'][str(self.split_num)][str(index)][
+                    combinations[2]
+                ]
+            )
             zcp_layerwise = torch.tensor(zcp_layerwise, dtype=torch.float32)
 
         # in getitem function, we only select the index corresponding data rather than the whole data

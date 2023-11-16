@@ -12,8 +12,7 @@ from exps.mq_bench_101.dataset import ZcDataset
 from exps.mq_bench_101.parzc import BaysianMLPMixer
 from piconas.core.losses.diffkd import diffkendall
 from piconas.core.losses.pair_loss import pair_loss
-from piconas.utils.rank_consistency import (kendalltau, pearson, spearman,
-                                            spearman_top_k)
+from piconas.utils.rank_consistency import kendalltau, pearson, spearman, spearman_top_k
 
 # Create a log directory if it doesn't exist
 log_dir = './logdir'
@@ -23,10 +22,12 @@ os.makedirs(log_dir, exist_ok=True)
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
     filename=os.path.join(
-        log_dir, 'training_mq_bench_101_run1.log'),  # Save logs to a file
+        log_dir, 'training_mq_bench_101_run1.log'
+    ),  # Save logs to a file
     level=logging.INFO,
     format=log_format,
-    datefmt='%m/%d %I:%M:%S %p')
+    datefmt='%m/%d %I:%M:%S %p',
+)
 
 # Create a console handler to print logs to the console
 console_handler = logging.StreamHandler(sys.stdout)
@@ -44,14 +45,17 @@ dataset = ZcDataset(json_path)
 train_size = int(0.9 * len(dataset))
 test_size = len(dataset) - train_size
 train_dataset, test_dataset = torch.utils.data.random_split(
-    dataset, [train_size, test_size])
+    dataset, [train_size, test_size]
+)
 
 # Create data loaders for batch processing
 batch_size = 35
 train_loader = DataLoader(
-    train_dataset, batch_size=batch_size, shuffle=True, drop_last=False)
+    train_dataset, batch_size=batch_size, shuffle=True, drop_last=False
+)
 test_loader = DataLoader(
-    test_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
+    test_dataset, batch_size=batch_size, shuffle=False, drop_last=False
+)
 
 # Create an instance of the MLP model and define the loss function and optimizer
 mlp_model = BaysianMLPMixer(
@@ -63,7 +67,8 @@ mlp_model = BaysianMLPMixer(
     emb_out_dim=1,
     expansion_factor=4,
     expansion_factor_token=0.5,
-    dropout=0.3667)
+    dropout=0.3667,
+)
 
 loss_function = diffkendall
 optimizer = optim.Adam(mlp_model.parameters(), lr=0.0028924995869062573)
@@ -94,8 +99,7 @@ for epoch in range(num_epochs):
             )
 
     if (epoch + 1) % 1 == 0:
-        logging.info(
-            f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+        logging.info(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
 logging.info('Training completed!')
 

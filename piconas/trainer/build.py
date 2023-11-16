@@ -8,7 +8,9 @@ def show_available_trainers():
 
 def build_trainer(trainer_name, **kwargs):
     if not is_trainer(trainer_name):
-        raise ValueError(f'Unkown trainer: {trainer_name} not '
-                         f'in {list(_trainer_entrypoints.keys())}')
+        raise ValueError(
+            f'Unkown trainer: {trainer_name} not '
+            f'in {list(_trainer_entrypoints.keys())}'
+        )
 
     return trainer_entrypoints(trainer_name)(**kwargs)

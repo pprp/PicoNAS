@@ -10,8 +10,12 @@ Matrix = TypeVar('Matrix')
 
 ALLTYPE = Union[Union[Scalar, Vector], Matrix]
 
-BINARY_KEYS = ('element_wise_sum', 'element_wise_difference',
-               'element_wise_product', 'matrix_multiplication')
+BINARY_KEYS = (
+    'element_wise_sum',
+    'element_wise_difference',
+    'element_wise_product',
+    'matrix_multiplication',
+)
 
 # sample key by probability
 
@@ -20,8 +24,7 @@ def sample_binary_key_by_prob(probability=None):
     if probability is None:
         # the probability from large to small
         probability = [0.6, 0.3, 0.05, 0.05]
-    return random.choices(
-        list(range(len(BINARY_KEYS))), weights=probability, k=1)[0]
+    return random.choices(list(range(len(BINARY_KEYS))), weights=probability, k=1)[0]
 
 
 # binary operator

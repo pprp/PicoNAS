@@ -20,12 +20,7 @@ from . import measure
 
 
 @measure('grad_norm', bn=True)
-def get_grad_norm_arr(net,
-                      inputs,
-                      targets,
-                      loss_fn,
-                      split_data=1,
-                      skip_grad=False):
+def get_grad_norm_arr(net, inputs, targets, loss_fn, split_data=1, skip_grad=False):
     net.zero_grad()
     N = inputs.shape[0]
     for sp in range(split_data):
@@ -41,7 +36,8 @@ def get_grad_norm_arr(net,
         grad_norm_arr = get_layer_metric_array(
             net,
             lambda l: l.weight.grad.norm()
-            if l.weight.grad is not None else torch.zeros_like(l.weight),
+            if l.weight.grad is not None
+            else torch.zeros_like(l.weight),
             mode='param',
         )
 

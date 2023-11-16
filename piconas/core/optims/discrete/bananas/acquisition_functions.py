@@ -6,11 +6,9 @@ from scipy.stats import norm
 logger = logging.getLogger(__name__)
 
 
-def acquisition_function(ensemble,
-                         ytrain,
-                         acq_fn_type='its',
-                         explore_factor=0.5,
-                         ei_calibration_factor=5.0):
+def acquisition_function(
+    ensemble, ytrain, acq_fn_type='its', explore_factor=0.5, ei_calibration_factor=5.0
+):
     """
     input:  trained ensemble
             ytrain (because some acquisition functions

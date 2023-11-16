@@ -8,7 +8,6 @@ from piconas.trainer import NB301Trainer
 
 
 class TestNB301Evaluator(TestCase):
-
     def test_nb301(self):
         nb301_model = OneShotNASBench301Network()
         nb301_mutator = OneShotMutator(with_alias=True)
@@ -19,8 +18,7 @@ class TestNB301Evaluator(TestCase):
         nb301_evaluator = NB301Evaluator(trainer=trainer, num_sample=50)
 
         random_subnet = nb301_mutator.random_subnet
-        genotype = nb301_evaluator.generate_genotype(random_subnet,
-                                                     nb301_mutator)
+        genotype = nb301_evaluator.generate_genotype(random_subnet, nb301_mutator)
         print(nb301_evaluator.query_result(genotype))
 
 

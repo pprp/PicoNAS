@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+
 """
 These are the encoding methods for nasbench101.
 The plan is to unify encodings across all search spaces.
@@ -57,7 +58,7 @@ def get_path_indices(spec):
                 path_indices.append(index)
                 break
             else:
-                index += len(OPS)**i * (mapping[path[i]] + 1)
+                index += len(OPS) ** i * (mapping[path[i]] + 1)
 
     path_indices.sort()
     return tuple(path_indices)
@@ -66,7 +67,7 @@ def get_path_indices(spec):
 def encode_paths(spec):
     """output one-hot encoding of paths"""
     path_indices = get_path_indices(spec)
-    num_paths = sum([len(OPS)**i for i in range(OP_SPOTS + 1)])
+    num_paths = sum([len(OPS) ** i for i in range(OP_SPOTS + 1)])
     encoding = np.zeros(num_paths)
     for index in path_indices:
         encoding[index] = 1
@@ -175,8 +176,12 @@ def encode_101_spec(spec, encoding_type='path'):
         return encode_bonas(spec=spec)
 
     else:
-        print('{} is not yet implemented as an encoding type \
-         for nb101'.format(encoding_type))
+        print(
+            '{} is not yet implemented as an encoding type \
+         for nb101'.format(
+                encoding_type
+            )
+        )
         raise NotImplementedError()
 
 

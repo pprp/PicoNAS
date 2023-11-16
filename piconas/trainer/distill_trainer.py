@@ -57,8 +57,8 @@ class Distill_Trainer(BaseTrainer):
 
         self.num_choices = 2
         self.learnable_params = nn.Parameter(
-            torch.randn(
-                self.num_choices, device=self.device, requires_grad=True) * 2)
+            torch.randn(self.num_choices, device=self.device, requires_grad=True) * 2
+        )
 
         self.teacher = teacher
         # self.model = student
@@ -81,9 +81,9 @@ class Distill_Trainer(BaseTrainer):
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
 
-        for step, ((trn_x, trn_y),
-                   (val_x,
-                    val_y)) in enumerate(zip(train_loader, valid_loader)):
+        for step, ((trn_x, trn_y), (val_x, val_y)) in enumerate(
+            zip(train_loader, valid_loader)
+        ):
             # get image and labels
             trn_x = self._to_device(trn_x, self.device)
             trn_y = self._to_device(trn_y, self.device)
@@ -98,9 +98,11 @@ class Distill_Trainer(BaseTrainer):
                 output_s = self.model(val_x)
                 output_t = self.teacher(val_x)
                 loss = self.kd_criterion(
-                    output_s, output_t, self.learnable_params[0],
-                    self.learnable_params[1]) + self.criterion(
-                        output_s, val_y)
+                    output_s,
+                    output_t,
+                    self.learnable_params[0],
+                    self.learnable_params[1],
+                ) + self.criterion(output_s, val_y)
                 loss.backward()
             self.arch_optimizer.step()
 
@@ -109,10 +111,10 @@ class Distill_Trainer(BaseTrainer):
             output_s = self.model(trn_x)
             output_t = self.teacher(trn_x)
             loss = self.kd_criterion(
-                output_s, output_t, self.learnable_params[0],
-                self.learnable_params[1]) + self.criterion(output_s, trn_y)
+                output_s, output_t, self.learnable_params[0], self.learnable_params[1]
+            ) + self.criterion(output_s, trn_y)
             loss.backward()
-            nn.utils.clip_grad_norm_(self.model.parameters(), 5.)
+            nn.utils.clip_grad_norm_(self.model.parameters(), 5.0)
             self.optimizer.step()
 
             # compute accuracy
@@ -146,8 +148,7 @@ class Distill_Trainer(BaseTrainer):
                 )
 
         # FOR DEBUG
-        self.logger.info(
-            f'current learnable_params: {self.learnable_params.cpu()}')
+        self.logger.info(f'current learnable_params: {self.learnable_params.cpu()}')
 
         return train_loss / (step + 1), top1_tacc.avg, top5_tacc.avg
 
@@ -168,8 +169,8 @@ class Distill_Trainer(BaseTrainer):
         output_s = self.model(val_x)
         output_t = self.teacher(val_x)
         loss = self.criterion(output_s, val_y) + self.kd_criterion(
-            output_s, output_t, self.learnable_params[0],
-            self.learnable_params[1])
+            output_s, output_t, self.learnable_params[0], self.learnable_params[1]
+        )
 
         w_model = tuple(self.model.parameters())
         d_model = torch.autograd.grad(loss, w_model, retain_graph=True)
@@ -198,12 +199,12 @@ class Distill_Trainer(BaseTrainer):
         output_s = self.model(x)
         output_t = self.teacher(x)
         loss = self.criterion(output_s, y) + self.kd_criterion(
-            output_s, output_t, self.learnable_params[0],
-            self.learnable_params[1])
+            output_s, output_t, self.learnable_params[0], self.learnable_params[1]
+        )
         gradients = torch.autograd.grad(loss, self.model.parameters())
         with torch.no_grad():
             for w, g in zip(self.model.parameters(), gradients):
-                m = self.optimizer.state[w].get('momentum_buffer', 0.)
+                m = self.optimizer.state[w].get('momentum_buffer', 0.0)
                 w = w - lr * (momentum * m + g + weight_decay * w)
 
     def _restore_weights(self, backup_params):
@@ -213,11 +214,11 @@ class Distill_Trainer(BaseTrainer):
 
     def _compute_hessian(self, backup_params, dw, trn_x, trn_y):
         """
-            dw = dw` { L_val(w`, alpha) }
-            w+ = w + eps * dw
-            w- = w - eps * dw
-            hessian = (dalpha { L_trn(w+, alpha) } - dalpha { L_trn(w-, alpha) }) / (2*eps)
-            eps = 0.01 / ||dw||
+        dw = dw` { L_val(w`, alpha) }
+        w+ = w + eps * dw
+        w- = w - eps * dw
+        hessian = (dalpha { L_trn(w+, alpha) } - dalpha { L_trn(w-, alpha) }) / (2*eps)
+        eps = 0.01 / ||dw||
         """
         self._restore_weights(backup_params)
         norm = torch.cat([w.view(-1) for w in dw]).norm()
@@ -227,15 +228,15 @@ class Distill_Trainer(BaseTrainer):
                 f'In computing hessian, norm is smaller than 1E-8, cause eps to be {norm.item()}.'
             )
         dalphas = []
-        for e in [eps, -2. * eps]:
+        for e in [eps, -2.0 * eps]:
             with torch.no_grad():
                 for p, d in zip(self.model.parameters(), dw):
                     p += e * d
             output_s = self.model(trn_x)
             output_t = self.teacher(trn_x)
             loss = self.criterion(output_s, trn_y) + self.kd_criterion(
-                output_s, output_t, self.learnable_params[0],
-                self.learnable_params[1])
+                output_s, output_t, self.learnable_params[0], self.learnable_params[1]
+            )
             dalphas.append(torch.autograd.grad(loss, self.learnable_params))
         dalpha_pos, dalpha_neg = dalphas
         return [(p - n) / 2.0 * eps for p, n in zip(dalpha_pos, dalpha_neg)]
@@ -258,8 +259,7 @@ class Distill_Trainer(BaseTrainer):
             epoch_start_time = time.time()
 
             # train
-            tr_loss, top1_tacc, top5_tacc = self._train(
-                train_loader, val_loader)
+            tr_loss, top1_tacc, top5_tacc = self._train(train_loader, val_loader)
 
             # validate
             val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
@@ -283,13 +283,11 @@ class Distill_Trainer(BaseTrainer):
             )
 
             self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss', tr_loss, global_step=self.current_epoch
+            )
             self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss', val_loss, global_step=self.current_epoch
+            )
 
             self.scheduler.step()
 
@@ -297,7 +295,8 @@ class Distill_Trainer(BaseTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
     def _predict(self, batch_inputs):
         """Network forward step. Low Level API"""

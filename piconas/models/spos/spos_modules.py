@@ -12,7 +12,6 @@ def channel_shuffle(x):
 
 
 class ShuffleModule(nn.Module):
-
     def __init__(self, inc, ouc, kernel, stride, supernet=True):
         super(ShuffleModule, self).__init__()
         self.affine = supernet
@@ -26,12 +25,8 @@ class ShuffleModule(nn.Module):
         self.branch = nn.Sequential(
             # point wise conv2d
             nn.Conv2d(
-                self.inc,
-                self.midc,
-                kernel_size=1,
-                stride=1,
-                padding=0,
-                bias=False),
+                self.inc, self.midc, kernel_size=1, stride=1, padding=0, bias=False
+            ),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             nn.ReLU(inplace=True),
             # depth wise conv2d
@@ -47,12 +42,8 @@ class ShuffleModule(nn.Module):
             nn.BatchNorm2d(self.midc, affine=self.affine),
             # point wise conv2d
             nn.Conv2d(
-                self.midc,
-                self.ouc,
-                kernel_size=1,
-                stride=1,
-                padding=0,
-                bias=False),
+                self.midc, self.ouc, kernel_size=1, stride=1, padding=0, bias=False
+            ),
             nn.BatchNorm2d(self.ouc, affine=self.affine),
             nn.ReLU(inplace=True),
         )
@@ -72,12 +63,8 @@ class ShuffleModule(nn.Module):
                 nn.BatchNorm2d(self.inc, affine=self.affine),
                 # point wise conv2d
                 nn.Conv2d(
-                    self.inc,
-                    self.inc,
-                    kernel_size=1,
-                    stride=1,
-                    padding=0,
-                    bias=False),
+                    self.inc, self.inc, kernel_size=1, stride=1, padding=0, bias=False
+                ),
                 nn.BatchNorm2d(self.inc, affine=self.affine),
                 nn.ReLU(inplace=True),
             )
@@ -92,7 +79,6 @@ class ShuffleModule(nn.Module):
 
 
 class ShuffleXModule(nn.Module):
-
     def __init__(self, inc, ouc, stride, supernet=True):
         super(ShuffleXModule, self).__init__()
         if supernet:
@@ -118,12 +104,8 @@ class ShuffleXModule(nn.Module):
             nn.BatchNorm2d(self.inc, affine=self.affine),
             # pw
             nn.Conv2d(
-                self.inc,
-                self.midc,
-                kernel_size=1,
-                stride=1,
-                padding=0,
-                bias=False),
+                self.inc, self.midc, kernel_size=1, stride=1, padding=0, bias=False
+            ),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             nn.ReLU(inplace=True),
             # dw
@@ -139,12 +121,8 @@ class ShuffleXModule(nn.Module):
             nn.BatchNorm2d(self.midc, affine=self.affine),
             # pw
             nn.Conv2d(
-                self.midc,
-                self.midc,
-                kernel_size=1,
-                stride=1,
-                padding=0,
-                bias=False),
+                self.midc, self.midc, kernel_size=1, stride=1, padding=0, bias=False
+            ),
             nn.BatchNorm2d(self.midc, affine=self.affine),
             nn.ReLU(inplace=True),
             # dw
@@ -160,12 +138,8 @@ class ShuffleXModule(nn.Module):
             nn.BatchNorm2d(self.midc, affine=self.affine),
             # pw
             nn.Conv2d(
-                self.midc,
-                self.ouc,
-                kernel_size=1,
-                stride=1,
-                padding=0,
-                bias=False),
+                self.midc, self.ouc, kernel_size=1, stride=1, padding=0, bias=False
+            ),
             nn.BatchNorm2d(self.ouc, affine=self.affine),
             nn.ReLU(inplace=True),
         )
@@ -184,12 +158,8 @@ class ShuffleXModule(nn.Module):
                 nn.BatchNorm2d(self.inc, affine=self.affine),
                 # pw
                 nn.Conv2d(
-                    self.inc,
-                    self.inc,
-                    kernel_size=1,
-                    stride=1,
-                    padding=0,
-                    bias=False),
+                    self.inc, self.inc, kernel_size=1, stride=1, padding=0, bias=False
+                ),
                 nn.BatchNorm2d(self.inc, affine=self.affine),
                 nn.ReLU(inplace=True),
             )
@@ -204,23 +174,28 @@ class ShuffleXModule(nn.Module):
 
 
 blocks_dict = {
-    'mobilenet_3x3_ratio_3':
-    lambda inp, oup, stride: InvertedResidual(inp, oup, 3, 1, stride, 3),
-    'mobilenet_3x3_ratio_6':
-    lambda inp, oup, stride: InvertedResidual(inp, oup, 3, 1, stride, 6),
-    'mobilenet_5x5_ratio_3':
-    lambda inp, oup, stride: InvertedResidual(inp, oup, 5, 2, stride, 3),
-    'mobilenet_5x5_ratio_6':
-    lambda inp, oup, stride: InvertedResidual(inp, oup, 5, 2, stride, 6),
-    'mobilenet_7x7_ratio_3':
-    lambda inp, oup, stride: InvertedResidual(inp, oup, 7, 3, stride, 3),
-    'mobilenet_7x7_ratio_6':
-    lambda inp, oup, stride: InvertedResidual(inp, oup, 7, 3, stride, 6),
+    'mobilenet_3x3_ratio_3': lambda inp, oup, stride: InvertedResidual(
+        inp, oup, 3, 1, stride, 3
+    ),
+    'mobilenet_3x3_ratio_6': lambda inp, oup, stride: InvertedResidual(
+        inp, oup, 3, 1, stride, 6
+    ),
+    'mobilenet_5x5_ratio_3': lambda inp, oup, stride: InvertedResidual(
+        inp, oup, 5, 2, stride, 3
+    ),
+    'mobilenet_5x5_ratio_6': lambda inp, oup, stride: InvertedResidual(
+        inp, oup, 5, 2, stride, 6
+    ),
+    'mobilenet_7x7_ratio_3': lambda inp, oup, stride: InvertedResidual(
+        inp, oup, 7, 3, stride, 3
+    ),
+    'mobilenet_7x7_ratio_6': lambda inp, oup, stride: InvertedResidual(
+        inp, oup, 7, 3, stride, 6
+    ),
 }
 
 
 class InvertedResidual(nn.Module):
-
     def __init__(self, inp, oup, ksize, padding, stride, expand_ratio):
         super(InvertedResidual, self).__init__()
         self.stride = stride
@@ -230,8 +205,7 @@ class InvertedResidual(nn.Module):
         if expand_ratio == 1:
             self.conv = nn.Sequential(
                 # dw
-                nn.Conv2d(
-                    inp, inp, ksize, stride, padding, groups=inp, bias=False),
+                nn.Conv2d(inp, inp, ksize, stride, padding, groups=inp, bias=False),
                 nn.BatchNorm2d(inp),
                 nn.ReLU6(inplace=True),
                 # pw-linear

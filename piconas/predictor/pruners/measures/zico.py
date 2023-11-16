@@ -11,14 +11,11 @@ def getgrad(model: torch.nn.Module, grad_dict: dict, step_iter=0):
             if isinstance(mod, nn.Conv2d) or isinstance(mod, nn.Linear):
                 if mod.weight.grad is None:
                     print(f'Warning: {name} grad is None. {mod}')
-                grad_dict[name] = [
-                    mod.weight.grad.data.cpu().reshape(-1).numpy()
-                ]
+                grad_dict[name] = [mod.weight.grad.data.cpu().reshape(-1).numpy()]
     else:
         for name, mod in model.named_modules():
             if isinstance(mod, nn.Conv2d) or isinstance(mod, nn.Linear):
-                grad_dict[name].append(
-                    mod.weight.grad.data.cpu().reshape(-1).numpy())
+                grad_dict[name].append(mod.weight.grad.data.cpu().reshape(-1).numpy())
     return grad_dict
 
 
@@ -40,7 +37,8 @@ def caculate_zico(grad_dict):
         else:
             nsr_mean_sum_abs += np.log(tmpsum)
             nsr_mean_avg_abs += np.log(
-                np.mean(nsr_mean_abs[nonzero_idx] / nsr_std[nonzero_idx]))
+                np.mean(nsr_mean_abs[nonzero_idx] / nsr_std[nonzero_idx])
+            )
     return nsr_mean_sum_abs
 
 

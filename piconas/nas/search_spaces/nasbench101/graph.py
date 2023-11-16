@@ -8,7 +8,10 @@ import torch.nn.functional as F
 from piconas.nas.search_spaces.core.graph import Graph
 from piconas.nas.search_spaces.core.query_metrics import Metric
 from piconas.nas.search_spaces.nasbench101.conversions import (
-    convert_spec_to_model, convert_spec_to_tuple, convert_tuple_to_spec)
+    convert_spec_to_model,
+    convert_spec_to_tuple,
+    convert_tuple_to_spec,
+)
 from piconas.utils import get_dataset_api
 
 INPUT = 'input'
@@ -44,7 +47,6 @@ class NasBench101SearchSpace(Graph):
         self.add_edge(1, 2)
 
     def convert_to_cell(self, matrix, ops):
-
         if len(matrix) < 7:
             # the nasbench spec can have an adjacency matrix of n x n for n<7,
             # but in the nasbench api, it is always 7x7 (possibly containing blank rows)
@@ -85,13 +87,11 @@ class NasBench101SearchSpace(Graph):
         Query results from nasbench 101
         """
         assert isinstance(metric, Metric)
-        assert dataset in ['cifar10',
-                           None], 'Unknown dataset: {}'.format(dataset)
+        assert dataset in ['cifar10', None], 'Unknown dataset: {}'.format(dataset)
         if metric in [Metric.ALL, Metric.HP]:
             raise NotImplementedError()
         if dataset_api is None:
-            raise NotImplementedError(
-                'Must pass in dataset_api to query nasbench101')
+            raise NotImplementedError('Must pass in dataset_api to query nasbench101')
         assert epoch in [
             -1,
             4,
@@ -111,7 +111,8 @@ class NasBench101SearchSpace(Graph):
 
         if self.get_spec() is None:
             raise NotImplementedError(
-                'Cannot yet query directly from the piconas.nas object')
+                'Cannot yet query directly from the piconas.nas object'
+            )
         api_spec = dataset_api['api'].ModelSpec(**self.spec)
 
         if not dataset_api['nb101_data'].is_valid(api_spec):
@@ -120,8 +121,9 @@ class NasBench101SearchSpace(Graph):
         query_results = dataset_api['nb101_data'].query(api_spec)
         if full_lc:
             vals = [
-                dataset_api['nb101_data'].query(
-                    api_spec, epochs=e)[metric_to_nb101[metric]]
+                dataset_api['nb101_data'].query(api_spec, epochs=e)[
+                    metric_to_nb101[metric]
+                ]
                 for e in [4, 12, 36, 108]
             ]
             # return a learning curve with unique values only at 4, 12, 36, 108
@@ -159,8 +161,9 @@ class NasBench101SearchSpace(Graph):
             api in set_spec and check whether `spec' is a string or a dict.
             """
             fix, comp = dataset_api['nb101_data'].get_metrics_from_hash(spec)
-            spec = self.convert_to_cell(fix['module_adjacency'],
-                                        fix['module_operations'])
+            spec = self.convert_to_cell(
+                fix['module_adjacency'], fix['module_operations']
+            )
             self.set_spec(spec)
         elif isinstance(spec, tuple):
             spec = convert_tuple_to_spec(spec)
@@ -175,8 +178,9 @@ class NasBench101SearchSpace(Graph):
         return dataset_api['nb101_data'].hash_iterator()
 
     def sample_random_labeled_architecture(self):
-        assert (self.labeled_archs
-                is not None), 'Labeled archs not provided to sample from'
+        assert (
+            self.labeled_archs is not None
+        ), 'Labeled archs not provided to sample from'
 
         while True:
             op_indices = random.choice(self.labeled_archs)
@@ -201,8 +205,7 @@ class NasBench101SearchSpace(Graph):
             return self.sample_random_labeled_architecture()
 
         while True:
-            matrix = np.random.choice([0, 1],
-                                      size=(NUM_VERTICES, NUM_VERTICES))
+            matrix = np.random.choice([0, 1], size=(NUM_VERTICES, NUM_VERTICES))
             matrix = np.triu(matrix, 1)
             ops = np.random.choice(OPS, size=NUM_VERTICES).tolist()
             ops[0] = INPUT
@@ -278,8 +281,7 @@ class NasBench101SearchSpace(Graph):
                 if matrix[src][dst] and is_valid_edge(matrix, (src, dst)):
                     nbhd = add_to_nbhd(new_matrix, new_ops, nbhd)
 
-                if not matrix[src][dst] and is_valid_edge(
-                        new_matrix, (src, dst)):
+                if not matrix[src][dst] and is_valid_edge(new_matrix, (src, dst)):
                     nbhd = add_to_nbhd(new_matrix, new_ops, nbhd)
 
         random.shuffle(nbhd)

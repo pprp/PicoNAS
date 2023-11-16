@@ -16,26 +16,23 @@ from piconas.utils import set_random_seed
 def get_args():
     parser = argparse.ArgumentParser('train macro benchmark')
     parser.add_argument(
-        '--work_dir', type=str, default='./work_dir', help='experiment name')
+        '--work_dir', type=str, default='./work_dir', help='experiment name'
+    )
     parser.add_argument(
-        '--data_dir',
-        type=str,
-        default='./data/cifar',
-        help='path to the dataset')
+        '--data_dir', type=str, default='./data/cifar', help='path to the dataset'
+    )
 
-    parser.add_argument(
-        '--seed', type=int, default=42, help='seed of experiments')
+    parser.add_argument('--seed', type=int, default=42, help='seed of experiments')
 
     parser.add_argument(
         '--model_name',
         type=str,
         default='OneShotNASBench201Network',
-        help='name of model')
+        help='name of model',
+    )
     parser.add_argument(
-        '--trainer_name',
-        type=str,
-        default='NB201Trainer',
-        help='name of trainer')
+        '--trainer_name', type=str, default='NB201Trainer', help='name of trainer'
+    )
     parser.add_argument(
         '--log_name',
         type=str,
@@ -45,57 +42,49 @@ def get_args():
 
     # ******************************* settings *******************************#
 
+    parser.add_argument('--crit', type=str, default='ce', help='decide the criterion')
     parser.add_argument(
-        '--crit', type=str, default='ce', help='decide the criterion')
+        '--optims', type=str, default='sgd', help='decide the optimizer'
+    )
     parser.add_argument(
-        '--optims', type=str, default='sgd', help='decide the optimizer')
+        '--sched', type=str, default='cosine', help='decide the scheduler'
+    )
     parser.add_argument(
-        '--sched', type=str, default='cosine', help='decide the scheduler')
-    parser.add_argument(
-        '--p_lambda', type=float, default=1, help='decide the scheduler')
+        '--p_lambda', type=float, default=1, help='decide the scheduler'
+    )
 
-    parser.add_argument(
-        '--classes', type=int, default=10, help='dataset classes')
+    parser.add_argument('--classes', type=int, default=10, help='dataset classes')
     parser.add_argument('--layers', type=int, default=20, help='batch size')
     parser.add_argument(
-        '--num_choices', type=int, default=4, help='number choices per layer')
-    parser.add_argument(
-        '--batch_size', type=int, default=128, help='batch size')
+        '--num_choices', type=int, default=4, help='number choices per layer'
+    )
+    parser.add_argument('--batch_size', type=int, default=128, help='batch size')
     parser.add_argument('--epochs', type=int, default=450, help='batch size')
-    parser.add_argument(
-        '--lr', type=float, default=0.025, help='initial learning rate')
+    parser.add_argument('--lr', type=float, default=0.025, help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
+    parser.add_argument('--weight-decay', type=float, default=5e-4, help='weight decay')
     parser.add_argument(
-        '--weight-decay', type=float, default=5e-4, help='weight decay')
+        '--val_interval', type=int, default=5, help='validate and save frequency'
+    )
     parser.add_argument(
-        '--val_interval',
-        type=int,
-        default=5,
-        help='validate and save frequency')
-    parser.add_argument(
-        '--random_search',
-        type=int,
-        default=1000,
-        help='validate and save frequency')
+        '--random_search', type=int, default=1000, help='validate and save frequency'
+    )
     # ******************************* dataset *******************************#
     parser.add_argument(
-        '--dataset', type=str, default='cifar10', help='path to the dataset')
+        '--dataset', type=str, default='cifar10', help='path to the dataset'
+    )
     parser.add_argument('--cutout', action='store_true', help='use cutout')
+    parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
     parser.add_argument(
-        '--cutout_length', type=int, default=16, help='cutout length')
+        '--auto_aug', action='store_true', default=False, help='use auto augmentation'
+    )
     parser.add_argument(
-        '--auto_aug',
-        action='store_true',
-        default=False,
-        help='use auto augmentation')
-    parser.add_argument(
-        '--resize', action='store_true', default=False, help='use resize')
+        '--resize', action='store_true', default=False, help='use resize'
+    )
     # ******************************* extra options *******************************#
     parser.add_argument(
-        '--type',
-        type=str,
-        default='flops',
-        help='can be used in the ablation study')
+        '--type', type=str, default='flops', help='can be used in the ablation study'
+    )
 
     return parser.parse_args()
 
@@ -122,7 +111,8 @@ def main():
         device = torch.device('cpu')
 
     train_data, valid_data, xshape, num_classes = get_datasets(
-        name=cfg.dataset, root=cfg.data_dir, cutout=-1)
+        name=cfg.dataset, root=cfg.data_dir, cutout=-1
+    )
     # search = [train_s, valid_s]
     # train = [train]
     # test = [valid]
@@ -132,7 +122,8 @@ def main():
         dataset=cfg.dataset,
         config_root='./config/',
         batch_size=(512, 512),
-        workers=2)
+        workers=2,
+    )
 
     model = build_model(cfg.model_name, num_classes=num_classes)
 

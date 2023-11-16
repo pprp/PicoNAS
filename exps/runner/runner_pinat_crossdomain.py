@@ -13,8 +13,7 @@ from piconas.core.losses.diffkd import diffkendall
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
 from piconas.predictor.pinat.model_factory import create_model
-from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
-                                 to_cuda)
+from piconas.utils.utils import AverageMeterGroup, accuracy_mse, set_seed, to_cuda
 
 parser = ArgumentParser()
 # exp and dataset
@@ -42,7 +41,8 @@ logging.basicConfig(
     stream=sys.stdout,
     level=logging.INFO,
     format=log_format,
-    datefmt='%m/%d %I:%M:%S %p')
+    datefmt='%m/%d %I:%M:%S %p',
+)
 logging.info(args)
 
 # set cpu/gpu device
@@ -92,8 +92,15 @@ def pair_loss(outputs, labels):
     return loss
 
 
-def train(train_set, train_loader, model, optimizer, lr_scheduler,
-          criterion1: nn.MSELoss, criterion2: PairwiseRankLoss):
+def train(
+    train_set,
+    train_loader,
+    model,
+    optimizer,
+    lr_scheduler,
+    criterion1: nn.MSELoss,
+    criterion2: PairwiseRankLoss,
+):
     model.train()
     for epoch in range(args.epochs):
         lr = optimizer.param_groups[0]['lr']
@@ -127,16 +134,18 @@ def train(train_set, train_loader, model, optimizer, lr_scheduler,
 
             # For logging, we can compute MSE or other metrics if desired.
             mse = accuracy_mse(predict.squeeze(), target.squeeze(), train_set)
-            meters.update({
-                'loss': loss.item(),
-                'mse': mse.item()
-            },
-                          n=target.size(0))
+            meters.update({'loss': loss.item(), 'mse': mse.item()}, n=target.size(0))
 
             if step % args.train_print_freq == 0:
-                logging.info('Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
-                             epoch + 1, args.epochs, step + 1,
-                             len(train_loader), lr, meters)
+                logging.info(
+                    'Epoch [%d/%d] Step [%d/%d] lr = %.3e  %s',
+                    epoch + 1,
+                    args.epochs,
+                    step + 1,
+                    len(train_loader),
+                    lr,
+                    meters,
+                )
 
         lr_scheduler.step()
     return model
@@ -155,17 +164,17 @@ def evaluate(test_set, test_loader, model, criterion):
             targets.append(target.cpu().numpy())
             meters.update(
                 {
-                    'loss':
-                    criterion(predict, target).item(),
-                    'mse':
-                    accuracy_mse(predict.squeeze(), target.squeeze(),
-                                 test_set).item()
+                    'loss': criterion(predict, target).item(),
+                    'mse': accuracy_mse(
+                        predict.squeeze(), target.squeeze(), test_set
+                    ).item(),
                 },
-                n=target.size(0))
-            if step % args.eval_print_freq == 0 or step + 1 == len(
-                    test_loader):
-                logging.info('Evaluation Step [%d/%d]  %s', step + 1,
-                             len(test_loader), meters)
+                n=target.size(0),
+            )
+            if step % args.eval_print_freq == 0 or step + 1 == len(test_loader):
+                logging.info(
+                    'Evaluation Step [%d/%d]  %s', step + 1, len(test_loader), meters
+                )
 
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
@@ -181,37 +190,44 @@ def main():
     model = create_model(args)
     model = model.to(device)
     print(model)
-    logging.info('PINAT params.: %f M' %
-                 (sum(_param.numel() for _param in model.parameters()) / 1e6))
-    logging.info('Training on NAS-Bench-%s, train_split: %s, eval_split: %s' %
-                 (args.bench, args.train_split, args.eval_split))
+    logging.info(
+        'PINAT params.: %f M'
+        % (sum(_param.numel() for _param in model.parameters()) / 1e6)
+    )
+    logging.info(
+        'Training on NAS-Bench-%s, train_split: %s, eval_split: %s'
+        % (args.bench, args.train_split, args.eval_split)
+    )
 
     # define loss, optimizer, and lr_scheduler
     criterion1 = nn.MSELoss()
     criterion2 = PairwiseRankLoss()
-    optimizer = optim.Adam(
-        model.parameters(), lr=args.lr, weight_decay=args.wd)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
     lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     # train and evaluate predictor
-    model = train(train_set, train_loader, model, optimizer, lr_scheduler,
-                  criterion1, criterion2)
-    kendall_tau, predict_all, target_all = evaluate(test_set, test_loader,
-                                                    model, criterion1)
+    model = train(
+        train_set, train_loader, model, optimizer, lr_scheduler, criterion1, criterion2
+    )
+    kendall_tau, predict_all, target_all = evaluate(
+        test_set, test_loader, model, criterion1
+    )
     logging.info('Kendalltau: %.6f', kendall_tau)
 
     # save checkpoint
     ckpt_dir = './checkpoints/nasbench_%s/' % args.bench
     ckpt_path = os.path.join(
-        ckpt_dir, '%s_tau%.6f_ckpt.pt' % (args.exp_name, kendall_tau))
+        ckpt_dir, '%s_tau%.6f_ckpt.pt' % (args.exp_name, kendall_tau)
+    )
     torch.save(model.state_dict(), ckpt_path)
     logging.info('Save model to %s' % ckpt_path)
 
     # write results
     with open('./results/preds_%s.txt' % args.bench, 'a') as f:
-        f.write('EXP:%s\tlr: %s\ttrain: %s\ttest: %s\tkendall_tau: %.6f\n' %
-                (args.exp_name, args.lr, args.train_split, args.eval_split,
-                 kendall_tau))
+        f.write(
+            'EXP:%s\tlr: %s\ttrain: %s\ttest: %s\tkendall_tau: %.6f\n'
+            % (args.exp_name, args.lr, args.train_split, args.eval_split, kendall_tau)
+        )
 
 
 if __name__ == '__main__':

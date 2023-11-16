@@ -2,7 +2,6 @@ import numpy as np
 
 
 class RandomCropPaste(object):
-
     def __init__(self, size, alpha=1.0, flip_p=0.5):
         """Randomly flip and paste a cropped image on the same image."""
         self.size = size
@@ -12,8 +11,7 @@ class RandomCropPaste(object):
     def __call__(self, img):
         lam = np.random.beta(self.alpha, self.alpha)
         front_bbx1, front_bby1, front_bbx2, front_bby2 = self._rand_bbox(lam)
-        img_front = img[:, front_bby1:front_bby2,
-                        front_bbx1:front_bbx2].clone()
+        img_front = img[:, front_bby1:front_bby2, front_bbx1:front_bbx2].clone()
         front_w = front_bbx2 - front_bbx1
         front_h = front_bby2 - front_bby1
 
@@ -23,9 +21,9 @@ class RandomCropPaste(object):
         img_y2 = img_y1 + front_h
 
         if np.random.rand(1) <= self.flip_p:
-            img_front = img_front.flip((-1, ))
+            img_front = img_front.flip((-1,))
         if np.random.rand(1) <= self.flip_p:
-            img = img.flip((-1, ))
+            img = img.flip((-1,))
 
         mixup_alpha = np.random.rand(1)
         img[:, img_y1:img_y2, img_x1:img_x2] *= mixup_alpha

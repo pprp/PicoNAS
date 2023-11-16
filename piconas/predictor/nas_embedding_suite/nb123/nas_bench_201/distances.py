@@ -12,8 +12,7 @@ def adj_distance(cell_1, cell_2):
     by comparing their adjacency matrices and op lists
     (edit distance)
     """
-    graph_dist = np.sum(
-        np.array(cell_1.get_matrix()) != np.array(cell_2.get_matrix()))
+    graph_dist = np.sum(np.array(cell_1.get_matrix()) != np.array(cell_2.get_matrix()))
     ops_dist = np.sum(np.array(cell_1.get_ops()) != np.array(cell_2.get_ops()))
     return graph_dist + ops_dist
 
@@ -26,11 +25,14 @@ def path_distance(cell_1, cell_2, cutoff=None):
     if cutoff:
         return np.sum(
             np.array(
-                cell_1.encode('trunc_path', cutoff=cutoff) != np.array(
-                    cell_2.encode('trunc_path', cutoff=cutoff))))
+                cell_1.encode('trunc_path', cutoff=cutoff)
+                != np.array(cell_2.encode('trunc_path', cutoff=cutoff))
+            )
+        )
     else:
         return np.sum(
-            np.array(cell_1.encode('path') != np.array(cell_2.encode('path'))))
+            np.array(cell_1.encode('path') != np.array(cell_2.encode('path')))
+        )
 
 
 def nasbot_distance(cell_1, cell_2):
@@ -38,9 +40,9 @@ def nasbot_distance(cell_1, cell_2):
     def adj_distance(cell_1, cell_2):
         cell_1_ops = cell_1.get_op_list()
         cell_2_ops = cell_2.get_op_list()
-        return np.sum([
-            1 for i in range(len(cell_1_ops)) if cell_1_ops[i] != cell_2_ops[i]
-        ])
+        return np.sum(
+            [1 for i in range(len(cell_1_ops)) if cell_1_ops[i] != cell_2_ops[i]]
+        )
 
     cell_1_ops = cell_1.get_op_list()
     cell_2_ops = cell_2.get_op_list()

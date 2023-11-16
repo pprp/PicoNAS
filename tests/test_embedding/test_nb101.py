@@ -5,7 +5,6 @@ from piconas.predictor.nas_embedding_suite.nb101_ss import NASBench101
 
 
 class TestNASBench101(unittest.TestCase):
-
     def setUp(self):
         self.nasbench101 = NASBench101(path='dummy_path')
 

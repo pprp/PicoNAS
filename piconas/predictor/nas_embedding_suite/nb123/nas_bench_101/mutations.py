@@ -28,8 +28,7 @@ def adj_mutate(nasbench, matrix, ops, cont, mutation_rate=1.0, patience=5000):
 
         if not cont:
             # flip each edge w.p. so expected flips is 1. same for ops
-            edge_mutation_prob = mutation_rate / (
-                NUM_VERTICES * (NUM_VERTICES - 1) / 2)
+            edge_mutation_prob = mutation_rate / (NUM_VERTICES * (NUM_VERTICES - 1) / 2)
             for src in range(0, NUM_VERTICES - 1):
                 for dst in range(src + 1, NUM_VERTICES):
                     if np.random.rand() < edge_mutation_prob:
@@ -48,7 +47,7 @@ def adj_mutate(nasbench, matrix, ops, cont, mutation_rate=1.0, patience=5000):
                 # choose a random edge to remove
                 idx = np.random.choice(range(num_edges))
                 counter = 0
-                for (i, j) in triu_indices:
+                for i, j in triu_indices:
                     if matrix[i][j] == 1:
                         if counter == idx:
                             new_matrix[i][j] = 0
@@ -59,7 +58,7 @@ def adj_mutate(nasbench, matrix, ops, cont, mutation_rate=1.0, patience=5000):
                 # choose a random edge to add
                 idx = np.random.choice(range(len(triu_indices) - num_edges))
                 counter = 0
-                for (i, j) in triu_indices:
+                for i, j in triu_indices:
                     if matrix[i][j] == 0:
                         if counter == idx:
                             new_matrix[i][j] = 1
@@ -79,13 +78,7 @@ def adj_mutate(nasbench, matrix, ops, cont, mutation_rate=1.0, patience=5000):
     return adj_mutate(nasbench, matrix, ops, mutation_rate=mutation_rate + 1)
 
 
-def trunc_adj_mutate(nasbench,
-                     matrix,
-                     ops,
-                     cutoff,
-                     mutation_rate=1.0,
-                     patience=5000):
-
+def trunc_adj_mutate(nasbench, matrix, ops, cutoff, mutation_rate=1.0, patience=5000):
     p = 0
     while p < patience:
         p += 1
@@ -94,7 +87,7 @@ def trunc_adj_mutate(nasbench,
 
         trunc_op_spots = (max(cutoff, 21) - 21) // 2
         if cutoff >= 21 and ((cutoff % 2) == 0):
-            if np.random.rand() > .5:
+            if np.random.rand() > 0.5:
                 cutoff += 1
 
         if trunc_op_spots > 0:
@@ -125,14 +118,16 @@ def trunc_adj_mutate(nasbench,
     return trunc_adj_mutate(nasbench, matrix, ops, cutoff, mutation_rate + 1)
 
 
-def path_mutate(nasbench,
-                path_indices,
-                index_hash,
-                cont,
-                weighted=True,
-                cutoff=0,
-                mutation_rate=1.0,
-                patience=5000):
+def path_mutate(
+    nasbench,
+    path_indices,
+    index_hash,
+    cont,
+    weighted=True,
+    cutoff=0,
+    mutation_rate=1.0,
+    patience=5000,
+):
     """
     For NAS encodings experiments, some of the path-based encodings currently require a
     hash map from path indices to cell architectuers. We have created a pickle file which
@@ -140,12 +135,13 @@ def path_mutate(nasbench,
     https://drive.google.com/file/d/1yMRFxT6u3ZyfiWUPhtQ_B9FbuGN3X-Nf/view?usp=sharing
     """
     if not index_hash:
-        print('Error: please download index_hash, located at \
+        print(
+            'Error: please download index_hash, located at \
         https://drive.google.com/file/d/1yMRFxT6u3ZyfiWUPhtQ_B9FbuGN3X-Nf/view?usp=sharing'
-              )
+        )
         raise NotImplementedError()
 
-    total_paths = sum([len(OPS)**i for i in range(OP_SPOTS + 1)])
+    total_paths = sum([len(OPS) ** i for i in range(OP_SPOTS + 1)])
     if not cutoff:
         cutoff = total_paths
 
@@ -157,8 +153,12 @@ def path_mutate(nasbench,
 
         if weighted:
             probs_by_length = [
-                .2, .127, 3.36 * 10**-2, 3.92 * 10**-3, 1.5 * 10**-4,
-                6.37 * 10**-7
+                0.2,
+                0.127,
+                3.36 * 10**-2,
+                3.92 * 10**-3,
+                1.5 * 10**-4,
+                6.37 * 10**-7,
             ]
         else:
             probs_by_length = [1 / cutoff for i in range(6)]
@@ -166,7 +166,7 @@ def path_mutate(nasbench,
         if not cont:
             # randomly sample paths
             for i in range(OP_SPOTS + 1):
-                for j in range(len(OPS)**i):
+                for j in range(len(OPS) ** i):
                     prob = np.random.rand() * mutation_rate
                     if prob < probs_by_length[i] and n not in path_indices:
                         new_path_indices.append(n)
@@ -203,7 +203,8 @@ def path_mutate(nasbench,
                 choices = [i for i in range(cutoff) if i not in path_indices]
                 if len(choices) > 0:
                     path = np.random.choice(
-                        [i for i in range(cutoff) if i not in path_indices])
+                        [i for i in range(cutoff) if i not in path_indices]
+                    )
                     new_path_indices.append(path)
                 elif len(new_path_indices) > 0:
                     new_path_indices.pop(len(new_path_indices) - 1)

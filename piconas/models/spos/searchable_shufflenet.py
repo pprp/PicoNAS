@@ -9,7 +9,6 @@ from ..registry import register_model
 
 @register_model
 class SearchableShuffleNetV2(nn.Module):
-
     def __init__(self, num_classes=10) -> None:
         super().__init__()
 
@@ -25,12 +24,8 @@ class SearchableShuffleNetV2(nn.Module):
 
         self.first_conv = nn.Sequential(
             nn.Conv2d(
-                3,
-                self.in_channels,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=False),
+                3, self.in_channels, kernel_size=3, stride=1, padding=1, bias=False
+            ),
             nn.BatchNorm2d(self.in_channels, affine=False),
             nn.ReLU6(inplace=True),
         )
@@ -41,8 +36,7 @@ class SearchableShuffleNetV2(nn.Module):
             self.layers.append(layer)
 
         self.last_conv = nn.Sequential(
-            nn.Conv2d(
-                self.in_channels, self.last_channel, 1, 1, 0, bias=False),
+            nn.Conv2d(self.in_channels, self.last_channel, 1, 1, 0, bias=False),
             nn.BatchNorm2d(self.last_channel, affine=False),
             nn.ReLU6(inplace=True),
         )
@@ -51,8 +45,9 @@ class SearchableShuffleNetV2(nn.Module):
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(self.last_channel, num_classes, bias=False)
 
-    def _make_layer(self, out_channels: int, num_blocks: int,
-                    stride: int) -> nn.Sequential:
+    def _make_layer(
+        self, out_channels: int, num_blocks: int, stride: int
+    ) -> nn.Sequential:
         layers = []
         for i in range(num_blocks):
             if i == 0 and stride == 2:
@@ -60,16 +55,14 @@ class SearchableShuffleNetV2(nn.Module):
             else:
                 inp, outp, stride = self.in_channels // 2, out_channels, 1
             stride = 2 if stride == 2 and i == 0 else 1
-            candidate_ops = nn.ModuleDict({
-                'shuffle_3x3':
-                ShuffleModule(inp, outp, kernel=3, stride=stride),
-                'shuffle_5x5':
-                ShuffleModule(inp, outp, kernel=5, stride=stride),
-                'shuffle_7x7':
-                ShuffleModule(inp, outp, kernel=7, stride=stride),
-                'shuffle_xception':
-                ShuffleXModule(inp, outp, stride=stride),
-            })
+            candidate_ops = nn.ModuleDict(
+                {
+                    'shuffle_3x3': ShuffleModule(inp, outp, kernel=3, stride=stride),
+                    'shuffle_5x5': ShuffleModule(inp, outp, kernel=5, stride=stride),
+                    'shuffle_7x7': ShuffleModule(inp, outp, kernel=7, stride=stride),
+                    'shuffle_xception': ShuffleXModule(inp, outp, stride=stride),
+                }
+            )
             layers.append(OneShotOP(candidate_ops=candidate_ops))
             self.in_channels = out_channels
         return nn.Sequential(*layers)
@@ -87,7 +80,6 @@ class SearchableShuffleNetV2(nn.Module):
 
 @register_model
 class SearchableMAE(SearchableShuffleNetV2):
-
     def __init__(self, classes=10) -> None:
         super().__init__(classes=classes)
 
@@ -107,12 +99,8 @@ class SearchableMAE(SearchableShuffleNetV2):
             # x32
             nn.Upsample(scale_factor=2),
             nn.Conv2d(
-                self.last_channel // 2,
-                3,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=True),
+                self.last_channel // 2, 3, kernel_size=3, stride=1, padding=1, bias=True
+            ),
             nn.BatchNorm2d(3),
             nn.ReLU(inplace=True),
         )
@@ -120,10 +108,8 @@ class SearchableMAE(SearchableShuffleNetV2):
     def process_mask(self, x: Tensor, mask: Tensor, patch_size=16):
         # process masked image
         x = rearrange(
-            x,
-            'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)',
-            p1=patch_size,
-            p2=patch_size)
+            x, 'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)', p1=patch_size, p2=patch_size
+        )
         mask = rearrange(mask, 'b h w -> b (h w)')
         mask = mask.unsqueeze(-1).repeat(1, 1, 12)
         x = x * mask

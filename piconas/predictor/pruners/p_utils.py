@@ -29,8 +29,7 @@ def get_some_data(train_dataloader, num_batches, device):
     return inputs, targets
 
 
-def get_some_data_grasp(train_dataloader, num_classes, samples_per_class,
-                        device):
+def get_some_data_grasp(train_dataloader, num_classes, samples_per_class, device):
     datas = [[] for _ in range(num_classes)]
     labels = [[] for _ in range(num_classes)]
     mark = dict()
@@ -38,7 +37,7 @@ def get_some_data_grasp(train_dataloader, num_classes, samples_per_class,
     while True:
         inputs, targets = next(dataloader_iter)
         for idx in range(inputs.shape[0]):
-            x, y = inputs[idx:idx + 1], targets[idx:idx + 1]
+            x, y = inputs[idx : idx + 1], targets[idx : idx + 1]
             category = y.item()
             if len(datas[category]) == samples_per_class:
                 mark[category] = True
@@ -66,13 +65,12 @@ def get_layer_metric_array(net, metric, mode):
 
 
 def reshape_elements(elements, shapes, device):
-
     def broadcast_val(elements, shapes):
         ret_grads = []
         for e, sh in zip(elements, shapes):
             ret_grads.append(
-                torch.stack([torch.Tensor(sh).fill_(v) for v in e],
-                            dim=0).to(device))
+                torch.stack([torch.Tensor(sh).fill_(v) for v in e], dim=0).to(device)
+            )
         return ret_grads
 
     if type(elements[0]) == list:

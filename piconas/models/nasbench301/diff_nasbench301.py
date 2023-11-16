@@ -6,8 +6,7 @@ import torch.nn as nn
 
 from piconas.nas.mutables import DiffOP
 from ..registry import register_model
-from .darts_ops import (DilConv, DropPath, FactorizedReduce, PoolBN, SepConv,
-                        StdConv)
+from .darts_ops import DilConv, DropPath, FactorizedReduce, PoolBN, SepConv, StdConv
 
 
 class Node(nn.Module):
@@ -20,33 +19,42 @@ class Node(nn.Module):
         num_downsample_connect (int): _description_
     """
 
-    def __init__(self, node_id: str, num_prev_nodes: int, channels: int,
-                 num_downsample_connect: int):
-
+    def __init__(
+        self,
+        node_id: str,
+        num_prev_nodes: int,
+        channels: int,
+        num_downsample_connect: int,
+    ):
         super().__init__()
         self.ops = nn.ModuleList()
         for i in range(num_prev_nodes):
             stride = 2 if i < num_downsample_connect else 1
-            candidate_ops = nn.ModuleDict({
-                'max_pool_3x3':
-                PoolBN('max', channels, 3, stride, 1, affine=False),
-                'avg_pool_3x3':
-                PoolBN('avg', channels, 3, stride, 1, affine=False),
-                'skip_connect':
-                nn.Identity() if stride == 1 else FactorizedReduce(
-                    channels, channels, affine=False),
-                'sep_conv_3x3':
-                SepConv(channels, channels, 3, stride, 1, affine=False),
-                'sep_conv_5x5':
-                SepConv(channels, channels, 5, stride, 2, affine=False),
-                'dil_conv_3x3':
-                DilConv(channels, channels, 3, stride, 2, 2, affine=False),
-                'dil_conv_5x5':
-                DilConv(channels, channels, 5, stride, 4, 2, affine=False)
-            })
+            candidate_ops = nn.ModuleDict(
+                {
+                    'max_pool_3x3': PoolBN('max', channels, 3, stride, 1, affine=False),
+                    'avg_pool_3x3': PoolBN('avg', channels, 3, stride, 1, affine=False),
+                    'skip_connect': nn.Identity()
+                    if stride == 1
+                    else FactorizedReduce(channels, channels, affine=False),
+                    'sep_conv_3x3': SepConv(
+                        channels, channels, 3, stride, 1, affine=False
+                    ),
+                    'sep_conv_5x5': SepConv(
+                        channels, channels, 5, stride, 2, affine=False
+                    ),
+                    'dil_conv_3x3': DilConv(
+                        channels, channels, 3, stride, 2, 2, affine=False
+                    ),
+                    'dil_conv_5x5': DilConv(
+                        channels, channels, 5, stride, 4, 2, affine=False
+                    ),
+                }
+            )
 
             self.ops.append(
-                DiffOP(candidate_ops=candidate_ops, alias=f'{node_id}_p{i}'))
+                DiffOP(candidate_ops=candidate_ops, alias=f'{node_id}_p{i}')
+            )
         self.drop_path = DropPath()
 
     def forward(self, prev_nodes):
@@ -80,7 +88,6 @@ class DartsCell(nn.Module):
         reduction_p: bool = False,
         reduction: bool = False,
     ):
-
         super().__init__()
         self.reduction = reduction
         self.n_nodes = n_nodes
@@ -88,11 +95,9 @@ class DartsCell(nn.Module):
         # If previous cell is reduction cell, current input size does not match with
         # output size of cell[k-2]. So the output[k-2] should be reduced by preprocessing.
         if reduction_p:
-            self.preproc0 = FactorizedReduce(
-                channels_pp, channels, affine=False)
+            self.preproc0 = FactorizedReduce(channels_pp, channels, affine=False)
         else:
-            self.preproc0 = StdConv(
-                channels_pp, channels, 1, 1, 0, affine=False)
+            self.preproc0 = StdConv(channels_pp, channels, 1, 1, 0, affine=False)
         self.preproc1 = StdConv(channels_p, channels, 1, 1, 0, affine=False)
 
         # generate dag
@@ -100,9 +105,12 @@ class DartsCell(nn.Module):
         for depth in range(2, self.n_nodes + 2):
             self.mutable_ops.append(
                 Node(
-                    '{}_n{}'.format('reduce' if reduction else 'normal',
-                                    depth), depth, channels,
-                    2 if reduction else 0))
+                    '{}_n{}'.format('reduce' if reduction else 'normal', depth),
+                    depth,
+                    channels,
+                    2 if reduction else 0,
+                )
+            )
 
     def forward(self, pprev, prev):
         tensors = [self.preproc0(pprev), self.preproc1(prev)]
@@ -131,14 +139,16 @@ class DiffNASBench301Network(nn.Module):
         stem_multiplier (int, optional): _description_. Defaults to 3.
     """
 
-    def __init__(self,
-                 in_channels: int = 3,
-                 channels: int = 16,
-                 num_classes: int = 10,
-                 n_layers: int = 8,
-                 factory_func=DartsCell,
-                 n_nodes: int = 4,
-                 stem_multiplier: int = 3):
+    def __init__(
+        self,
+        in_channels: int = 3,
+        channels: int = 16,
+        num_classes: int = 10,
+        n_layers: int = 8,
+        factory_func=DartsCell,
+        n_nodes: int = 4,
+        stem_multiplier: int = 3,
+    ):
         super().__init__()
         self.in_channels = in_channels
         self.channels = channels
@@ -147,8 +157,8 @@ class DiffNASBench301Network(nn.Module):
 
         c_cur = stem_multiplier * self.channels
         self.stem = nn.Sequential(
-            nn.Conv2d(in_channels, c_cur, 3, 1, 1, bias=False),
-            nn.BatchNorm2d(c_cur))
+            nn.Conv2d(in_channels, c_cur, 3, 1, 1, bias=False), nn.BatchNorm2d(c_cur)
+        )
 
         # for the first cell, stem is used for both s0 and s1
         # [!] channels_pp and channels_p is output channel size,
@@ -164,8 +174,9 @@ class DiffNASBench301Network(nn.Module):
                 c_cur *= 2
                 reduction = True
 
-            cell = factory_func(n_nodes, channels_pp, channels_p, c_cur,
-                                reduction_p, reduction)
+            cell = factory_func(
+                n_nodes, channels_pp, channels_p, c_cur, reduction_p, reduction
+            )
             self.cells.append(cell)
             c_cur_out = c_cur * n_nodes
             channels_pp, channels_p = channels_p, c_cur_out

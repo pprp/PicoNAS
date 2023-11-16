@@ -5,8 +5,12 @@ License: https://github.com/changlin31/BossNAS
 import numpy as np
 import torch.nn as nn
 
-from piconas.models.nats.nats_ops import (InferCell, ResNetBasicblock,
-                                          SlimmableConv2d, SlimmableLinear)
+from piconas.models.nats.nats_ops import (
+    InferCell,
+    ResNetBasicblock,
+    SlimmableConv2d,
+    SlimmableLinear,
+)
 from piconas.models.nats.nats_ops import Structure as CellStructure
 from piconas.models.nats.nats_ops import SwitchableBatchNorm2d
 from piconas.models.nats.utils import reset
@@ -22,7 +26,8 @@ def fair_random_op_encoding(num_of_ops, layers):
     encodings = np.zeros((layers, num_of_ops), dtype=np.int8)
     for i in range(layers):
         encodings[:][i] = np.random.choice(
-            np.arange(0, num_of_ops), size=num_of_ops, replace=False)
+            np.arange(0, num_of_ops), size=num_of_ops, replace=False
+        )
     return encodings.T.tolist()
 
 
@@ -125,8 +130,7 @@ class SupernetNATS(nn.Module):
         self.max_num_Cs = 5
         self.candidate_Cs = [8, 16, 24, 32, 40, 48, 56, 64]
         self.FLAGS = {
-            'width_mult_list':
-            [0.125, 0.25, 0.375, 0.50, 0.625, 0.75, 0.875, 1.0]
+            'width_mult_list': [0.125, 0.25, 0.375, 0.50, 0.625, 0.75, 0.875, 1.0]
         }
         self._num_of_ops = 8
         self.target = target
@@ -139,8 +143,7 @@ class SupernetNATS(nn.Module):
 
         # generate channel list
         self.channels = [
-            int(64 * width_mult)
-            for width_mult in self.FLAGS['width_mult_list']
+            int(64 * width_mult) for width_mult in self.FLAGS['width_mult_list']
         ]
 
         self.stem = nn.Sequential(
@@ -159,7 +162,8 @@ class SupernetNATS(nn.Module):
 
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.classifier = SlimmableLinear(
-            self.candidate_Cs, [self._num_classes], bias=False)
+            self.candidate_Cs, [self._num_classes], bias=False
+        )
 
     def forward(self, x, forward_op=None):
         """
@@ -173,14 +177,13 @@ class SupernetNATS(nn.Module):
         x = self.stem[1](x, idx)
         # blocks
         for i, block in enumerate(self._blocks):
-            pre_op = forward_op[sum(self._op_layers_list[:i]) -
-                                1] if i > 0 else -1
+            pre_op = forward_op[sum(self._op_layers_list[:i]) - 1] if i > 0 else -1
             x = block(
                 x,
                 i,
-                forward_list=forward_op[sum(self._op_layers_list[:i]
-                                            ):sum(self._op_layers_list[:(i +
-                                                                         1)])],
+                forward_list=forward_op[
+                    sum(self._op_layers_list[:i]) : sum(self._op_layers_list[: (i + 1)])
+                ],
                 pre_op=pre_op,
             )
 
@@ -193,10 +196,12 @@ class SupernetNATS(nn.Module):
         # TODO: support fair
         if method == 'uni':
             forward_op = uniform_random_op_encoding(
-                num_of_ops=self._num_of_ops, layers=sum(self._op_layers_list))
+                num_of_ops=self._num_of_ops, layers=sum(self._op_layers_list)
+            )
         elif method == 'fair':
             forward_op = fair_random_op_encoding(
-                num_of_ops=self._num_of_ops, layers=sum(self._op_layers_list))
+                num_of_ops=self._num_of_ops, layers=sum(self._op_layers_list)
+            )
         elif method == 'large':
             forward_op = [7 for _ in range(sum(self._op_layers_list))]
         elif method == 'small':
@@ -208,15 +213,17 @@ class SupernetNATS(nn.Module):
     def init_weights(self):
         pass  # FIXME: Using pytorch default weight init
 
-    def _make_block(self, ):
+    def _make_block(
+        self,
+    ):
         self._blocks = nn.ModuleList()
         for i, layers in enumerate(self._op_layers_list):
             self._blocks.append(Block(layers, stage=i, target=self.target))
 
     def get_all_path(self, start_block=0):
         return all_op_encoding(
-            num_of_ops=self._num_of_ops,
-            layers=self._op_layers_list[start_block])
+            num_of_ops=self._num_of_ops, layers=self._op_layers_list[start_block]
+        )
 
     def reset_params(self):
         self.apply(reset)

@@ -69,8 +69,7 @@ class MacroTrainer(BaseTrainer):
             self.mutator.prepare_from_supernet(self.model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(
-            num_sample=50, dataset=self.dataset)
+        self.evaluator = self._build_evaluator(num_sample=50, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -89,7 +88,8 @@ class MacroTrainer(BaseTrainer):
 
     def _build_evaluator(self, num_sample=50, dataset='cifar10'):
         return MacroEvaluator(
-            self, num_sample=num_sample, type='test_acc', dataset=dataset)
+            self, num_sample=num_sample, type='test_acc', dataset=dataset
+        )
 
     def sample_subnet_by_type(self, type: str = 'random') -> List[Dict]:
         """Return two subnets based on ``type``.
@@ -285,9 +285,11 @@ class MacroTrainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = (2 *
-                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
+        loss3 = (
+            2
+            * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+            * self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+        )
         loss3.backward()
 
         return loss2, outputs
@@ -325,18 +327,18 @@ class MacroTrainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = (2 *
-                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
+        loss3 = (
+            2
+            * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+            * self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+        )
         loss_list.append(loss3)
 
         # distill loss
         if loss2 > loss1:
-            loss4 = self.distill_loss(
-                feat_s=feat2, feat_t=feat1) * self.lambda_kd
+            loss4 = self.distill_loss(feat_s=feat2, feat_t=feat1) * self.lambda_kd
         else:
-            loss4 = self.distill_loss(
-                feat_s=feat1, feat_t=feat2) * self.lambda_kd
+            loss4 = self.distill_loss(feat_s=feat1, feat_t=feat2) * self.lambda_kd
         loss_list.append(loss4)
 
         loss = sum(loss_list)
@@ -379,8 +381,7 @@ class MacroTrainer(BaseTrainer):
             for j in range(i):
                 flops1, flops2 = flops_list[i], flops_list[j]
                 loss1, loss2 = loss_list[i], loss_list[j]
-                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1,
-                                                       loss2)
+                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1, loss2)
 
                 rank_loss_list.append(tmp_rank_loss)
 
@@ -461,23 +462,23 @@ class MacroTrainer(BaseTrainer):
             )
 
             if epoch % 5 == 0:
-                kt, ps, sp = self.evaluator.compute_rank_consistency(
-                    val_loader)
+                kt, ps, sp = self.evaluator.compute_rank_consistency(val_loader)
                 self.writer.add_scalar(
-                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
+                    'RANK/kendall_tau', kt, global_step=self.current_epoch
+                )
                 self.writer.add_scalar(
-                    'RANK/pearson', ps, global_step=self.current_epoch)
+                    'RANK/pearson', ps, global_step=self.current_epoch
+                )
                 self.writer.add_scalar(
-                    'RANK/spearman', sp, global_step=self.current_epoch)
+                    'RANK/spearman', sp, global_step=self.current_epoch
+                )
 
             self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss', tr_loss, global_step=self.current_epoch
+            )
             self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss', val_loss, global_step=self.current_epoch
+            )
 
             self.scheduler.step()
 
@@ -485,7 +486,8 @@ class MacroTrainer(BaseTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         # self.model.eval()
@@ -497,8 +499,7 @@ class MacroTrainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 # move to device
-                outputs, labels = self._predict(
-                    batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
@@ -552,8 +553,7 @@ class MacroTrainer(BaseTrainer):
         for k, v in self.mutator.search_group.items():
             current_choice = subnet_dict[k]  # '1' or '2' or 'I'
             choice_flops = 0
-            for _, module in v[0]._candidate_ops[current_choice].named_modules(
-            ):
+            for _, module in v[0]._candidate_ops[current_choice].named_modules():
                 flops = getattr(module, '__flops__', 0)
                 if flops > 0:
                     choice_flops += flops
@@ -561,12 +561,12 @@ class MacroTrainer(BaseTrainer):
             subnet_flops += choice_flops
         return subnet_flops
 
-    def get_subnet_predictive(self,
-                              subnet_dict,
-                              dataloader,
-                              measure_name='zen') -> float:
+    def get_subnet_predictive(
+        self, subnet_dict, dataloader, measure_name='zen'
+    ) -> float:
         """Calculate zenscore based on subnet dict."""
         import copy
+
         m = copy.deepcopy(self.model)
         o = OneShotMutator()
         o.prepare_from_supernet(m)
@@ -581,7 +581,8 @@ class MacroTrainer(BaseTrainer):
             dataload_info=dataload_info,
             measure_names=measure_name,
             loss_fn=F.cross_entropy,
-            device=self.trainer.device)
+            device=self.trainer.device,
+        )
 
         del m
         del o
@@ -593,8 +594,7 @@ class MacroTrainer(BaseTrainer):
         for k, v in self.mutator.search_group.items():
             current_choice = subnet_dict[k]
             choice_params = 0
-            for _, module in v[0]._candidate_ops[current_choice].named_modules(
-            ):
+            for _, module in v[0]._candidate_ops[current_choice].named_modules():
                 params = getattr(module, '__params__', 0)
                 if params > 0:
                     choice_params += params

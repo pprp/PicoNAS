@@ -122,7 +122,8 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
         """
         if self._search_group is None:
             raise RuntimeError(
-                'Call `prepare_from_supernet` before access search group!')
+                'Call `prepare_from_supernet` before access search group!'
+            )
         return self._search_group
 
     def _build_search_group(self, supernet: Module) -> None:
@@ -162,7 +163,8 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
             for module_name in group:
                 assert module_name in module_name2module, (
                     f'`{module_name}` is not a module name of supernet, '
-                    f'expected module names: {module_name2module.keys()}')
+                    f'expected module names: {module_name2module.keys()}'
+                )
 
                 if module_name in module_name2module:
                     self.module_name2group_id[module_name] = idx
@@ -210,7 +212,8 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
             for module_name in group:
                 assert module_name in alias2module, (
                     f'`{module_name}` is not a module name of supernet, '
-                    f'expected module names: {alias2module.keys()}')
+                    f'expected module names: {alias2module.keys()}'
+                )
 
                 if module_name in alias2module:
                     self.alias2group_id[module_name] = idx
@@ -219,7 +222,6 @@ class ArchitectureMutator(BaseMutator, Generic[MUTABLE_TYPE]):
 
         self.alias2group_id_copy = copy.deepcopy(self.alias2group_id)
         for gid, (alias_name, modules) in enumerate(alias2module.items()):
-
             for module in modules:
                 if len(self.alias2group_id_copy.keys()) > 0:
                     group_id = self.alias2group_id_copy.get(alias_name)

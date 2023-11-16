@@ -9,7 +9,6 @@ from ..registry import register_model
 
 @register_model
 class VisionTransformerForSimMIM(VisionTransformer):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -32,15 +31,15 @@ class VisionTransformerForSimMIM(VisionTransformer):
         x = x * (1 - w) + mask_token * w
 
         cls_tokens = self.cls_token.expand(
-            B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
+            B, -1, -1
+        )  # stole cls_tokens impl from Phil Wang, thanks
         x = torch.cat((cls_tokens, x), dim=1)
 
         if self.pos_embed is not None:
             x = x + self.pos_embed
         x = self.pos_drop(x)
 
-        rel_pos_bias = self.rel_pos_bias(
-        ) if self.rel_pos_bias is not None else None
+        rel_pos_bias = self.rel_pos_bias() if self.rel_pos_bias is not None else None
         for blk in self.blocks:
             x = blk(x, rel_pos_bias=rel_pos_bias)
         x = self.norm(x)
@@ -53,7 +52,6 @@ class VisionTransformerForSimMIM(VisionTransformer):
 
 
 class SimMIM(nn.Module):
-
     def __init__(self, encoder, encoder_stride):
         super().__init__()
         self.encoder = encoder
@@ -76,8 +74,11 @@ class SimMIM(nn.Module):
         x_rec = self.decoder(z)
 
         mask = (
-            mask.repeat_interleave(self.patch_size, 1).repeat_interleave(
-                self.patch_size, 2).unsqueeze(1).contiguous())
+            mask.repeat_interleave(self.patch_size, 1)
+            .repeat_interleave(self.patch_size, 2)
+            .unsqueeze(1)
+            .contiguous()
+        )
         loss_recon = F.l1_loss(x, x_rec, reduction='none')
         return (loss_recon * mask).sum() / (mask.sum() + 1e-5) / self.in_chans
 
@@ -90,8 +91,5 @@ class SimMIM(nn.Module):
     @torch.jit.ignore
     def no_weight_decay_keywords(self):
         if hasattr(self.encoder, 'no_weight_decay_keywords'):
-            return {
-                f'encoder.{i}'
-                for i in self.encoder.no_weight_decay_keywords()
-            }
+            return {f'encoder.{i}' for i in self.encoder.no_weight_decay_keywords()}
         return {}

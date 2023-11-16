@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 
-def gram_linear(x):  #np和tensor都可以用这个方法
+def gram_linear(x):  # np和tensor都可以用这个方法
     """Compute Gram (kernel) matrix for a linear kernel.
     Args:
         x: A num_examples x num_features matrix of features.
@@ -62,9 +62,9 @@ def center_gram(gram, unbiased=False):
         gram -= means[:, None]
         gram -= means[None, :]
         np.fill_diagonal(gram, 0)
-    else:  #(256, 256)
-        means = np.mean(gram, 0, dtype=np.float64)  #(256,)
-        means -= np.mean(means) / 2  #(256,)
+    else:  # (256, 256)
+        means = np.mean(gram, 0, dtype=np.float64)  # (256,)
+        means -= np.mean(means) / 2  # (256,)
         gram -= means[:, None]  ##(256, 256)
         gram -= means[None, :]  ##(256, 256)
 
@@ -113,7 +113,7 @@ def cka(gram_x, gram_y, debiased=False):
 
 
 def _ravel(gram):
-    return torch.reshape(gram, (-1, ))
+    return torch.reshape(gram, (-1,))
 
 
 def tensor_cka(gram_x, gram_y, debiased=False):
@@ -121,7 +121,8 @@ def tensor_cka(gram_x, gram_y, debiased=False):
     gram_y = tensor_center_gram(gram_y, unbiased=debiased)
     # scaled_hsic = gram_x.ravel().dot(gram_y.ravel())
     scaled_hsic = _ravel(gram_x).dot(
-        _ravel(gram_y))  # works under pytorch 1.5. Same for below.
+        _ravel(gram_y)
+    )  # works under pytorch 1.5. Same for below.
     # normalization_x = torch.linalg.norm(gram_x)
     # normalization_y = torch.linalg.norm(gram_y)
     normalization_x = torch.norm(gram_x)
@@ -129,14 +130,17 @@ def tensor_cka(gram_x, gram_y, debiased=False):
     return scaled_hsic / (normalization_x * normalization_y)
 
 
-def _debiased_dot_product_similarity_helper(xty, sum_squared_rows_x,
-                                            sum_squared_rows_y, squared_norm_x,
-                                            squared_norm_y, n):
+def _debiased_dot_product_similarity_helper(
+    xty, sum_squared_rows_x, sum_squared_rows_y, squared_norm_x, squared_norm_y, n
+):
     """Helper for computing debiased dot product similarity (i.e. linear HSIC)."""
     # This formula can be derived by manipulating the unbiased estimator from
     # Song et al. (2007).
-    return (xty - n / (n - 2.) * sum_squared_rows_x.dot(sum_squared_rows_y) +
-            squared_norm_x * squared_norm_y / ((n - 1) * (n - 2)))
+    return (
+        xty
+        - n / (n - 2.0) * sum_squared_rows_x.dot(sum_squared_rows_y)
+        + squared_norm_x * squared_norm_y / ((n - 1) * (n - 2))
+    )
 
 
 def feature_space_linear_cka(features_x, features_y, debiased=False):
@@ -154,7 +158,7 @@ def feature_space_linear_cka(features_x, features_y, debiased=False):
     features_x = features_x - np.mean(features_x, 0, keepdims=True)
     features_y = features_y - np.mean(features_y, 0, keepdims=True)
 
-    dot_product_similarity = np.linalg.norm(features_x.T.dot(features_y))**2
+    dot_product_similarity = np.linalg.norm(features_x.T.dot(features_y)) ** 2
     normalization_x = np.linalg.norm(features_x.T.dot(features_x))
     normalization_y = np.linalg.norm(features_y.T.dot(features_y))
 
@@ -167,20 +171,33 @@ def feature_space_linear_cka(features_x, features_y, debiased=False):
         squared_norm_y = np.sum(sum_squared_rows_y)
 
         dot_product_similarity = _debiased_dot_product_similarity_helper(
-            dot_product_similarity, sum_squared_rows_x, sum_squared_rows_y,
-            squared_norm_x, squared_norm_y, n)
+            dot_product_similarity,
+            sum_squared_rows_x,
+            sum_squared_rows_y,
+            squared_norm_x,
+            squared_norm_y,
+            n,
+        )
         normalization_x = np.sqrt(
-            _debiased_dot_product_similarity_helper(normalization_x**2,
-                                                    sum_squared_rows_x,
-                                                    sum_squared_rows_x,
-                                                    squared_norm_x,
-                                                    squared_norm_x, n))
+            _debiased_dot_product_similarity_helper(
+                normalization_x**2,
+                sum_squared_rows_x,
+                sum_squared_rows_x,
+                squared_norm_x,
+                squared_norm_x,
+                n,
+            )
+        )
         normalization_y = np.sqrt(
-            _debiased_dot_product_similarity_helper(normalization_y**2,
-                                                    sum_squared_rows_y,
-                                                    sum_squared_rows_y,
-                                                    squared_norm_y,
-                                                    squared_norm_y, n))
+            _debiased_dot_product_similarity_helper(
+                normalization_y**2,
+                sum_squared_rows_y,
+                sum_squared_rows_y,
+                squared_norm_y,
+                squared_norm_y,
+                n,
+            )
+        )
 
     return dot_product_similarity / (normalization_x * normalization_y)
 
@@ -202,5 +219,7 @@ class RMI_loss(nn.Module):
             s.append(
                 tensor_cka(
                     tensor_gram_linear(features_1[i].view(self.datasize, -1)),
-                    tensor_gram_linear(features_2[i].view(self.datasize, -1))))
+                    tensor_gram_linear(features_2[i].view(self.datasize, -1)),
+                )
+            )
         return torch.sum(3 - s[0] - s[1] - s[2])

@@ -20,30 +20,24 @@ from piconas.utils import set_random_seed
 def get_args():
     parser = argparse.ArgumentParser('train macro benchmark')
     parser.add_argument(
-        '--work_dir',
-        type=str,
-        default='./logdir/rnd_search',
-        help='experiment name')
+        '--work_dir', type=str, default='./logdir/rnd_search', help='experiment name'
+    )
 
     parser.add_argument(
-        '--data_dir',
-        type=str,
-        default='./data/cifar',
-        help='path to the dataset')
+        '--data_dir', type=str, default='./data/cifar', help='path to the dataset'
+    )
 
-    parser.add_argument(
-        '--seed', type=int, default=42, help='seed of experiments')
+    parser.add_argument('--seed', type=int, default=42, help='seed of experiments')
 
     parser.add_argument(
         '--model_name',
         type=str,
         default='OneShotNASBench201Network',
-        help='name of model')
+        help='name of model',
+    )
     parser.add_argument(
-        '--trainer_name',
-        type=str,
-        default='NB201Trainer',
-        help='name of trainer')
+        '--trainer_name', type=str, default='NB201Trainer', help='name of trainer'
+    )
     parser.add_argument(
         '--log_name',
         type=str,
@@ -53,61 +47,53 @@ def get_args():
 
     # ******************************* settings *******************************#
 
+    parser.add_argument('--crit', type=str, default='ce', help='decide the criterion')
     parser.add_argument(
-        '--crit', type=str, default='ce', help='decide the criterion')
+        '--optims', type=str, default='sgd', help='decide the optimizer'
+    )
     parser.add_argument(
-        '--optims', type=str, default='sgd', help='decide the optimizer')
-    parser.add_argument(
-        '--sched', type=str, default='cosine', help='decide the scheduler')
+        '--sched', type=str, default='cosine', help='decide the scheduler'
+    )
 
-    parser.add_argument(
-        '--classes', type=int, default=10, help='dataset classes')
+    parser.add_argument('--classes', type=int, default=10, help='dataset classes')
     parser.add_argument('--layers', type=int, default=20, help='batch size')
     parser.add_argument(
-        '--num_choices', type=int, default=4, help='number choices per layer')
-    parser.add_argument(
-        '--batch_size', type=int, default=128, help='batch size')
+        '--num_choices', type=int, default=4, help='number choices per layer'
+    )
+    parser.add_argument('--batch_size', type=int, default=128, help='batch size')
     parser.add_argument('--epochs', type=int, default=200, help='batch size')
-    parser.add_argument(
-        '--lr', type=float, default=0.025, help='initial learning rate')
+    parser.add_argument('--lr', type=float, default=0.025, help='initial learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
+    parser.add_argument('--weight-decay', type=float, default=5e-4, help='weight decay')
     parser.add_argument(
-        '--weight-decay', type=float, default=5e-4, help='weight decay')
+        '--val_interval', type=int, default=5, help='validate and save frequency'
+    )
     parser.add_argument(
-        '--val_interval',
-        type=int,
-        default=5,
-        help='validate and save frequency')
-    parser.add_argument(
-        '--random_search',
-        type=int,
-        default=1000,
-        help='validate and save frequency')
+        '--random_search', type=int, default=1000, help='validate and save frequency'
+    )
     # ******************************* dataset *******************************#
     parser.add_argument(
-        '--dataset', type=str, default='cifar10', help='path to the dataset')
+        '--dataset', type=str, default='cifar10', help='path to the dataset'
+    )
     parser.add_argument('--cutout', action='store_true', help='use cutout')
+    parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
     parser.add_argument(
-        '--cutout_length', type=int, default=16, help='cutout length')
+        '--auto_aug', action='store_true', default=False, help='use auto augmentation'
+    )
     parser.add_argument(
-        '--auto_aug',
-        action='store_true',
-        default=False,
-        help='use auto augmentation')
-    parser.add_argument(
-        '--resize', action='store_true', default=False, help='use resize')
+        '--resize', action='store_true', default=False, help='use resize'
+    )
     # measure_name
     parser.add_argument(
         '--measure_name',
         type=str,
         default='eznas-a',
-        help='measure name of zerocost proxies')
+        help='measure name of zerocost proxies',
+    )
     # is_predictor
     parser.add_argument(
-        '--is_predictor',
-        type=bool,
-        default=False,
-        help='whether to use predictor')
+        '--is_predictor', type=bool, default=False, help='whether to use predictor'
+    )
 
     return parser.parse_args()
 
@@ -131,11 +117,9 @@ def main():
     else:
         device = torch.device('cpu')
 
-    train_dataloader = build_dataloader(
-        type='train', dataset=args.dataset, config=args)
+    train_dataloader = build_dataloader(type='train', dataset=args.dataset, config=args)
 
-    val_dataloader = build_dataloader(
-        type='val', dataset=args.dataset, config=args)
+    val_dataloader = build_dataloader(type='val', dataset=args.dataset, config=args)
 
     # build model
     model = build_model(args.model_name)
@@ -161,8 +145,7 @@ def main():
     # Random Search Algorithm for Zero-cost proxies
 
     # Build trainer and evaluator
-    evaluator = NB201Evaluator(
-        trainer, num_sample=50, is_predictor=args.is_predictor)
+    evaluator = NB201Evaluator(trainer, num_sample=50, is_predictor=args.is_predictor)
 
     # Record the best one with highest zc score
     best_subnet = None
@@ -190,10 +173,12 @@ def main():
             trainer.model,
             train_dataloader,
             dataload_info=dataload_info,
-            measure_names=args.measure_name if isinstance(
-                args.measure_name, list) else [args.measure_name],
+            measure_names=args.measure_name
+            if isinstance(args.measure_name, list)
+            else [args.measure_name],
             loss_fn=F.cross_entropy,
-            device=device)
+            device=device,
+        )
         # update the best record
         if zc_score > best_zc_score:
             best_zc_score = zc_score
@@ -217,16 +202,18 @@ def main():
 
     # save the record to .csv file with path=./logdir/evo_search
     import pandas as pd
+
     _dict = {
         'trials': trial_list,
         'zc_score': best_zc_score_list,
-        'gt_score': best_gt_score_list
+        'gt_score': best_gt_score_list,
     }
     df = pd.DataFrame(_dict)
     df.to_csv(os.path.join(args.work_dir, f'{args.log_name}.csv'))
 
     # save ploted figure to .png file with path=./logdir/evo_search
     import matplotlib.pyplot as plt
+
     plt.plot(trial_list, best_zc_score_list, label='zc_score')
     plt.plot(trial_list, best_gt_score_list, label='gt_score')
     plt.legend()

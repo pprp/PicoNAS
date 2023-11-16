@@ -64,7 +64,8 @@ def pair_loss_with_prior(outputs, labels, priors, alpha=0.5):
 
     # Calculate pairwise differences incorporating the priors
     pairwise_diff = (1 - alpha) * (output1 - output1.t()) + alpha * (
-        prior1 - prior1.t())
+        prior1 - prior1.t()
+    )
 
     # Calculate pairwise ranking using the modified differences
     tmp = pairwise_diff * torch.sign(label1 - label1.t())

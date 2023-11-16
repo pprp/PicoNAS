@@ -3,7 +3,6 @@ from unittest import TestCase
 
 
 class TestNASBench201(TestCase):
-
     def setUp(self):
         self.nasbench201 = NASBench201(path='dummy_path')
 

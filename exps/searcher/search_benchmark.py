@@ -14,16 +14,18 @@ from scipy.stats import kendalltau
 
 from piconas.core.losses.landmark_loss import PairwiseRankLoss
 from piconas.datasets.predictor.data_factory import create_dataloader
-from piconas.predictor.pinat.model_factory import (create_best_nb101_model,
-                                                   create_model,
-                                                   create_nb201_model)
-from piconas.utils.utils import (AverageMeterGroup, accuracy_mse, set_seed,
-                                 to_cuda)
+from piconas.predictor.pinat.model_factory import (
+    create_best_nb101_model,
+    create_model,
+    create_nb201_model,
+)
+from piconas.utils.utils import AverageMeterGroup, accuracy_mse, set_seed, to_cuda
 
 parser = ArgumentParser()
 # exp and dataset
 parser.add_argument(
-    '--exp_name', type=str, default='Search Benchmark for best accuracy')
+    '--exp_name', type=str, default='Search Benchmark for best accuracy'
+)
 parser.add_argument('--bench', type=str, default='101')
 parser.add_argument('--train_split', type=str, default='100')
 parser.add_argument('--eval_split', type=str, default='all')
@@ -47,7 +49,8 @@ logging.basicConfig(
     stream=sys.stdout,
     level=logging.INFO,
     format=log_format,
-    datefmt='%m/%d %I:%M:%S %p')
+    datefmt='%m/%d %I:%M:%S %p',
+)
 logging.info(args)
 
 # set cpu/gpu device
@@ -110,17 +113,17 @@ def evaluate(test_set, test_loader, model, criterion):
             targets.append(target.cpu().numpy())
             meters.update(
                 {
-                    'loss':
-                    criterion(predict, target).item(),
-                    'mse':
-                    accuracy_mse(predict.squeeze(), target.squeeze(),
-                                 test_set).item()
+                    'loss': criterion(predict, target).item(),
+                    'mse': accuracy_mse(
+                        predict.squeeze(), target.squeeze(), test_set
+                    ).item(),
                 },
-                n=target.size(0))
-            if step % args.eval_print_freq == 0 or step + 1 == len(
-                    test_loader):
-                logging.info('Evaluation Step [%d/%d]  %s', step + 1,
-                             len(test_loader), meters)
+                n=target.size(0),
+            )
+            if step % args.eval_print_freq == 0 or step + 1 == len(test_loader):
+                logging.info(
+                    'Evaluation Step [%d/%d]  %s', step + 1, len(test_loader), meters
+                )
 
     predicts = np.concatenate(predicts)
     targets = np.concatenate(targets)
@@ -149,6 +152,7 @@ def traverse_benchmark(test_set, test_loader, model, topN=10):
 
     # plot correlation between predicts and targets
     import matplotlib.pyplot as plt
+
     plt.scatter(predicts, val_target_list)
     plt.savefig('correlation-w-valacc-vs-parzc.png')
     plt.clf()
@@ -175,10 +179,12 @@ def traverse_benchmark(test_set, test_loader, model, topN=10):
 
     logging.info(
         'Currently we found that the best val acc of Top10 of search space is: %.6f'
-        % best_val_target)
+        % best_val_target
+    )
     logging.info(
         'Currently we found that the best test acc of Top10 of search space is: %.6f'
-        % best_test_target)
+        % best_test_target
+    )
 
     # find highest idx for predicts
     highest_idx = np.argmax(predicts)
@@ -186,11 +192,13 @@ def traverse_benchmark(test_set, test_loader, model, topN=10):
     norm_best_test_acc = test_target_list[highest_idx]
 
     logging.info(
-        'Currently we found that the best val acc of search space is: %.6f' %
-        norm_best_val_acc)
+        'Currently we found that the best val acc of search space is: %.6f'
+        % norm_best_val_acc
+    )
     logging.info(
-        'Currently we found that the best test acc of search space is: %.6f' %
-        norm_best_test_acc)
+        'Currently we found that the best test acc of search space is: %.6f'
+        % norm_best_test_acc
+    )
 
     return best_val_target, best_test_target
 
@@ -208,30 +216,34 @@ def main():
         model = create_best_nb101_model()
         ckpt_dir = 'checkpoints/nasbench_101/101_cifar10_ParZCBMM_mse_t100_vall_e300_bs10_best_nb101_run0_tau0.648251_ckpt.pt'
 
-    model.load_state_dict(
-        torch.load(ckpt_dir, map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load(ckpt_dir, map_location=torch.device('cpu')))
 
     model = model.to(device)
     # logging.info(model)
-    logging.info('PINAT params.: %f M' %
-                 (sum(_param.numel() for _param in model.parameters()) / 1e6))
-    logging.info('Training on NAS-Bench-%s, train_split: %s, eval_split: %s' %
-                 (args.bench, args.train_split, args.eval_split))
+    logging.info(
+        'PINAT params.: %f M'
+        % (sum(_param.numel() for _param in model.parameters()) / 1e6)
+    )
+    logging.info(
+        'Training on NAS-Bench-%s, train_split: %s, eval_split: %s'
+        % (args.bench, args.train_split, args.eval_split)
+    )
 
     # define loss, optimizer, and lr_scheduler
     criterion1 = nn.MSELoss()
-    optimizer = optim.Adam(
-        model.parameters(), lr=args.lr, weight_decay=args.wd)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
 
     # train and evaluate predictorß
-    kendall_tau, predict_all, target_all = evaluate(test_set, test_loader,
-                                                    model, criterion1)
+    kendall_tau, predict_all, target_all = evaluate(
+        test_set, test_loader, model, criterion1
+    )
     logging.info('Kendalltau: %.6f', kendall_tau)
 
     # evaluate the final performance across the whole dataset
     t1 = time.time()
     best_val_acc, best_test_acc = traverse_benchmark(
-        test_set, test_loader, model, topN=5)
+        test_set, test_loader, model, topN=5
+    )
     spent_time = time.time() - t1
     # spent time is seconds
     logging.info('Spent time: %.2f seconds' % spent_time)

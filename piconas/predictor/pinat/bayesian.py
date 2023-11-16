@@ -7,13 +7,14 @@ from piconas.predictor.pinat.BN.bayesian import BayesianLayer
 
 
 class BayesianNetwork(nn.Module):
-
     def __init__(self, layer_sizes=[294, 160, 64]):
         super(BayesianNetwork, self).__init__()
-        self.layers = nn.ModuleList([
-            BayesianLayer(layer_sizes[i], layer_sizes[i + 1])
-            for i in range(len(layer_sizes) - 1)
-        ])
+        self.layers = nn.ModuleList(
+            [
+                BayesianLayer(layer_sizes[i], layer_sizes[i + 1])
+                for i in range(len(layer_sizes) - 1)
+            ]
+        )
         self.fc = nn.Linear(layer_sizes[-1], 1, bias=False)
 
     def forward(self, x):
@@ -36,7 +37,8 @@ if __name__ == '__main__':
     test_set = Nb101DatasetPINAT(split='100', data_type='test')
 
     loader = torch.utils.data.DataLoader(
-        test_set, batch_size=32, shuffle=False, num_workers=0, drop_last=False)
+        test_set, batch_size=32, shuffle=False, num_workers=0, drop_last=False
+    )
 
     for batch in loader:
         input = batch

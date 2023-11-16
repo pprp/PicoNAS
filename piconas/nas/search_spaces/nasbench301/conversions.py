@@ -16,8 +16,10 @@ This file contains all 12 types of conversions from one represenation to another
 
 def get_cell_of_type(naslib_object, cell_type):
     for node in naslib_object.nodes:
-        if ('subgraph' in naslib_object.nodes[node]
-                and naslib_object.nodes[node]['subgraph'].name == cell_type):
+        if (
+            'subgraph' in naslib_object.nodes[node]
+            and naslib_object.nodes[node]['subgraph'].name == cell_type
+        ):
             return naslib_object.nodes[node]['subgraph']
 
     raise Exception(f'Cell of type {cell_type} not found in the graph')
@@ -42,12 +44,15 @@ def convert_naslib_to_genotype(naslib_object):
     ]
     converted_cells = []
     for cell in cells:
-        edge_op_dict = {(i, j):
-                        ops_to_genotype[cell.edges[i, j]['op'].get_op_name]
-                        for i, j in cell.edges}
-        op_edge_list = [(edge_op_dict[(i, j)], i - 1)
-                        for i, j in sorted(edge_op_dict, key=lambda x: x[1])
-                        if j < 7]
+        edge_op_dict = {
+            (i, j): ops_to_genotype[cell.edges[i, j]['op'].get_op_name]
+            for i, j in cell.edges
+        }
+        op_edge_list = [
+            (edge_op_dict[(i, j)], i - 1)
+            for i, j in sorted(edge_op_dict, key=lambda x: x[1])
+            if j < 7
+        ]
         converted_cells.append(op_edge_list)
 
     return Genotype(
@@ -92,16 +97,16 @@ def convert_genotype_to_naslib(genotype, naslib_object):
             if i % 2 == 0:
                 tail += 1
             head = edge[1] + 1
-            edge_op_dict[cell_names[c]][(head,
-                                         tail)] = genotype_to_ops[edge[0]]
+            edge_op_dict[cell_names[c]][(head, tail)] = genotype_to_ops[edge[0]]
 
     def add_genotype_op_index(edge):
         # function that adds the op index from genotype to each edge, and deletes the rest
         if (edge.head, edge.tail) in edge_op_dict[edge.data.cell_name]:
             for i, op in enumerate(edge.data.op):
-                if (op.get_op_name
-                        in edge_op_dict[edge.data.cell_name][(edge.head,
-                                                              edge.tail)]):
+                if (
+                    op.get_op_name
+                    in edge_op_dict[edge.data.cell_name][(edge.head, edge.tail)]
+                ):
                     index = i
                     break
             edge.data.set('op_index', index, shared=True)
@@ -125,9 +130,8 @@ def convert_genotype_to_naslib(genotype, naslib_object):
     )
 
     naslib_object.update_edges(
-        update_ops,
-        scope=naslib_object.OPTIMIZER_SCOPE,
-        private_edge_data=True)
+        update_ops, scope=naslib_object.OPTIMIZER_SCOPE, private_edge_data=True
+    )
 
 
 def convert_genotype_to_config(genotype):
@@ -142,7 +146,7 @@ def convert_genotype_to_config(genotype):
         n = 2
         for node_idx in range(4):
             end = start + n
-            ops = cell[2 * node_idx:2 * node_idx + 2]
+            ops = cell[2 * node_idx : 2 * node_idx + 2]
 
             # get edge idx
             edges = {
@@ -155,10 +159,15 @@ def convert_genotype_to_config(genotype):
                 # get node idx
                 input_nodes = sorted(list(map(lambda x: x[1], ops)))
                 input_nodes_idx = '_'.join([str(i) for i in input_nodes])
-                config.update({
-                    base_string + 'inputs_node_' + cell_type + '_' + str(node_idx + 2):
-                    input_nodes_idx
-                })
+                config.update(
+                    {
+                        base_string
+                        + 'inputs_node_'
+                        + cell_type
+                        + '_'
+                        + str(node_idx + 2): input_nodes_idx
+                    }
+                )
 
             start = end
             n += 1
@@ -178,8 +187,7 @@ def convert_config_to_genotype(config):
             end = start + n
             # print(start, end)
             for j in range(start, end):
-                key = 'NetworkSelectorDatasetInfo:darts:edge_{}_{}'.format(
-                    cell_type, j)
+                key = 'NetworkSelectorDatasetInfo:darts:edge_{}_{}'.format(cell_type, j)
                 if key in config:
                     genotype[i].append((config[key], j - start))
 

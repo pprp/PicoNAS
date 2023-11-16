@@ -5,15 +5,12 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 
-from piconas.models.nasbench201.oneshot_nasbench201 import \
-    OneShotNASBench201Network
+from piconas.models.nasbench201.oneshot_nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
-from piconas.predictor.pruners.measures.synflow import \
-    compute_synflow_per_weight
+from piconas.predictor.pruners.measures.synflow import compute_synflow_per_weight
 
 
 class ToyModel(nn.Module):
-
     def __init__(self):
         super().__init__()
         current_c = random.randint(8, 20)
@@ -36,13 +33,13 @@ class ToyModel(nn.Module):
 
 
 class TestSynflowScore(TestCase):
-
     def test_synflow_score_with_fixmodel(self):
         inputs = torch.randn(4, 3, 32, 32)
         for _ in range(3):
             m = ToyModel()
             score = compute_synflow_per_weight(
-                net=m, inputs=inputs, targets=None, mode='other')
+                net=m, inputs=inputs, targets=None, mode='other'
+            )
             assert score is not None
 
     def test_nb201_synflow_score_with_mutablemodel(self):
@@ -56,7 +53,8 @@ class TestSynflowScore(TestCase):
             rand_subnet = o.random_subnet
             o.set_subnet(rand_subnet)
             score_list = compute_synflow_per_weight(
-                net=m, inputs=inputs, targets=None, mode='channel')
+                net=m, inputs=inputs, targets=None, mode='channel'
+            )
             result_list = []
 
             for score in score_list:

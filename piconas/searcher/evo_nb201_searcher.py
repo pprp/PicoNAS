@@ -16,22 +16,22 @@ class EvolutionSearcher(object):
     """Evolution Searcher for NAS-Bench-201."""
 
     def __init__(
-            self,
-            max_epochs: int = 20,
-            select_num: int = 10,
-            population_num: int = 100,
-            mutate_prob: float = 0.1,
-            crossover_num: int = 50,
-            mutation_num: int = 50,
-            flops_limit: float = 330 * 1e6,
-            trainer: NB201Trainer = None,
-            model_path: str = None,  # noqa: E501
-            train_loader=None,
-            val_loader=None,
-            log_name='evolution-searcher',
-            logger=None,
-            predictor=False):
-
+        self,
+        max_epochs: int = 20,
+        select_num: int = 10,
+        population_num: int = 100,
+        mutate_prob: float = 0.1,
+        crossover_num: int = 50,
+        mutation_num: int = 50,
+        flops_limit: float = 330 * 1e6,
+        trainer: NB201Trainer = None,
+        model_path: str = None,  # noqa: E501
+        train_loader=None,
+        val_loader=None,
+        log_name='evolution-searcher',
+        logger=None,
+        predictor=False,
+    ):
         self.max_epochs = max_epochs
         self.select_num = select_num
         self.population_num = population_num
@@ -52,7 +52,8 @@ class EvolutionSearcher(object):
 
         if logger is None:
             self.logger = get_logger(
-                self.log_name, log_file=os.path.join(log_path, log_file_name))
+                self.log_name, log_file=os.path.join(log_path, log_file_name)
+            )
         else:
             self.logger = logger
 
@@ -94,8 +95,9 @@ class EvolutionSearcher(object):
             self.logger.info('flops limit exceed')
             return False
 
-        info['err'] = self.trainer.get_subnet_error(subnet, self.train_loader,
-                                                    self.val_loader)
+        info['err'] = self.trainer.get_subnet_error(
+            subnet, self.train_loader, self.val_loader
+        )
         # info = self.trainer.
         info['visited'] = True
         return True
@@ -144,7 +146,10 @@ class EvolutionSearcher(object):
 
         def mutate_subnet(subnet: Dict):
             convert_to = [
-                'nor_conv_3x3', 'skip_connect', 'nor_conv_1x1', 'avg_pool_3x3'
+                'nor_conv_3x3',
+                'skip_connect',
+                'nor_conv_1x1',
+                'avg_pool_3x3',
             ]
             for key, value in subnet.items():
                 if np.random.random_sample() < mutate_prob:
@@ -191,12 +196,15 @@ class EvolutionSearcher(object):
 
     def search(self):
         self.logger.info(
-            'population_num = {} select_num = {} mutation_num = {} crossover_num = {} random_num = {} max_epochs = {}'
-            .format(
-                self.population_num, self.select_num, self.mutation_num,
+            'population_num = {} select_num = {} mutation_num = {} crossover_num = {} random_num = {} max_epochs = {}'.format(
+                self.population_num,
+                self.select_num,
+                self.mutation_num,
                 self.crossover_num,
                 self.population_num - self.mutation_num - self.crossover_num,
-                self.max_epochs))
+                self.max_epochs,
+            )
+        )
 
         # Append `population_num` subnet to candidates.
         self.get_random(self.population_num)
@@ -211,11 +219,11 @@ class EvolutionSearcher(object):
             self.update_top_k(
                 self.candidates,
                 k=self.select_num,
-                key=lambda x: self.vis_dict[str(x)]['err'])
+                key=lambda x: self.vis_dict[str(x)]['err'],
+            )
             self.update_top_k(
-                self.candidates,
-                k=50,
-                key=lambda x: self.vis_dict[str(x)]['err'])
+                self.candidates, k=50, key=lambda x: self.vis_dict[str(x)]['err']
+            )
 
             self.logger.info(
                 f'epoch = {self.epoch} : top {len(self.keep_top_k[50])} result'
@@ -226,8 +234,9 @@ class EvolutionSearcher(object):
                         f'No.{i+1} {subnet} Top-1 err = {self.vis_dict[str(subnet)]["err"]}'
                     )
 
-            mutation = self.get_mutation(self.select_num, self.mutation_num,
-                                         self.mutate_prob)
+            mutation = self.get_mutation(
+                self.select_num, self.mutation_num, self.mutate_prob
+            )
             crossover = self.get_crossover(self.select_num, self.crossover_num)
 
             self.candidates = mutation + crossover
@@ -237,7 +246,8 @@ class EvolutionSearcher(object):
             self.epoch += 1
 
             self.keep_top_k[self.select_num].sort(
-                key=lambda x: self.vis_dict[str(x)]['err'], reverse=False)
+                key=lambda x: self.vis_dict[str(x)]['err'], reverse=False
+            )
             top3_subnet = self.keep_top_k[self.select_num][:5]
 
             tmp_acc = []
@@ -245,10 +255,12 @@ class EvolutionSearcher(object):
 
             for i in range(5):
                 genotype = self.trainer.evaluator.generate_genotype(
-                    top3_subnet[i], self.trainer.mutator)
+                    top3_subnet[i], self.trainer.mutator
+                )
                 results = self.trainer.evaluator.get_predictor_score(genotype)
                 acc = self.trainer.evaluator.query_result(
-                    genotype, cost_key='eval_acc1es')
+                    genotype, cost_key='eval_acc1es'
+                )
 
                 tmp_acc.append(acc)
                 tmp_pred.append(results)
@@ -266,16 +278,17 @@ class EvolutionSearcher(object):
     def draw_evalution_process(self):
         # save recorder to path logdir/evo_search to log_name.csv and log_name.png
         import csv
+
         with open(f'./logdir/evo_search/{self.log_name}.csv', 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['epoch', 'gt', 'pred'])
             for i in range(len(self.recorder_idx)):
-                writer.writerow([
-                    self.recorder_idx[i], self.recorder_gt[i],
-                    self.recorder_pred[i]
-                ])
+                writer.writerow(
+                    [self.recorder_idx[i], self.recorder_gt[i], self.recorder_pred[i]]
+                )
 
         import matplotlib.pyplot as plt
+
         plt.figure()
         plt.title('Evolution Search Process')
         plt.xlabel('epoch')

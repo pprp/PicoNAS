@@ -7,7 +7,6 @@ from piconas.utils.get_dataset_api import NDS
 
 
 class TestNDS(unittest.TestCase):
-
     def setUp(self) -> None:
         self.nds_api = NDS('Amoeba')
         self.iter_nds = iter(self.nds_api)

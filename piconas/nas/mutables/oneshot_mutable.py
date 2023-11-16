@@ -35,8 +35,7 @@ class OneShotMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         alias: Optional[str] = None,
         init_cfg: Optional[Dict] = None,
     ) -> None:
-        super().__init__(
-            module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
+        super().__init__(module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
 
     def forward(self, x: Any, choice: Optional[CHOICE_TYPE] = None) -> Any:
         """Calls either :func:`forward_fixed` or :func:`forward_choice`
@@ -78,9 +77,7 @@ class OneShotMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
         """Forward all choices."""
 
     @abstractmethod
-    def forward_choice(self,
-                       x: Any,
-                       choice: Optional[CHOICE_TYPE] = None) -> Any:
+    def forward_choice(self, x: Any, choice: Optional[CHOICE_TYPE] = None) -> Any:
         """Forward when the mutable is not fixed.
 
         All subclasses must implement this method.
@@ -88,10 +85,11 @@ class OneShotMutable(BaseMutable[CHOICE_TYPE, CHOSEN_TYPE]):
 
     def set_forward_args(self, choice: CHOICE_TYPE) -> None:
         """Interface for modifying the choice using partial."""
-        forward_with_default_args: Callable[[Any, Optional[CHOICE_TYPE]],
-                                            Any] = partial(
-                                                self.forward,
-                                                choice=choice)  # noqa:E501
+        forward_with_default_args: Callable[
+            [Any, Optional[CHOICE_TYPE]], Any
+        ] = partial(
+            self.forward, choice=choice
+        )  # noqa:E501
         setattr(self, 'forward', forward_with_default_args)
 
 
@@ -120,11 +118,11 @@ class OneShotOP(OneShotMutable[str, str]):
         alias: Optional[str] = None,
         init_cfg: Optional[Dict] = None,
     ) -> None:
-        super().__init__(
-            module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
+        super().__init__(module_kwargs=module_kwargs, alias=alias, init_cfg=init_cfg)
         assert len(candidate_ops) >= 1, (
             f'Number of candidate op must greater than 1, '
-            f'but got: {len(candidate_ops)}')
+            f'but got: {len(candidate_ops)}'
+        )
 
         self._is_fixed = False
         self._chosen: Optional[str] = None
@@ -214,7 +212,8 @@ class OneShotOP(OneShotMutable[str, str]):
         if self.is_fixed:
             raise AttributeError(
                 'The mode of current MUTABLE is `fixed`. '
-                'Please do not call `fix_chosen` function again.')
+                'Please do not call `fix_chosen` function again.'
+            )
 
         for c in self.choices:
             if c not in chosen:
@@ -235,24 +234,27 @@ class OneShotOP(OneShotMutable[str, str]):
 
     def set_forward_args(self, choice: CHOICE_TYPE) -> None:
         """Interface for modifying the choice using partial."""
-        forward_with_default_args: Callable[[Any, Optional[CHOICE_TYPE]],
-                                            Any] = partial(
-                                                self.forward,
-                                                choice=choice)  # noqa:E501
+        forward_with_default_args: Callable[
+            [Any, Optional[CHOICE_TYPE]], Any
+        ] = partial(
+            self.forward, choice=choice
+        )  # noqa:E501
         setattr(self, 'forward', forward_with_default_args)
 
     def shrink_choice(self, choice: CHOICE_TYPE) -> None:
         """Shrink the search space"""
-        assert choice in self._candidate_ops.keys(),  \
-            f'current choice: {choice} is not avaliable ' \
+        assert choice in self._candidate_ops.keys(), (
+            f'current choice: {choice} is not avaliable '
             f'in {self._candidate_ops.keys()}'
+        )
         self._candidate_ops.pop(choice)
 
     def expand_choice(self, choice: CHOICE_TYPE) -> None:
         """Expand the search space in width"""
-        assert choice in self._candidate_ops.keys(),  \
-            f'current choice: {choice} is not avaliable ' \
+        assert choice in self._candidate_ops.keys(), (
+            f'current choice: {choice} is not avaliable '
             f'in {self._candidate_ops.keys()}'
+        )
 
         new_key = f'{choice}_'
         while new_key in self._candidate_ops.keys():
@@ -294,8 +296,9 @@ class OneShotProbOP(OneShotOP):
             init_cfg=init_cfg,
         )
         assert choice_probs is not None
-        assert (sum(choice_probs) - 1 < np.finfo(np.float64).eps
-                ), f'Please make sure the sum of the {choice_probs} is 1.'
+        assert (
+            sum(choice_probs) - 1 < np.finfo(np.float64).eps
+        ), f'Please make sure the sum of the {choice_probs} is 1.'
         self.choice_probs = choice_probs
 
     @property
@@ -338,7 +341,8 @@ class OneShotPathOP(OneShotOP):
         )
         assert len(candidate_ops) >= 1, (
             f'Number of candidate op must greater than 1, '
-            f'but got: {len(candidate_ops)}')
+            f'but got: {len(candidate_ops)}'
+        )
 
         self._is_fixed = False
         self._chosen: Optional[str] = None
@@ -436,7 +440,8 @@ class OneShotChoiceRoute(OneShotMutable):
         super().__init__(init_cfg=init_cfg, alias=alias)
         assert len(edges) >= 2, (
             f'Number of edges must greater than or equal to 1, '
-            f'but got: {len(edges)}')
+            f'but got: {len(edges)}'
+        )
 
         self._is_fixed = False
         self._edges: nn.ModuleDict = edges
@@ -452,8 +457,9 @@ class OneShotChoiceRoute(OneShotMutable):
         Returns:
             Tensor: the result of forward the fixed operation.
         """
-        assert (self._chosen is not None
-                ), 'Please call fix_chosen before calling `forward_fixed`.'
+        assert (
+            self._chosen is not None
+        ), 'Please call fix_chosen before calling `forward_fixed`.'
 
         outputs = list()
         for choice, x in zip(self._unfixed_choices, inputs):
@@ -466,9 +472,9 @@ class OneShotChoiceRoute(OneShotMutable):
         """Sampling two edges with randomness"""
         return random.sample(self._edges.keys(), k=2)
 
-    def forward_choice(self,
-                       inputs: Union[List[Any], Tuple[Any]],
-                       choice: List[str] = None) -> Tensor:
+    def forward_choice(
+        self, inputs: Union[List[Any], Tuple[Any]], choice: List[str] = None
+    ) -> Tensor:
         """Forward when the mutable is in `unfixed` mode.
 
         Args:
@@ -489,9 +495,10 @@ class OneShotChoiceRoute(OneShotMutable):
                 idx = choice_list.index(c)
                 x.append(inputs[idx])
 
-            assert len(choice) == len(x), \
-                f'Get length of choice is {len(choice)}, but get ' \
+            assert len(choice) == len(x), (
+                f'Get length of choice is {len(choice)}, but get '
                 f'length of input is {len(x)}'
+            )
 
             # sample two path
             outputs = list()
@@ -511,7 +518,8 @@ class OneShotChoiceRoute(OneShotMutable):
         """
         assert len(x) == len(self._edges), (
             f'Lenght of edges {len(self._edges)} should be same as '
-            f'the length of inputs {len(x)}.')
+            f'the length of inputs {len(x)}.'
+        )
 
         outputs = list()
         for op, input in zip(self._edges.values(), x):
@@ -532,7 +540,8 @@ class OneShotChoiceRoute(OneShotMutable):
         if self.is_fixed:
             raise AttributeError(
                 'The mode of current MUTABLE is `fixed`. '
-                'Please do not call `fix_chosen` function again.')
+                'Please do not call `fix_chosen` function again.'
+            )
 
         for c in self.choices:
             if c not in chosen:

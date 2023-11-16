@@ -9,9 +9,7 @@ from piconas.nas.mutators import OneShotMutator
 
 
 class TestOneShot(TestCase):
-
     def test_oneshotop(self):
-
         candidate_ops = nn.ModuleDict()
 
         candidate_ops.add_module('candidate1', nn.Conv2d(32, 32, 3, 1, 1))

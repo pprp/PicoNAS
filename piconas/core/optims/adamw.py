@@ -25,13 +25,13 @@ class AdamW(Optimizer):
     """
 
     def __init__(
-            self,
-            params,
-            lr=1e-3,
-            betas=(0.9, 0.999),
-            eps=1e-8,
-            weight_decay=0,
-            amsgrad=False,
+        self,
+        params,
+        lr=1e-3,
+        betas=(0.9, 0.999),
+        eps=1e-8,
+        weight_decay=0,
+        amsgrad=False,
     ):
         if lr < 0.0:
             raise ValueError(f'Invalid learning rate: {lr}')
@@ -42,11 +42,8 @@ class AdamW(Optimizer):
         if not 0.0 <= betas[1] < 1.0:
             raise ValueError(f'Invalid beta parameter at index 1: {betas[1]}')
         defaults = dict(
-            lr=lr,
-            betas=betas,
-            eps=eps,
-            weight_decay=weight_decay,
-            amsgrad=amsgrad)
+            lr=lr, betas=betas, eps=eps, weight_decay=weight_decay, amsgrad=amsgrad
+        )
         super(AdamW, self).__init__(params, defaults)
 
     def __setstate__(self, state):
@@ -109,16 +106,16 @@ class AdamW(Optimizer):
                 else:
                     denom = exp_avg_sq.sqrt().add_(group['eps'])
 
-                bias_correction1 = 1 - beta1**state['step']
-                bias_correction2 = 1 - beta2**state['step']
-                step_size = group['lr'] * math.sqrt(
-                    bias_correction2) / bias_correction1
+                bias_correction1 = 1 - beta1 ** state['step']
+                bias_correction2 = 1 - beta2 ** state['step']
+                step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
 
                 # p.data.addcdiv_(-step_size, exp_avg, denom)
                 p.data.add_(
                     -step_size,
                     torch.mul(p.data, group['weight_decay']).addcdiv_(
-                        1, exp_avg, denom),
+                        1, exp_avg, denom
+                    ),
                 )
 
         return loss

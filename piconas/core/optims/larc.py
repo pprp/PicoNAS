@@ -85,8 +85,7 @@ class LARC(object):
             weight_decays = []
             for group in self.optim.param_groups:
                 # absorb weight decay control from optimizer
-                weight_decay = group[
-                    'weight_decay'] if 'weight_decay' in group else 0
+                weight_decay = group['weight_decay'] if 'weight_decay' in group else 0
                 weight_decays.append(weight_decay)
                 group['weight_decay'] = 0
                 for p in group['params']:
@@ -98,8 +97,10 @@ class LARC(object):
                     if param_norm != 0 and grad_norm != 0:
                         # calculate adaptive lr + weight decay
                         adaptive_lr = (
-                            self.trust_coefficient * (param_norm) /
-                            (grad_norm + param_norm * weight_decay + self.eps))
+                            self.trust_coefficient
+                            * (param_norm)
+                            / (grad_norm + param_norm * weight_decay + self.eps)
+                        )
 
                         # clip learning rate for LARC
                         if self.clip:

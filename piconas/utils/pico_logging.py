@@ -69,7 +69,8 @@ def get_logger(name, log_file=None, log_level=logging.INFO, file_mode='w'):
         handlers.append(file_handler)
 
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
     for handler in handlers:
         handler.setFormatter(formatter)
         handler.setLevel(log_level)
@@ -109,7 +110,8 @@ def print_log(msg, logger=None, level=logging.INFO):
     else:
         raise TypeError(
             'logger should be either a logging.Logger object, str, '
-            f'"silent" or None, but got {type(logger)}')
+            f'"silent" or None, but got {type(logger)}'
+        )
 
 
 def log_formats(x):
@@ -164,7 +166,7 @@ def log_first_n(lvl, msg, n=1, *, name=None, key='caller'):
             message before.
     """
     if isinstance(key, str):
-        key = (key, )
+        key = (key,)
     assert len(key) > 0
 
     caller_module, caller_key = _find_caller()
@@ -172,7 +174,7 @@ def log_first_n(lvl, msg, n=1, *, name=None, key='caller'):
     if 'caller' in key:
         hash_key = hash_key + caller_key
     if 'message' in key:
-        hash_key = hash_key + (msg, )
+        hash_key = hash_key + (msg,)
 
     _LOG_COUNTER[hash_key] += 1
     if _LOG_COUNTER[hash_key] <= n:

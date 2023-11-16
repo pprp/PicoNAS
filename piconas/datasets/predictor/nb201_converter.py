@@ -1,8 +1,6 @@
 import numpy as np
 
-NAS_BENCH_201 = [
-    'none', 'skip_connect', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3'
-]
+NAS_BENCH_201 = ['none', 'skip_connect', 'nor_conv_1x1', 'nor_conv_3x3', 'avg_pool_3x3']
 
 
 def get_adj_matrix(arch):
@@ -44,8 +42,17 @@ def distill(result):
     imagenet16_valid = float(imagenet16[2].strip(',test')[-7:-2].strip('='))
     imagenet16_test = float(imagenet16[3][-7:-2].strip('='))
 
-    return cifar10_train, cifar10_valid, cifar10_test, cifar100_train, cifar100_valid, \
-           cifar100_test, imagenet16_train, imagenet16_valid, imagenet16_test
+    return (
+        cifar10_train,
+        cifar10_valid,
+        cifar10_test,
+        cifar100_train,
+        cifar100_valid,
+        cifar100_test,
+        imagenet16_train,
+        imagenet16_valid,
+        imagenet16_test,
+    )
 
 
 if __name__ == '__main__':
@@ -63,8 +70,17 @@ if __name__ == '__main__':
             arch_result.append(line)
             arch_pointer += 1
             if arch_pointer == 10:
-                cifar10_train, cifar10_valid, cifar10_test, cifar100_train, cifar100_valid, \
-                cifar100_test, imagenet16_train, imagenet16_valid, imagenet16_test = distill(''.join(arch_result))
+                (
+                    cifar10_train,
+                    cifar10_valid,
+                    cifar10_test,
+                    cifar100_train,
+                    cifar100_valid,
+                    cifar100_test,
+                    imagenet16_train,
+                    imagenet16_valid,
+                    imagenet16_test,
+                ) = distill(''.join(arch_result))
                 arch_result = list()
                 arch_pointer = 0
                 model_dict = {
@@ -93,7 +109,8 @@ if __name__ == '__main__':
         np.save('nasbench201_dict_with_arch.npy', nasbench201_dict)
 
     nasbench201_dict = np.load(
-        'nasbench201_dict_with_arch.npy', allow_pickle=True).item()
+        'nasbench201_dict_with_arch.npy', allow_pickle=True
+    ).item()
     for key in nasbench201_dict.keys():
         print(nasbench201_dict[key])
         break

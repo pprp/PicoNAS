@@ -106,10 +106,10 @@ class Pooling(nn.Module):
         if C_in == C_out:
             self.preprocess = None
         else:
-            self.preprocess = ReLUConvBN(C_in, C_out, 1, 1, 0, 0, bn_affine,
-                                         bn_momentum, bn_track_running_stats)
-        self.op = nn.AvgPool2d(
-            3, stride=stride, padding=1, count_include_pad=False)
+            self.preprocess = ReLUConvBN(
+                C_in, C_out, 1, 1, 0, 0, bn_affine, bn_momentum, bn_track_running_stats
+            )
+        self.op = nn.AvgPool2d(3, stride=stride, padding=1, count_include_pad=False)
 
     def forward(self, x):
         """
@@ -150,8 +150,11 @@ class Zero(nn.Module):
             input tensor
         """
         if self.C_in == self.C_out:
-            return (x.mul(0.0) if self.stride == 1 else
-                    x[:, :, ::self.stride, ::self.stride].mul(0.0))
+            return (
+                x.mul(0.0)
+                if self.stride == 1
+                else x[:, :, :: self.stride, :: self.stride].mul(0.0)
+            )
 
         shape = list(x.shape)
         shape[1] = self.C_out
@@ -159,7 +162,6 @@ class Zero(nn.Module):
 
 
 class FactorizedReduce(nn.Module):
-
     def __init__(
         self,
         C_in,
@@ -180,8 +182,8 @@ class FactorizedReduce(nn.Module):
         self.convs = nn.ModuleList()
         for i in range(2):
             self.convs.append(
-                nn.Conv2d(
-                    C_in, C_outs[i], 1, stride=stride, padding=0, bias=False))
+                nn.Conv2d(C_in, C_outs[i], 1, stride=stride, padding=0, bias=False)
+            )
         self.pad = nn.ConstantPad2d((0, 1, 0, 1), 0)
         self.bn = nn.BatchNorm2d(
             C_out,
@@ -193,8 +195,7 @@ class FactorizedReduce(nn.Module):
     def forward(self, x):
         x = self.relu(x)
         y = self.pad(x)
-        out = torch.cat([self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])],
-                        dim=1)
+        out = torch.cat([self.convs[0](x), self.convs[1](y[:, :, 1:, 1:])], dim=1)
         out = self.bn(out)
         return out
 
@@ -250,57 +251,57 @@ class NASBench201Cell(nn.Module):
         for i in range(self.NUM_NODES):
             node_ops = nn.ModuleList()
             for layer_idx in range(i):
-                candidate_op = nn.ModuleDict({
-                    # 'none':
-                    # Zero(C_in, C_out, stride),
-                    'avg_pool_3x3':
-                    Pooling(
-                        C_in,
-                        C_out,
-                        stride if layer_idx == 0 else 1,
-                        bn_affine,
-                        bn_momentum,
-                        bn_track_running_stats,
-                    ),
-                    'nor_conv_3x3':
-                    ReLUConvBN(
-                        C_in,
-                        C_out,
-                        3,
-                        stride if layer_idx == 0 else 1,
-                        1,
-                        1,
-                        bn_affine,
-                        bn_momentum,
-                        bn_track_running_stats,
-                    ),
-                    'nor_conv_1x1':
-                    ReLUConvBN(
-                        C_in,
-                        C_out,
-                        1,
-                        stride if layer_idx == 0 else 1,
-                        0,
-                        1,
-                        bn_affine,
-                        bn_momentum,
-                        bn_track_running_stats,
-                    ),
-                    'skip_connect':
-                    nn.Identity()
-                    if stride == 1 and C_in == C_out else FactorizedReduce(
-                        C_in,
-                        C_out,
-                        stride if layer_idx == 0 else 1,
-                        bn_affine,
-                        bn_momentum,
-                        bn_track_running_stats,
-                    ),
-                })
+                candidate_op = nn.ModuleDict(
+                    {
+                        # 'none':
+                        # Zero(C_in, C_out, stride),
+                        'avg_pool_3x3': Pooling(
+                            C_in,
+                            C_out,
+                            stride if layer_idx == 0 else 1,
+                            bn_affine,
+                            bn_momentum,
+                            bn_track_running_stats,
+                        ),
+                        'nor_conv_3x3': ReLUConvBN(
+                            C_in,
+                            C_out,
+                            3,
+                            stride if layer_idx == 0 else 1,
+                            1,
+                            1,
+                            bn_affine,
+                            bn_momentum,
+                            bn_track_running_stats,
+                        ),
+                        'nor_conv_1x1': ReLUConvBN(
+                            C_in,
+                            C_out,
+                            1,
+                            stride if layer_idx == 0 else 1,
+                            0,
+                            1,
+                            bn_affine,
+                            bn_momentum,
+                            bn_track_running_stats,
+                        ),
+                        'skip_connect': nn.Identity()
+                        if stride == 1 and C_in == C_out
+                        else FactorizedReduce(
+                            C_in,
+                            C_out,
+                            stride if layer_idx == 0 else 1,
+                            bn_affine,
+                            bn_momentum,
+                            bn_track_running_stats,
+                        ),
+                    }
+                )
                 node_ops.append(
                     OneShotOP(
-                        candidate_ops=candidate_op,
-                        alias=f'node{i}_edge{layer_idx}'))  # with alias
+                        candidate_ops=candidate_op, alias=f'node{i}_edge{layer_idx}'
+                    )
+                )  # with alias
             self.layers.append(node_ops)
 
     def forward(self, input):
@@ -335,7 +336,6 @@ class ResNetBasicBlock(nn.Module):
         bn_track_running_stats=True,
         with_residual=True,
     ):
-
         super(ResNetBasicBlock, self).__init__()
         assert stride in [1, 2], 'invalid stride {:}'.format(stride)
         self.conv_a = ReLUConvBN(
@@ -349,23 +349,28 @@ class ResNetBasicBlock(nn.Module):
             bn_momentum,
             bn_track_running_stats,
         )
-        self.conv_b = ReLUConvBN(planes, planes, 3, 1, 1, 1, bn_affine,
-                                 bn_momentum, bn_track_running_stats)
+        self.conv_b = ReLUConvBN(
+            planes, planes, 3, 1, 1, 1, bn_affine, bn_momentum, bn_track_running_stats
+        )
         if stride == 2:
             self.downsample = nn.Sequential(
                 nn.AvgPool2d(kernel_size=2, stride=2, padding=0),
                 nn.Conv2d(
-                    inplanes,
-                    planes,
-                    kernel_size=1,
-                    stride=1,
-                    padding=0,
-                    bias=False),
+                    inplanes, planes, kernel_size=1, stride=1, padding=0, bias=False
+                ),
             )
         elif inplanes != planes:
-            self.downsample = ReLUConvBN(inplanes, planes, 1, 1, 0, 1,
-                                         bn_affine, bn_momentum,
-                                         bn_track_running_stats)
+            self.downsample = ReLUConvBN(
+                inplanes,
+                planes,
+                1,
+                1,
+                0,
+                1,
+                bn_affine,
+                bn_momentum,
+                bn_track_running_stats,
+            )
         else:
             self.downsample = None
         self.in_dim = inplanes
@@ -386,7 +391,6 @@ class ResNetBasicBlock(nn.Module):
 
 @register_model
 class OneShotNASBench201Network(nn.Module):
-
     def __init__(
         self,
         stem_out_channels: int = 16,
@@ -412,22 +416,22 @@ class OneShotNASBench201Network(nn.Module):
             nn.BatchNorm2d(C, momentum=self.bn_momentum),
         )
 
-        layer_channels = [C] * N + [C * 2] + [C * 2] * N + [C * 4
-                                                            ] + [C * 4] * N
-        layer_reductions = [False] * N + [True] + [False] * N + [
-            True
-        ] + [False] * N
+        layer_channels = [C] * N + [C * 2] + [C * 2] * N + [C * 4] + [C * 4] * N
+        layer_reductions = [False] * N + [True] + [False] * N + [True] + [False] * N
 
         C_prev = C
         self.cells = nn.ModuleList()
-        for i, (C_curr,
-                reduction) in enumerate(zip(layer_channels, layer_reductions)):
-
+        for i, (C_curr, reduction) in enumerate(zip(layer_channels, layer_reductions)):
             if reduction:
-                cell = ResNetBasicBlock(C_prev, C_curr, 2, self.bn_affine,
-                                        self.bn_momentum,
-                                        self.bn_track_running_stats,
-                                        self.with_residual)
+                cell = ResNetBasicBlock(
+                    C_prev,
+                    C_curr,
+                    2,
+                    self.bn_affine,
+                    self.bn_momentum,
+                    self.bn_track_running_stats,
+                    self.with_residual,
+                )
             else:
                 cell = NASBench201Cell(
                     i,
@@ -442,8 +446,8 @@ class OneShotNASBench201Network(nn.Module):
             C_prev = C_curr
 
         self.lastact = nn.Sequential(
-            nn.BatchNorm2d(C_prev, momentum=self.bn_momentum),
-            nn.ReLU(inplace=True))
+            nn.BatchNorm2d(C_prev, momentum=self.bn_momentum), nn.ReLU(inplace=True)
+        )
         self.dropout = nn.Dropout(0.1)
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(C_prev, self.num_classes)

@@ -19,7 +19,7 @@ def encode_adj(matrix, ops):
     """
     encoding_length = (NUM_VERTICES**2 - NUM_VERTICES) // 2 + OP_SPOTS
     encoding = np.zeros((encoding_length))
-    dic = {CONV1X1: 0., CONV3X3: 0.5, MAXPOOL3X3: 1.0}
+    dic = {CONV1X1: 0.0, CONV3X3: 0.5, MAXPOOL3X3: 1.0}
     n = 0
     for i in range(NUM_VERTICES - 1):
         for j in range(i + 1, NUM_VERTICES):
@@ -33,7 +33,7 @@ def encode_adj(matrix, ops):
 def encode_cat_adj(matrix, ops):
     encoding_length = (NUM_VERTICES**2 - NUM_VERTICES) // 2 + OP_SPOTS
     encoding = np.zeros((encoding_length))
-    dic = {CONV1X1: 0., CONV3X3: 0.5, MAXPOOL3X3: 1.0}
+    dic = {CONV1X1: 0.0, CONV3X3: 0.5, MAXPOOL3X3: 1.0}
     n = 0
     m = 0
     for i in range(NUM_VERTICES - 1):
@@ -56,7 +56,7 @@ def encode_cont_adj(matrix, ops):
     """
     encoding_length = (NUM_VERTICES**2 - NUM_VERTICES) // 2 + OP_SPOTS + 1
     encoding = np.zeros((encoding_length))
-    dic = {CONV1X1: 0., CONV3X3: 0.5, MAXPOOL3X3: 1.0}
+    dic = {CONV1X1: 0.0, CONV3X3: 0.5, MAXPOOL3X3: 1.0}
     n = 0
     for i in range(NUM_VERTICES - 1):
         for j in range(i + 1, NUM_VERTICES):
@@ -69,8 +69,8 @@ def encode_cont_adj(matrix, ops):
 
 
 def encode_paths(path_indices):
-    """ output one-hot encoding of paths """
-    num_paths = sum([len(OPS)**i for i in range(OP_SPOTS + 1)])
+    """output one-hot encoding of paths"""
+    num_paths = sum([len(OPS) ** i for i in range(OP_SPOTS + 1)])
     encoding = np.zeros(num_paths)
     for index in path_indices:
         encoding[index] = 1

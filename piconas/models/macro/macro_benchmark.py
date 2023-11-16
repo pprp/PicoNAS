@@ -9,13 +9,7 @@ from ..registry import register_model
 
 
 class ConvBNReLU(nn.Sequential):
-
-    def __init__(self,
-                 in_planes,
-                 out_planes,
-                 kernel_size=3,
-                 stride=1,
-                 groups=1):
+    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         padding = (kernel_size - 1) // 2
         super(ConvBNReLU, self).__init__(
             nn.Conv2d(
@@ -33,9 +27,7 @@ class ConvBNReLU(nn.Sequential):
 
 
 class InvertedResidual(nn.Module):
-
-    def __init__(self, inp, oup, kernel_size, stride, expand_ratio,
-                 use_res_connect):
+    def __init__(self, inp, oup, kernel_size, stride, expand_ratio, use_res_connect):
         super(InvertedResidual, self).__init__()
         self.stride = stride
         assert stride in [1, 2]
@@ -49,19 +41,21 @@ class InvertedResidual(nn.Module):
         if expand_ratio != 1:
             # pw
             layers.append(ConvBNReLU(inp, hidden_dim, kernel_size=1))
-            layers.extend([
-                # dw
-                ConvBNReLU(
-                    hidden_dim,
-                    hidden_dim,
-                    stride=stride,
-                    groups=hidden_dim,
-                    kernel_size=self.kernel_size,
-                ),
-                # pw-linear
-                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                nn.BatchNorm2d(oup),
-            ])
+            layers.extend(
+                [
+                    # dw
+                    ConvBNReLU(
+                        hidden_dim,
+                        hidden_dim,
+                        stride=stride,
+                        groups=hidden_dim,
+                        kernel_size=self.kernel_size,
+                    ),
+                    # pw-linear
+                    nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+                    nn.BatchNorm2d(oup),
+                ]
+            )
         self.conv = nn.Sequential(*layers)
 
     def forward(self, x):
@@ -99,7 +93,6 @@ class MacroBenchmarkSuperNet(nn.Module):
     """
 
     def __init__(self, num_classes: int = 10, first_conv_out_channels=32):
-
         super(MacroBenchmarkSuperNet, self).__init__()
 
         self.arch_settings: List[List] = [
@@ -112,8 +105,7 @@ class MacroBenchmarkSuperNet(nn.Module):
             [128, 1, 2, 'downsample'],  # 14
             [256, 2, 1, 'mutable'],  # 15, 16
         ]
-        self.in_conv = ConvBNReLU(
-            3, first_conv_out_channels, kernel_size=3, stride=1)
+        self.in_conv = ConvBNReLU(3, first_conv_out_channels, kernel_size=3, stride=1)
 
         self.in_channels = first_conv_out_channels
 
@@ -135,8 +127,9 @@ class MacroBenchmarkSuperNet(nn.Module):
         self.out1 = nn.AdaptiveAvgPool2d((1, 1))
         self.out2 = nn.Linear(1280, num_classes)
 
-    def _make_layer(self, out_channels: int, num_blocks: int, stride: int,
-                    block_type: str) -> Sequential:
+    def _make_layer(
+        self, out_channels: int, num_blocks: int, stride: int, block_type: str
+    ) -> Sequential:
         """make single layer"""
         if block_type == 'downsample':
             layers = []
@@ -157,28 +150,27 @@ class MacroBenchmarkSuperNet(nn.Module):
             if i >= 1:
                 stride = 1
 
-            candidate_ops = nn.ModuleDict({
-                'I':
-                Identity(),
-                '1':
-                InvertedResidual(
-                    self.in_channels,
-                    out_channels,
-                    kernel_size=3,
-                    stride=stride,
-                    expand_ratio=3,
-                    use_res_connect=1,
-                ),
-                '2':
-                InvertedResidual(
-                    self.in_channels,
-                    out_channels,
-                    kernel_size=5,
-                    stride=stride,
-                    expand_ratio=6,
-                    use_res_connect=1,
-                ),
-            })
+            candidate_ops = nn.ModuleDict(
+                {
+                    'I': Identity(),
+                    '1': InvertedResidual(
+                        self.in_channels,
+                        out_channels,
+                        kernel_size=3,
+                        stride=stride,
+                        expand_ratio=3,
+                        use_res_connect=1,
+                    ),
+                    '2': InvertedResidual(
+                        self.in_channels,
+                        out_channels,
+                        kernel_size=5,
+                        stride=stride,
+                        expand_ratio=6,
+                        use_res_connect=1,
+                    ),
+                }
+            )
             osop = OneShotOP(candidate_ops=candidate_ops)
             layers.append(osop)
 
@@ -189,7 +181,6 @@ class MacroBenchmarkSuperNet(nn.Module):
         return Sequential(*layers)
 
     def forward(self, x):
-
         # stem convolution
         x = self.in_conv(x)
 

@@ -18,12 +18,9 @@ def snip_forward_linear(self, x):
     return F.linear(x, self.weight * self.weight_mask, self.bias)
 
 
-def compute_snip_per_weight(net,
-                            inputs,
-                            targets,
-                            mode='param',
-                            loss_fn=nn.CrossEntropyLoss(),
-                            split_data=1):
+def compute_snip_per_weight(
+    net, inputs, targets, mode='param', loss_fn=nn.CrossEntropyLoss(), split_data=1
+):
     for layer in net.modules():
         if isinstance(layer, (nn.Conv2d, nn.Linear)):
             layer.weight_mask = nn.Parameter(torch.ones_like(layer.weight))
@@ -67,7 +64,8 @@ if __name__ == '__main__':
         shuffle=False,
         num_workers=0,
         pin_memory=True,
-        drop_last=False)
+        drop_last=False,
+    )
 
     inputs, targets, _ = next(iter(dataloader))
 
@@ -89,7 +87,8 @@ if __name__ == '__main__':
         # apply min-max scale to layerwise_zc
         lw_zc_list = np.array(lw_zc_list)
         lw_zc_list = (lw_zc_list - min(lw_zc_list)) / (
-            max(lw_zc_list) - min(lw_zc_list))
+            max(lw_zc_list) - min(lw_zc_list)
+        )
         lw_zc_list = lw_zc_list.tolist()
 
         entry = {'id': i + 1, 'layerwise_zc': lw_zc_list, 'gt': gt_base}
@@ -104,7 +103,8 @@ if __name__ == '__main__':
         max_len = max(max_len, len(item['layerwise_zc']))
     for item in data_to_save:
         item['layerwise_zc'] = item['layerwise_zc'] + [0] * (
-            max_len - len(item['layerwise_zc']))
+            max_len - len(item['layerwise_zc'])
+        )
     print(max_len)
 
     # Save to JSON file

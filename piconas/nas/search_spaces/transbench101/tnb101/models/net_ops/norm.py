@@ -16,7 +16,6 @@ TORCH_VERSION = tuple(int(x) for x in torch.__version__.split('.')[:2])
 
 
 class _NewEmptyTensorOp(torch.autograd.Function):
-
     @staticmethod
     def forward(ctx, x, new_shape):
         ctx.shape = x.shape
@@ -29,12 +28,9 @@ class _NewEmptyTensorOp(torch.autograd.Function):
 
 
 class AllReduce(Function):
-
     @staticmethod
     def forward(ctx, input):
-        input_list = [
-            torch.zeros_like(input) for k in range(dist.get_world_size())
-        ]
+        input_list = [torch.zeros_like(input) for k in range(dist.get_world_size())]
         # Use allgather instead of allreduce since I don't trust in-place operations ..
         dist.all_gather(input_list, input, async_op=False)
         inputs = torch.stack(input_list, dim=0)
@@ -72,10 +68,9 @@ class NaiveSyncBatchNorm(BatchNorm2d):
         a simplified implementation and an accurate computation of overall mean & variance.
     """
 
-    def __init__(self,
-                 *args,
-                 stats_mode='N',
-                 **kwargs):  # note we changed the default state to "N"
+    def __init__(
+        self, *args, stats_mode='N', **kwargs
+    ):  # note we changed the default state to "N"
         super().__init__(*args, **kwargs)
         assert stats_mode in ['', 'N']
         self._stats_mode = stats_mode
@@ -100,11 +95,8 @@ class NaiveSyncBatchNorm(BatchNorm2d):
             momentum = self.momentum
         else:
             if B == 0:
-                vec = torch.zeros([2 * C + 1],
-                                  device=mean.device,
-                                  dtype=mean.dtype)
-                vec = vec + input.sum(
-                )  # make sure there is gradient w.r.t input
+                vec = torch.zeros([2 * C + 1], device=mean.device, dtype=mean.dtype)
+                vec = vec + input.sum()  # make sure there is gradient w.r.t input
             else:
                 vec = torch.cat(
                     [
@@ -117,10 +109,12 @@ class NaiveSyncBatchNorm(BatchNorm2d):
             vec = AllReduce.apply(vec * B)
 
             total_batch = vec[-1].detach()
-            momentum = (total_batch.clamp(max=1) * self.momentum
-                        )  # no update if total_batch is 0
+            momentum = (
+                total_batch.clamp(max=1) * self.momentum
+            )  # no update if total_batch is 0
             total_batch = torch.max(
-                total_batch, torch.ones_like(total_batch))  # avoid div-by-zero
+                total_batch, torch.ones_like(total_batch)
+            )  # avoid div-by-zero
             mean, meansqr, _ = torch.split(vec / total_batch, C)
 
         var = meansqr - mean * mean
@@ -137,8 +131,10 @@ class NaiveSyncBatchNorm(BatchNorm2d):
     def extra_repr(self):
         return (
             '{num_features}, eps={eps}, momentum={momentum}, affine={affine}, '
-            'track_running_stats={track_running_stats}, _stats_mode={_stats_mode}'
-            .format(**self.__dict__))
+            'track_running_stats={track_running_stats}, _stats_mode={_stats_mode}'.format(
+                **self.__dict__
+            )
+        )
 
     @classmethod
     def convert_sync_batchnorm(cls, module, process_group=None):
@@ -163,7 +159,8 @@ class NaiveSyncBatchNorm(BatchNorm2d):
             module_output.num_batches_tracked = module.num_batches_tracked
         for name, child in module.named_children():
             module_output.add_module(
-                name, cls.convert_sync_batchnorm(child, process_group))
+                name, cls.convert_sync_batchnorm(child, process_group)
+            )
         del module
         return module_output
 

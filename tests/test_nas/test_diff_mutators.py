@@ -8,7 +8,6 @@ from piconas.nas.mutators import DiffMutator
 
 
 class TestDiffMutator(TestCase):
-
     def setUp(self) -> None:
         self.inputs = torch.randn(4, 3, 32, 32)
         self.model = DiffNASBench201Network()

@@ -62,7 +62,8 @@ def find_measures_arrays(
     # given 1 minibatch of data
     if dataload == 'random':
         inputs, targets = get_some_data(
-            trainloader, num_batches=num_imgs_or_batches, device=device)
+            trainloader, num_batches=num_imgs_or_batches, device=device
+        )
     elif dataload == 'grasp':
         inputs, targets = get_some_data_grasp(
             trainloader,
@@ -103,9 +104,7 @@ def find_measures_arrays(
                 while inputs.shape[0] % ds != 0:
                     ds += 1
                 torch.cuda.empty_cache()
-                print(
-                    f'Caught CUDA OOM, retrying with data split into {ds} parts'
-                )
+                print(f'Caught CUDA OOM, retrying with data split into {ds} parts')
             else:
                 raise e
 
@@ -122,7 +121,6 @@ def find_measures(
     measure_names=None,  # an array of measure names to compute, if left blank, all measures are computed by default
     measures_arr=None,
 ):
-
     # Given a neural net
     # and some information about the input data (dataloader)
     # and loss function (loss_fn)
@@ -141,7 +139,8 @@ def find_measures(
         x_shape[0] = 1  # to prevent overflow
 
         model_stats = get_model_stats(
-            net_orig, input_tensor_shape=x_shape, clone_model=True)
+            net_orig, input_tensor_shape=x_shape, clone_model=True
+        )
 
         if measure_names[0] == 'flops':
             measure_score = float(model_stats.Flops) / 1e6  # megaflops

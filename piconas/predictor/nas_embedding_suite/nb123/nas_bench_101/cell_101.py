@@ -24,9 +24,7 @@ MAX_EDGES = 9
 
 
 class Cell101:
-
     def __init__(self, matrix, ops):
-
         self.matrix = matrix
         self.ops = ops
 
@@ -45,8 +43,7 @@ class Cell101:
         n = np.shape(self.matrix)[0]
         sub_paths = []
         for j in range(0, n):
-            sub_paths.append([[(0, j)]
-                              ]) if self.matrix[0][j] else sub_paths.append([])
+            sub_paths.append([[(0, j)]]) if self.matrix[0][j] else sub_paths.append([])
 
         # create paths sequentially
         for i in range(1, n - 1):
@@ -77,11 +74,11 @@ class Cell101:
 
     def is_valid_vertex(self, vertex):
         edges, nodes = self.get_utilized()
-        return (vertex in nodes)
+        return vertex in nodes
 
     def is_valid_edge(self, edge):
         edges, nodes = self.get_utilized()
-        return (edge in edges)
+        return edge in edges
 
     @classmethod
     def convert_to_cell(cls, arch):
@@ -114,12 +111,9 @@ class Cell101:
         else:
             return {'matrix': matrix, 'ops': ops}
 
-    def encode(self,
-               predictor_encoding,
-               nasbench=None,
-               deterministic=True,
-               cutoff=None):
-
+    def encode(
+        self, predictor_encoding, nasbench=None, deterministic=True, cutoff=None
+    ):
         if predictor_encoding in ['adj', 'bohamiann']:
             return encode_adj(self.matrix, self.ops)
         elif predictor_encoding == 'cat_adj':
@@ -145,12 +139,10 @@ class Cell101:
         elif predictor_encoding == 'vae':
             return self.vae_encoding(nasbench, deterministic=deterministic)
         else:
-            print('{} is an invalid predictor encoding'.format(
-                predictor_encoding))
+            print('{} is an invalid predictor encoding'.format(predictor_encoding))
             raise NotImplementedError()
 
     def gcn_encoding(self, nasbench, deterministic):
-
         def loss_to_normalized_acc(loss):
             MEAN = 0.908192
             STD = 0.023961
@@ -160,9 +152,9 @@ class Cell101:
 
         op_map = [OUTPUT, INPUT, *OPS]
         ops_onehot = np.array(
-            [[i == op_map.index(op) for i in range(len(op_map))]
-             for op in self.ops],
-            dtype=np.float32)
+            [[i == op_map.index(op) for i in range(len(op_map))] for op in self.ops],
+            dtype=np.float32,
+        )
         val_loss = self.get_val_loss(nasbench, deterministic=deterministic)
         test_loss = self.get_test_loss(nasbench)
 
@@ -172,7 +164,7 @@ class Cell101:
             'operations': ops_onehot,
             'mask': np.array([i < 7 for i in range(7)], dtype=np.float32),
             'val_acc': loss_to_normalized_acc(val_loss),
-            'test_acc': loss_to_normalized_acc(test_loss)
+            'test_acc': loss_to_normalized_acc(test_loss),
         }
         return dic
 
@@ -189,8 +181,7 @@ class Cell101:
                 if self.matrix[i][j]:
                     adj_list[j][i + 1] = 1
 
-        acc = 1 - self.get_val_loss(
-            nasbench, deterministic=deterministic) / 100
+        acc = 1 - self.get_val_loss(nasbench, deterministic=deterministic) / 100
         return [adj_list, acc]
 
     def distance(self, other, dist_type, cutoff=None):
@@ -216,25 +207,25 @@ class Cell101:
             print('{} is an invalid distance'.format(dist_type))
             raise NotImplementedError()
 
-    def mutate(self,
-               nasbench,
-               mutation_rate=1.0,
-               mutate_encoding='adj',
-               cutoff=None,
-               comparisons=2500,
-               patience=5000,
-               prob_wt=False,
-               index_hash=None):
-
+    def mutate(
+        self,
+        nasbench,
+        mutation_rate=1.0,
+        mutate_encoding='adj',
+        cutoff=None,
+        comparisons=2500,
+        patience=5000,
+        prob_wt=False,
+        index_hash=None,
+    ):
         if mutate_encoding in ['adj', 'cont_adj']:
-            cont = ('cont' in mutate_encoding)
-            return adj_mutate(
-                nasbench, matrix=self.matrix, ops=self.ops, cont=cont)
+            cont = 'cont' in mutate_encoding
+            return adj_mutate(nasbench, matrix=self.matrix, ops=self.ops, cont=cont)
         elif mutate_encoding == 'trunc_adj':
             return trunc_adj_mutate(nasbench, self.matrix, self.ops, cutoff)
         elif mutate_encoding[-4:] == 'path':
-            weighted = ('wtd' in mutate_encoding)
-            cont = ('cont' in mutate_encoding)
+            weighted = 'wtd' in mutate_encoding
+            cont = 'cont' in mutate_encoding
             if 'trunc' in mutate_encoding and not cutoff:
                 cutoff = 40
             else:
@@ -246,19 +237,23 @@ class Cell101:
                 index_hash=index_hash,
                 cont=cont,
                 weighted=weighted,
-                cutoff=cutoff)
+                cutoff=cutoff,
+            )
 
     @classmethod
-    def random_cell(cls,
-                    nasbench,
-                    random_encoding,
-                    cutoff=None,
-                    max_edges=10,
-                    max_nodes=8,
-                    index_hash=None):
+    def random_cell(
+        cls,
+        nasbench,
+        random_encoding,
+        cutoff=None,
+        max_edges=10,
+        max_nodes=8,
+        index_hash=None,
+    ):
         if random_encoding == 'constrained':
             return random_cell_constrained(
-                nasbench, max_edges=max_edges, max_nodes=max_nodes)
+                nasbench, max_edges=max_edges, max_nodes=max_nodes
+            )
         elif random_encoding == 'uniform':
             return random_cell_uniform(cls, nasbench)
         elif random_encoding == 'adj':
@@ -266,8 +261,8 @@ class Cell101:
         elif random_encoding == 'cont_adj':
             return random_cell_cont_adj(nasbench)
         elif random_encoding[-4:] == 'path':
-            weighted = ('wtd' in random_encoding)
-            cont = ('cont' in random_encoding)
+            weighted = 'wtd' in random_encoding
+            cont = 'cont' in random_encoding
             if 'trunc' in random_encoding and not cutoff:
                 cutoff = 40
             elif 'trunc' not in random_encoding:
@@ -278,17 +273,20 @@ class Cell101:
                 index_hash=index_hash,
                 weighted=weighted,
                 cont=cont,
-                cutoff=cutoff)
+                cutoff=cutoff,
+            )
         else:
             print('{} is an invalid random encoding'.format(random_encoding))
             raise NotImplementedError()
 
-    def get_neighborhood(self,
-                         nasbench,
-                         mutate_encoding='adj',
-                         cutoff=None,
-                         index_hash=None,
-                         shuffle=True):
+    def get_neighborhood(
+        self,
+        nasbench,
+        mutate_encoding='adj',
+        cutoff=None,
+        index_hash=None,
+        shuffle=True,
+    ):
         if mutate_encoding == 'adj':
             return self.adj_neighborhood(nasbench, shuffle=shuffle)
         elif mutate_encoding in ['path', 'trunc_path']:
@@ -297,32 +295,32 @@ class Cell101:
             elif 'trunc' not in mutate_encoding:
                 cutoff = None
             return self.path_neighborhood(
-                nasbench,
-                cutoff=cutoff,
-                index_hash=index_hash,
-                shuffle=shuffle)
+                nasbench, cutoff=cutoff, index_hash=index_hash, shuffle=shuffle
+            )
         else:
-            print('{} is an invalid neighborhood encoding'.format(
-                mutate_encoding))
+            print('{} is an invalid neighborhood encoding'.format(mutate_encoding))
             raise NotImplementedError()
 
-    def get_val_loss(self,
-                     nasbench,
-                     deterministic=True,
-                     patience=50,
-                     epochs=None,
-                     dataset=None):
+    def get_val_loss(
+        self, nasbench, deterministic=True, patience=50, epochs=None, dataset=None
+    ):
         if not deterministic:
             # output one of the three validation accuracies at random
             acc = 0
             if epochs:
-                acc = (100 * (1 - nasbench.query(
-                    api.ModelSpec(matrix=self.matrix, ops=self.ops),
-                    epochs=epochs)['validation_accuracy']))
+                acc = 100 * (
+                    1
+                    - nasbench.query(
+                        api.ModelSpec(matrix=self.matrix, ops=self.ops), epochs=epochs
+                    )['validation_accuracy']
+                )
             else:
-                acc = (100 * (1 - nasbench.query(
-                    api.ModelSpec(matrix=self.matrix,
-                                  ops=self.ops))['validation_accuracy']))
+                acc = 100 * (
+                    1
+                    - nasbench.query(api.ModelSpec(matrix=self.matrix, ops=self.ops))[
+                        'validation_accuracy'
+                    ]
+                )
             return np.round(acc, 4)
         else:
             # query the api until we see all three accuracies, then average them
@@ -332,12 +330,12 @@ class Cell101:
                 patience -= 1
                 if epochs:
                     acc = nasbench.query(
-                        api.ModelSpec(matrix=self.matrix, ops=self.ops),
-                        epochs=epochs)['validation_accuracy']
+                        api.ModelSpec(matrix=self.matrix, ops=self.ops), epochs=epochs
+                    )['validation_accuracy']
                 else:
                     acc = nasbench.query(
-                        api.ModelSpec(matrix=self.matrix,
-                                      ops=self.ops))['validation_accuracy']
+                        api.ModelSpec(matrix=self.matrix, ops=self.ops)
+                    )['validation_accuracy']
                 if acc not in accs:
                     accs.append(acc)
             return round(100 * (1 - np.mean(accs)), 4)
@@ -350,16 +348,17 @@ class Cell101:
         accs = []
         while len(accs) < 3 and patience > 0:
             patience -= 1
-            acc = nasbench.query(
-                api.ModelSpec(matrix=self.matrix,
-                              ops=self.ops))['test_accuracy']
+            acc = nasbench.query(api.ModelSpec(matrix=self.matrix, ops=self.ops))[
+                'test_accuracy'
+            ]
             if acc not in accs:
                 accs.append(acc)
         return round(100 * (1 - np.mean(accs)), 4)
 
     def get_num_params(self, nasbench):
-        return nasbench.query(api.ModelSpec(
-            matrix=self.matrix, ops=self.ops))['trainable_parameters']
+        return nasbench.query(api.ModelSpec(matrix=self.matrix, ops=self.ops))[
+            'trainable_parameters'
+        ]
 
     def perturb(self, nasbench, edits=1):
         """
@@ -418,7 +417,7 @@ class Cell101:
                     path_indices.append(index)
                     break
                 else:
-                    index += len(OPS)**i * (mapping[path[i]] + 1)
+                    index += len(OPS) ** i * (mapping[path[i]] + 1)
 
         path_indices.sort()
         return tuple(path_indices)
@@ -449,8 +448,9 @@ class Cell101:
                     if nasbench.is_valid(spec):
                         nbhd.append(new_arch)
 
-                if not self.matrix[src][dst] and Cell101(
-                        **new_arch).is_valid_edge((src, dst)):
+                if not self.matrix[src][dst] and Cell101(**new_arch).is_valid_edge(
+                    (src, dst)
+                ):
                     spec = api.ModelSpec(matrix=new_matrix, ops=new_ops)
                     if nasbench.is_valid(spec):
                         nbhd.append(new_arch)
@@ -467,14 +467,15 @@ class Cell101:
         https://drive.google.com/file/d/1yMRFxT6u3ZyfiWUPhtQ_B9FbuGN3X-Nf/view?usp=sharing
         """
         if not index_hash:
-            print('Error: please download index_hash, located at \
+            print(
+                'Error: please download index_hash, located at \
             https://drive.google.com/file/d/1yMRFxT6u3ZyfiWUPhtQ_B9FbuGN3X-Nf/view?usp=sharing'
-                  )
+            )
             raise NotImplementedError()
 
         nbhd = []
         path_indices = self.get_path_indices()
-        total_paths = sum([len(OPS)**i for i in range(OP_SPOTS + 1)])
+        total_paths = sum([len(OPS) ** i for i in range(OP_SPOTS + 1)])
 
         if cutoff:
             cutoff_value = cutoff
@@ -482,9 +483,7 @@ class Cell101:
             cutoff_value = total_paths
 
         new_sets = []
-        path_indices_cutoff = [
-            path for path in path_indices if path < cutoff_value
-        ]
+        path_indices_cutoff = [path for path in path_indices if path < cutoff_value]
 
         # remove paths
         for path in path_indices_cutoff:
@@ -492,9 +491,7 @@ class Cell101:
             new_sets.append(new_path_indices)
 
         # add paths
-        other_paths = [
-            path for path in range(cutoff_value) if path not in path_indices
-        ]
+        other_paths = [path for path in range(cutoff_value) if path not in path_indices]
         for path in other_paths:
             new_path_indices = [*path_indices, path]
             new_sets.append(new_path_indices)
@@ -502,7 +499,6 @@ class Cell101:
         for new_path_indices in new_sets:
             new_tuple = tuple(new_path_indices)
             if new_tuple in index_hash:
-
                 spec = index_hash[new_tuple]
                 matrix = spec['matrix']
                 ops = spec['ops']

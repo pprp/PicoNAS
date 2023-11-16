@@ -5,14 +5,12 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 
-from piconas.models.nasbench201.oneshot_nasbench201 import \
-    OneShotNASBench201Network
+from piconas.models.nasbench201.oneshot_nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
 from piconas.predictor.pruners.measures.te_nas import compute_tenas
 
 
 class ToyModel(nn.Module):
-
     def __init__(self):
         super().__init__()
         current_c = random.randint(8, 20)
@@ -35,7 +33,6 @@ class ToyModel(nn.Module):
 
 
 class TestTenasScore(TestCase):
-
     def test_tenas_score_with_fixmodel(self):
         inputs = torch.randn(4, 3, 32, 32)
         for _ in range(3):

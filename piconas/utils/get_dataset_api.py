@@ -41,8 +41,9 @@ def get_transbench101_api(dataset):
     if dataset not in TASK_NAMES:
         return None
 
-    datafile_path = os.path.join(get_project_root(), 'data',
-                                 'transnas-bench_v10141024.pth')
+    datafile_path = os.path.join(
+        get_project_root(), 'data', 'transnas-bench_v10141024.pth'
+    )
     assert os.path.exists(
         datafile_path
     ), f'Could not fine {datafile_path}. Please download transnas-bench_v10141024.pth\
@@ -57,8 +58,7 @@ def get_transbench101_api(dataset):
 def get_nasbench101_api(dataset=None):
     import piconas.nas.utils.nb101_api as api
 
-    nb101_datapath = os.path.join(get_project_root(), 'data',
-                                  'nasbench_only108.pkl')
+    nb101_datapath = os.path.join(get_project_root(), 'data', 'nasbench_only108.pkl')
     assert os.path.exists(
         nb101_datapath
     ), f'Could not find {nb101_datapath}. Please download nasbench_only108.pk \
@@ -81,8 +81,7 @@ def get_nasbench201_api(dataset):
     if dataset not in datafiles.keys():
         return None
 
-    datafile_path = os.path.join(get_project_root(), 'data',
-                                 datafiles[dataset])
+    datafile_path = os.path.join(get_project_root(), 'data', datafiles[dataset])
     assert os.path.exists(
         datafile_path
     ), f'Could not find {datafile_path}. Please download {datafiles[dataset]} from \
@@ -101,9 +100,10 @@ def get_nasbench301_api(dataset):
     try:
         import nasbench301
     except ModuleNotFoundError:
-        raise ModuleNotFoundError("No module named 'nasbench301'. \
+        raise ModuleNotFoundError(
+            "No module named 'nasbench301'. \
             Please install nasbench301 from https://github.com/automl/nasbench301@no_gin"
-                                  )
+        )
 
     # Paths to v1.0 model files and data file.
     download_path = os.path.join(get_project_root(), 'data', 'nb301_models')
@@ -114,10 +114,11 @@ def get_nasbench301_api(dataset):
     nb301_runtime_path = os.path.join(nb_models_path, 'lgb_runtime_v1.0')
 
     if not all(
-            os.path.exists(model)
-            for model in [nb301_model_path, nb301_runtime_path]):
+        os.path.exists(model) for model in [nb301_model_path, nb301_runtime_path]
+    ):
         nasbench301.download_models(
-            version='1.0', delete_zip=True, download_dir=download_path)
+            version='1.0', delete_zip=True, download_dir=download_path
+        )
 
     models_not_found_msg = 'Please download v1.0 models from \
 https://figshare.com/articles/software/nasbench301_models_v1_0_zip/13061510'
@@ -144,7 +145,6 @@ https://figshare.com/articles/software/nasbench301_models_v1_0_zip/13061510'
 
 
 class ReturnFeatureLayer(torch.nn.Module):
-
     def __init__(self, mod):
         super(ReturnFeatureLayer, self).__init__()
         self.mod = mod
@@ -162,7 +162,6 @@ def return_feature_layer(network, prefix=''):
 
 
 class NDS:
-
     def __init__(self, searchspace):
         self.searchspace = searchspace
         data = json.load(open(f'data/nds_data/{searchspace}.json', 'r'))
@@ -194,14 +193,17 @@ class NDS:
                 normal=gen['normal'],
                 normal_concat=gen['normal_concat'],
                 reduce=gen['reduce'],
-                reduce_concat=gen['reduce_concat'])
+                reduce_concat=gen['reduce_concat'],
+            )
             if '_in' in self.searchspace:
-                network = NetworkImageNet(config['width'], 10, config['depth'],
-                                          False, genotype)
+                network = NetworkImageNet(
+                    config['width'], 10, config['depth'], False, genotype
+                )
             else:
-                network = NetworkCIFAR(config['width'], 10, config['depth'],
-                                       False, genotype)
-            network.drop_path_prob = 0.
+                network = NetworkCIFAR(
+                    config['width'], 10, config['depth'], False, genotype
+                )
+            network.drop_path_prob = 0.0
             L = config['depth']
         else:
             if 'bot_muls' in config and 'bms' not in config:
@@ -237,11 +239,10 @@ class NDS:
         return random.randint(0, len(self.data) - 1)
 
     def get_final_accuracy(self, uid):
-        return 100. - self.data[uid]['test_ep_top1'][-1]
+        return 100.0 - self.data[uid]['test_ep_top1'][-1]
 
 
 def get_dataset_api(search_space=None, dataset=None):
-
     if search_space == 'nasbench101':
         return get_nasbench101_api(dataset=dataset)
 
@@ -252,9 +253,9 @@ def get_dataset_api(search_space=None, dataset=None):
         return get_nasbench301_api(dataset=dataset)
 
     elif search_space in [
-            'transbench101',
-            'transbench101_micro',
-            'transbench101_macro',
+        'transbench101',
+        'transbench101_micro',
+        'transbench101_macro',
     ]:
         return get_transbench101_api(dataset=dataset)
 
@@ -307,9 +308,7 @@ def get_dataset_api(search_space=None, dataset=None):
 
 
 def get_zc_benchmark_api(search_space, dataset):
-
-    datafile_path = os.path.join(get_project_root(), 'data',
-                                 f'zc_{search_space}.json')
+    datafile_path = os.path.join(get_project_root(), 'data', f'zc_{search_space}.json')
     with open(datafile_path) as f:
         data = json.load(f)
 
@@ -317,8 +316,9 @@ def get_zc_benchmark_api(search_space, dataset):
 
 
 def load_sampled_architectures(search_space, postfix=''):
-    datafile_path = os.path.join(get_project_root(), 'data', 'archs',
-                                 f'archs_{search_space}{postfix}.json')
+    datafile_path = os.path.join(
+        get_project_root(), 'data', 'archs', f'archs_{search_space}{postfix}.json'
+    )
     with open(datafile_path) as f:
         data = json.load(f)
 

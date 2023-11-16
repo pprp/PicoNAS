@@ -21,8 +21,7 @@ def init_weights(m):
         m.weight.data.normal_(mean=0.0, std=math.sqrt(2.0 / fan_out))
     elif isinstance(m, nn.BatchNorm2d):
         zero_init_gamma = False
-        zero_init_gamma = hasattr(
-            m, 'final_bn') and m.final_bn and zero_init_gamma
+        zero_init_gamma = hasattr(m, 'final_bn') and m.final_bn and zero_init_gamma
         m.weight.data.fill_(0.0 if zero_init_gamma else 1.0)
         m.bias.data.zero_()
     elif isinstance(m, nn.Linear):
@@ -67,17 +66,9 @@ def reset_bn_stats(model):
             m.reset_running_stats()
 
 
-def complexity_conv2d(cx,
-                      w_in,
-                      w_out,
-                      k,
-                      stride,
-                      padding,
-                      groups=1,
-                      bias=False):
+def complexity_conv2d(cx, w_in, w_out, k, stride, padding, groups=1, bias=False):
     """Accumulates complexity of Conv2D into cx = (h, w, flops, params, acts)."""
-    h, w, flops, params, acts = cx['h'], cx['w'], cx['flops'], cx[
-        'params'], cx['acts']
+    h, w, flops, params, acts = cx['h'], cx['w'], cx['flops'], cx['params'], cx['acts']
     h = (h + 2 * padding - k) // stride + 1
     w = (w + 2 * padding - k) // stride + 1
     flops += k * k * w_in * w_out * h * w // groups
@@ -90,16 +81,14 @@ def complexity_conv2d(cx,
 
 def complexity_batchnorm2d(cx, w_in):
     """Accumulates complexity of BatchNorm2D into cx = (h, w, flops, params, acts)."""
-    h, w, flops, params, acts = cx['h'], cx['w'], cx['flops'], cx[
-        'params'], cx['acts']
+    h, w, flops, params, acts = cx['h'], cx['w'], cx['flops'], cx['params'], cx['acts']
     params += 2 * w_in
     return {'h': h, 'w': w, 'flops': flops, 'params': params, 'acts': acts}
 
 
 def complexity_maxpool2d(cx, k, stride, padding):
     """Accumulates complexity of MaxPool2d into cx = (h, w, flops, params, acts)."""
-    h, w, flops, params, acts = cx['h'], cx['w'], cx['flops'], cx[
-        'params'], cx['acts']
+    h, w, flops, params, acts = cx['h'], cx['w'], cx['flops'], cx['params'], cx['acts']
     h = (h + 2 * padding - k) // stride + 1
     w = (w + 2 * padding - k) // stride + 1
     return {'h': h, 'w': w, 'flops': flops, 'params': params, 'acts': acts}
@@ -133,6 +122,6 @@ def set_flat_weights(model, flat_weights):
     k = 0
     for p in model.parameters():
         n = p.data.numel()
-        p.data.copy_(flat_weights[k:(k + n)].view_as(p.data))
+        p.data.copy_(flat_weights[k : (k + n)].view_as(p.data))
         k += n
     assert k == flat_weights.numel()

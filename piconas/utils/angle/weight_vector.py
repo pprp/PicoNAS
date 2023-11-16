@@ -7,9 +7,9 @@ from piconas.models.spos import SearchableMobileNet
 from piconas.nas.mutators import OneShotMutator
 
 
-def get_mb_arch_vector(supernet: SearchableMobileNet,
-                       mutator: OneShotMutator,
-                       subnet_dict: Dict = None) -> List:
+def get_mb_arch_vector(
+    supernet: SearchableMobileNet, mutator: OneShotMutator, subnet_dict: Dict = None
+) -> List:
     """get SearchableMobileNet arch vector
 
     Args:
@@ -17,12 +17,12 @@ def get_mb_arch_vector(supernet: SearchableMobileNet,
         mutator (OneShotMutator): oneshotmutator for searchable mobilenet.
     """
 
-    first_conv = torch.reshape(supernet.first_conv[0].weight.data, (-1, ))
-    conv1 = torch.reshape(supernet.stem_MBConv.conv[0].weight.data, (-1, ))
-    conv2 = torch.reshape(supernet.stem_MBConv.conv[3].weight.data, (-1, ))
+    first_conv = torch.reshape(supernet.first_conv[0].weight.data, (-1,))
+    conv1 = torch.reshape(supernet.stem_MBConv.conv[0].weight.data, (-1,))
+    conv2 = torch.reshape(supernet.stem_MBConv.conv[3].weight.data, (-1,))
 
-    last_conv = torch.reshape(supernet.last_conv[0].weight.data, (-1, ))
-    classifier = torch.reshape(supernet.classifier.weight.data, (-1, ))
+    last_conv = torch.reshape(supernet.last_conv[0].weight.data, (-1,))
+    classifier = torch.reshape(supernet.classifier.weight.data, (-1,))
 
     arch_vector = [first_conv, conv1, conv2, last_conv, classifier]
 
@@ -36,11 +36,14 @@ def get_mb_arch_vector(supernet: SearchableMobileNet,
         # print(choice, len(modules), type(modules[0]))
         # print(modules[0]._candidate_ops.keys())
         conv1 = torch.reshape(
-            modules[0]._candidate_ops[choice].conv[0].weight.data, (-1, ))
+            modules[0]._candidate_ops[choice].conv[0].weight.data, (-1,)
+        )
         conv2 = torch.reshape(
-            modules[0]._candidate_ops[choice].conv[3].weight.data, (-1, ))
+            modules[0]._candidate_ops[choice].conv[3].weight.data, (-1,)
+        )
         conv3 = torch.reshape(
-            modules[0]._candidate_ops[choice].conv[6].weight.data, (-1, ))
+            modules[0]._candidate_ops[choice].conv[6].weight.data, (-1,)
+        )
         arch_vector += [torch.cat([conv1, conv2, conv3], dim=0)]
 
     arch_vector = torch.cat(arch_vector, dim=0)

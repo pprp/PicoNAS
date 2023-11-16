@@ -19,8 +19,7 @@ def load_json(path):
     return arch_dict
 
 
-def compuate_rank_consistency(loader, sampled_dict: Dict,
-                              trainer: NATSTrainer) -> None:
+def compuate_rank_consistency(loader, sampled_dict: Dict, trainer: NATSTrainer) -> None:
     """compute rank consistency of different types of indicators."""
     true_indicator_list: List[float] = []
     supernet_indicator_list: List[float] = []
@@ -29,7 +28,8 @@ def compuate_rank_consistency(loader, sampled_dict: Dict,
         print(f'evaluating the {i}th architecture.')
         current_op_list = convert_channel2idx(k)
         loss, top1_acc, top5_acc = trainer.metric_score(
-            loader, current_op_list=current_op_list)
+            loader, current_op_list=current_op_list
+        )
 
         supernet_indicator_list.append(loss)
         true_indicator_list.append(v)
@@ -109,4 +109,5 @@ if __name__ == '__main__':
 
     # compute the rank consistency of supernet
     compuate_rank_consistency(
-        loader=dataloader, sampled_dict=sampled_dict, trainer=trainer)
+        loader=dataloader, sampled_dict=sampled_dict, trainer=trainer
+    )

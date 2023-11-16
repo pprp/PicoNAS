@@ -30,23 +30,24 @@ class BaseTrainer(nn.Module):
         searching (bool, optional): [description]. Defaults to True.
     """
 
-    def __init__(self,
-                 model,
-                 mutator,
-                 criterion,
-                 optimizer,
-                 scheduler,
-                 device=None,
-                 log_name='base',
-                 searching: bool = True,
-                 print_freq: int = 100,
-                 dataset: str = 'cifar10',
-                 **kwargs):
+    def __init__(
+        self,
+        model,
+        mutator,
+        criterion,
+        optimizer,
+        scheduler,
+        device=None,
+        log_name='base',
+        searching: bool = True,
+        print_freq: int = 100,
+        dataset: str = 'cifar10',
+        **kwargs,
+    ):
         super().__init__()
         self.model = model
         self.mutator = mutator
-        self.criterion = nn.CrossEntropyLoss(
-        ) if criterion is None else criterion
+        self.criterion = nn.CrossEntropyLoss() if criterion is None else criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = self._get_device(device) if device is None else device
@@ -67,7 +68,8 @@ class BaseTrainer(nn.Module):
         if not os.path.exists(log_path):
             os.makedirs(log_path)
         self.logger = get_logger(
-            self.log_name, log_file=os.path.join(log_path, log_file_name))
+            self.log_name, log_file=os.path.join(log_path, log_file_name)
+        )
 
         # writer_path = os.path.join('./logdirs', self.log_name)
         # self.writer = SummaryWriter(writer_path)
@@ -139,11 +141,10 @@ class BaseTrainer(nn.Module):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
-    def forward(self,
-                batch_inputs: torch.Tensor,
-                mode: str = 'tensor') -> Tensor:
+    def forward(self, batch_inputs: torch.Tensor, mode: str = 'tensor') -> Tensor:
         """Forward. High Level API.
 
         Note:
@@ -316,8 +317,7 @@ class BaseTrainer(nn.Module):
                 f'FLOPs counter is currently not currently supported with {flops_model.__class__.__name__}'
             )
 
-        flops, params = get_model_complexity_info(flops_model,
-                                                  self.input_shape)
+        flops, params = get_model_complexity_info(flops_model, self.input_shape)
         flops_lookup = dict()
         for name, module in flops_model.named_modules():
             flops = getattr(module, '__flops__', 0)

@@ -7,7 +7,6 @@ from piconas.core.losses import RMI_loss
 
 
 class TestRMILoss(TestCase):
-
     def test_rmi_loss(self):
         fmap1 = torch.randn(3, 3, 32, 32)
         fmap2 = torch.randn(3, 3, 32, 32)

@@ -6,8 +6,7 @@ import torch.nn as nn
 
 
 class DropPath(nn.Module):
-
-    def __init__(self, p=0.):
+    def __init__(self, p=0.0):
         """
         Drop path with probability.
         Parameters
@@ -19,11 +18,12 @@ class DropPath(nn.Module):
         self.p = p
 
     def forward(self, x):
-        if self.training and self.p > 0.:
-            keep_prob = 1. - self.p
+        if self.training and self.p > 0.0:
+            keep_prob = 1.0 - self.p
             # per data point mask
-            mask = torch.zeros((x.size(0), 1, 1, 1),
-                               device=x.device).bernoulli_(keep_prob)
+            mask = torch.zeros((x.size(0), 1, 1, 1), device=x.device).bernoulli_(
+                keep_prob
+            )
             return x / keep_prob * mask
 
         return x
@@ -48,19 +48,14 @@ class PoolBN(nn.Module):
         is using affine in BatchNorm
     """
 
-    def __init__(self,
-                 pool_type,
-                 C,
-                 kernel_size,
-                 stride,
-                 padding,
-                 affine=False):
+    def __init__(self, pool_type, C, kernel_size, stride, padding, affine=False):
         super().__init__()
         if pool_type.lower() == 'max':
             self.pool = nn.MaxPool2d(kernel_size, stride, padding)
         elif pool_type.lower() == 'avg':
             self.pool = nn.AvgPool2d(
-                kernel_size, stride, padding, count_include_pad=False)
+                kernel_size, stride, padding, count_include_pad=False
+            )
         else:
             raise ValueError()
 
@@ -89,19 +84,16 @@ class StdConv(nn.Sequential):
         is using affine in BatchNorm
     """
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_size,
-                 stride,
-                 padding,
-                 affine=False):
+    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=False):
         super().__init__()
         self.net = nn.Sequential
         for idx, ops in enumerate(
-            (nn.ReLU(),
-             nn.Conv2d(C_in, C_out, kernel_size, stride, padding,
-                       bias=False), nn.BatchNorm2d(C_out, affine=affine))):
+            (
+                nn.ReLU(),
+                nn.Conv2d(C_in, C_out, kernel_size, stride, padding, bias=False),
+                nn.BatchNorm2d(C_out, affine=affine),
+            )
+        ):
             self.add_module(str(idx), ops)
 
 
@@ -110,21 +102,14 @@ class FacConv(nn.Module):
     Factorized conv: ReLU - Conv(Kx1) - Conv(1xK) - BN
     """
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_length,
-                 stride,
-                 padding,
-                 affine=False):
+    def __init__(self, C_in, C_out, kernel_length, stride, padding, affine=False):
         super().__init__()
         self.net = nn.Sequential(
             nn.ReLU(),
-            nn.Conv2d(
-                C_in, C_in, (kernel_length, 1), stride, padding, bias=False),
-            nn.Conv2d(
-                C_in, C_out, (1, kernel_length), stride, padding, bias=False),
-            nn.BatchNorm2d(C_out, affine=affine))
+            nn.Conv2d(C_in, C_in, (kernel_length, 1), stride, padding, bias=False),
+            nn.Conv2d(C_in, C_out, (1, kernel_length), stride, padding, bias=False),
+            nn.BatchNorm2d(C_out, affine=affine),
+        )
 
     def forward(self, x):
         return self.net(x)
@@ -151,14 +136,9 @@ class DilConv(nn.Module):
         is using affine in BatchNorm
     """
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_size,
-                 stride,
-                 padding,
-                 dilation,
-                 affine=False):
+    def __init__(
+        self, C_in, C_out, kernel_size, stride, padding, dilation, affine=False
+    ):
         super().__init__()
         self.net = nn.Sequential(
             nn.ReLU(),
@@ -170,9 +150,11 @@ class DilConv(nn.Module):
                 padding,
                 dilation=dilation,
                 groups=C_in,
-                bias=False),
+                bias=False,
+            ),
             nn.Conv2d(C_in, C_out, 1, stride=1, padding=0, bias=False),
-            nn.BatchNorm2d(C_out, affine=affine))
+            nn.BatchNorm2d(C_out, affine=affine),
+        )
 
     def forward(self, x):
         return self.net(x)
@@ -198,31 +180,14 @@ class SepConv(nn.Module):
         is using affine in BatchNorm
     """
 
-    def __init__(self,
-                 C_in,
-                 C_out,
-                 kernel_size,
-                 stride,
-                 padding,
-                 affine=False):
+    def __init__(self, C_in, C_out, kernel_size, stride, padding, affine=False):
         super().__init__()
         self.net = nn.Sequential(
             DilConv(
-                C_in,
-                C_in,
-                kernel_size,
-                stride,
-                padding,
-                dilation=1,
-                affine=affine),
-            DilConv(
-                C_in,
-                C_out,
-                kernel_size,
-                1,
-                padding,
-                dilation=1,
-                affine=affine))
+                C_in, C_in, kernel_size, stride, padding, dilation=1, affine=affine
+            ),
+            DilConv(C_in, C_out, kernel_size, 1, padding, dilation=1, affine=affine),
+        )
 
     def forward(self, x):
         return self.net(x)
@@ -236,10 +201,8 @@ class FactorizedReduce(nn.Module):
     def __init__(self, C_in, C_out, affine=False):
         super().__init__()
         self.relu = nn.ReLU()
-        self.conv1 = nn.Conv2d(
-            C_in, C_out // 2, 1, stride=2, padding=0, bias=False)
-        self.conv2 = nn.Conv2d(
-            C_in, C_out // 2, 1, stride=2, padding=0, bias=False)
+        self.conv1 = nn.Conv2d(C_in, C_out // 2, 1, stride=2, padding=0, bias=False)
+        self.conv2 = nn.Conv2d(C_in, C_out // 2, 1, stride=2, padding=0, bias=False)
         self.bn = nn.BatchNorm2d(C_out, affine=affine)
 
     def forward(self, x):
@@ -250,22 +213,21 @@ class FactorizedReduce(nn.Module):
 
 
 class ZeroLayer(nn.Module):
-
     def __init__(self, stride=None):
         super(ZeroLayer, self).__init__()
         self.stride = stride
 
     def forward(self, x):
-        '''n, c, h, w = x.size()
+        """n, c, h, w = x.size()
         h //= self.stride
         w //= self.stride
         device = x.get_device() if x.is_cuda else torch.device('cpu')
         # noinspection PyUnresolvedReferences
         padding = torch.zeros(n, c, h, w, device=device, requires_grad=False)
-        return padding'''
+        return padding"""
         if self.stride == 1:
-            return x.mul(0.)
-        return x[:, :, ::self.stride, ::self.stride].mul(0.)
+            return x.mul(0.0)
+        return x[:, :, :: self.stride, :: self.stride].mul(0.0)
 
     @staticmethod
     def is_zero_layer():

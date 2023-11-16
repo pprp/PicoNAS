@@ -6,9 +6,7 @@ from piconas.nas.mutators import OneShotMutator
 
 
 class TestNB301Trainer(TestCase):
-
     def test_nb301_evaluator(self):
-
         m = OneShotNASBench301Network()
         v = OneShotMutator(with_alias=True)
         v.prepare_from_supernet(m)

@@ -8,7 +8,6 @@ from ..registry import register_model
 
 @register_model
 class SearchableMobileNet(nn.Module):
-
     def __init__(self, num_classes: int = 10, width_mult: float = 1.0) -> None:
         super().__init__()
         self.width_mult = width_mult
@@ -26,18 +25,15 @@ class SearchableMobileNet(nn.Module):
 
         self.first_conv = nn.Sequential(
             nn.Conv2d(
-                3,
-                self.in_channels,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=False),
+                3, self.in_channels, kernel_size=3, stride=1, padding=1, bias=False
+            ),
             nn.BatchNorm2d(self.in_channels, affine=False),
             nn.ReLU6(inplace=True),
         )
 
-        self.stem_MBConv = InvertedResidual(self.in_channels,
-                                            int(24 * width_mult), 3, 1, 1, 1)
+        self.stem_MBConv = InvertedResidual(
+            self.in_channels, int(24 * width_mult), 3, 1, 1, 1
+        )
 
         self.in_channels = int(24 * width_mult)
 
@@ -48,8 +44,7 @@ class SearchableMobileNet(nn.Module):
 
         # building last several layers
         self.last_conv = nn.Sequential(
-            nn.Conv2d(
-                self.in_channels, self.last_channel, 1, 1, 0, bias=False),
+            nn.Conv2d(self.in_channels, self.last_channel, 1, 1, 0, bias=False),
             nn.BatchNorm2d(self.last_channel, affine=False),
             nn.ReLU6(inplace=True),
         )
@@ -57,8 +52,9 @@ class SearchableMobileNet(nn.Module):
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(self.last_channel, num_classes, bias=False)
 
-    def _make_layer(self, out_channels: int, num_blocks: int,
-                    stride: int) -> nn.Sequential:
+    def _make_layer(
+        self, out_channels: int, num_blocks: int, stride: int
+    ) -> nn.Sequential:
         layers = []
         out_channels = int(out_channels * self.width_mult)
 
@@ -68,20 +64,28 @@ class SearchableMobileNet(nn.Module):
             else:
                 inp, outp, stride = self.in_channels, out_channels, 1
 
-            candidate_ops = nn.ModuleDict({
-                'mbconv_k3_r3':
-                blocks_dict['mobilenet_3x3_ratio_3'](inp, outp, stride),
-                'mbconv_k3_r6':
-                blocks_dict['mobilenet_3x3_ratio_6'](inp, outp, stride),
-                'mbconv_k5_r3':
-                blocks_dict['mobilenet_5x5_ratio_3'](inp, outp, stride),
-                'mbconv_k5_r6':
-                blocks_dict['mobilenet_5x5_ratio_6'](inp, outp, stride),
-                'mbconv_k7_r3':
-                blocks_dict['mobilenet_7x7_ratio_3'](inp, outp, stride),
-                'mbconv_k7_r6':
-                blocks_dict['mobilenet_7x7_ratio_6'](inp, outp, stride),
-            })
+            candidate_ops = nn.ModuleDict(
+                {
+                    'mbconv_k3_r3': blocks_dict['mobilenet_3x3_ratio_3'](
+                        inp, outp, stride
+                    ),
+                    'mbconv_k3_r6': blocks_dict['mobilenet_3x3_ratio_6'](
+                        inp, outp, stride
+                    ),
+                    'mbconv_k5_r3': blocks_dict['mobilenet_5x5_ratio_3'](
+                        inp, outp, stride
+                    ),
+                    'mbconv_k5_r6': blocks_dict['mobilenet_5x5_ratio_6'](
+                        inp, outp, stride
+                    ),
+                    'mbconv_k7_r3': blocks_dict['mobilenet_7x7_ratio_3'](
+                        inp, outp, stride
+                    ),
+                    'mbconv_k7_r6': blocks_dict['mobilenet_7x7_ratio_6'](
+                        inp, outp, stride
+                    ),
+                }
+            )
             layers.append(OneShotOP(candidate_ops=candidate_ops))
             self.in_channels = out_channels
         return nn.Sequential(*layers)

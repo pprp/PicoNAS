@@ -4,7 +4,6 @@ import torch
 
 # Code: https://github.com/facebookresearch/mixup-cifar10
 class MixUp(object):
-
     def __init__(self, alpha=0.1):
         self.alpha = alpha
 

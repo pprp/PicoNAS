@@ -1,18 +1,17 @@
 import torch.nn as nn
 
-from piconas.nas.search_spaces.transbench101.tnb101.models.net_ops.cell_ops import \
-    ReLUConvBN
+from piconas.nas.search_spaces.transbench101.tnb101.models.net_ops.cell_ops import (
+    ReLUConvBN,
+)
 from .cell_micro import MicroCell, ResNetBasicblock
 
 
 class MacroNet(nn.Module):
     """Adapted from torchvision/models/resnet.py"""
 
-    def __init__(self,
-                 net_code,
-                 structure='full',
-                 input_dim=(224, 224),
-                 num_classes=75):
+    def __init__(
+        self, net_code, structure='full', input_dim=(224, 224), num_classes=75
+    ):
         super(MacroNet, self).__init__()
         assert structure in [
             'full',
@@ -35,33 +34,34 @@ class MacroNet(nn.Module):
                 bias=False,
             ),
             nn.BatchNorm2d(
-                self.base_channel // 2, affine=False,
-                track_running_stats=True),
-            ReLUConvBN(self.base_channel // 2, self.base_channel, 3, 2, 1, 1,
-                       True, True),
+                self.base_channel // 2, affine=False, track_running_stats=True
+            ),
+            ReLUConvBN(
+                self.base_channel // 2, self.base_channel, 3, 2, 1, 1, True, True
+            ),
         )
 
         self.layers = []
         for i, layer_type in enumerate(self.macro_code):
             layer_type = int(
-                layer_type)  # channel change: [2, 4]; stride change: [3, 4]
+                layer_type
+            )  # channel change: [2, 4]; stride change: [3, 4]
             target_channel = self.inplanes * 2 if layer_type % 2 == 0 else self.inplanes
             stride = 2 if layer_type > 2 else 1
             self.feature_dim = [
                 self.feature_dim[0] // stride,
                 self.feature_dim[1] // stride,
             ]
-            layer = self._make_layer(self.cell, target_channel, 2, stride,
-                                     True, True)
+            layer = self._make_layer(self.cell, target_channel, 2, stride, True, True)
             self.add_module(f'layer{i}', layer)
             self.layers.append(f'layer{i}')
 
         self.avgpool = (
-            nn.AdaptiveAvgPool2d(
-                (1, 1)) if structure in ['drop_last', 'full'] else None)
+            nn.AdaptiveAvgPool2d((1, 1)) if structure in ['drop_last', 'full'] else None
+        )
         self.head = (
-            nn.Linear(self.inplanes, num_classes)
-            if structure in ['full'] else None)
+            nn.Linear(self.inplanes, num_classes) if structure in ['full'] else None
+        )
 
         if structure == 'full':
             self.output_dim = (1, num_classes)
@@ -90,13 +90,9 @@ class MacroNet(nn.Module):
 
         return x
 
-    def _make_layer(self,
-                    cell,
-                    planes,
-                    num_blocks,
-                    stride=1,
-                    affine=False,
-                    track_running_stats=True):
+    def _make_layer(
+        self, cell, planes, num_blocks, stride=1, affine=False, track_running_stats=True
+    ):
         layers = [
             cell(
                 self.micro_code,
@@ -117,7 +113,8 @@ class MacroNet(nn.Module):
                     1,
                     affine,
                     track_running_stats,
-                ))
+                )
+            )
         return nn.Sequential(*layers)
 
     def _read_net_code(self, net_code):
@@ -135,8 +132,7 @@ class MacroNet(nn.Module):
         # kaiming initialization
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(
-                    m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)

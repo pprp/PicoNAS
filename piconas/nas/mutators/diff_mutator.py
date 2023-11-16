@@ -30,9 +30,8 @@ class DiffMutator(ArchitectureMutator[DiffMutable]):
         init_cfg: Optional[Dict] = None,
     ) -> None:
         super().__init__(
-            custom_group=custom_group,
-            with_alias=with_alias,
-            init_cfg=init_cfg)
+            custom_group=custom_group, with_alias=with_alias, init_cfg=init_cfg
+        )
 
     def build_arch_param(self, num_choices) -> nn.Parameter:
         """Build learnable architecture parameters."""

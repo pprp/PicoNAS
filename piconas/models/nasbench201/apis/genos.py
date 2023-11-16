@@ -20,26 +20,25 @@ def get_combination(space, num):
 
 
 class Structure:
-
     def __init__(self, genotype):
         assert isinstance(genotype, list) or isinstance(
-            genotype, tuple), 'invalid class of genotype : {:}'.format(
-                type(genotype))
+            genotype, tuple
+        ), 'invalid class of genotype : {:}'.format(type(genotype))
         self.node_num = len(genotype) + 1
         self.nodes = []
         self.node_N = []
         for idx, node_info in enumerate(genotype):
             assert isinstance(node_info, list) or isinstance(
-                node_info, tuple), 'invalid class of node_info : {:}'.format(
-                    type(node_info))
-            assert len(node_info) >= 1, 'invalid length : {:}'.format(
-                len(node_info))
+                node_info, tuple
+            ), 'invalid class of node_info : {:}'.format(type(node_info))
+            assert len(node_info) >= 1, 'invalid length : {:}'.format(len(node_info))
             for node_in in node_info:
                 assert isinstance(node_in, list) or isinstance(
-                    node_in, tuple), 'invalid class of in-node : {:}'.format(
-                        type(node_in))
-                assert (len(node_in) == 2 and node_in[1] <= idx
-                        ), 'invalid in-node : {:}'.format(node_in)
+                    node_in, tuple
+                ), 'invalid class of in-node : {:}'.format(type(node_in))
+                assert (
+                    len(node_in) == 2 and node_in[1] <= idx
+                ), 'invalid in-node : {:}'.format(node_in)
             self.node_N.append(len(node_info))
             self.nodes.append(tuple(deepcopy(node_info)))
 
@@ -58,8 +57,9 @@ class Structure:
         return genotypes, True
 
     def node(self, index):
-        assert index > 0 and index <= len(
-            self), 'invalid index={:} < {:}'.format(index, len(self))
+        assert index > 0 and index <= len(self), 'invalid index={:} < {:}'.format(
+            index, len(self)
+        )
         return self.nodes[index]
 
     def tostr(self):
@@ -118,9 +118,8 @@ class Structure:
 
     def __repr__(self):
         return '{name}({node_num} nodes with {node_info})'.format(
-            name=self.__class__.__name__,
-            node_info=self.tostr(),
-            **self.__dict__)
+            name=self.__class__.__name__, node_info=self.tostr(), **self.__dict__
+        )
 
     def __len__(self):
         return len(self.nodes) + 1
@@ -130,16 +129,17 @@ class Structure:
 
     @staticmethod
     def str2structure(xstr):
-        assert isinstance(xstr,
-                          str), 'must take string (not {:}) as input'.format(
-                              type(xstr))
+        assert isinstance(xstr, str), 'must take string (not {:}) as input'.format(
+            type(xstr)
+        )
         nodestrs = xstr.split('+')
         genotypes = []
         for i, node_str in enumerate(nodestrs):
             inputs = list(filter(lambda x: x != '', node_str.split('|')))
             for xinput in inputs:
-                assert len(xinput.split(
-                    '~')) == 2, 'invalid input length : {:}'.format(xinput)
+                assert len(xinput.split('~')) == 2, 'invalid input length : {:}'.format(
+                    xinput
+                )
             inputs = (xi.split('~') for xi in inputs)
             input_infos = tuple((op, int(IDX)) for (op, IDX) in inputs)
             genotypes.append(input_infos)
@@ -147,16 +147,17 @@ class Structure:
 
     @staticmethod
     def str2fullstructure(xstr, default_name='none'):
-        assert isinstance(xstr,
-                          str), 'must take string (not {:}) as input'.format(
-                              type(xstr))
+        assert isinstance(xstr, str), 'must take string (not {:}) as input'.format(
+            type(xstr)
+        )
         nodestrs = xstr.split('+')
         genotypes = []
         for i, node_str in enumerate(nodestrs):
             inputs = list(filter(lambda x: x != '', node_str.split('|')))
             for xinput in inputs:
-                assert len(xinput.split(
-                    '~')) == 2, 'invalid input length : {:}'.format(xinput)
+                assert len(xinput.split('~')) == 2, 'invalid input length : {:}'.format(
+                    xinput
+                )
             inputs = (xi.split('~') for xi in inputs)
             input_infos = list((op, int(IDX)) for (op, IDX) in inputs)
             all_in_nodes = list(x[1] for x in input_infos)
@@ -170,12 +171,13 @@ class Structure:
     @staticmethod
     def gen_all(search_space, num, return_ori):
         assert isinstance(search_space, list) or isinstance(
-            search_space, tuple), 'invalid class of search-space : {:}'.format(
-                type(search_space))
+            search_space, tuple
+        ), 'invalid class of search-space : {:}'.format(type(search_space))
         assert (
             num >= 2
         ), 'There should be at least two nodes in a neural cell instead of {:}'.format(
-            num)
+            num
+        )
         all_archs = get_combination(search_space, 1)
         for i, arch in enumerate(all_archs):
             all_archs[i] = [tuple(arch)]
@@ -193,67 +195,72 @@ class Structure:
             return [Structure(x) for x in all_archs]
 
 
-ResNet_CODE = Structure([
-    (('nor_conv_3x3', 0), ),  # node-1
-    (('nor_conv_3x3', 1), ),  # node-2
-    (('skip_connect', 0), ('skip_connect', 2)),
-]  # node-3
-                        )
+ResNet_CODE = Structure(
+    [
+        (('nor_conv_3x3', 0),),  # node-1
+        (('nor_conv_3x3', 1),),  # node-2
+        (('skip_connect', 0), ('skip_connect', 2)),
+    ]  # node-3
+)
 
-AllConv3x3_CODE = Structure([
-    (('nor_conv_3x3', 0), ),  # node-1
-    (('nor_conv_3x3', 0), ('nor_conv_3x3', 1)),  # node-2
-    (('nor_conv_3x3', 0), ('nor_conv_3x3', 1), ('nor_conv_3x3', 2)),
-]  # node-3
-                            )
+AllConv3x3_CODE = Structure(
+    [
+        (('nor_conv_3x3', 0),),  # node-1
+        (('nor_conv_3x3', 0), ('nor_conv_3x3', 1)),  # node-2
+        (('nor_conv_3x3', 0), ('nor_conv_3x3', 1), ('nor_conv_3x3', 2)),
+    ]  # node-3
+)
 
-AllFull_CODE = Structure([
-    (
-        ('skip_connect', 0),
-        ('nor_conv_1x1', 0),
-        ('nor_conv_3x3', 0),
-        ('avg_pool_3x3', 0),
-    ),  # node-1
-    (
-        ('skip_connect', 0),
-        ('nor_conv_1x1', 0),
-        ('nor_conv_3x3', 0),
-        ('avg_pool_3x3', 0),
-        ('skip_connect', 1),
-        ('nor_conv_1x1', 1),
-        ('nor_conv_3x3', 1),
-        ('avg_pool_3x3', 1),
-    ),  # node-2
-    (
-        ('skip_connect', 0),
-        ('nor_conv_1x1', 0),
-        ('nor_conv_3x3', 0),
-        ('avg_pool_3x3', 0),
-        ('skip_connect', 1),
-        ('nor_conv_1x1', 1),
-        ('nor_conv_3x3', 1),
-        ('avg_pool_3x3', 1),
-        ('skip_connect', 2),
-        ('nor_conv_1x1', 2),
-        ('nor_conv_3x3', 2),
-        ('avg_pool_3x3', 2),
-    ),
-]  # node-3
-                         )
+AllFull_CODE = Structure(
+    [
+        (
+            ('skip_connect', 0),
+            ('nor_conv_1x1', 0),
+            ('nor_conv_3x3', 0),
+            ('avg_pool_3x3', 0),
+        ),  # node-1
+        (
+            ('skip_connect', 0),
+            ('nor_conv_1x1', 0),
+            ('nor_conv_3x3', 0),
+            ('avg_pool_3x3', 0),
+            ('skip_connect', 1),
+            ('nor_conv_1x1', 1),
+            ('nor_conv_3x3', 1),
+            ('avg_pool_3x3', 1),
+        ),  # node-2
+        (
+            ('skip_connect', 0),
+            ('nor_conv_1x1', 0),
+            ('nor_conv_3x3', 0),
+            ('avg_pool_3x3', 0),
+            ('skip_connect', 1),
+            ('nor_conv_1x1', 1),
+            ('nor_conv_3x3', 1),
+            ('avg_pool_3x3', 1),
+            ('skip_connect', 2),
+            ('nor_conv_1x1', 2),
+            ('nor_conv_3x3', 2),
+            ('avg_pool_3x3', 2),
+        ),
+    ]  # node-3
+)
 
-AllConv1x1_CODE = Structure([
-    (('nor_conv_1x1', 0), ),  # node-1
-    (('nor_conv_1x1', 0), ('nor_conv_1x1', 1)),  # node-2
-    (('nor_conv_1x1', 0), ('nor_conv_1x1', 1), ('nor_conv_1x1', 2)),
-]  # node-3
-                            )
+AllConv1x1_CODE = Structure(
+    [
+        (('nor_conv_1x1', 0),),  # node-1
+        (('nor_conv_1x1', 0), ('nor_conv_1x1', 1)),  # node-2
+        (('nor_conv_1x1', 0), ('nor_conv_1x1', 1), ('nor_conv_1x1', 2)),
+    ]  # node-3
+)
 
-AllIdentity_CODE = Structure([
-    (('skip_connect', 0), ),  # node-1
-    (('skip_connect', 0), ('skip_connect', 1)),  # node-2
-    (('skip_connect', 0), ('skip_connect', 1), ('skip_connect', 2)),
-]  # node-3
-                             )
+AllIdentity_CODE = Structure(
+    [
+        (('skip_connect', 0),),  # node-1
+        (('skip_connect', 0), ('skip_connect', 1)),  # node-2
+        (('skip_connect', 0), ('skip_connect', 1), ('skip_connect', 2)),
+    ]  # node-3
+)
 
 architectures = {
     'resnet': ResNet_CODE,

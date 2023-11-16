@@ -16,8 +16,7 @@ b = [
 
 fig, axes = plt.subplots(1, 1, figsize=(10, 8))
 df = pd.DataFrame(np.array(a).T, columns=['resnet20', 'resnet32', 'resnet56'])
-color = dict(
-    boxes='DarkGreen', whiskers='DarkOrange', medians='DarkBlue', caps='Gray')
+color = dict(boxes='DarkGreen', whiskers='DarkOrange', medians='DarkBlue', caps='Gray')
 # 箱型图着色
 # boxes → 箱线
 # whiskers → 分位数与error bar横线之间竖线的颜色

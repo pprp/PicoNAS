@@ -7,8 +7,7 @@ from piconas.predictor.pinat.model_factory import create_best_nb201_model
 # build predictor model
 predictor_m = create_best_nb201_model()
 ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
-predictor_m.load_state_dict(
-    torch.load(ckpt_dir, map_location=torch.device('cpu')))
+predictor_m.load_state_dict(torch.load(ckpt_dir, map_location=torch.device('cpu')))
 
 # build dataset for nb201. Test set encompass all the architectures in the search space
 test_set = Nb201DatasetPINAT(split='all', data_type='test', data_set='cifar10')
@@ -19,8 +18,7 @@ input = test_set.get_batch(ss_index)
 
 key_list = ['num_vertices', 'lapla', 'edge_num', 'features', 'zcp_layerwise']
 input['edge_index_list'] = [input['edge_index_list']]
-input['operations'] = torch.tensor(
-    input['operations']).unsqueeze(0).unsqueeze(0)
+input['operations'] = torch.tensor(input['operations']).unsqueeze(0).unsqueeze(0)
 
 for _key in key_list:
     if isinstance(input[_key], (list, float, int)):
@@ -32,8 +30,7 @@ for _key in key_list:
     elif isinstance(input[_key], torch.Tensor):
         input[_key] = torch.unsqueeze(input[_key], dim=0)
     else:
-        raise NotImplementedError(
-            f'key: {_key} is not list, is a {type(input[_key])}')
+        raise NotImplementedError(f'key: {_key} is not list, is a {type(input[_key])}')
     input[_key] = input[_key]
 score = predictor_m(input)
 

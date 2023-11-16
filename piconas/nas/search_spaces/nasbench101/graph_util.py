@@ -65,7 +65,7 @@ def is_full_dag(matrix):
     """
     shape = np.shape(matrix)
 
-    rows = matrix[:shape[0] - 1, :] == 0
+    rows = matrix[: shape[0] - 1, :] == 0
     rows = np.all(rows, axis=1)  # Any row with all 0 will be True
     rows_bad = np.any(rows)
 
@@ -103,13 +103,18 @@ def hash_module(matrix, labeling):
         new_hashes = []
         for v in range(vertices):
             in_neighbors = [hashes[w] for w in range(vertices) if matrix[w, v]]
-            out_neighbors = [
-                hashes[w] for w in range(vertices) if matrix[v, w]
-            ]
+            out_neighbors = [hashes[w] for w in range(vertices) if matrix[v, w]]
             new_hashes.append(
-                hashlib.md5((''.join(sorted(in_neighbors)) + '|' +
-                             ''.join(sorted(out_neighbors)) + '|' +
-                             hashes[v]).encode('utf-8')).hexdigest())
+                hashlib.md5(
+                    (
+                        ''.join(sorted(in_neighbors))
+                        + '|'
+                        + ''.join(sorted(out_neighbors))
+                        + '|'
+                        + hashes[v]
+                    ).encode('utf-8')
+                ).hexdigest()
+            )
         hashes = new_hashes
     fingerprint = hashlib.md5(str(sorted(hashes)).encode('utf-8')).hexdigest()
 
@@ -130,7 +135,8 @@ def permute_graph(graph, label, permutation):
     inverse_perm = [x[1] for x in sorted(forward_perm)]
     edge_fn = lambda x, y: graph[inverse_perm[x], inverse_perm[y]] == 1
     new_matrix = np.fromfunction(
-        np.vectorize(edge_fn), (len(label), len(label)), dtype=np.int8)
+        np.vectorize(edge_fn), (len(label), len(label)), dtype=np.int8
+    )
     new_label = [label[inverse_perm[i]] for i in range(len(label))]
     return new_matrix, new_label
 

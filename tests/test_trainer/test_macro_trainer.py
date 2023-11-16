@@ -6,9 +6,7 @@ from piconas.trainer import MacroTrainer
 
 
 class TestMacroTrainer(TestCase):
-
     def test_get_subnet_flops(self):
-
         model = MacroBenchmarkSuperNet()
 
         trainer = MacroTrainer(

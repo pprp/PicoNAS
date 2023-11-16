@@ -24,7 +24,8 @@ def fair_random_op_encoding(num_of_ops, layers):
     encodings = np.zeros((layers, num_of_ops), dtype=np.int8)
     for i in range(layers):
         encodings[:][i] = np.random.choice(
-            np.arange(0, num_of_ops), size=num_of_ops, replace=False)
+            np.arange(0, num_of_ops), size=num_of_ops, replace=False
+        )
     return encodings.T.tolist()
 
 
@@ -43,7 +44,6 @@ def all_op_encoding(num_of_ops, layers):
 
 
 class MixOps(nn.Module):
-
     def __init__(
         self,
         inc,
@@ -61,8 +61,7 @@ class MixOps(nn.Module):
             downsample_layers = []
             if stride == 2:
                 downsample_layers += [
-                    nn.AvgPool2d(
-                        2, 2, ceil_mode=True, count_include_pad=False)
+                    nn.AvgPool2d(2, 2, ceil_mode=True, count_include_pad=False)
                 ]
             if inc != outc:
                 downsample_layers += [
@@ -79,20 +78,18 @@ class MixOps(nn.Module):
 
         if to_dispatch:
             if PRIMITIVES[init_op_index].endswith('_dual'):
-                self._mix_ops.append(OPS[PRIMITIVES[init_op_index]](
-                    inc, outc, stride, hidden_outc))
+                self._mix_ops.append(
+                    OPS[PRIMITIVES[init_op_index]](inc, outc, stride, hidden_outc)
+                )
             else:
-                self._mix_ops.append(OPS[PRIMITIVES[init_op_index]](inc, outc,
-                                                                    stride))
+                self._mix_ops.append(OPS[PRIMITIVES[init_op_index]](inc, outc, stride))
 
         else:
             for i, prim in enumerate(PRIMITIVES):
                 if prim.endswith('_dual'):
-                    self._mix_ops.append(OPS[prim](inc, outc, stride,
-                                                   hidden_outc))
+                    self._mix_ops.append(OPS[prim](inc, outc, stride, hidden_outc))
                 else:
-                    self._mix_ops.append(OPS[prim](inc, outc, stride,
-                                                   downsamples[i]))
+                    self._mix_ops.append(OPS[prim](inc, outc, stride, downsamples[i]))
 
     def forward(self, x, forward_index=0):
         # Single-path
@@ -100,7 +97,6 @@ class MixOps(nn.Module):
 
 
 class Block(nn.Module):
-
     def __init__(
         self,
         inc,
@@ -112,13 +108,15 @@ class Block(nn.Module):
         init_op_list=None,
     ):
         super(Block, self).__init__()
-        init_op_list = (init_op_list if init_op_list is not None else [None] *
-                        layers)  # to_dispatch
+        init_op_list = (
+            init_op_list if init_op_list is not None else [None] * layers
+        )  # to_dispatch
         self._block_layers = nn.ModuleList()
         # TODO:
         if layers == 1:
             self._block_layers.append(
-                MixOps(inc, outc, stride, to_dispatch, init_op_list[0]))
+                MixOps(inc, outc, stride, to_dispatch, init_op_list[0])
+            )
         else:
             for i in range(layers):
                 if i == 0:
@@ -130,7 +128,8 @@ class Block(nn.Module):
                             to_dispatch,
                             init_op_list[i],
                             hidden_outc=hidden_outc,
-                        ))
+                        )
+                    )
                 elif i == layers - 1:
                     self._block_layers.append(
                         MixOps(
@@ -140,7 +139,8 @@ class Block(nn.Module):
                             to_dispatch,
                             init_op_list[i],
                             hidden_outc=hidden_outc,
-                        ))
+                        )
+                    )
                 else:
                     self._block_layers.append(
                         MixOps(
@@ -150,7 +150,8 @@ class Block(nn.Module):
                             to_dispatch,
                             init_op_list[i],
                             hidden_outc=hidden_outc,
-                        ))
+                        )
+                    )
 
     def forward(self, x, forwad_list=None):
         assert len(forwad_list) == len(self._block_layers)
@@ -164,11 +165,7 @@ class Block(nn.Module):
 
 @register_model
 class SupernetMBConv(nn.Module):
-
-    def __init__(self,
-                 to_dispatch=False,
-                 init_op_list=None,
-                 block_layers_num=None):
+    def __init__(self, to_dispatch=False, init_op_list=None, block_layers_num=None):
         super(SupernetMBConv, self).__init__()
         #  hidden_outc / outc /stride / layers
         self.block_cfgs = [
@@ -188,10 +185,13 @@ class SupernetMBConv(nn.Module):
         self._to_dis = to_dispatch
         self._op_layers_list = [cfg[-1] for cfg in self.block_cfgs]
         self._init_op_list = (
-            init_op_list if init_op_list is not None else [None] *
-            sum(self._op_layers_list))  # dispatch params
-        self._stem = nn.Sequential(OPS['Conv3x3_BN_swish'](3, 32, 2),
-                                   OPS['MB1_3x3_se0.25'](32, 16, 1))
+            init_op_list
+            if init_op_list is not None
+            else [None] * sum(self._op_layers_list)
+        )  # dispatch params
+        self._stem = nn.Sequential(
+            OPS['Conv3x3_BN_swish'](3, 32, 2), OPS['MB1_3x3_se0.25'](32, 16, 1)
+        )
         self._make_block(self.block_cfgs)
         self._num_of_ops = len(PRIMITIVES)
 
@@ -216,10 +216,11 @@ class SupernetMBConv(nn.Module):
                     stride,
                     layers,
                     to_dispatch=self._to_dis,
-                    init_op_list=self.
-                    _init_op_list[block_layer_index:block_layer_index +
-                                  layers],
-                ))
+                    init_op_list=self._init_op_list[
+                        block_layer_index : block_layer_index + layers
+                    ],
+                )
+            )
             inc = outc
             block_layer_index += layers
 
@@ -227,7 +228,7 @@ class SupernetMBConv(nn.Module):
         if start_block == 0:
             x = self._stem(x)
         for i, block in enumerate(self._blocks):
-            if (i < start_block):
+            if i < start_block:
                 # if start_block = 1 , forward will skip the block 0 and 1
                 continue
             if block_op:
@@ -235,8 +236,11 @@ class SupernetMBConv(nn.Module):
             else:
                 x = block(
                     x,
-                    forward_op[sum(self._op_layers_list[:i]
-                                   ):sum(self._op_layers_list[:(i + 1)])],
+                    forward_op[
+                        sum(self._op_layers_list[:i]) : sum(
+                            self._op_layers_list[: (i + 1)]
+                        )
+                    ],
                 )
             break
         self.visualize_feature = x
@@ -252,18 +256,20 @@ class SupernetMBConv(nn.Module):
             forward_op = np.zeros(sum(self._op_layers_list), dtype=int)
         elif method == 'uni':
             forward_op = uniform_random_op_encoding(
-                num_of_ops=self._num_of_ops, layers=sum(self._op_layers_list))
+                num_of_ops=self._num_of_ops, layers=sum(self._op_layers_list)
+            )
         elif method == 'fair':
             forward_op = fair_random_op_encoding(
-                num_of_ops=self._num_of_ops, layers=sum(self._op_layers_list))
+                num_of_ops=self._num_of_ops, layers=sum(self._op_layers_list)
+            )
         else:
             raise NotImplementedError
         return forward_op
 
     def get_all_path(self, start_block):
         return all_op_encoding(
-            num_of_ops=self._num_of_ops,
-            layers=self._op_layers_list[start_block])
+            num_of_ops=self._num_of_ops, layers=self._op_layers_list[start_block]
+        )
 
     def reset_params(self):
         self.apply(reset)

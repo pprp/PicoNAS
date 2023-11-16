@@ -18,9 +18,7 @@ _measure_impls = {}
 
 
 def measure(name, bn=True, copy_net=True, force_clean=True, **impl_args):
-
     def make_impl(func):
-
         def measure_impl(net_orig, device, *args, **kwargs):
             if copy_net:
                 net = net_orig.get_prunable_copy(bn=bn).to(device)

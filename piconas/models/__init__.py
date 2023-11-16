@@ -14,10 +14,24 @@ from .spos import SearchableMobileNet  # noqa: F401
 from .spos import SearchableMAE, SearchableShuffleNetV2  # noqa: F401
 
 __all__ = [
-    'MAE_ViT', 'ViT_Classifier', 'MacroBenchmarkSuperNet',
-    'SearchableShuffleNetV2', 'DiffNASBench201Network',
-    'OneShotNASBench201Network', 'SearchableMobileNet', 'SearchableMAE',
-    'BNNAS', 'OneShotNASBench101Network', 'SupernetNATS', 'MAESupernetNATS',
-    'build_model', 'OneShotNASBench301Network', 'DiffNASBench301Network',
-    'AnyNet', 'NetworkCIFAR', 'NetworkImageNet', 'resnet20', 'resnet56'
+    'MAE_ViT',
+    'ViT_Classifier',
+    'MacroBenchmarkSuperNet',
+    'SearchableShuffleNetV2',
+    'DiffNASBench201Network',
+    'OneShotNASBench201Network',
+    'SearchableMobileNet',
+    'SearchableMAE',
+    'BNNAS',
+    'OneShotNASBench101Network',
+    'SupernetNATS',
+    'MAESupernetNATS',
+    'build_model',
+    'OneShotNASBench301Network',
+    'DiffNASBench301Network',
+    'AnyNet',
+    'NetworkCIFAR',
+    'NetworkImageNet',
+    'resnet20',
+    'resnet56',
 ]

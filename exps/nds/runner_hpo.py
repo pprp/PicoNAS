@@ -16,8 +16,7 @@ from exps.mq_bench_101.parzc import BaysianMLPMixer
 from exps.nds.zc_dataset import ZcDataset
 from piconas.core.losses.diffkd import diffkendall
 from piconas.core.losses.pair_loss import pair_loss
-from piconas.utils.rank_consistency import (kendalltau, pearson, spearman,
-                                            spearman_top_k)
+from piconas.utils.rank_consistency import kendalltau, pearson, spearman, spearman_top_k
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--search_space', type=str, default='Amoeba')
@@ -25,7 +24,9 @@ args = parser.parse_args()
 
 SEARCH_SPACE = {'Amoeba', 'DARTS', 'ENAS', 'NASNet', 'PNAS'}
 
-assert args.search_space in SEARCH_SPACE, f'args.search_space: {args.search_space} not in {SEARCH_SPACE}'
+assert (
+    args.search_space in SEARCH_SPACE
+), f'args.search_space: {args.search_space} not in {SEARCH_SPACE}'
 
 # Create a log directory if it doesn't exist
 log_dir = './logdir/nds'
@@ -34,12 +35,13 @@ os.makedirs(log_dir, exist_ok=True)
 # Set up logging to save logs to './logdir'
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
-    filename=os.path.join(log_dir,
-                          f'training_hpo_NDS_{args.search_space}_NDSKD.log'
-                          ),  # Save logs to a file
+    filename=os.path.join(
+        log_dir, f'training_hpo_NDS_{args.search_space}_NDSKD.log'
+    ),  # Save logs to a file
     level=logging.INFO,
     format=log_format,
-    datefmt='%m/%d %I:%M:%S %p')
+    datefmt='%m/%d %I:%M:%S %p',
+)
 
 # Create a console handler to print logs to the console
 console_handler = logging.StreamHandler(sys.stdout)
@@ -56,8 +58,9 @@ def objective(trial):
     # Sample hyperparameters to optimize
     patch_size = 16
     max_sequence_length = 4096  # Maximum sequence length
-    sequence_length = trial.suggest_int('sequence_length', patch_size,
-                                        max_sequence_length)
+    sequence_length = trial.suggest_int(
+        'sequence_length', patch_size, max_sequence_length
+    )
     # Ensure sequence_length is divisible by patch_size
     sequence_length -= sequence_length % patch_size
     dim = trial.suggest_int('dim', 256, 4096)
@@ -74,13 +77,12 @@ def objective(trial):
     train_size = int(0.9 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = torch.utils.data.random_split(
-        dataset, [train_size, test_size])
+        dataset, [train_size, test_size]
+    )
 
     # Create data loaders for batch processing
-    train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(
-        test_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     if args.search_space == 'Amoeba':
         input_dim = 2832
@@ -103,7 +105,8 @@ def objective(trial):
         emb_out_dim=1,
         expansion_factor=4,
         expansion_factor_token=0.5,
-        dropout=dropout)
+        dropout=dropout,
+    )
 
     loss_function = pair_loss
     optimizer = optim.Adam(mlp_model.parameters(), lr=learning_rate)
@@ -127,8 +130,7 @@ def objective(trial):
             optimizer.step()
 
         if (epoch + 1) % 2 == 0:
-            logging.info(
-                f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+            logging.info(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
     logging.info('Training completed!')
 

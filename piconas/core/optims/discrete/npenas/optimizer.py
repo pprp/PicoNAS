@@ -6,12 +6,15 @@ import numpy as np
 import torch
 
 from piconas.core.optims.core.metaclasses import MetaOptimizer
-from piconas.core.optims.discrete.bananas.acquisition_functions import \
-    acquisition_function
+from piconas.core.optims.discrete.bananas.acquisition_functions import (
+    acquisition_function,
+)
 from piconas.datasets import build_dataloader
 from piconas.nas.search_spaces.core.query_metrics import Metric
 from piconas.nas.search_spaces.nasbench101.conversions import (
-    convert_spec_to_tuple, convert_tuple_to_spec)
+    convert_spec_to_tuple,
+    convert_tuple_to_spec,
+)
 from piconas.predictor import ZeroCost
 from piconas.predictor.ensemble import Ensemble
 from piconas.predictor.utils.encodings import encode_spec
@@ -21,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 
 class Npenas(MetaOptimizer):
-
     # training the models is not implemented
     using_step_function = False
 
@@ -58,8 +60,9 @@ class Npenas(MetaOptimizer):
         self.zc_api = zc_api
 
     def adapt_search_space(self, search_space, scope=None, dataset_api=None):
-        assert (search_space.QUERYABLE
-                ), 'Npenas is currently only implemented for benchmarks.'
+        assert (
+            search_space.QUERYABLE
+        ), 'Npenas is currently only implemented for benchmarks.'
 
         self.search_space = search_space.clone()
         self.scope = scope if scope else search_space.OPTIMIZER_SCOPE
@@ -87,14 +90,13 @@ class Npenas(MetaOptimizer):
         return zc_scores
 
     def new_epoch(self, epoch):
-
         if epoch < self.num_init:
             # randomly sample initial architectures
             model = torch.nn.Module()
             # model.ss = self.search_space.clone()
             self.search_space.sample_random_architecture(
-                dataset_api=self.dataset_api,
-                load_labeled=self.sample_from_zc_api)
+                dataset_api=self.dataset_api, load_labeled=self.sample_from_zc_api
+            )
 
             model.arch_hash = self.search_space.get_hash()
             model.arch = encode_spec(
@@ -105,9 +107,9 @@ class Npenas(MetaOptimizer):
             model.accuracy = self.zc_api[str(model.arch_hash)]['val_accuracy']
 
             if self.zc and len(self.train_data) <= self.max_zerocost:
-                model.zc_scores = self.query_zc_scores(model.arch_hash,
-                                                       self.zc_names,
-                                                       self.zc_api)
+                model.zc_scores = self.query_zc_scores(
+                    model.arch_hash, self.zc_names, self.zc_api
+                )
 
             self.train_data.append(model)
             self._update_history(model)
@@ -129,8 +131,7 @@ class Npenas(MetaOptimizer):
                 if self.zc and len(self.train_data) <= self.max_zerocost:
                     # pass the zero-cost scores to the predictor
                     train_info = {
-                        'zero_cost_scores':
-                        [m.zc_scores for m in self.train_data]
+                        'zero_cost_scores': [m.zc_scores for m in self.train_data]
                     }
                     ensemble.set_pre_computations(xtrain_zc_info=train_info)
 
@@ -138,23 +139,21 @@ class Npenas(MetaOptimizer):
 
                 # define an acquisition function
                 acq_fn = acquisition_function(
-                    ensemble=ensemble, ytrain=None, acq_fn_type='exploit_only')
+                    ensemble=ensemble, ytrain=None, acq_fn_type='exploit_only'
+                )
 
                 # optimize the acquisition function to output k new architectures
                 candidates = []
                 zc_scores = []
 
                 # mutate the k best architectures by x
-                best_arch_indices = np.argsort(
-                    ytrain)[-self.num_arches_to_mutate:]
-                best_arches = [
-                    self.train_data[i].arch_hash for i in best_arch_indices
-                ]
+                best_arch_indices = np.argsort(ytrain)[-self.num_arches_to_mutate :]
+                best_arches = [self.train_data[i].arch_hash for i in best_arch_indices]
                 candidates = []
                 for arch in best_arches:
                     for _ in range(
-                            int(self.num_candidates / len(best_arches) /
-                                self.max_mutations)):
+                        int(self.num_candidates / len(best_arches) / self.max_mutations)
+                    ):
                         candidate = torch.nn.Module()
                         current_hash = copy.deepcopy(arch)
                         for edit in range(int(self.max_mutations)):
@@ -164,7 +163,8 @@ class Npenas(MetaOptimizer):
                             candidate = arch
                             """
                             new_arch_hash = self.mutate_arch(
-                                current_hash, dataset_api=self.dataset_api)
+                                current_hash, dataset_api=self.dataset_api
+                            )
                             current_hash = new_arch_hash
 
                         candidate.arch_hash = current_hash
@@ -173,33 +173,34 @@ class Npenas(MetaOptimizer):
                             encoding_type='adjacency_one_hot',
                             ss_type=self.search_space.get_type(),
                         )
-                        candidate.accuracy = self.zc_api[str(
-                            candidate.arch_hash)]['val_accuracy']
+                        candidate.accuracy = self.zc_api[str(candidate.arch_hash)][
+                            'val_accuracy'
+                        ]
                         candidates.append(candidate)
 
                 if self.zc:
                     for model in candidates:
                         model.zc_scores = self.query_zc_scores(
-                            model.arch_hash, self.zc_names, self.zc_api)
+                            model.arch_hash, self.zc_names, self.zc_api
+                        )
 
                     values = [
-                        acq_fn(model.arch, [{
-                            'zero_cost_scores': model.zc_scores
-                        }]) for model in candidates
+                        acq_fn(model.arch, [{'zero_cost_scores': model.zc_scores}])
+                        for model in candidates
                     ]
                 else:
                     values = [acq_fn(model.arch) for model in candidates]
                 sorted_indices = np.argsort(values)
-                choices = [candidates[i] for i in sorted_indices[-self.k:]]
+                choices = [candidates[i] for i in sorted_indices[-self.k :]]
                 self.next_batch = [*choices]
 
             # train the next architecture chosen by the neural predictor
             model = self.next_batch.pop()
             model.accuracy = self.zc_api[str(model.arch_hash)]['val_accuracy']
             if self.zc and len(self.train_data) <= self.max_zerocost:
-                model.zc_scores = self.query_zc_scores(model.arch_hash,
-                                                       self.zc_names,
-                                                       self.zc_api)
+                model.zc_scores = self.query_zc_scores(
+                    model.arch_hash, self.zc_names, self.zc_api
+                )
 
             self._update_history(model)
             self.train_data.append(model)
@@ -255,9 +256,7 @@ class Npenas(MetaOptimizer):
 
             op_indices = list(arch_hash)
             edge = np.random.choice(len(arch_hash))
-            available = [
-                o for o in range(len(OP_NAMES)) if o != arch_hash[edge]
-            ]
+            available = [o for o in range(len(OP_NAMES)) if o != arch_hash[edge]]
             op_index = np.random.choice(available)
             op_indices[edge] = op_index
 
@@ -283,20 +282,14 @@ class Npenas(MetaOptimizer):
                                 new_matrix[src][dst] = 1 - new_matrix[src][dst]
                     for ind in range(1, NUM_VERTICES - 1):
                         if np.random.random() < 1 / len(OPS):
-                            available = [
-                                op for op in OPS if op != new_ops[ind]
-                            ]
+                            available = [op for op in OPS if op != new_ops[ind]]
                             new_ops[ind] = np.random.choice(available)
 
-                    new_spec = dataset_api['api'].ModelSpec(
-                        new_matrix, new_ops)
+                    new_spec = dataset_api['api'].ModelSpec(new_matrix, new_ops)
                     if dataset_api['nb101_data'].is_valid(new_spec):
                         break
 
-            return convert_spec_to_tuple({
-                'matrix': new_matrix,
-                'ops': new_ops
-            })
+            return convert_spec_to_tuple({'matrix': new_matrix, 'ops': new_ops})
 
         elif self.search_space.get_type() == 'nasbench301':
             # mutate function doesn't exist? search space is too big
@@ -307,9 +300,7 @@ class Npenas(MetaOptimizer):
 
             op_indices = list(arch_hash)
             edge = np.random.choice(len(arch_hash))
-            available = [
-                o for o in range(len(OP_NAMES)) if o != arch_hash[edge]
-            ]
+            available = [o for o in range(len(OP_NAMES)) if o != arch_hash[edge]]
             op_index = np.random.choice(available)
             op_indices[edge] = op_index
 

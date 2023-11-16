@@ -30,10 +30,9 @@ class NB201Shrinker(object):
         trainer (_type_): _description_
     """
 
-    def __init__(self,
-                 trainer: BaseTrainer,
-                 sample_num: int = 200,
-                 per_stage_drop_num: int = 1):
+    def __init__(
+        self, trainer: BaseTrainer, sample_num: int = 200, per_stage_drop_num: int = 1
+    ):
         self.trainer = trainer
         self.mutator = trainer.mutator
         self.sample_num = sample_num
@@ -43,8 +42,7 @@ class NB201Shrinker(object):
         """each operator is ranked according to its metric score."""
 
         # sort by
-        extend_operators.sort(
-            key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
+        extend_operators.sort(key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
         # drop operators whose ranking fall at the tail.
         num = 0
@@ -84,8 +82,7 @@ class NB201Shrinker(object):
         """each operator is ranked according to its metric score."""
 
         # sort by
-        extend_operators.sort(
-            key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
+        extend_operators.sort(key=lambda x: vis_dict_slice[x]['metric'], reverse=False)
 
         # drop operators whose ranking fall at the tail.
         num, drop_ops = 0, []
@@ -117,8 +114,9 @@ class NB201Shrinker(object):
                 break
         return drop_ops
 
-    def compute_score(self, extend_operators, vis_dict_slice, vis_dict,
-                      train_loader, val_loader):
+    def compute_score(
+        self, extend_operators, vis_dict_slice, vis_dict, train_loader, val_loader
+    ):
         """
         1. Random sample `num` of architectures extended by some operators.
         2. Compute metrics of all candidate architectures.
@@ -131,8 +129,7 @@ class NB201Shrinker(object):
             info = vis_dict_slice[operator]
             if self.sample_num - len(info['cand_pool']) > 0:
                 num = self.sample_num - len(info['cand_pool'])
-                candidate_subnets = self.get_random_extend(
-                    num, operator, vis_dict)
+                candidate_subnets = self.get_random_extend(num, operator, vis_dict)
 
                 for subnet in candidate_subnets:
                     for id, choice in subnet.items():
@@ -150,7 +147,8 @@ class NB201Shrinker(object):
             # info['metric'] = self.trainer.get_subnet_nwot(subnet)
             # info['metric'] = self.trainer.get_subnet_flops(subnet)
             info['metric'] = self.trainer.get_subnet_acc(
-                subnet, train_loader, val_loader)
+                subnet, train_loader, val_loader
+            )
 
         # step 3: calculate sum of angles for each operator
         for subnet in candidates:
@@ -159,19 +157,19 @@ class NB201Shrinker(object):
                 extend_operator_ = (id, choice)
                 if extend_operator_ in vis_dict_slice:
                     slice_info = vis_dict_slice[extend_operator_]
-                    if subnet in slice_info['cand_pool'] and slice_info[
-                            'count'] < self.sample_num:
+                    if (
+                        subnet in slice_info['cand_pool']
+                        and slice_info['count'] < self.sample_num
+                    ):
                         slice_info['metric'] += info['metric']
                         slice_info['count'] += 1
 
         # step 4: compute scores of all candidate operators
         for operator in extend_operators:
             if vis_dict_slice[operator]['count'] > 0:
-                vis_dict_slice[operator]['metric'] /= vis_dict_slice[operator][
-                    'count']
+                vis_dict_slice[operator]['metric'] /= vis_dict_slice[operator]['count']
 
     def get_random_extend(self, num: int, operator: Tuple[int, str], vis_dict):
-
         def get_extend_subnet(operator):
             """Here we do not consider for skip connection as anglenas."""
             id, choice = operator
@@ -232,8 +230,9 @@ class NB201Shrinker(object):
                 vis_dict_slice[operator]['cand_pool'] = []
                 extend_operators.append(operator)
 
-        self.compute_score(extend_operators, vis_dict_slice, vis_dict,
-                           train_loader, val_loader)
+        self.compute_score(
+            extend_operators, vis_dict_slice, vis_dict, train_loader, val_loader
+        )
         drop_ops = self.drop_operator(extend_operators, vis_dict_slice)
         self.trainer.logger.info(f'drop ops: {drop_ops}')
 
@@ -256,8 +255,9 @@ class NB201Shrinker(object):
                 vis_dict_slice[operator]['cand_pool'] = []
                 extend_operators.append(operator)
 
-        self.compute_score(extend_operators, vis_dict_slice, vis_dict,
-                           train_loader, val_loader)
+        self.compute_score(
+            extend_operators, vis_dict_slice, vis_dict, train_loader, val_loader
+        )
         expand_ops = self.expand_operator(extend_operators, vis_dict_slice)
         self.trainer.logger.info(f'expand ops: {expand_ops}')
 
@@ -302,7 +302,8 @@ class NB201ShrinkTrainer(BaseTrainer):
             log_name=log_name,
             searching=searching,
             dataset=dataset,
-            **kwargs)
+            **kwargs,
+        )
 
         # init flops
         self._init_flops()
@@ -313,8 +314,7 @@ class NB201ShrinkTrainer(BaseTrainer):
             self.mutator.prepare_from_supernet(model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(
-            num_sample=1000, dataset=self.dataset)
+        self.evaluator = self._build_evaluator(num_sample=1000, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -333,7 +333,7 @@ class NB201ShrinkTrainer(BaseTrainer):
             2: 'nor_conv_3x3',
             3: 'nor_conv_3x3',
             4: 'nor_conv_3x3',
-            5: 'nor_conv_3x3'
+            5: 'nor_conv_3x3',
         }
 
         self.min_subnet = {
@@ -342,27 +342,34 @@ class NB201ShrinkTrainer(BaseTrainer):
             2: 'skip_connect',
             3: 'skip_connect',
             4: 'skip_connect',
-            5: 'skip_connect'
+            5: 'skip_connect',
         }
 
         # type from kwargs can be random, hamming, adaptive
         if 'type' in kwargs:
             self.type = kwargs['type']
             assert self.type in {
-                'random', 'hamming', 'adaptive', 'uniform', 'fair', 'sandwich',
-                'zenscore', 'flops', 'params', 'nwot'
+                'random',
+                'hamming',
+                'adaptive',
+                'uniform',
+                'fair',
+                'sandwich',
+                'zenscore',
+                'flops',
+                'params',
+                'nwot',
             }
         else:
             self.type = None
         self.logger.info(f'Current type of nb201 trainer is: {self.type}.')
 
         self.shrinker = NB201Shrinker(self)
-        self.expand_times = kwargs[
-            'expand_times'] if 'expand_times' in kwargs else 6
-        self.shrink_times = kwargs[
-            'shrink_times'] if 'shrink_times' in kwargs else 3
-        self.every_n_epochs = kwargs[
-            'every_n_epochs'] if 'every_n_epochs' in kwargs else 5
+        self.expand_times = kwargs['expand_times'] if 'expand_times' in kwargs else 6
+        self.shrink_times = kwargs['shrink_times'] if 'shrink_times' in kwargs else 3
+        self.every_n_epochs = (
+            kwargs['every_n_epochs'] if 'every_n_epochs' in kwargs else 5
+        )
 
         self.kl_loss = KLDivergence(loss_weight=1)
 
@@ -431,17 +438,16 @@ class NB201ShrinkTrainer(BaseTrainer):
             subnet2 = self.mutator.random_subnet
 
             # 调参，调大或者调小 (1) 6.7 (2) 5 (3) 11
-            while adaptive_hamming_dist(subnet1,
-                                        subnet2) < 6.7 and max_iter > 0:
+            while adaptive_hamming_dist(subnet1, subnet2) < 6.7 and max_iter > 0:
                 subnet2 = self.mutator.random_subnet
             if max_iter > 0:
                 return subnet1, subnet2
             else:
                 return subnet1, self.mutator.random_subnet
 
-    def sample_subnet_by_policy(self,
-                                policy: str = 'balanced',
-                                n_samples: int = 3) -> Dict:
+    def sample_subnet_by_policy(
+        self, policy: str = 'balanced', n_samples: int = 3
+    ) -> Dict:
         assert policy in {'zenscore', 'flops', 'params', 'nwot'}
         n_subnets = [self.mutator.random_subnet for _ in range(n_samples)]
 
@@ -451,8 +457,7 @@ class NB201ShrinkTrainer(BaseTrainer):
             return (n_list - min_n) / max_n - min_n
 
         if policy == 'flops':
-            n_flops = torch.tensor(
-                [self.get_subnet_flops(i) for i in n_subnets])
+            n_flops = torch.tensor([self.get_subnet_flops(i) for i in n_subnets])
             res = minmaxscaler(n_flops)
             res = F.softmax(res, dim=0)
             # Find the max
@@ -461,8 +466,7 @@ class NB201ShrinkTrainer(BaseTrainer):
             subnet = n_subnets[max_idx]
 
         elif policy == 'params':
-            n_params = torch.tensor(
-                [self.get_subnet_params(i) for i in n_subnets])
+            n_params = torch.tensor([self.get_subnet_params(i) for i in n_subnets])
             res = minmaxscaler(n_params)
             res = F.softmax(res, dim=0)
             # Find the max
@@ -470,8 +474,7 @@ class NB201ShrinkTrainer(BaseTrainer):
             subnet = n_subnets[max_idx]
 
         elif policy == 'zenscore':
-            n_zenscore = torch.tensor(
-                [self.get_subnet_zenscore(i) for i in n_subnets])
+            n_zenscore = torch.tensor([self.get_subnet_zenscore(i) for i in n_subnets])
             res = minmaxscaler(n_zenscore)
             res = F.softmax(res, dim=0)
             # Find the max
@@ -535,8 +538,7 @@ class NB201ShrinkTrainer(BaseTrainer):
                 elif self.type == 'sandwich':
                     loss, outputs = self._forward_sandwich(batch_inputs)
             elif self.type in {'zenscore', 'flops', 'params', 'nwot'}:
-                loss, outputs = self._forward_balanced(
-                    batch_inputs, policy=self.type)
+                loss, outputs = self._forward_balanced(batch_inputs, policy=self.type)
             else:
                 loss, outputs = self._forward_pairwise_loss(batch_inputs)
 
@@ -657,7 +659,8 @@ class NB201ShrinkTrainer(BaseTrainer):
                     )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg}'
-                f' Top5 acc: {top5_vacc.avg}')
+                f' Top5 acc: {top5_vacc.avg}'
+            )
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def fit(self, train_loader, val_loader, epochs):
@@ -678,8 +681,7 @@ class NB201ShrinkTrainer(BaseTrainer):
             epoch_start_time = time.time()
 
             # train
-            tr_loss, top1_tacc, top5_tacc = self._train(
-                train_loader, val_loader)
+            tr_loss, top1_tacc, top5_tacc = self._train(train_loader, val_loader)
 
             # validate
             val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
@@ -702,45 +704,58 @@ class NB201ShrinkTrainer(BaseTrainer):
                 f'Epoch: {epoch + 1}/{epochs} Time: {epoch_time} Train loss: {tr_loss} Val loss: {val_loss}'  # noqa: E501
             )
 
-            if (self.expand_times > 0
-                    and (self.current_epoch + 1) % self.every_n_epochs == 0
-                    and self.current_epoch > 100):
+            if (
+                self.expand_times > 0
+                and (self.current_epoch + 1) % self.every_n_epochs == 0
+                and self.current_epoch > 100
+            ):
                 self.shrinker.expand(train_loader, val_loader)
                 self.expand_times -= 1
 
-            if (self.shrink_times > 0
-                    and (self.current_epoch + 1) % self.every_n_epochs == 0
-                    and self.current_epoch > 100):
+            if (
+                self.shrink_times > 0
+                and (self.current_epoch + 1) % self.every_n_epochs == 0
+                and self.current_epoch > 100
+            ):
                 self.shrinker.shrink(train_loader, val_loader)
                 self.shrink_times -= 1
 
-            if (self.current_epoch < 100
-                    and epoch % 10 == 0) or (self.current_epoch >= 100
-                                             and epoch % 100 == 0):
+            if (self.current_epoch < 100 and epoch % 10 == 0) or (
+                self.current_epoch >= 100 and epoch % 100 == 0
+            ):
                 assert self.evaluator is not None
                 # BWR@K, P@tbk
-                kt, ps, sp, rd, minn_at_ks, patks, cpr = self.evaluator.compute_rank_consistency(
-                    val_loader, self.mutator)
+                (
+                    kt,
+                    ps,
+                    sp,
+                    rd,
+                    minn_at_ks,
+                    patks,
+                    cpr,
+                ) = self.evaluator.compute_rank_consistency(val_loader, self.mutator)
                 self.writer.add_scalar(
-                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
+                    'RANK/kendall_tau', kt, global_step=self.current_epoch
+                )
                 self.writer.add_scalar(
-                    'RANK/pearson', ps, global_step=self.current_epoch)
+                    'RANK/pearson', ps, global_step=self.current_epoch
+                )
                 self.writer.add_scalar(
-                    'RANK/spearman', sp, global_step=self.current_epoch)
-                self.writer.add_scalar(
-                    'RANK/cpr', cpr, global_step=self.current_epoch)
+                    'RANK/spearman', sp, global_step=self.current_epoch
+                )
+                self.writer.add_scalar('RANK/cpr', cpr, global_step=self.current_epoch)
 
                 if isinstance(rd, list):
                     for i, r in enumerate(rd):
                         self.writer.add_scalar(
                             f'ANALYSE/rank_diff_{(i+1)*20}%',
                             r,
-                            global_step=self.current_epoch)
+                            global_step=self.current_epoch,
+                        )
                 else:
                     self.writer.add_scalar(
-                        'ANALYSE/rank_diff',
-                        rd,
-                        global_step=self.current_epoch)
+                        'ANALYSE/rank_diff', rd, global_step=self.current_epoch
+                    )
 
                 for k, minn, brk, maxn, wrk in minn_at_ks:
                     # self.writer.add_scalar(
@@ -748,44 +763,44 @@ class NB201ShrinkTrainer(BaseTrainer):
                     #     minn,
                     #     global_step=self.current_epoch)
                     self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{k}_BR@K',
-                        brk,
-                        global_step=self.current_epoch)
+                        f'ANALYSE/oneshot_{k}_BR@K', brk, global_step=self.current_epoch
+                    )
                     # self.writer.add_scalar(
                     #     f'ANALYSE/oneshot_{k}_maxn',
                     #     maxn,
                     #     global_step=self.current_epoch)
                     self.writer.add_scalar(
-                        f'ANALYSE/oneshot_{k}_WR@K',
-                        wrk,
-                        global_step=self.current_epoch)
+                        f'ANALYSE/oneshot_{k}_WR@K', wrk, global_step=self.current_epoch
+                    )
 
                 for ratio, k, p_at_topk, p_at_bk, kd_at_topk, kd_at_bk in patks:
                     self.writer.add_scalar(
                         f'ANALYSE/oneshot_{ratio}_P@topK',
                         p_at_topk,
-                        global_step=self.current_epoch)
+                        global_step=self.current_epoch,
+                    )
                     self.writer.add_scalar(
                         f'ANALYSE/oneshot_{ratio}_P@bottomK',
                         p_at_bk,
-                        global_step=self.current_epoch)
+                        global_step=self.current_epoch,
+                    )
                     self.writer.add_scalar(
                         f'ANALYSE/oneshot_{ratio}_KD@topK',
                         kd_at_topk,
-                        global_step=self.current_epoch)
+                        global_step=self.current_epoch,
+                    )
                     self.writer.add_scalar(
                         f'ANALYSE/oneshot_{ratio}_KD@bottomK',
                         kd_at_bk,
-                        global_step=self.current_epoch)
+                        global_step=self.current_epoch,
+                    )
 
             self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss', tr_loss, global_step=self.current_epoch
+            )
             self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss', val_loss, global_step=self.current_epoch
+            )
 
             if isinstance(self.scheduler, lr_scheduler.ReduceLROnPlateau):
                 self.scheduler.step(val_loss)
@@ -796,7 +811,8 @@ class NB201ShrinkTrainer(BaseTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         # self.model.eval()
@@ -808,8 +824,7 @@ class NB201ShrinkTrainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 # move to device
-                outputs, labels = self._predict(
-                    batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
@@ -842,8 +857,7 @@ class NB201ShrinkTrainer(BaseTrainer):
         for k, v in self.mutator.search_group.items():
             current_choice = subnet_dict[k]
             choice_flops = 0
-            for _, module in v[0]._candidate_ops[current_choice].named_modules(
-            ):
+            for _, module in v[0]._candidate_ops[current_choice].named_modules():
                 flops = getattr(module, '__flops__', 0)
                 if flops > 0:
                     choice_flops += flops
@@ -859,10 +873,9 @@ class NB201ShrinkTrainer(BaseTrainer):
                 constant_init(m, val=1, bias=0.0001)
                 nn.init.constant_(m.running_mean, 0)
 
-    def get_subnet_predictive(self,
-                              subnet_dict,
-                              dataloader,
-                              measure_name='nwot') -> float:
+    def get_subnet_predictive(
+        self, subnet_dict, dataloader, measure_name='nwot'
+    ) -> float:
         """Calculate zenscore based on subnet dict."""
         o = OneShotMutator(with_alias=True)
         copy_model = copy.deepcopy(self.model)
@@ -878,16 +891,16 @@ class NB201ShrinkTrainer(BaseTrainer):
             dataload_info=dataload_info,
             measure_names=measure_name,
             loss_fn=F.cross_entropy,
-            device=self.trainer.device)
+            device=self.trainer.device,
+        )
 
         del o
         del copy_model
         return score
 
-    def get_subnet_error(self,
-                         subnet_dict: Dict,
-                         train_loader=None,
-                         val_loader=None) -> float:
+    def get_subnet_error(
+        self, subnet_dict: Dict, train_loader=None, val_loader=None
+    ) -> float:
         """Calculate the subnet of validation error.
         Including:
         1. BN calibration
@@ -937,10 +950,9 @@ class NB201ShrinkTrainer(BaseTrainer):
 
         return 100 - top1_vacc.avg
 
-    def get_subnet_acc(self,
-                       subnet_dict: Dict,
-                       train_loader=None,
-                       val_loader=None) -> float:
+    def get_subnet_acc(
+        self, subnet_dict: Dict, train_loader=None, val_loader=None
+    ) -> float:
         """Calculate the subnet of validation error.
         Including:
         1. BN calibration
@@ -992,7 +1004,7 @@ class NB201ShrinkTrainer(BaseTrainer):
 
     def _forward_balanced(self, batch_inputs, policy='zenscore'):
         """Balanced Sampling Rules.
-            Policy can be `zenscore`, `flops`, `params`, `nwot`
+        Policy can be `zenscore`, `flops`, `params`, `nwot`
         """
         inputs, labels = batch_inputs
         inputs = self._to_device(inputs, self.device)
@@ -1069,9 +1081,11 @@ class NB201ShrinkTrainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = (2 *
-                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
+        loss3 = (
+            2
+            * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+            * self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+        )
         loss3.backward()
 
         return loss2, outputs
@@ -1109,17 +1123,14 @@ class NB201ShrinkTrainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1,
-                                                      loss2)
+        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1, loss2)
         loss_list.append(loss3)
 
         # distill loss
         if loss2 > loss1:
-            loss4 = self.distill_loss(
-                feat_s=feat2, feat_t=feat1) * self.lambda_kd
+            loss4 = self.distill_loss(feat_s=feat2, feat_t=feat1) * self.lambda_kd
         else:
-            loss4 = self.distill_loss(
-                feat_s=feat1, feat_t=feat2) * self.lambda_kd
+            loss4 = self.distill_loss(feat_s=feat1, feat_t=feat2) * self.lambda_kd
         loss_list.append(loss4)
 
         loss = sum(loss_list)
@@ -1162,8 +1173,7 @@ class NB201ShrinkTrainer(BaseTrainer):
             for j in range(i):
                 flops1, flops2 = flops_list[i], flops_list[j]
                 loss1, loss2 = loss_list[i], loss_list[j]
-                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1,
-                                                       loss2)
+                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1, loss2)
 
                 rank_loss_list.append(tmp_rank_loss)
 

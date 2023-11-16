@@ -8,7 +8,6 @@ from piconas.predictor.utils.encodings import encode
 
 
 class BaseTree(Predictor):
-
     def __init__(
         self,
         encoding_type='adjacency_one_hot',
@@ -33,7 +32,8 @@ class BaseTree(Predictor):
     def get_dataset(self, encodings, labels=None):
         return NotImplementedError(
             'Tree cannot process the numpy data without \
-                                   converting to the proper representation')
+                                   converting to the proper representation'
+        )
 
     def train(self, train_data, **kwargs):
         return NotImplementedError('Train method not implemented')
@@ -42,21 +42,21 @@ class BaseTree(Predictor):
         return self.model.predict(data, **kwargs)
 
     def fit(self, xtrain, ytrain, train_info=None, params=None, **kwargs):
-
         # normalize accuracies
         self.mean = np.mean(ytrain)
         self.std = np.std(ytrain)
 
         if type(xtrain) is list:
-
             # TODO: Fix. Hacky way to make XGBoost accept both encodings as well as NASLib Graphs as xtrain
             if isinstance(xtrain[0], nn.Module):
-                xtrain = np.array([
-                    encode(
-                        arch,
-                        encoding_type=self.encoding_type,
-                        ss_type=self.ss_type) for arch in xtrain
-                ])
+                xtrain = np.array(
+                    [
+                        encode(
+                            arch, encoding_type=self.encoding_type, ss_type=self.ss_type
+                        )
+                        for arch in xtrain
+                    ]
+                )
 
             if self.zc:
                 # mean, std = -10000000.0, 150000000.0
@@ -64,9 +64,10 @@ class BaseTree(Predictor):
                 if self.zc_only:
                     xtrain = self.zc_features
                 else:
-                    xtrain = [[*x, *zc_scores]
-                              for x, zc_scores in zip(xtrain, self.zc_features)
-                              ]
+                    xtrain = [
+                        [*x, *zc_scores]
+                        for x, zc_scores in zip(xtrain, self.zc_features)
+                    ]
             xtrain = np.array(xtrain)
             ytrain = np.array(ytrain)
 
@@ -77,7 +78,8 @@ class BaseTree(Predictor):
 
         if self.zc:
             self.zc_to_features_map = self._get_zc_to_feature_mapping(
-                self.zc_names, xtrain)
+                self.zc_names, xtrain
+            )
 
         # convert to the right representation
         train_data = self.get_dataset(xtrain, ytrain)
@@ -92,17 +94,17 @@ class BaseTree(Predictor):
         return train_error
 
     def query(self, xtest, info=None):
-
         if type(xtest) is list:
-
             # TODO: Fix. Hacky way to make XGBoost accept both encodings as well as NASLib Graphs as xtrain
             if isinstance(xtest[0], nn.Module):
-                xtest = np.array([
-                    encode(
-                        arch,
-                        encoding_type=self.encoding_type,
-                        ss_type=self.ss_type) for arch in xtest
-                ])
+                xtest = np.array(
+                    [
+                        encode(
+                            arch, encoding_type=self.encoding_type, ss_type=self.ss_type
+                        )
+                        for arch in xtest
+                    ]
+                )
             if self.zc:
                 # mean, std = -10000000.0, 150000000.0
                 zc_scores = [
@@ -126,8 +128,8 @@ class BaseTree(Predictor):
         pass
 
     def create_zc_feature_vector(
-            self, zero_cost_scores: Union[List[Dict],
-                                          Dict]) -> Union[List[List], List]:
+        self, zero_cost_scores: Union[List[Dict], Dict]
+    ) -> Union[List[List], List]:
         zc_features = []
 
         def _make_features(zc_scores):
@@ -157,7 +159,8 @@ class BaseTree(Predictor):
         mapping = {}
 
         for zc_name, feature_index in zip(
-                zc_names, range(n_arch_features, n_arch_features + n_zc)):
+            zc_names, range(n_arch_features, n_arch_features + n_zc)
+        ):
             mapping[zc_name] = f'f{feature_index}'
 
         return mapping

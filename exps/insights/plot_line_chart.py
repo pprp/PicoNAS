@@ -3,14 +3,16 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 zc_name_list = [
-    'plain_layerwise', 'snip_layerwise', 'grad_norm_layerwise',
-    'fisher_layerwise', 'l2_norm_layerwise', 'grasp_layerwise'
+    'plain_layerwise',
+    'snip_layerwise',
+    'grad_norm_layerwise',
+    'fisher_layerwise',
+    'l2_norm_layerwise',
+    'grasp_layerwise',
 ]
 
 # Define a list of custom colors suitable for scientific figures with higher opacity
-custom_colors = [
-    '#e377c2', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'
-]
+custom_colors = ['#e377c2', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
 
 # Create a single figure using "ggplot" style
 with plt.style.context('default'):
@@ -30,12 +32,13 @@ with plt.style.context('default'):
         # Normalize feature importance to enhance discriminability
         scaler = MinMaxScaler()
         feature_importance_normalized = scaler.fit_transform(
-            feature_importance.reshape(-1, 1)).flatten()
+            feature_importance.reshape(-1, 1)
+        ).flatten()
 
         # Store data in the dictionary
         data_dict[zc_name] = {
             'pos': pos,
-            'feature_importance_normalized': feature_importance_normalized
+            'feature_importance_normalized': feature_importance_normalized,
         }
 
     # Create corresponding color map for data_dict
@@ -43,13 +46,15 @@ with plt.style.context('default'):
 
     # Calculate the sorted order of bars based on their values
     sorted_order = np.argsort(
-        -data_dict[zc_name_list[0]]['feature_importance_normalized'])
+        -data_dict[zc_name_list[0]]['feature_importance_normalized']
+    )
 
     # Plot the bars in the sorted order
     for i, zc_name in enumerate(zc_name_list):
         pos = data_dict[zc_name]['pos'][sorted_order]
         feature_importance_normalized = data_dict[zc_name][
-            'feature_importance_normalized'][sorted_order]
+            'feature_importance_normalized'
+        ][sorted_order]
 
         # Plot the bars with custom color and alpha (opacity)
         plt.bar(
@@ -58,12 +63,14 @@ with plt.style.context('default'):
             align='center',
             color=custom_colors[i],
             alpha=0.5,
-            width=0.9)
+            width=0.9,
+        )
         # plt.plot(pos, feature_importance_normalized, color=custom_colors[i], alpha=0.7, linewidth=1.5)
 
         # Collect handles for legend
         legend_handles.append(
-            plt.Rectangle((0, 0), 1, 1, color=custom_colors[i], alpha=0.5))
+            plt.Rectangle((0, 0), 1, 1, color=custom_colors[i], alpha=0.5)
+        )
 
     plt.yticks(fontsize=14)
     plt.xlabel('Layer Index', fontsize=16)
@@ -74,10 +81,8 @@ with plt.style.context('default'):
 
     # Show the legend using collected handles and labels
     plt.legend(
-        handles=legend_handles,
-        labels=zc_name_list,
-        loc='upper right',
-        fontsize=12)
+        handles=legend_handles, labels=zc_name_list, loc='upper right', fontsize=12
+    )
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig('./gbdt_streamgraph_combined.png')

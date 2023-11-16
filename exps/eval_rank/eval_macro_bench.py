@@ -19,10 +19,9 @@ def load_json(path):
     return arch_dict
 
 
-def compuate_rank_consistency(loader,
-                              sampled_dict: Dict,
-                              trainer: MacroTrainer,
-                              type: str = 'val_acc') -> None:
+def compuate_rank_consistency(
+    loader, sampled_dict: Dict, trainer: MacroTrainer, type: str = 'val_acc'
+) -> None:
     """compute rank consistency of different types of indicators."""
     assert type in [
         'test_acc',
@@ -39,8 +38,7 @@ def compuate_rank_consistency(loader,
     for i, (k, v) in enumerate(sampled_dict.items()):
         print(f'evaluating the {i}th architecture.')
         subnet_dict = convert_arch2dict(k)
-        loss, top1_acc, top5_acc = trainer.metric_score(
-            loader, subnet_dict=subnet_dict)
+        loss, top1_acc, top5_acc = trainer.metric_score(loader, subnet_dict=subnet_dict)
 
         supernet_indicator_list.append(top1_acc)
         true_indicator_list.append(v[type])
@@ -104,8 +102,7 @@ if __name__ == '__main__':
     arch_dict = load_json(cfg.json_path)
 
     # random sample `num_sample` archs
-    sampled_archs: List[str] = random.sample(
-        arch_dict.keys(), k=cfg.num_sample)
+    sampled_archs: List[str] = random.sample(arch_dict.keys(), k=cfg.num_sample)
 
     # generate sampled dict
     sampled_dict: Dict = {arch: arch_dict[arch] for arch in sampled_archs}
@@ -128,7 +125,5 @@ if __name__ == '__main__':
 
     # compute the rank consistency of supernet
     compuate_rank_consistency(
-        loader=dataloader,
-        sampled_dict=sampled_dict,
-        trainer=trainer,
-        type=cfg.type)
+        loader=dataloader, sampled_dict=sampled_dict, trainer=trainer, type=cfg.type
+    )

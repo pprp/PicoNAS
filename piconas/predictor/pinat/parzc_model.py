@@ -19,14 +19,13 @@ def graph_pooling(inputs, num_vertices):
     return torch.div(out, num_vertices.unsqueeze(-1).expand_as(out))
 
 
-def accuracy_mse(prediction, target, scale=100.):
+def accuracy_mse(prediction, target, scale=100.0):
     prediction = prediction.detach() * scale
     target = (target) * scale
     return F.mse_loss(prediction, target)
 
 
 class DirectedGraphConvolution(nn.Module):
-
     def __init__(self, in_features, out_features):
         super().__init__()
         self.in_features = in_features
@@ -42,32 +41,34 @@ class DirectedGraphConvolution(nn.Module):
 
     def forward(self, inputs, adj):
         norm_adj = normalize_adj(adj)
-        output1 = F.relu(
-            torch.matmul(norm_adj, torch.matmul(inputs, self.weight1)))
+        output1 = F.relu(torch.matmul(norm_adj, torch.matmul(inputs, self.weight1)))
         inv_norm_adj = normalize_adj(adj.transpose(1, 2))
-        output2 = F.relu(
-            torch.matmul(inv_norm_adj, torch.matmul(inputs, self.weight2)))
+        output2 = F.relu(torch.matmul(inv_norm_adj, torch.matmul(inputs, self.weight2)))
         out = (output1 + output2) / 2
         out = self.dropout(out)
         return out
 
     def __repr__(self):
-        return self.__class__.__name__ + ' (' \
-               + str(self.in_features) + ' -> ' \
-               + str(self.out_features) + ')'
+        return (
+            self.__class__.__name__
+            + ' ('
+            + str(self.in_features)
+            + ' -> '
+            + str(self.out_features)
+            + ')'
+        )
 
 
 class NeuralPredictorModel(nn.Module):
-
-    def __init__(self,
-                 initial_hidden=-1,
-                 gcn_hidden=144,
-                 gcn_layers=4,
-                 linear_hidden=128):
+    def __init__(
+        self, initial_hidden=-1, gcn_hidden=144, gcn_layers=4, linear_hidden=128
+    ):
         super().__init__()
         self.gcn = [
-            DirectedGraphConvolution(initial_hidden if i == 0 else gcn_hidden,
-                                     gcn_hidden) for i in range(gcn_layers)
+            DirectedGraphConvolution(
+                initial_hidden if i == 0 else gcn_hidden, gcn_hidden
+            )
+            for i in range(gcn_layers)
         ]
         self.gcn = nn.ModuleList(self.gcn)
         self.dropout = nn.Dropout(0.1)
@@ -76,15 +77,17 @@ class NeuralPredictorModel(nn.Module):
         self.proj = nn.Linear(5, 4)
 
     def forward(self, inputs):
-        numv, adj, out = inputs['num_vertices'], inputs['adjacency'], inputs[
-            'operations']  # 7 6 5
+        numv, adj, out = (
+            inputs['num_vertices'],
+            inputs['adjacency'],
+            inputs['operations'],
+        )  # 7 6 5
         gs = adj.size(1)  # graph node number
 
         adj_with_diag = normalize_adj(
-            adj +
-            torch.eye(gs, device=adj.device))  # assuming diagonal is not 1
+            adj + torch.eye(gs, device=adj.device)
+        )  # assuming diagonal is not 1
         out = self.proj(out)  # 7 6 6
-        breakpoint()
         for layer in self.gcn:
             out = layer(out, adj_with_diag)  # 7 4 4
         out = graph_pooling(out, numv)
@@ -102,20 +105,18 @@ if __name__ == '__main__':
     initial_hidden = 4
 
     predictor = NeuralPredictorModel(
-        initial_hidden=initial_hidden, gcn_hidden=gcn_hidden)
+        initial_hidden=initial_hidden, gcn_hidden=gcn_hidden
+    )
     if torch.cuda.is_available():
         predictor = predictor.cuda()
 
     from piconas.datasets.predictor.nb201_dataset import Nb201DatasetPINAT
-    test_set = Nb201DatasetPINAT(
-        split='all', data_type='test', data_set='cifar10')
+
+    test_set = Nb201DatasetPINAT(split='all', data_type='test', data_set='cifar10')
 
     loader = torch.utils.data.DataLoader(
-        test_set,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=0,
-        drop_last=False)
+        test_set, batch_size=batch_size, shuffle=False, num_workers=0, drop_last=False
+    )
 
     for batch in loader:
         input = batch

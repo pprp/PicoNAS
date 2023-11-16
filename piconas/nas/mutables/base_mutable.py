@@ -58,13 +58,15 @@ class BaseMutable(BaseModule, ABC, Generic[CHOICE_TYPE, CHOSEN_TYPE]):
     @is_fixed.setter
     def is_fixed(self, is_fixed: bool) -> None:
         """Set the status of `is_fixed`."""
-        assert isinstance(
-            is_fixed, bool), (f'The type of `is_fixed` need to be bool type, '
-                              f'but got: {type(is_fixed)}')
+        assert isinstance(is_fixed, bool), (
+            f'The type of `is_fixed` need to be bool type, '
+            f'but got: {type(is_fixed)}'
+        )
         if self._is_fixed:
             raise AttributeError(
                 'The mode of current MUTABLE is `fixed`. '
-                'Please do not set `is_fixed` function repeatedly.')
+                'Please do not set `is_fixed` function repeatedly.'
+            )
         self._is_fixed = is_fixed
 
     @property

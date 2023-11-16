@@ -15,8 +15,12 @@ from piconas.nas.search_spaces.core import primitives as ops
 from piconas.nas.search_spaces.core.graph import EdgeData, Graph
 from piconas.nas.search_spaces.core.query_metrics import Metric
 from piconas.nas.search_spaces.nasbench301.conversions import (
-    convert_compact_to_naslib, convert_naslib_to_compact,
-    convert_naslib_to_genotype, make_compact_immutable, make_compact_mutable)
+    convert_compact_to_naslib,
+    convert_naslib_to_compact,
+    convert_naslib_to_genotype,
+    make_compact_immutable,
+    make_compact_mutable,
+)
 from piconas.utils.utils import AttrDict
 from .primitives import FactorizedReduce
 
@@ -46,6 +50,7 @@ class NasBench301SearchSpace(Graph):
     and two kinds of learnable cells: normal and reduction cells. At
     each edge are 8 primitive operations.
     """
+
     """
     Scope is used to target different instances of the same cell.
     Here we divide the cells in normal/reduction cell and stage.
@@ -117,8 +122,9 @@ class NasBench301SearchSpace(Graph):
         normal_cell.add_edges_from([(5, 6)])
 
         # Edges connecting to the output are always the identity
-        normal_cell.add_edges_from([(i, 7, EdgeData().finalize())
-                                    for i in range(3, 7)])  # output
+        normal_cell.add_edges_from(
+            [(i, 7, EdgeData().finalize()) for i in range(3, 7)]
+        )  # output
 
         # Reduction cell has the same topology
         reduction_cell = deepcopy(normal_cell)
@@ -143,35 +149,28 @@ class NasBench301SearchSpace(Graph):
         self.add_node(3)
 
         # cells
+        self.add_node(4, subgraph=normal_cell.set_scope('n_stage_1').set_input([2, 3]))
         self.add_node(
-            4, subgraph=normal_cell.set_scope('n_stage_1').set_input([2, 3]))
+            5, subgraph=normal_cell.copy().set_scope('n_stage_1').set_input([2, 4])
+        )
         self.add_node(
-            5,
-            subgraph=normal_cell.copy().set_scope('n_stage_1').set_input(
-                [2, 4]))
+            6, subgraph=reduction_cell.set_scope('r_stage_1').set_input([4, 5])
+        )
         self.add_node(
-            6,
-            subgraph=reduction_cell.set_scope('r_stage_1').set_input([4, 5]))
+            7, subgraph=normal_cell.copy().set_scope('n_stage_2').set_input([5, 6])
+        )
         self.add_node(
-            7,
-            subgraph=normal_cell.copy().set_scope('n_stage_2').set_input(
-                [5, 6]))
+            8, subgraph=normal_cell.copy().set_scope('n_stage_2').set_input([6, 7])
+        )
         self.add_node(
-            8,
-            subgraph=normal_cell.copy().set_scope('n_stage_2').set_input(
-                [6, 7]))
+            9, subgraph=reduction_cell.copy().set_scope('r_stage_2').set_input([7, 8])
+        )
         self.add_node(
-            9,
-            subgraph=reduction_cell.copy().set_scope('r_stage_2').set_input(
-                [7, 8]))
+            10, subgraph=normal_cell.copy().set_scope('n_stage_3').set_input([8, 9])
+        )
         self.add_node(
-            10,
-            subgraph=normal_cell.copy().set_scope('n_stage_3').set_input(
-                [8, 9]))
-        self.add_node(
-            11,
-            subgraph=normal_cell.copy().set_scope('n_stage_3').set_input(
-                [9, 10]))
+            11, subgraph=normal_cell.copy().set_scope('n_stage_3').set_input([9, 10])
+        )
 
         # output
         self.add_node(12)
@@ -204,7 +203,8 @@ class NasBench301SearchSpace(Graph):
         reduction_cell_indices = [6, 9]
 
         channel_map_from, channel_map_to = channel_maps(
-            reduction_cell_indices, max_index=12)
+            reduction_cell_indices, max_index=12
+        )
 
         self._set_makrograph_ops(
             channel_map_from,
@@ -229,9 +229,7 @@ class NasBench301SearchSpace(Graph):
         stem_multiplier = 3
         self.edges[1, 2].set(
             'op',
-            ops.Stem(
-                C_in=self.in_channels,
-                C_out=self.channels[0] * stem_multiplier),
+            ops.Stem(C_in=self.in_channels, C_out=self.channels[0] * stem_multiplier),
         )
 
         # edges connecting cells
@@ -242,19 +240,20 @@ class NasBench301SearchSpace(Graph):
                 C_in = self.channels[channel_map_from[u]]
                 C_out = self.channels[channel_map_to[v]]
                 if C_in == C_out:
-                    C_in = (C_in * stem_multiplier if u == 2 else C_in *
-                            self.num_in_edges)  # handle Stem
+                    C_in = (
+                        C_in * stem_multiplier if u == 2 else C_in * self.num_in_edges
+                    )  # handle Stem
                     if v in reduction_cell_indices:
                         C_out *= 2
                     data.set(
-                        'op',
-                        ops.ReLUConvBN(
-                            C_in, C_out, kernel_size=1, affine=affine))
+                        'op', ops.ReLUConvBN(C_in, C_out, kernel_size=1, affine=affine)
+                    )
                 else:
                     data.set(
                         'op',
                         FactorizedReduce(
-                            C_in * self.num_in_edges, C_out, affine=affine),
+                            C_in * self.num_in_edges, C_out, affine=affine
+                        ),
                     )
 
         # post-processing
@@ -264,8 +263,7 @@ class NasBench301SearchSpace(Graph):
             ops.Sequential(
                 nn.AdaptiveAvgPool2d(1),
                 nn.Flatten(),
-                nn.Linear(self.channels[-1] * self.num_in_edges,
-                          self.num_classes),
+                nn.Linear(self.channels[-1] * self.num_in_edges, self.num_classes),
             ),
         )
 
@@ -276,7 +274,8 @@ class NasBench301SearchSpace(Graph):
         for scope, c in zip(stages, self.channels):
             self.update_edges(
                 update_func=lambda edge: NasBench301SearchSpace._set_ops(
-                    edge, c, stride=1),
+                    edge, c, stride=1
+                ),
                 scope=scope,
                 private_edge_data=True,
             )
@@ -316,25 +315,18 @@ class NasBench301SearchSpace(Graph):
         edge.data.set(
             'op',
             [
-                ops.Identity() if stride == 1 else FactorizedReduce(
-                    C, C, stride, affine=False),
+                ops.Identity()
+                if stride == 1
+                else FactorizedReduce(C, C, stride, affine=False),
                 ops.Zero(stride=stride),
                 ops.MaxPool(C, 3, stride, use_bn=True),
                 ops.AvgPool(C, 3, stride, use_bn=True),
                 ops.SepConv(
-                    C,
-                    C,
-                    kernel_size=3,
-                    stride=stride,
-                    padding=1,
-                    affine=False),
+                    C, C, kernel_size=3, stride=stride, padding=1, affine=False
+                ),
                 ops.SepConv(
-                    C,
-                    C,
-                    kernel_size=5,
-                    stride=stride,
-                    padding=2,
-                    affine=False),
+                    C, C, kernel_size=5, stride=stride, padding=2, affine=False
+                ),
                 ops.DilConv(
                     C,
                     C,
@@ -382,13 +374,11 @@ class NasBench301SearchSpace(Graph):
                 ops.Sequential(
                     nn.ReLU(inplace=False),
                     nn.AvgPool2d(
-                        5, stride=3, padding=0,
-                        count_include_pad=False),  # image size = 2 x 2
+                        5, stride=3, padding=0, count_include_pad=False
+                    ),  # image size = 2 x 2
                     nn.Conv2d(
-                        self.channels[-1] * self.num_in_edges,
-                        128,
-                        1,
-                        bias=False),
+                        self.channels[-1] * self.num_in_edges, 128, 1, bias=False
+                    ),
                     nn.BatchNorm2d(128),
                     nn.ReLU(inplace=False),
                     nn.Conv2d(128, 768, 2, bias=False),
@@ -415,8 +405,7 @@ class NasBench301SearchSpace(Graph):
         Query results from nasbench 301
         """
         if dataset_api is None:
-            raise NotImplementedError(
-                'Must pass in dataset_api to query NAS-Bench-301')
+            raise NotImplementedError('Must pass in dataset_api to query NAS-Bench-301')
 
         metric_to_nb301 = {
             Metric.TRAIN_LOSS: 'train_losses',
@@ -430,11 +419,13 @@ class NasBench301SearchSpace(Graph):
         genotype = convert_naslib_to_genotype(self)
         if metric == Metric.VAL_ACCURACY:
             val_acc = dataset_api['nb301_model'][0].predict(
-                config=genotype, representation='genotype')
+                config=genotype, representation='genotype'
+            )
             return val_acc
         elif metric == Metric.TRAIN_TIME:
             runtime = dataset_api['nb301_model'][1].predict(
-                config=genotype, representation='genotype')
+                config=genotype, representation='genotype'
+            )
             return runtime
         else:
             return -1
@@ -459,16 +450,15 @@ class NasBench301SearchSpace(Graph):
 
         k = 2
         if len(in_edges) >= k:
-            if any(
-                    e.has('alpha') or (e.has('final') and e.final)
-                    for _, e in in_edges):
+            if any(e.has('alpha') or (e.has('final') and e.final) for _, e in in_edges):
                 # We are in the one-shot case
                 for _, data in in_edges:
                     if data.has('final') and data.final:
                         return  # We are looking at an out node
                     data.alpha.data[1] = -float('Inf')
                 sorted_edge_ids = sorted(
-                    in_edges, key=_largest_post_softmax_weight, reverse=True)
+                    in_edges, key=_largest_post_softmax_weight, reverse=True
+                )
                 keep_edges, _ = zip(*sorted_edge_ids[:k])
                 for edge_id, edge_data in in_edges:
                     if edge_id not in keep_edges:
@@ -476,16 +466,13 @@ class NasBench301SearchSpace(Graph):
             else:
                 # We are in the discrete case (e.g. random search)
                 for _, data in in_edges:
-                    if isinstance(data.op,
-                                  list) and data.op[1].get_op_name == 'Zero':
+                    if isinstance(data.op, list) and data.op[1].get_op_name == 'Zero':
                         data.op.pop(1)
                 if any(e.has('final') and e.final for _, e in in_edges):
                     return  # TODO: how about mixed final and non-final?
                 else:
                     for _ in range(len(in_edges) - k):
-                        in_edges[random.randint(0,
-                                                len(in_edges) -
-                                                1)][1].delete()
+                        in_edges[random.randint(0, len(in_edges) - 1)][1].delete()
 
     def get_compact(self):
         if self.compact is None:
@@ -506,8 +493,9 @@ class NasBench301SearchSpace(Graph):
         self.set_compact(make_compact_immutable(compact))
 
     def sample_random_labeled_architecture(self):
-        assert (self.labeled_archs
-                is not None), 'Labeled archs not provided to sample from'
+        assert (
+            self.labeled_archs is not None
+        ), 'Labeled archs not provided to sample from'
 
         op_indices = random.choice(self.labeled_archs)
 
@@ -532,18 +520,21 @@ class NasBench301SearchSpace(Graph):
             nodes_in_normal = np.random.choice(range(i + 2), 2, replace=False)
             nodes_in_reduce = np.random.choice(range(i + 2), 2, replace=False)
 
-            compact[0].extend([(nodes_in_normal[0], ops[0]),
-                               (nodes_in_normal[1], ops[1])])
-            compact[1].extend([(nodes_in_reduce[0], ops[2]),
-                               (nodes_in_reduce[1], ops[3])])
+            compact[0].extend(
+                [(nodes_in_normal[0], ops[0]), (nodes_in_normal[1], ops[1])]
+            )
+            compact[1].extend(
+                [(nodes_in_reduce[0], ops[2]), (nodes_in_reduce[1], ops[3])]
+            )
 
         self.set_compact(compact)
 
     @staticmethod
     def get_configspace(
-            path_to_configspace_obj=os.path.join(
-                get_project_root(),
-                'search_spaces/nasbench301/configspace.json')):
+        path_to_configspace_obj=os.path.join(
+            get_project_root(), 'search_spaces/nasbench301/configspace.json'
+        )
+    ):
         """
         Returns the ConfigSpace object for the search space
 

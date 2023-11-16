@@ -1,8 +1,13 @@
 import numpy as np
 
 OPS = [
-    'max_pool_3x3', 'avg_pool_3x3', 'skip_connect', 'sep_conv_3x3',
-    'sep_conv_5x5', 'dil_conv_3x3', 'dil_conv_5x5'
+    'max_pool_3x3',
+    'avg_pool_3x3',
+    'skip_connect',
+    'sep_conv_3x3',
+    'sep_conv_5x5',
+    'dil_conv_3x3',
+    'dil_conv_5x5',
 ]
 NUM_VERTICES = 4
 INPUT_1 = 'c_k-2'
@@ -56,7 +61,7 @@ def transform_geno_to_nas101_format(geno):
         'dil_conv_3x3': 7,
         'dil_conv_5x5': 8,
         'sum': 9,
-        'output': 10
+        'output': 10,
     }
     ops[2][ops_set[geno[1][0]]] = 1  # A
     ops[3][ops_set[geno[0][0]]] = 1  # B
@@ -83,25 +88,57 @@ def transform_nas101_format_to_geno(adj, ops):
         7: 'dil_conv_3x3',
         8: 'dil_conv_5x5',
         9: 'sum',
-        10: 'output'
+        10: 'output',
     }
     geno = []
-    geno.append((ops_set_reverse[int(np.where(ops[3, :] == 1)[0])],
-                 adj_set_reverse[int(np.where(adj[:, 3] == 1)[0])]))  #B
-    geno.append((ops_set_reverse[int(np.where(ops[2, :] == 1)[0])],
-                 adj_set_reverse[int(np.where(adj[:, 2] == 1)[0])]))  #A
-    geno.append((ops_set_reverse[int(np.where(ops[6, :] == 1)[0])],
-                 adj_set_reverse[int(np.where(adj[:, 6] == 1)[0])]))  #D
-    geno.append((ops_set_reverse[int(np.where(ops[5, :] == 1)[0])],
-                 adj_set_reverse[int(np.where(adj[:, 5] == 1)[0])]))  #C
-    geno.append((ops_set_reverse[int(np.where(ops[9, :] == 1)[0])],
-                 adj_set_reverse[int(np.where(adj[:, 9] == 1)[0])]))  #F
-    geno.append((ops_set_reverse[int(np.where(ops[8, :] == 1)[0])],
-                 adj_set_reverse[int(np.where(adj[:, 8] == 1)[0])]))  #E
-    geno.append((ops_set_reverse[int(np.where(ops[12, :] == 1)[0])],
-                 adj_set_reverse[int(np.where(adj[:, 12] == 1)[0])]))  #H
-    geno.append((ops_set_reverse[int(np.where(ops[11, :] == 1)[0])],
-                 adj_set_reverse[int(np.where(adj[:, 11] == 1)[0])]))  #G
+    geno.append(
+        (
+            ops_set_reverse[int(np.where(ops[3, :] == 1)[0])],
+            adj_set_reverse[int(np.where(adj[:, 3] == 1)[0])],
+        )
+    )  # B
+    geno.append(
+        (
+            ops_set_reverse[int(np.where(ops[2, :] == 1)[0])],
+            adj_set_reverse[int(np.where(adj[:, 2] == 1)[0])],
+        )
+    )  # A
+    geno.append(
+        (
+            ops_set_reverse[int(np.where(ops[6, :] == 1)[0])],
+            adj_set_reverse[int(np.where(adj[:, 6] == 1)[0])],
+        )
+    )  # D
+    geno.append(
+        (
+            ops_set_reverse[int(np.where(ops[5, :] == 1)[0])],
+            adj_set_reverse[int(np.where(adj[:, 5] == 1)[0])],
+        )
+    )  # C
+    geno.append(
+        (
+            ops_set_reverse[int(np.where(ops[9, :] == 1)[0])],
+            adj_set_reverse[int(np.where(adj[:, 9] == 1)[0])],
+        )
+    )  # F
+    geno.append(
+        (
+            ops_set_reverse[int(np.where(ops[8, :] == 1)[0])],
+            adj_set_reverse[int(np.where(adj[:, 8] == 1)[0])],
+        )
+    )  # E
+    geno.append(
+        (
+            ops_set_reverse[int(np.where(ops[12, :] == 1)[0])],
+            adj_set_reverse[int(np.where(adj[:, 12] == 1)[0])],
+        )
+    )  # H
+    geno.append(
+        (
+            ops_set_reverse[int(np.where(ops[11, :] == 1)[0])],
+            adj_set_reverse[int(np.where(adj[:, 11] == 1)[0])],
+        )
+    )  # G
     return geno
 
 
@@ -111,18 +148,21 @@ def sample_arch():
     for i in range(NUM_VERTICES):
         ops_normal = np.random.choice(range(num_ops), NUM_VERTICES)
         nodes_in_normal = np.random.choice(range(i + 2), 2, replace=False)
-        normal.extend([(str(nodes_in_normal[0]), OPS[ops_normal[0]]),
-                       (str(nodes_in_normal[1]), OPS[ops_normal[1]])])
+        normal.extend(
+            [
+                (str(nodes_in_normal[0]), OPS[ops_normal[0]]),
+                (str(nodes_in_normal[1]), OPS[ops_normal[1]]),
+            ]
+        )
     return normal
 
 
 def build_mat_encoding(normal):
     normal_cell = [(item[1], int(item[0])) for item in tuple(normal)]
-    adj_nas101_format, ops_nas101_format = transform_geno_to_nas101_format(
-        normal_cell)
+    adj_nas101_format, ops_nas101_format = transform_geno_to_nas101_format(normal_cell)
     return {
         'module_adjacency': adj_nas101_format.astype(int).tolist(),
-        'module_operations': ops_nas101_format.astype(int).tolist()
+        'module_operations': ops_nas101_format.astype(int).tolist(),
     }
 
 

@@ -4,7 +4,6 @@ from .net_ops.cell_ops import ConvLayer
 
 
 class Discriminator(nn.Module):
-
     def __init__(self, norm='spectral'):
         """
         Discriminator component for Pix2Pix tasks

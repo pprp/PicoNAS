@@ -4,7 +4,6 @@ import torch
 
 
 class ViTBenchAPI:
-
     def __init__(self, api_path: str):
         self.data: List[Dict] = self.load_json(api_path)
 
@@ -13,8 +12,7 @@ class ViTBenchAPI:
 
     def query_by_idx(self, idx: int) -> Dict:
         if idx < 0 or idx >= len(self.data):
-            raise IndexError(
-                f'Index out of range. Max index: {len(self.data) - 1}')
+            raise IndexError(f'Index out of range. Max index: {len(self.data) - 1}')
         return self.data[idx]
 
     def query_by_arch(self, arch: Dict) -> List[Dict]:
@@ -27,24 +25,33 @@ class ViTBenchAPI:
     def query_by_cifar100_base(self, base_acc: float) -> List[Dict]:
         results = []
         for item in self.data:
-            if 'cifar100' in item and 'base' in item['cifar100'] and item[
-                    'cifar100']['base'] == base_acc:
+            if (
+                'cifar100' in item
+                and 'base' in item['cifar100']
+                and item['cifar100']['base'] == base_acc
+            ):
                 results.append(item)
         return results
 
     def query_by_flowers_base(self, base_acc: float) -> List[Dict]:
         results = []
         for item in self.data:
-            if 'flowers' in item and 'base' in item['flowers'] and item[
-                    'flowers']['base'] == base_acc:
+            if (
+                'flowers' in item
+                and 'base' in item['flowers']
+                and item['flowers']['base'] == base_acc
+            ):
                 results.append(item)
         return results
 
     def query_by_chaoyang_base(self, base_acc: float) -> List[Dict]:
         results = []
         for item in self.data:
-            if 'chaoyang' in item and 'base' in item['chaoyang'] and item[
-                    'chaoyang']['base'] == base_acc:
+            if (
+                'chaoyang' in item
+                and 'base' in item['chaoyang']
+                and item['chaoyang']['base'] == base_acc
+            ):
                 results.append(item)
         return results
 

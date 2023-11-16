@@ -3,8 +3,8 @@ import torch.nn as nn
 from piconas.nas.search_spaces.core.graph import Graph
 from piconas.nas.search_spaces.nasbench101.conversions import get_children
 from piconas.nas.search_spaces.nasbench101.primitives import ModelWrapper
-from piconas.nas.search_spaces.transbench101.tnb101.model_builder import \
-    create_model
+from piconas.nas.search_spaces.transbench101.tnb101.model_builder import create_model
+
 """
 There are three representations
 'naslib': the NASBench201SearchSpace object
@@ -22,7 +22,6 @@ EDGE_LIST = ((1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4))
 
 
 def convert_naslib_to_op_indices(naslib_object):
-
     cell = naslib_object._get_child_graphs(single_instances=True)[0]
     ops = [cell.edges[i, j]['op'].get_op_name for i, j in EDGE_LIST]
     return [OP_NAMES.index(name) for name in ops]
@@ -31,7 +30,8 @@ def convert_naslib_to_op_indices(naslib_object):
 def _wrap_model(model):
     all_leaf_modules = get_children(model)
     inplace_relus = [
-        module for module in all_leaf_modules
+        module
+        for module in all_leaf_modules
         if isinstance(module, nn.ReLU) and module.inplace
     ]
 
@@ -80,8 +80,9 @@ def convert_op_indices_to_naslib(op_indices, naslib_object):
         if (edge.head, edge.tail) in edge_op_dict:
             for i, op in enumerate(edge.data.op):
                 if op.get_op_name == edge_op_dict[(edge.head, edge.tail)] or (
-                        op.get_op_name == 'FactorizedReduce' and
-                        edge_op_dict[(edge.head, edge.tail)] == 'Identity'):
+                    op.get_op_name == 'FactorizedReduce'
+                    and edge_op_dict[(edge.head, edge.tail)] == 'Identity'
+                ):
                     index = i
                     break
             edge.data.set('op_index', index, shared=True)
@@ -97,14 +98,12 @@ def convert_op_indices_to_naslib(op_indices, naslib_object):
         edge.data.set('primitives', primitives)  # store for later use
 
     naslib_object.update_edges(
-        add_op_index,
-        scope=naslib_object.OPTIMIZER_SCOPE,
-        private_edge_data=False)
+        add_op_index, scope=naslib_object.OPTIMIZER_SCOPE, private_edge_data=False
+    )
 
     naslib_object.update_edges(
-        update_ops,
-        scope=naslib_object.OPTIMIZER_SCOPE,
-        private_edge_data=True)
+        update_ops, scope=naslib_object.OPTIMIZER_SCOPE, private_edge_data=True
+    )
 
 
 def convert_naslib_to_str(naslib_object):
@@ -120,12 +119,14 @@ def convert_naslib_to_str(naslib_object):
         'Zero': 'none',
     }
 
-    cell = (naslib_object.nodes[2]['subgraph'].edges[1, 2]['op'].op[1]
-            )  # TODO: Do this in a clean fashion
+    cell = (
+        naslib_object.nodes[2]['subgraph'].edges[1, 2]['op'].op[1]
+    )  # TODO: Do this in a clean fashion
     assert cell.name == 'cell' and isinstance(cell, Graph)
 
-    edge_op_dict = {(i, j): ops_to_nb201[cell.edges[i, j]['op'].get_op_name]
-                    for i, j in cell.edges}
+    edge_op_dict = {
+        (i, j): ops_to_nb201[cell.edges[i, j]['op'].get_op_name] for i, j in cell.edges
+    }
     op_edge_list = [
         '{}~{}'.format(edge_op_dict[(i, j)], i - 1)
         for i, j in sorted(edge_op_dict, key=lambda x: x[1])
@@ -150,8 +151,9 @@ def convert_naslib_to_transbench101_micro(naslib_object):
     cell = naslib_object.nodes[2]['subgraph'].edges[1, 2]['op'].op[1]
     assert cell.name == 'cell' and isinstance(cell, Graph)
 
-    edge_op_dict = {(i, j): ops_to_tb101[cell.edges[i, j]['op'].get_op_name]
-                    for i, j in cell.edges}
+    edge_op_dict = {
+        (i, j): ops_to_tb101[cell.edges[i, j]['op'].get_op_name] for i, j in cell.edges
+    }
 
     op_edge_list = [
         '{}'.format(edge_op_dict[(i, j)])

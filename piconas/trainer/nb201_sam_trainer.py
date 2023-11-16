@@ -59,7 +59,8 @@ class NB201_SAM_Trainer(BaseTrainer):
             log_name=log_name,
             searching=searching,
             dataset=dataset,
-            **kwargs)
+            **kwargs,
+        )
 
         # init flops
         self._init_flops()
@@ -70,8 +71,7 @@ class NB201_SAM_Trainer(BaseTrainer):
             self.mutator.prepare_from_supernet(model)
 
         # evaluate the rank consistency
-        self.evaluator = self._build_evaluator(
-            num_sample=50, dataset=self.dataset)
+        self.evaluator = self._build_evaluator(num_sample=50, dataset=self.dataset)
 
         # pairwise rank loss
         self.pairwise_rankloss = PairwiseRankLoss()
@@ -87,9 +87,7 @@ class NB201_SAM_Trainer(BaseTrainer):
         # type from kwargs can be random, hamming, adaptive
         if 'type' in kwargs:
             self.type = kwargs['type']
-            assert self.type in {
-                'random', 'hamming', 'adaptive', 'uniform', 'fair'
-            }
+            assert self.type in {'random', 'hamming', 'adaptive', 'uniform', 'fair'}
         else:
             self.type = None
         self.logger.info(f'Current type of nb201 trainer is: {self.type}.')
@@ -159,8 +157,7 @@ class NB201_SAM_Trainer(BaseTrainer):
             subnet2 = self.mutator.random_subnet
 
             # 调参，调大或者调小 (1) 6.7 (2) 5 (3) 11
-            while adaptive_hamming_dist(subnet1,
-                                        subnet2) < 6.7 and max_iter > 0:
+            while adaptive_hamming_dist(subnet1, subnet2) < 6.7 and max_iter > 0:
                 subnet2 = self.mutator.random_subnet
             if max_iter > 0:
                 return subnet1, subnet2
@@ -334,7 +331,8 @@ class NB201_SAM_Trainer(BaseTrainer):
                     )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg}'
-                f' Top5 acc: {top5_vacc.avg}')
+                f' Top5 acc: {top5_vacc.avg}'
+            )
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def fit(self, train_loader, val_loader, epochs):
@@ -381,22 +379,24 @@ class NB201_SAM_Trainer(BaseTrainer):
             if epoch % 5 == 0:
                 assert self.evaluator is not None
                 kt, ps, sp = self.evaluator.compute_rank_consistency(
-                    val_loader, self.mutator)
+                    val_loader, self.mutator
+                )
                 self.writer.add_scalar(
-                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
+                    'RANK/kendall_tau', kt, global_step=self.current_epoch
+                )
                 self.writer.add_scalar(
-                    'RANK/pearson', ps, global_step=self.current_epoch)
+                    'RANK/pearson', ps, global_step=self.current_epoch
+                )
                 self.writer.add_scalar(
-                    'RANK/spearman', sp, global_step=self.current_epoch)
+                    'RANK/spearman', sp, global_step=self.current_epoch
+                )
 
             self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss', tr_loss, global_step=self.current_epoch
+            )
             self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss', val_loss, global_step=self.current_epoch
+            )
 
             self.scheduler.step()
 
@@ -404,7 +404,8 @@ class NB201_SAM_Trainer(BaseTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         # self.model.eval()
@@ -416,8 +417,7 @@ class NB201_SAM_Trainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 # move to device
-                outputs, labels = self._predict(
-                    batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
@@ -471,8 +471,7 @@ class NB201_SAM_Trainer(BaseTrainer):
         for k, v in self.mutator.search_group.items():
             current_choice = subnet_dict[k]  # '1' or '2' or 'I'
             choice_flops = 0
-            for _, module in v[0]._candidate_ops[current_choice].named_modules(
-            ):
+            for _, module in v[0]._candidate_ops[current_choice].named_modules():
                 flops = getattr(module, '__flops__', 0)
                 if flops > 0:
                     choice_flops += flops
@@ -480,12 +479,12 @@ class NB201_SAM_Trainer(BaseTrainer):
             subnet_flops += choice_flops
         return subnet_flops
 
-    def get_subnet_predictive(self,
-                              subnet_dict,
-                              dataloader,
-                              measure_name='nwot') -> float:
+    def get_subnet_predictive(
+        self, subnet_dict, dataloader, measure_name='nwot'
+    ) -> float:
         """Calculate zenscore based on subnet dict."""
         import copy
+
         m = copy.deepcopy(self.model)
         o = OneShotMutator(with_alias=True)
         o.prepare_from_supernet(m)
@@ -500,16 +499,16 @@ class NB201_SAM_Trainer(BaseTrainer):
             dataload_info=dataload_info,
             measure_names=measure_name,
             loss_fn=F.cross_entropy,
-            device=self.trainer.device)
+            device=self.trainer.device,
+        )
 
         del m
         del o
         return score
 
-    def get_subnet_error(self,
-                         subnet_dict: Dict,
-                         train_loader=None,
-                         val_loader=None) -> float:
+    def get_subnet_error(
+        self, subnet_dict: Dict, train_loader=None, val_loader=None
+    ) -> float:
         """Calculate the subnet of validation error.
         Including:
         1. BN calibration
@@ -588,8 +587,7 @@ class NB201_SAM_Trainer(BaseTrainer):
         # sum_loss.backward()
         return sum_loss, outputs
 
-    def fit_specific(self, train_loader, val_loader, epochs,
-                     subnet_cfg: dict) -> None:
+    def fit_specific(self, train_loader, val_loader, epochs, subnet_cfg: dict) -> None:
         """Fits. High Level API
         Fit the model using the given loaders for the given number
         of epochs.
@@ -614,8 +612,7 @@ class NB201_SAM_Trainer(BaseTrainer):
             tr_loss, top1_tacc, top5_tacc = self._train(train_loader)
 
             # validate
-            val_loss, top1_vacc, top5_vacc = self._validate_specific(
-                val_loader)
+            val_loss, top1_vacc, top5_vacc = self._validate_specific(val_loader)
 
             # save ckpt
             if epoch % 10 == 0:
@@ -637,23 +634,23 @@ class NB201_SAM_Trainer(BaseTrainer):
 
             if epoch % 5 == 0:
                 assert self.evaluator is not None
-                kt, ps, sp = self.evaluator.compute_rank_consistency(
-                    self.mutator)
+                kt, ps, sp = self.evaluator.compute_rank_consistency(self.mutator)
                 self.writer.add_scalar(
-                    'RANK/kendall_tau', kt, global_step=self.current_epoch)
+                    'RANK/kendall_tau', kt, global_step=self.current_epoch
+                )
                 self.writer.add_scalar(
-                    'RANK/pearson', ps, global_step=self.current_epoch)
+                    'RANK/pearson', ps, global_step=self.current_epoch
+                )
                 self.writer.add_scalar(
-                    'RANK/spearman', sp, global_step=self.current_epoch)
+                    'RANK/spearman', sp, global_step=self.current_epoch
+                )
 
             self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss', tr_loss, global_step=self.current_epoch
+            )
             self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss', val_loss, global_step=self.current_epoch
+            )
 
             self.scheduler.step()
 
@@ -661,7 +658,8 @@ class NB201_SAM_Trainer(BaseTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
     def _forward_pairwise_loss(self, batch_inputs):
         inputs, labels = batch_inputs
@@ -693,9 +691,11 @@ class NB201_SAM_Trainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = (2 *
-                 np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs) *
-                 self.pairwise_rankloss(flops1, flops2, loss1, loss2))
+        loss3 = (
+            2
+            * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
+            * self.pairwise_rankloss(flops1, flops2, loss1, loss2)
+        )
         loss3.backward()
 
         return loss2, outputs
@@ -733,17 +733,14 @@ class NB201_SAM_Trainer(BaseTrainer):
         #       1. min(2, self.current_epoch/10.)
         #       2. 2 * np.sin(np.pi * 0.8 * self.current_epoch / self.max_epochs)
 
-        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1,
-                                                      loss2)
+        loss3 = self._lambda * self.pairwise_rankloss(flops1, flops2, loss1, loss2)
         loss_list.append(loss3)
 
         # distill loss
         if loss2 > loss1:
-            loss4 = self.distill_loss(
-                feat_s=feat2, feat_t=feat1) * self.lambda_kd
+            loss4 = self.distill_loss(feat_s=feat2, feat_t=feat1) * self.lambda_kd
         else:
-            loss4 = self.distill_loss(
-                feat_s=feat1, feat_t=feat2) * self.lambda_kd
+            loss4 = self.distill_loss(feat_s=feat1, feat_t=feat2) * self.lambda_kd
         loss_list.append(loss4)
 
         loss = sum(loss_list)
@@ -786,8 +783,7 @@ class NB201_SAM_Trainer(BaseTrainer):
             for j in range(i):
                 flops1, flops2 = flops_list[i], flops_list[j]
                 loss1, loss2 = loss_list[i], loss_list[j]
-                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1,
-                                                       loss2)
+                tmp_rank_loss = self.pairwise_rankloss(flops1, flops2, loss1, loss2)
 
                 rank_loss_list.append(tmp_rank_loss)
 

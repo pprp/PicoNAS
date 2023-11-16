@@ -4,7 +4,6 @@ from torch.nn.modules.loss import _WeightedLoss
 
 
 class SoftmaxCrossEntropyWithLogits(_WeightedLoss):
-
     def __init__(self, weight=None):
         super(SoftmaxCrossEntropyWithLogits, self).__init__(weight=None)
         self.weight = weight

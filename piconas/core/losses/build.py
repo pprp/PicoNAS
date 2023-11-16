@@ -5,7 +5,6 @@ from .landmark_loss import _loss_fn, get_rank_loss_fn
 
 
 class LSR(nn.Module):
-
     def __init__(self, e=0.1, reduction='mean'):
         super().__init__()
 
@@ -56,21 +55,24 @@ class LSR(nn.Module):
         return one_hot.to(target.device)
 
     def forward(self, x, target):
-
         if x.size(0) != target.size(0):
             raise ValueError(
-                'Expected input batchsize ({}) to match target batch_size({})'.
-                format(x.size(0), target.size(0)))
+                'Expected input batchsize ({}) to match target batch_size({})'.format(
+                    x.size(0), target.size(0)
+                )
+            )
 
         if x.dim() < 2:
             raise ValueError(
-                'Expected input tensor to have least 2 dimensions(got {})'.
-                format(x.size(0)))
+                'Expected input tensor to have least 2 dimensions(got {})'.format(
+                    x.size(0)
+                )
+            )
 
         if x.dim() != 2:
             raise ValueError(
-                'Only 2 dimension tensor are implemented, (got {})'.format(
-                    x.size()))
+                'Only 2 dimension tensor are implemented, (got {})'.format(x.size())
+            )
 
         smoothed_target = self._smooth_label(target, x.size(1), self.e)
         x = self.log_softmax(x)

@@ -15,17 +15,16 @@ class FFEncoder(nn.Module):
         if self.encoder_str == 'resnet50':
             self.network = models.resnet50()  # resnet50: Bottleneck, [3,4,6,3]
             # Adjust according to task
-            if task_name in [
-                    'autoencoder', 'normal', 'inpainting', 'segmentsemantic'
-            ]:
+            if task_name in ['autoencoder', 'normal', 'inpainting', 'segmentsemantic']:
                 self.network.inplanes = 1024
                 self.network.layer4 = self.network._make_layer(
-                    models.resnet.Bottleneck, 512, 3, stride=1, dilate=False)
+                    models.resnet.Bottleneck, 512, 3, stride=1, dilate=False
+                )
                 self.network = nn.Sequential(
-                    *list(self.network.children())[:-2], )
+                    *list(self.network.children())[:-2],
+                )
             else:
-                self.network = nn.Sequential(
-                    *list(self.network.children())[:-2])
+                self.network = nn.Sequential(*list(self.network.children())[:-2])
         # elif self.encoder_str == '64-41414-super_0123':
         #     self.network = SuperNetDartsV1(encoder_str, structure='backbone')
         else:

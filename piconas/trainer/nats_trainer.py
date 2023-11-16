@@ -52,7 +52,8 @@ class NATSTrainer(BaseTrainer):
             log_name=log_name,
             searching=searching,
             dataset=dataset,
-            **kwargs)
+            **kwargs,
+        )
 
         assert method in {'uni', 'fair'}
         self.method = method
@@ -208,11 +209,14 @@ class NATSTrainer(BaseTrainer):
                 else:
                     kt, ps, sp = self.evaluator.compute_rank_consistency()
                     self.writer.add_scalar(
-                        'RANK/kendall_tau', kt, global_step=self.current_epoch)
+                        'RANK/kendall_tau', kt, global_step=self.current_epoch
+                    )
                     self.writer.add_scalar(
-                        'RANK/pearson', ps, global_step=self.current_epoch)
+                        'RANK/pearson', ps, global_step=self.current_epoch
+                    )
                     self.writer.add_scalar(
-                        'RANK/spearman', sp, global_step=self.current_epoch)
+                        'RANK/spearman', sp, global_step=self.current_epoch
+                    )
 
             # save ckpt
             if epoch % 10 == 0:
@@ -233,13 +237,11 @@ class NATSTrainer(BaseTrainer):
             )
 
             self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss', tr_loss, global_step=self.current_epoch
+            )
             self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss', val_loss, global_step=self.current_epoch
+            )
 
             self.scheduler.step()
 
@@ -247,7 +249,8 @@ class NATSTrainer(BaseTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
     def forward_fairnas(self, batch_inputs):
         inputs, labels = batch_inputs
@@ -281,9 +284,7 @@ class NATSTrainer(BaseTrainer):
         t_loss.backward(retain_graph=True)
 
         # middle supernet
-        mid_forward_lists = [
-            self.model.set_forward_cfg('uni') for _ in range(2)
-        ]
+        mid_forward_lists = [self.model.set_forward_cfg('uni') for _ in range(2)]
         for mid_forward_list in mid_forward_lists:
             output, s_feat = self.model(inputs, mid_forward_list)
             loss = self.distill_criterion(output, t_output)
@@ -311,9 +312,7 @@ class NATSTrainer(BaseTrainer):
         mse_loss_list.append(t_loss)
 
         # middle supernet
-        mid_forward_lists = [
-            self.model.set_forward_cfg('uni') for _ in range(2)
-        ]
+        mid_forward_lists = [self.model.set_forward_cfg('uni') for _ in range(2)]
         for mid_forward_list in mid_forward_lists:
             output, feat_s = self.model(inputs, mid_forward_list)
             loss = self.distill_criterion(output, t_output)

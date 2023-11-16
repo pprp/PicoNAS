@@ -7,6 +7,7 @@ import torch.nn as nn
 
 import piconas.utils.utils as utils
 from piconas.core.losses import PairwiseRankLoss
+
 # from piconas.evaluator.nb201_evaluator import NB201Evaluator
 from piconas.models.nasbench201 import DiffNASBench201Network
 from piconas.nas.mutators import DiffMutator
@@ -97,9 +98,9 @@ class Darts_Trainer(BaseTrainer):
         top1_tacc = AvgrageMeter()
         top5_tacc = AvgrageMeter()
 
-        for step, ((trn_x, trn_y),
-                   (val_x,
-                    val_y)) in enumerate(zip(train_loader, valid_loader)):
+        for step, ((trn_x, trn_y), (val_x, val_y)) in enumerate(
+            zip(train_loader, valid_loader)
+        ):
             # get image and labels
             trn_x = self._to_device(trn_x, self.device)
             trn_y = self._to_device(trn_y, self.device)
@@ -121,7 +122,7 @@ class Darts_Trainer(BaseTrainer):
             outputs = self.model(trn_x)
             loss = self.criterion(outputs, trn_y)
             loss.backward()
-            nn.utils.clip_grad_norm_(self.model.parameters(), 5.)
+            nn.utils.clip_grad_norm_(self.model.parameters(), 5.0)
             self.optimizer.step()
 
             # compute accuracy
@@ -180,9 +181,10 @@ class Darts_Trainer(BaseTrainer):
         loss = self.criterion(output, val_y)
 
         w_model, w_arch = tuple(self.model.parameters()), tuple(
-            self.mutator.parameters())
+            self.mutator.parameters()
+        )
         w_grads = torch.autograd.grad(loss, w_model + w_arch)
-        d_model, d_arch = w_grads[:len(w_model)], w_grads[len(w_model):]
+        d_model, d_arch = w_grads[: len(w_model)], w_grads[len(w_model) :]
 
         # compute hessian and final gradients [expression (8) from paper]
         hessian = self._compute_hessian(backup_params, d_model, trn_x, trn_y)
@@ -205,7 +207,7 @@ class Darts_Trainer(BaseTrainer):
         gradients = torch.autograd.grad(loss, self.model.parameters())
         with torch.no_grad():
             for w, g in zip(self.model.parameters(), gradients):
-                m = self.optimizer.state[w].get('momentum_buffer', 0.)
+                m = self.optimizer.state[w].get('momentum_buffer', 0.0)
                 w = w - lr * (momentum * m + g + weight_decay * w)
 
     def _restore_weights(self, backup_params):
@@ -215,11 +217,11 @@ class Darts_Trainer(BaseTrainer):
 
     def _compute_hessian(self, backup_params, dw, trn_x, trn_y):
         """
-            dw = dw` { L_val(w`, alpha) }
-            w+ = w + eps * dw
-            w- = w - eps * dw
-            hessian = (dalpha { L_trn(w+, alpha) } - dalpha { L_trn(w-, alpha) }) / (2*eps)
-            eps = 0.01 / ||dw||
+        dw = dw` { L_val(w`, alpha) }
+        w+ = w + eps * dw
+        w- = w - eps * dw
+        hessian = (dalpha { L_trn(w+, alpha) } - dalpha { L_trn(w-, alpha) }) / (2*eps)
+        eps = 0.01 / ||dw||
         """
         self._restore_weights(backup_params)
         norm = torch.cat([w.view(-1) for w in dw]).norm()
@@ -229,14 +231,13 @@ class Darts_Trainer(BaseTrainer):
                 f'In computing hessian, norm is smaller than 1E-8, cause eps to be {norm.item()}.'
             )
         dalphas = []
-        for e in [eps, -2. * eps]:
+        for e in [eps, -2.0 * eps]:
             with torch.no_grad():
                 for p, d in zip(self.model.parameters(), dw):
                     p += e * d
             output = self.model(trn_x)
             loss = self.criterion(output, trn_y)
-            dalphas.append(
-                torch.autograd.grad(loss, self.mutator.parameters()))
+            dalphas.append(torch.autograd.grad(loss, self.mutator.parameters()))
         dalpha_pos, dalpha_neg = dalphas
         return [(p - n) / 2.0 * eps for p, n in zip(dalpha_pos, dalpha_neg)]
 
@@ -298,7 +299,8 @@ class Darts_Trainer(BaseTrainer):
                     )
             self.logger.info(
                 f'Val loss: {val_loss / (step + 1)} Top1 acc: {top1_vacc.avg}'
-                f' Top5 acc: {top5_vacc.avg}')
+                f' Top5 acc: {top5_vacc.avg}'
+            )
         return val_loss / (step + 1), top1_vacc.avg, top5_vacc.avg
 
     def fit(self, train_loader, val_loader, epochs):
@@ -319,8 +321,7 @@ class Darts_Trainer(BaseTrainer):
             epoch_start_time = time.time()
 
             # train
-            tr_loss, top1_tacc, top5_tacc = self._train(
-                train_loader, val_loader)
+            tr_loss, top1_tacc, top5_tacc = self._train(train_loader, val_loader)
 
             # validate
             val_loss, top1_vacc, top5_vacc = self._validate(val_loader)
@@ -357,13 +358,11 @@ class Darts_Trainer(BaseTrainer):
             #         'RANK/spearman', sp, global_step=self.current_epoch)
 
             self.writer.add_scalar(
-                'EPOCH_LOSS/train_epoch_loss',
-                tr_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/train_epoch_loss', tr_loss, global_step=self.current_epoch
+            )
             self.writer.add_scalar(
-                'EPOCH_LOSS/valid_epoch_loss',
-                val_loss,
-                global_step=self.current_epoch)
+                'EPOCH_LOSS/valid_epoch_loss', val_loss, global_step=self.current_epoch
+            )
 
             self.scheduler.step()
 
@@ -371,7 +370,8 @@ class Darts_Trainer(BaseTrainer):
 
         # final message
         self.logger.info(
-            f"""End of training. Total time: {round(total_time, 5)} seconds""")
+            f"""End of training. Total time: {round(total_time, 5)} seconds"""
+        )
 
     def metric_score(self, loader, subnet_dict: Dict = None):
         # self.model.eval()
@@ -383,8 +383,7 @@ class Darts_Trainer(BaseTrainer):
         with torch.no_grad():
             for step, batch_inputs in enumerate(loader):
                 # move to device
-                outputs, labels = self._predict(
-                    batch_inputs, subnet_dict=subnet_dict)
+                outputs, labels = self._predict(batch_inputs, subnet_dict=subnet_dict)
 
                 # compute loss
                 loss = self._compute_loss(outputs, labels)
@@ -438,8 +437,7 @@ class Darts_Trainer(BaseTrainer):
         for k, v in self.mutator.search_group.items():
             current_choice = subnet_dict[k]  # '1' or '2' or 'I'
             choice_flops = 0
-            for _, module in v[0]._candidate_ops[current_choice].named_modules(
-            ):
+            for _, module in v[0]._candidate_ops[current_choice].named_modules():
                 flops = getattr(module, '__flops__', 0)
                 if flops > 0:
                     choice_flops += flops
@@ -447,10 +445,9 @@ class Darts_Trainer(BaseTrainer):
             subnet_flops += choice_flops
         return subnet_flops
 
-    def get_subnet_error(self,
-                         subnet_dict: Dict,
-                         train_loader=None,
-                         val_loader=None) -> float:
+    def get_subnet_error(
+        self, subnet_dict: Dict, train_loader=None, val_loader=None
+    ) -> float:
         """Calculate the subnet of validation error.
         Including:
         1. BN calibration

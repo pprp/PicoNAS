@@ -19,6 +19,5 @@ def get_cell_based_tiny_net(config):
     elif hasattr(config, 'arch_str'):
         genotype = CellStructure.str2structure(config.arch_str)
     else:
-        raise ValueError(
-            'Can not find genotype from this config : {:}'.format(config))
+        raise ValueError('Can not find genotype from this config : {:}'.format(config))
     return TinyNetwork(config.C, config.N, genotype, config.num_classes)

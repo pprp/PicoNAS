@@ -25,19 +25,16 @@ class ZeroCostPredictorEvaluator(object):
         self.test_size = config.test_size
         self.dataset = config.dataset
         self.metric = Metric.VAL_ACCURACY
-        self.device = torch.device(
-            'cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.results = [config]
 
         self.test_data_file = config.test_data_file
         self.log_results_to_json = log_results
         self.zc_api = zc_api
 
-    def adapt_search_space(self,
-                           search_space,
-                           load_labeled=False,
-                           scope=None,
-                           dataset_api=None):
+    def adapt_search_space(
+        self, search_space, load_labeled=False, scope=None, dataset_api=None
+    ):
         self.search_space = search_space.clone()
         self.scope = scope if scope else search_space.OPTIMIZER_SCOPE
         self.predictor.set_ss_type(self.search_space.get_type())
@@ -51,13 +48,11 @@ class ZeroCostPredictorEvaluator(object):
         """
         info_dict = {}
         accuracy = arch.query(
-            metric=self.metric,
-            dataset=self.dataset,
-            dataset_api=self.dataset_api)
+            metric=self.metric, dataset=self.dataset, dataset_api=self.dataset_api
+        )
         train_time = arch.query(
-            metric=Metric.TRAIN_TIME,
-            dataset=self.dataset,
-            dataset_api=self.dataset_api)
+            metric=Metric.TRAIN_TIME, dataset=self.dataset, dataset_api=self.dataset_api
+        )
         return accuracy, train_time, info_dict
 
     def load_dataset_from_file(self, datapath, size):
@@ -101,7 +96,8 @@ class ZeroCostPredictorEvaluator(object):
                 graph.sample_random_architecture(dataset_api=self.dataset_api)
             else:
                 self.search_space.sample_random_architecture(
-                    dataset_api=self.dataset_api, load_labeled=True)
+                    dataset_api=self.dataset_api, load_labeled=True
+                )
 
             encoding = self.search_space.get_hash()
             accuracy = self.zc_api[str(encoding)]['val_accuracy']
@@ -148,33 +144,33 @@ class ZeroCostPredictorEvaluator(object):
 
         logger.info('Compute evaluation metrics')
         results_dict = utils.compute_scores(ytest, test_pred)
-        results_dict['query_time'] = (query_time_end -
-                                      query_time_start) / len(xtest)
+        results_dict['query_time'] = (query_time_end - query_time_start) / len(xtest)
 
         method_type = self.predictor.method_type
-        logger.info('dataset: {}, predictor: {}, kendalltau {}'.format(
-            self.dataset, method_type, np.round(results_dict['kendalltau'],
-                                                4)))
+        logger.info(
+            'dataset: {}, predictor: {}, kendalltau {}'.format(
+                self.dataset, method_type, np.round(results_dict['kendalltau'], 4)
+            )
+        )
 
         # print entire results dict:
         print_string = ''
         for key in results_dict:
             if type(results_dict[key]) not in [str, set, bool]:
                 # todo: serialize other types
-                print_string += key + ': {}, '.format(
-                    np.round(results_dict[key], 4))
+                print_string += key + ': {}, '.format(np.round(results_dict[key], 4))
         logger.info(print_string)
         self.results.append(results_dict)
 
     def load_test_data(self):
         if self.test_data_file is not None:
             logger.info('Loading the test set from file')
-            test_data = self.load_dataset_from_file(self.test_data_file,
-                                                    self.test_size)
+            test_data = self.load_dataset_from_file(self.test_data_file, self.test_size)
         else:
             logger.info('Sampling from search space...')
             test_data = self.load_dataset(
-                load_labeled=self.load_labeled, data_size=self.test_size)
+                load_labeled=self.load_labeled, data_size=self.test_size
+            )
 
         return test_data
 
@@ -193,9 +189,8 @@ class ZeroCostPredictorEvaluator(object):
         if not os.path.exists(self.config.save):
             os.makedirs(self.config.save)
         with codecs.open(
-                os.path.join(self.config.save, 'scores.json'),
-                'w',
-                encoding='utf-8') as file:
+            os.path.join(self.config.save, 'scores.json'), 'w', encoding='utf-8'
+        ) as file:
             for res in self.results:
                 for key, value in res.items():
                     if type(value) == np.int32 or type(value) == np.int64:

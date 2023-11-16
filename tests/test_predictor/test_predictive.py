@@ -7,14 +7,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from piconas.datasets import build_dataloader
-from piconas.models.nasbench201.oneshot_nasbench201 import \
-    OneShotNASBench201Network
+from piconas.models.nasbench201.oneshot_nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
 from piconas.predictor.pruners.predictive import find_measures
 
 
 class ToyModel(nn.Module):
-
     def __init__(self):
         super().__init__()
         current_c = random.randint(8, 20)
@@ -38,7 +36,6 @@ class ToyModel(nn.Module):
 
 
 class TestPredictive(TestCase):
-
     def setUp(self) -> None:
         self.model = OneShotNASBench201Network()
         # self.model = ToyModel()
@@ -64,7 +61,8 @@ class TestPredictive(TestCase):
             dataload_info=dataload_info,
             measure_names=['zen'],
             loss_fn=F.cross_entropy,
-            device=device)
+            device=device,
+        )
 
         print(measure_values)
 

@@ -14,7 +14,6 @@ class Dict(dict):
 
 
 class TestDataset(TestCase):
-
     @unittest.skip('pass')
     def test_dataset(self):
         dataset = build_dataset(type='train', dataset='cifar10')
@@ -35,6 +34,7 @@ class TestDataset(TestCase):
 
     def test_immitate_dataloader(self):
         import random
+
         img = torch.randn(4, 3, 32, 32)
         num_classes = 10
         choiced = random.sample(list(range(num_classes)), k=4)
@@ -66,8 +66,7 @@ class TestDataset(TestCase):
             plt.savefig('origin.png')
 
             # 2, 3, 32, 32 -> 2, 16 * 16, 2*2*3
-            img = rearrange(
-                img, 'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)', p1=16, p2=16)
+            img = rearrange(img, 'b c (p1 h) (p2 w) -> b (p1 p2) (c h w)', p1=16, p2=16)
 
             # mask [2, 16, 16] -> [2, 16 * 16]
             mask = rearrange(mask, 'b h w -> b (h w)')

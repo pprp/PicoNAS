@@ -11,7 +11,6 @@ from piconas.nas.mutables import OneShotPathOP
 
 
 class Cell(nn.Module):
-
     def __init__(self, inplanes, outplanes, shadow_bn, layer_idx=0):
         super(Cell, self).__init__()
         self.inplanes = inplanes
@@ -26,8 +25,7 @@ class Cell(nn.Module):
             nodes.append(ConvBnRelu(self.inplanes, self.outplanes, 3))
             nodes.append(MaxPool(self.inplanes, self.outplanes))
         nodes.append(nn.Conv2d(outplanes, outplanes, kernel_size=1, stride=1))
-        self.edges = OneShotPathOP(
-            candidate_ops=nodes, alias=f'layer-{layer_idx}')
+        self.edges = OneShotPathOP(candidate_ops=nodes, alias=f'layer-{layer_idx}')
 
         self.bn_list = nn.ModuleList([])
         if self.shadow_bn:
@@ -42,19 +40,14 @@ class Cell(nn.Module):
 
 @register_model
 class OneShotNASBench101Network(nn.Module):
-
     def __init__(self, init_channels=128, num_classes=10, shadow_bn=True):
         super(OneShotNASBench101Network, self).__init__()
         self.init_channels = init_channels
 
         self.stem = nn.Sequential(
             nn.Conv2d(
-                3,
-                self.init_channels,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=False),
+                3, self.init_channels, kernel_size=3, stride=1, padding=1, bias=False
+            ),
             nn.BatchNorm2d(self.init_channels),
             nn.ReLU(inplace=True),
         )
@@ -68,7 +61,9 @@ class OneShotNASBench101Network(nn.Module):
                         self.init_channels,
                         self.init_channels * 2,
                         shadow_bn=shadow_bn,
-                        layer_idx=i))
+                        layer_idx=i,
+                    )
+                )
                 self.init_channels *= 2
             else:
                 self.cell_list.append(
@@ -76,7 +71,9 @@ class OneShotNASBench101Network(nn.Module):
                         self.init_channels,
                         self.init_channels,
                         shadow_bn=shadow_bn,
-                        layer_idx=i))
+                        layer_idx=i,
+                    )
+                )
 
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(self.init_channels, num_classes)

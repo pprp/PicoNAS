@@ -17,17 +17,15 @@ def collate_fn(batch):
             ret.append(None)
         else:
             ret.append(
-                default_collate(
-                    [batch[i][0][item_idx] for i in range(batch_num)]))
+                default_collate([batch[i][0][item_idx] for i in range(batch_num)])
+            )
     ret.append(default_collate([batch[i][1] for i in range(batch_num)]))
     return ret
 
 
-def build_dataset(type='train',
-                  dataset='cifar10',
-                  config=None,
-                  fast=False,
-                  data_dir=None):
+def build_dataset(
+    type='train', dataset='cifar10', config=None, fast=False, data_dir=None
+):
     assert dataset in ['cifar10', 'cifar100', 'simmim', 'ImageNet16-120']
     assert type in ['train', 'val']
 
@@ -89,16 +87,16 @@ def build_dataset(type='train',
             dataset_type = ImageNet16(
                 root=data_dir,
                 train=True,
-                transform=build_transforms(
-                    'ImageNet16-120', 'train', config=config),
-                use_num_of_class_only=120)
+                transform=build_transforms('ImageNet16-120', 'train', config=config),
+                use_num_of_class_only=120,
+            )
         elif type == 'val':
             dataset_type = ImageNet16(
                 root=data_dir,
                 train=False,
-                transform=build_transforms(
-                    'ImageNet16-120', 'val', config=config),
-                use_num_of_class_only=120)
+                transform=build_transforms('ImageNet16-120', 'val', config=config),
+                use_num_of_class_only=120,
+            )
     else:
         raise f'Type Error: {dataset} Not Supported'
 
@@ -121,10 +119,7 @@ def process_fast(dataset_type):
     dataset_type.targets = dataset_type.targets[:choice_num]
 
 
-def build_dataloader(dataset='cifar10',
-                     type='train',
-                     config=None,
-                     data_dir=None):
+def build_dataloader(dataset='cifar10', type='train', config=None, data_dir=None):
     assert type in ['train', 'val']
     assert dataset in ['cifar10', 'cifar100', 'simmim', 'ImageNet16-120']
 
@@ -141,11 +136,8 @@ def build_dataloader(dataset='cifar10',
         if type == 'train':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'train',
-                    'cifar10',
-                    config=config,
-                    fast=fast,
-                    data_dir=data_dir),
+                    'train', 'cifar10', config=config, fast=fast, data_dir=data_dir
+                ),
                 batch_size=batch_size,
                 shuffle=True,
                 num_workers=nw,
@@ -154,11 +146,8 @@ def build_dataloader(dataset='cifar10',
         elif type == 'val':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'val',
-                    'cifar10',
-                    config=config,
-                    fast=fast,
-                    data_dir=data_dir),
+                    'val', 'cifar10', config=config, fast=fast, data_dir=data_dir
+                ),
                 batch_size=batch_size,
                 shuffle=False,
                 num_workers=nw,
@@ -168,11 +157,8 @@ def build_dataloader(dataset='cifar10',
         if type == 'train':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'train',
-                    'cifar100',
-                    config=config,
-                    fast=fast,
-                    data_dir=data_dir),
+                    'train', 'cifar100', config=config, fast=fast, data_dir=data_dir
+                ),
                 batch_size=batch_size,
                 shuffle=True,
                 num_workers=nw,
@@ -181,11 +167,8 @@ def build_dataloader(dataset='cifar10',
         elif type == 'val':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'val',
-                    'cifar100',
-                    config=config,
-                    fast=fast,
-                    data_dir=data_dir),
+                    'val', 'cifar100', config=config, fast=fast, data_dir=data_dir
+                ),
                 batch_size=batch_size,
                 shuffle=False,
                 num_workers=nw,
@@ -195,11 +178,8 @@ def build_dataloader(dataset='cifar10',
         if type == 'train':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'train',
-                    'simmim',
-                    config=config,
-                    fast=fast,
-                    data_dir=data_dir),
+                    'train', 'simmim', config=config, fast=fast, data_dir=data_dir
+                ),
                 batch_size=batch_size,
                 shuffle=True,
                 num_workers=nw,
@@ -209,11 +189,8 @@ def build_dataloader(dataset='cifar10',
         elif type == 'val':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'val',
-                    'simmim',
-                    config=config,
-                    fast=fast,
-                    data_dir=data_dir),
+                    'val', 'simmim', config=config, fast=fast, data_dir=data_dir
+                ),
                 batch_size=batch_size,
                 shuffle=False,
                 num_workers=nw,
@@ -228,7 +205,8 @@ def build_dataloader(dataset='cifar10',
                     'ImageNet16-120',
                     config=config,
                     fast=fast,
-                    data_dir=data_dir),
+                    data_dir=data_dir,
+                ),
                 batch_size=batch_size,
                 shuffle=True,
                 num_workers=nw,
@@ -237,11 +215,8 @@ def build_dataloader(dataset='cifar10',
         elif type == 'val':
             dataloader_type = DataLoader(
                 build_dataset(
-                    'val',
-                    'ImageNet16-120',
-                    config=config,
-                    fast=fast,
-                    data_dir=data_dir),
+                    'val', 'ImageNet16-120', config=config, fast=fast, data_dir=data_dir
+                ),
                 batch_size=batch_size,
                 shuffle=False,
                 num_workers=nw,

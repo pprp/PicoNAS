@@ -9,34 +9,55 @@ from nasbench import api as NB1API
 from sklearn import preprocessing
 from tqdm import tqdm
 
-from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.cell_101 import \
-    Cell101
+from piconas.predictor.nas_embedding_suite.nb123.nas_bench_101.cell_101 import Cell101
 
 BASE_PATH = '/data/lujunl/pprp/bench/'
 
 
 class NASBench101:
-
-    def __init__(self,
-                 path=None,
-                 zcp_dict=False,
-                 normalize_zcp=True,
-                 log_synflow=True,
-                 embedding_list=[
-                     'adj', 'adj_op', 'cat_adj', 'cont_adj', 'path',
-                     'cat_path', 'trunc_path', 'trunc_cat_path', 'zcp', 'gcn',
-                     'vae', 'arch2vec', 'cate'
-                 ]):
+    def __init__(
+        self,
+        path=None,
+        zcp_dict=False,
+        normalize_zcp=True,
+        log_synflow=True,
+        embedding_list=[
+            'adj',
+            'adj_op',
+            'cat_adj',
+            'cont_adj',
+            'path',
+            'cat_path',
+            'trunc_path',
+            'trunc_cat_path',
+            'zcp',
+            'gcn',
+            'vae',
+            'arch2vec',
+            'cate',
+        ],
+    ):
         self.zcps = [
-            'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
-            'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen'
+            'epe_nas',
+            'fisher',
+            'flops',
+            'grad_norm',
+            'grasp',
+            'jacov',
+            'l2_norm',
+            'nwot',
+            'params',
+            'plain',
+            'snip',
+            'synflow',
+            'zen',
         ]
         self.nb1_op_idx = {
             'input': 0,
             'output': 1,
             'conv3x3-bn-relu': 2,
             'conv1x1-bn-relu': 3,
-            'maxpool3x3': 4
+            'maxpool3x3': 4,
         }
         self.zcp_dict = zcp_dict
 
@@ -49,10 +70,16 @@ class NASBench101:
         # check if saved_valacc.pkl exists, if not, create it
         if not os.path.exists(BASE_PATH + 'saved_valacc.pkl'):
             valacc_list = [
-                sum([
-                    self.nb1_api.get_metrics_from_hash(hash_)[1][108][ixe]
-                    ['final_validation_accuracy'] for ixe in range(3)
-                ]) / 3 for hash_ in tqdm(self.nb1_api.hash_iterator())
+                sum(
+                    [
+                        self.nb1_api.get_metrics_from_hash(hash_)[1][108][ixe][
+                            'final_validation_accuracy'
+                        ]
+                        for ixe in range(3)
+                    ]
+                )
+                / 3
+                for hash_ in tqdm(self.nb1_api.hash_iterator())
             ]
             torch.save(valacc_list, BASE_PATH + 'saved_valacc.pkl')
         else:
@@ -61,7 +88,8 @@ class NASBench101:
         # MinMax normalize valacc_list
         self.min_max_scaler = preprocessing.QuantileTransformer()
         self.valacc_list = self.min_max_scaler.fit_transform(
-            np.array(valacc_list).reshape(-1, 1)).reshape(-1)
+            np.array(valacc_list).reshape(-1, 1)
+        ).reshape(-1)
 
     # Key Functions Begin
     def get_adjmlp_zcp(self, idx):
@@ -72,11 +100,11 @@ class NASBench101:
         matrix, ops = self.pad_size_6(matrix, ops)
         module_operations = self.transform_nb101_operations(ops)
         adj_mat = np.asarray(matrix).flatten()
-        op_mat = torch.Tensor(
-            np.asarray(module_operations)).argmax(dim=1).numpy().flatten()
+        op_mat = (
+            torch.Tensor(np.asarray(module_operations)).argmax(dim=1).numpy().flatten()
+        )
         op_mat = op_mat / np.max(op_mat)
-        return np.concatenate(
-            (adj_mat, op_mat, np.asarray(self.get_zcp(idx)))).tolist()
+        return np.concatenate((adj_mat, op_mat, np.asarray(self.get_zcp(idx)))).tolist()
 
     def get_adj_op(self, idx, space=None, bin_space=None):
         hash = self.hash_iterator_list[idx]
@@ -87,7 +115,7 @@ class NASBench101:
         module_operations = self.transform_nb101_operations(ops)
         return {
             'module_adjacency': matrix.tolist(),
-            'module_operations': module_operations.tolist()
+            'module_operations': module_operations.tolist(),
         }
 
     def get_a2vcatezcp(self, idx, joint=None, space=None):
@@ -134,16 +162,13 @@ class NASBench101:
         print('Loading Files for NASBench101...')
         start_time = time.time()
 
-        self.cate_nb101 = torch.load(BASE_PATH +
-                                     'cate_embeddings/cate_nasbench101.pt')
+        self.cate_nb101 = torch.load(BASE_PATH + 'cate_embeddings/cate_nasbench101.pt')
         self.arch2vec_nb101 = torch.load(
-            BASE_PATH +
-            'arch2vec_embeddings/arch2vec-model-dim_32_search_space_nasbench101-nasbench101.pt'
+            BASE_PATH
+            + 'arch2vec_embeddings/arch2vec-model-dim_32_search_space_nasbench101-nasbench101.pt'
         )
-        self.zcp_nb101 = json.load(
-            open(BASE_PATH + 'zc_nasbench101_full.json', 'r'))
-        self.nb1_api = NB1API.NASBench(BASE_PATH +
-                                       'nasbench_only108_caterec.tfrecord')
+        self.zcp_nb101 = json.load(open(BASE_PATH + 'zc_nasbench101_full.json', 'r'))
+        self.nb1_api = NB1API.NASBench(BASE_PATH + 'nasbench_only108_caterec.tfrecord')
 
         print('Loaded files in: ', time.time() - start_time, ' seconds')
 
@@ -160,63 +185,70 @@ class NASBench101:
         if normalize_zcp:
             print('Normalizing ZCP dict')
             try:
-                self.norm_zcp = pd.DataFrame({
-                    k0: {
-                        k1: v1['score']
-                        for k1, v1 in v0.items() if v1.__class__() == {}
+                self.norm_zcp = pd.DataFrame(
+                    {
+                        k0: {
+                            k1: v1['score']
+                            for k1, v1 in v0.items()
+                            if v1.__class__() == {}
+                        }
+                        for k0, v0 in self.zcp_nb101['cifar10'].items()
                     }
-                    for k0, v0 in self.zcp_nb101['cifar10'].items()
-                }).T
+                ).T
             except KeyError:
                 import pdb
+
                 pdb.set_trace()
 
             # Add normalization code here
-            self.norm_zcp['epe_nas'] = self.min_max_scaling(
-                self.norm_zcp['epe_nas'])
+            self.norm_zcp['epe_nas'] = self.min_max_scaling(self.norm_zcp['epe_nas'])
             self.norm_zcp['fisher'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['fisher']))
+                self.log_transform(self.norm_zcp['fisher'])
+            )
             self.norm_zcp['flops'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['flops']))
+                self.log_transform(self.norm_zcp['flops'])
+            )
             self.norm_zcp['grad_norm'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['grad_norm']))
-            self.norm_zcp['grasp'] = self.standard_scaling(
-                self.norm_zcp['grasp'])
-            self.norm_zcp['jacov'] = self.min_max_scaling(
-                self.norm_zcp['jacov'])
-            self.norm_zcp['l2_norm'] = self.min_max_scaling(
-                self.norm_zcp['l2_norm'])
+                self.log_transform(self.norm_zcp['grad_norm'])
+            )
+            self.norm_zcp['grasp'] = self.standard_scaling(self.norm_zcp['grasp'])
+            self.norm_zcp['jacov'] = self.min_max_scaling(self.norm_zcp['jacov'])
+            self.norm_zcp['l2_norm'] = self.min_max_scaling(self.norm_zcp['l2_norm'])
             self.norm_zcp['nwot'] = self.min_max_scaling(self.norm_zcp['nwot'])
             self.norm_zcp['params'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['params']))
-            self.norm_zcp['plain'] = self.min_max_scaling(
-                self.norm_zcp['plain'])
+                self.log_transform(self.norm_zcp['params'])
+            )
+            self.norm_zcp['plain'] = self.min_max_scaling(self.norm_zcp['plain'])
             self.norm_zcp['snip'] = self.min_max_scaling(
-                self.log_transform(self.norm_zcp['snip']))
+                self.log_transform(self.norm_zcp['snip'])
+            )
 
             if log_synflow:
                 self.norm_zcp['synflow'] = self.min_max_scaling(
-                    self.log_transform(self.norm_zcp['synflow']))
+                    self.log_transform(self.norm_zcp['synflow'])
+                )
             else:
                 self.norm_zcp['synflow'] = self.min_max_scaling(
-                    self.norm_zcp['synflow'])
+                    self.norm_zcp['synflow']
+                )
 
             self.norm_zcp['zen'] = self.min_max_scaling(self.norm_zcp['zen'])
             self.norm_zcp['val_accuracy'] = self.min_max_scaling(
-                self.norm_zcp['val_accuracy'])
+                self.norm_zcp['val_accuracy']
+            )
 
             self.zcp_nb101 = {'cifar10': self.norm_zcp.T.to_dict()}
 
     def create_hash_to_idx(self):
         self.hash_iterator_list = list(self.nb1_api.hash_iterator())
         self.hash_to_idx = {
-            hash: idx
-            for idx, hash in enumerate(self.hash_iterator_list)
+            hash: idx for idx, hash in enumerate(self.hash_iterator_list)
         }
 
     def get_params(self, idx):
-        return self.nb1_api.get_metrics_from_hash(
-            self.hash_iterator_list[idx])[0]['trainable_parameters']
+        return self.nb1_api.get_metrics_from_hash(self.hash_iterator_list[idx])[0][
+            'trainable_parameters'
+        ]
 
     def transform_nb101_operations(self, ops):
         transform_dict = {
@@ -224,7 +256,7 @@ class NASBench101:
             'conv1x1-bn-relu': 1,
             'conv3x3-bn-relu': 2,
             'maxpool3x3': 3,
-            'output': 4
+            'output': 4,
         }
         ops_array = np.zeros([7, 5], dtype='int8')
         for row, op in enumerate(ops):
@@ -234,8 +266,7 @@ class NASBench101:
 
     def pad_size_6(self, matrix, ops):
         if len(matrix) < 7:
-            new_matrix, new_ops = self.create_padded_matrix_and_ops(
-                matrix, ops)
+            new_matrix, new_ops = self.create_padded_matrix_and_ops(matrix, ops)
             return new_matrix, new_ops
         else:
             return matrix, ops
@@ -274,14 +305,26 @@ class NASBench101:
         cellobj = Cell101(matrix, ops)
 
         output_dict = self.create_embedding_output_dict(
-            cellobj, matrix, module_operations, idx, zcp_stringarg)
+            cellobj, matrix, module_operations, idx, zcp_stringarg
+        )
         return output_dict
 
-    def create_embedding_output_dict(self, cellobj, matrix, module_operations,
-                                     idx, zcp_stringarg):
+    def create_embedding_output_dict(
+        self, cellobj, matrix, module_operations, idx, zcp_stringarg
+    ):
         predictor_encodings = [
-            'adj', 'adj_op', 'cat_adj', 'cont_adj', 'path', 'cat_path',
-            'trunc_path', 'trunc_cat_path', 'gcn', 'vae', 'arch2vec', 'cate'
+            'adj',
+            'adj_op',
+            'cat_adj',
+            'cont_adj',
+            'path',
+            'cat_path',
+            'trunc_path',
+            'trunc_cat_path',
+            'gcn',
+            'vae',
+            'arch2vec',
+            'cate',
         ]
         output_dict = {}
 
@@ -289,7 +332,8 @@ class NASBench101:
             try:
                 getter_function = getattr(self, f'get_{encoding}_value')
                 output_dict[encoding] = getter_function(
-                    cellobj, matrix, module_operations, idx)
+                    cellobj, matrix, module_operations, idx
+                )
             except Exception as e:
                 print(f'Probably {encoding} matrix mismatch: ', e)
                 output_dict[encoding] = None

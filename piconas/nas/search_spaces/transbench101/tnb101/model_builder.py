@@ -1,5 +1,9 @@
-from .models.decoder import (FFDecoder, GenerativeDecoder, SegmentationDecoder,
-                             SiameseDecoder)
+from .models.decoder import (
+    FFDecoder,
+    GenerativeDecoder,
+    SegmentationDecoder,
+    SiameseDecoder,
+)
 from .models.discriminator import Discriminator
 from .models.encoder import FFEncoder
 from .models.feedforward import FeedForwardNet
@@ -17,8 +21,11 @@ def create_model(encoder_str, task_name):
 
     # model
     cfg['encoder'] = FFEncoder(encoder_str, task_name=cfg['task_name']).network
-    cfg['decoder_input_dim'] = ((2048, 16, 16) if cfg['encoder_str']
-                                == 'resnet50' else cfg['encoder'].output_dim)
+    cfg['decoder_input_dim'] = (
+        (2048, 16, 16)
+        if cfg['encoder_str'] == 'resnet50'
+        else cfg['encoder'].output_dim
+    )
 
     if task_name == 'segmentsemantic':
         model = _create_model_segmentsemantic(cfg)
@@ -35,8 +42,7 @@ def create_model(encoder_str, task_name):
     elif task_name == 'normal':
         model = _create_model_normal(cfg)
     else:
-        raise NotImplementedError(
-            f'Model not implemented for task {task_name}')
+        raise NotImplementedError(f'Model not implemented for task {task_name}')
 
     return model
 
@@ -73,7 +79,8 @@ def _create_model_class_scene(cfg):
 def _create_model_jigsaw(cfg):
     cfg['target_dim'] = 1000
     cfg['decoder'] = SiameseDecoder(
-        cfg['decoder_input_dim'], cfg['target_dim'], num_pieces=9)
+        cfg['decoder_input_dim'], cfg['target_dim'], num_pieces=9
+    )
     cfg['model'] = SiameseNet(cfg['encoder'], cfg['decoder'])
 
     return cfg['model']
@@ -86,8 +93,7 @@ def _create_model_room_layout(cfg):
 
 def _create_model_autoencoder(cfg):
     cfg['target_dim'] = (256, 256)  # ORIG CODE (3, 256, 256)
-    cfg['decoder'] = GenerativeDecoder(cfg['decoder_input_dim'],
-                                       cfg['target_dim'])
+    cfg['decoder'] = GenerativeDecoder(cfg['decoder_input_dim'], cfg['target_dim'])
     cfg['discriminator'] = Discriminator()
     cfg['model'] = GAN(cfg['encoder'], cfg['decoder'], cfg['discriminator'])
 

@@ -98,20 +98,25 @@ def random_cell_path(nasbench, index_hash, weighted, cont, cutoff):
     https://drive.google.com/file/d/1yMRFxT6u3ZyfiWUPhtQ_B9FbuGN3X-Nf/view?usp=sharing
     """
     if not index_hash:
-        print('Error: please download index_hash, located at \
+        print(
+            'Error: please download index_hash, located at \
         https://drive.google.com/file/d/1yMRFxT6u3ZyfiWUPhtQ_B9FbuGN3X-Nf/view?usp=sharing'
-              )
+        )
         raise NotImplementedError()
 
-    total_paths = sum([len(OPS)**i for i in range(OP_SPOTS + 1)])
+    total_paths = sum([len(OPS) ** i for i in range(OP_SPOTS + 1)])
     if not cutoff:
         cutoff = total_paths
 
     while True:
         if weighted:
             probs_by_length = [
-                .2, .127, 3.36 * 10**-2, 3.92 * 10**-3, 1.5 * 10**-4,
-                6.37 * 10**-7
+                0.2,
+                0.127,
+                3.36 * 10**-2,
+                3.92 * 10**-3,
+                1.5 * 10**-4,
+                6.37 * 10**-7,
             ]
         else:
             probs_by_length = [1 / cutoff for i in range(OP_SPOTS + 1)]
@@ -121,7 +126,7 @@ def random_cell_path(nasbench, index_hash, weighted, cont, cutoff):
         weights = []
         n = 0
         for i in range(OP_SPOTS + 1):
-            for j in range(len(OPS)**i):
+            for j in range(len(OPS) ** i):
                 weights.append(probs_by_length[i])
                 path_probs.append(np.random.rand())
                 n += 1
@@ -136,7 +141,7 @@ def random_cell_path(nasbench, index_hash, weighted, cont, cutoff):
             weighted_probs = [
                 path_probs[i] * weights[i] for i in range(len(path_probs))
             ]
-            path_indices = np.argsort(weighted_probs)[-1 * num_paths:]
+            path_indices = np.argsort(weighted_probs)[-1 * num_paths :]
         else:
             # pick each path with some probability
             path_indices = [

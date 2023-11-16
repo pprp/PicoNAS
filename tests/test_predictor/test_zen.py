@@ -5,14 +5,12 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 
-from piconas.models.nasbench201.oneshot_nasbench201 import \
-    OneShotNASBench201Network
+from piconas.models.nasbench201.oneshot_nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
 from piconas.predictor.pruners.measures.zen import compute_zen_score
 
 
 class ToyModel(nn.Module):
-
     def __init__(self):
         super().__init__()
         current_c = random.randint(8, 20)
@@ -35,13 +33,11 @@ class ToyModel(nn.Module):
 
 
 class TestZenScore(TestCase):
-
     def test_zen_score_with_fixmodel(self):
         inputs = torch.randn(4, 3, 32, 32)
         for _ in range(3):
             m = ToyModel()
-            score = compute_zen_score(
-                net=m, inputs=inputs, targets=None, repeat=3)
+            score = compute_zen_score(net=m, inputs=inputs, targets=None, repeat=3)
             assert score is not None
 
     def test_nb201_zen_score_with_mutablemodel(self):
@@ -54,8 +50,7 @@ class TestZenScore(TestCase):
         for i in range(3):
             rand_subnet = o.random_subnet
             o.set_subnet(rand_subnet)
-            score = compute_zen_score(
-                net=m, inputs=inputs, targets=None, repeat=5)
+            score = compute_zen_score(net=m, inputs=inputs, targets=None, repeat=5)
             print(f'The score of {i} th model is {score}')
 
 

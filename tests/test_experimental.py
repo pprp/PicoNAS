@@ -12,7 +12,7 @@ def sample_combination_bitwise():
         0b011,  # G, W
         0b101,  # G, X
         0b110,  # W, X
-        0b111  # G, W, X
+        0b111,  # G, W, X
     ]
     idx = random.randint(0, 6)
     bit_combination = combinations[idx]
@@ -27,7 +27,6 @@ def sample_combination_bitwise():
 
 
 class Graph(nx.DiGraph):
-
     def __init__(self):
         super().__init__()
 
@@ -114,7 +113,8 @@ class Graph(nx.DiGraph):
             node_color='skyblue',
             font_size=15,
             width=2,
-            alpha=0.8)
+            alpha=0.8,
+        )
         plt.title('Graph Visualization')
         # plt.show()
         plt.savefig('./visualize_graph.png')
@@ -126,8 +126,7 @@ class Graph(nx.DiGraph):
     def __repr__(self) -> str:
         """Matrix representation of the graph."""
         matrix = self.adjacency_matrix()
-        return '\n'.join(
-            [' '.join([str(cell) for cell in row]) for row in matrix])
+        return '\n'.join([' '.join([str(cell) for cell in row]) for row in matrix])
 
     def find_path(self, start_node, end_node):
         visited = set()
@@ -211,13 +210,11 @@ def create_dag_graph(input_combination):
         # Randomly connect one operation to the output
         # sample key based on the value as probability
         target_node_hash = {
-            k: v / sum(target_node_hash.values())
-            for k, v in target_node_hash.items()
+            k: v / sum(target_node_hash.values()) for k, v in target_node_hash.items()
         }
         sampled_target_node = random.choices(
-            list(target_node_hash.keys()),
-            weights=list(target_node_hash.values()),
-            k=1)[0]
+            list(target_node_hash.keys()), weights=list(target_node_hash.values()), k=1
+        )[0]
         graph.add_edge(sampled_target_node, output_node)
 
         for inp in input_combination:

@@ -15,7 +15,6 @@ from .ops import OPS, FactorizedReduce, Identity, ReLUConvBN
 
 
 class ASPP(nn.Module):
-
     def __init__(self, in_channels, out_channels, num_classes, rates):
         super(ASPP, self).__init__()
         assert len(rates) in [1, 3]
@@ -23,7 +22,9 @@ class ASPP(nn.Module):
         self.global_pooling = nn.AdaptiveAvgPool2d(1)
         self.aspp1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 1, bias=False),
-            nn.BatchNorm2d(out_channels), nn.ReLU(inplace=True))
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+        )
         self.aspp2 = nn.Sequential(
             nn.Conv2d(
                 in_channels,
@@ -31,8 +32,11 @@ class ASPP(nn.Module):
                 3,
                 dilation=rates[0],
                 padding=rates[0],
-                bias=False), nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True))
+                bias=False,
+            ),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+        )
         if len(self.rates) == 3:
             self.aspp3 = nn.Sequential(
                 nn.Conv2d(
@@ -41,8 +45,11 @@ class ASPP(nn.Module):
                     3,
                     dilation=rates[1],
                     padding=rates[1],
-                    bias=False), nn.BatchNorm2d(out_channels),
-                nn.ReLU(inplace=True))
+                    bias=False,
+                ),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(inplace=True),
+            )
             self.aspp4 = nn.Sequential(
                 nn.Conv2d(
                     in_channels,
@@ -50,26 +57,31 @@ class ASPP(nn.Module):
                     3,
                     dilation=rates[2],
                     padding=rates[2],
-                    bias=False), nn.BatchNorm2d(out_channels),
-                nn.ReLU(inplace=True))
+                    bias=False,
+                ),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(inplace=True),
+            )
         self.aspp5 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 1, bias=False),
-            nn.BatchNorm2d(out_channels), nn.ReLU(inplace=True))
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+        )
         self.classifier = nn.Sequential(
-            nn.Conv2d(
-                out_channels * (len(rates) + 2), out_channels, 1, bias=False),
-            nn.BatchNorm2d(out_channels), nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, num_classes, 1))
+            nn.Conv2d(out_channels * (len(rates) + 2), out_channels, 1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_channels, num_classes, 1),
+        )
 
     def forward(self, x):
         x1 = self.aspp1(x)
         x2 = self.aspp2(x)
         x5 = self.global_pooling(x)
         x5 = self.aspp5(x5)
-        x5 = nn.Upsample((x.shape[2], x.shape[3]),
-                         mode='bilinear',
-                         align_corners=True)(
-                             x5)
+        x5 = nn.Upsample((x.shape[2], x.shape[3]), mode='bilinear', align_corners=True)(
+            x5
+        )
         if len(self.rates) == 3:
             x3 = self.aspp3(x)
             x4 = self.aspp4(x)
@@ -81,7 +93,6 @@ class ASPP(nn.Module):
 
 
 class Classifier(nn.Module):
-
     def __init__(self, channels, num_classes):
         super(Classifier, self).__init__()
         self.pooling = nn.AdaptiveAvgPool2d(1)
@@ -95,10 +106,11 @@ class Classifier(nn.Module):
 
 def drop_path(x, drop_prob):
     """Drop path (ported from DARTS)."""
-    if drop_prob > 0.:
-        keep_prob = 1. - drop_prob
+    if drop_prob > 0.0:
+        keep_prob = 1.0 - drop_prob
         mask = Variable(
-            torch.cuda.FloatTensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob))
+            torch.cuda.FloatTensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob)
+        )
         x.div_(keep_prob)
         x.mul_(mask)
     return x
@@ -107,8 +119,7 @@ def drop_path(x, drop_prob):
 class Cell(nn.Module):
     """NAS cell (ported from DARTS)."""
 
-    def __init__(self, genotype, C_prev_prev, C_prev, C, reduction,
-                 reduction_prev):
+    def __init__(self, genotype, C_prev_prev, C_prev, C, reduction, reduction_prev):
         super(Cell, self).__init__()
 
         if reduction_prev:
@@ -150,7 +161,7 @@ class Cell(nn.Module):
             op2 = self._ops[2 * i + 1]
             h1 = op1(h1)
             h2 = op2(h2)
-            if self.training and drop_prob > 0.:
+            if self.training and drop_prob > 0.0:
                 if not isinstance(op1, Identity):
                     h1 = drop_path(h1, drop_prob)
                 if not isinstance(op2, Identity):
@@ -161,7 +172,6 @@ class Cell(nn.Module):
 
 
 class AuxiliaryHeadCIFAR(nn.Module):
-
     def __init__(self, C, num_classes):
         """assuming input size 8x8"""
         super(AuxiliaryHeadCIFAR, self).__init__()
@@ -174,7 +184,8 @@ class AuxiliaryHeadCIFAR(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(128, 768, 2, bias=False),
             nn.BatchNorm2d(768),
-            nn.ReLU(inplace=True))
+            nn.ReLU(inplace=True),
+        )
         self.classifier = nn.Linear(768, num_classes)
 
     def forward(self, x):
@@ -184,7 +195,6 @@ class AuxiliaryHeadCIFAR(nn.Module):
 
 
 class AuxiliaryHeadImageNet(nn.Module):
-
     def __init__(self, C, num_classes):
         """assuming input size 14x14"""
         super(AuxiliaryHeadImageNet, self).__init__()
@@ -198,7 +208,8 @@ class AuxiliaryHeadImageNet(nn.Module):
             # NOTE: This batchnorm was omitted in my earlier implementation due to a typo.
             # Commenting it out for consistency with the experiments in the paper.
             # nn.BatchNorm2d(768),
-            nn.ReLU(inplace=True))
+            nn.ReLU(inplace=True),
+        )
         self.classifier = nn.Linear(768, num_classes)
 
     def forward(self, x):
@@ -218,8 +229,8 @@ class NetworkCIFAR(nn.Module):
         stem_multiplier = 3
         C_curr = stem_multiplier * C
         self.stem = nn.Sequential(
-            nn.Conv2d(3, C_curr, 3, padding=1, bias=False),
-            nn.BatchNorm2d(C_curr))
+            nn.Conv2d(3, C_curr, 3, padding=1, bias=False), nn.BatchNorm2d(C_curr)
+        )
 
         C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
         self.cells = nn.ModuleList()
@@ -230,8 +241,9 @@ class NetworkCIFAR(nn.Module):
                 reduction = True
             else:
                 reduction = False
-            cell = Cell(genotype, C_prev_prev, C_prev, C_curr, reduction,
-                        reduction_prev)
+            cell = Cell(
+                genotype, C_prev_prev, C_prev, C_curr, reduction, reduction_prev
+            )
             reduction_prev = reduction
             self.cells += [cell]
             C_prev_prev, C_prev = C_prev, cell.multiplier * C_curr
@@ -239,8 +251,7 @@ class NetworkCIFAR(nn.Module):
                 C_to_auxiliary = C_prev
 
         if auxiliary:
-            self.auxiliary_head = AuxiliaryHeadCIFAR(C_to_auxiliary,
-                                                     num_classes)
+            self.auxiliary_head = AuxiliaryHeadCIFAR(C_to_auxiliary, num_classes)
         self.classifier = Classifier(C_prev, num_classes)
 
     def forward(self, input):
@@ -276,8 +287,7 @@ class NetworkImageNet(nn.Module):
         self._auxiliary = auxiliary
 
         self.stem0 = nn.Sequential(
-            nn.Conv2d(
-                3, C // 2, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.Conv2d(3, C // 2, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(C // 2),
             nn.ReLU(inplace=True),
             nn.Conv2d(C // 2, C, 3, stride=2, padding=1, bias=False),
@@ -301,8 +311,9 @@ class NetworkImageNet(nn.Module):
                 reduction = True
             else:
                 reduction = False
-            cell = Cell(genotype, C_prev_prev, C_prev, C_curr, reduction,
-                        reduction_prev)
+            cell = Cell(
+                genotype, C_prev_prev, C_prev, C_curr, reduction, reduction_prev
+            )
             reduction_prev = reduction
             self.cells += [cell]
             C_prev_prev, C_prev = C_prev, cell.multiplier * C_curr
@@ -310,8 +321,7 @@ class NetworkImageNet(nn.Module):
                 C_to_auxiliary = C_prev
 
         if auxiliary:
-            self.auxiliary_head = AuxiliaryHeadImageNet(
-                C_to_auxiliary, num_classes)
+            self.auxiliary_head = AuxiliaryHeadImageNet(C_to_auxiliary, num_classes)
         self.classifier = Classifier(C_prev, num_classes)
 
     def forward(self, input):
@@ -344,13 +354,18 @@ class NAS(nn.Module):
     """NAS net wrapper (delegates to nets from DARTS)."""
 
     def __init__(self, dataset='cifar10', genotype='nas'):
-        assert dataset in ['cifar10', 'imagenet', 'cityscapes'], \
-            'Training on {} is not supported'.format(dataset)
-        assert dataset in ['cifar10', 'imagenet', 'cityscapes'], \
-            'Testing on {} is not supported'.format(dataset)
+        assert dataset in [
+            'cifar10',
+            'imagenet',
+            'cityscapes',
+        ], 'Training on {} is not supported'.format(dataset)
+        assert dataset in [
+            'cifar10',
+            'imagenet',
+            'cityscapes',
+        ], 'Testing on {} is not supported'.format(dataset)
 
-        assert genotype in GENOTYPES, \
-            'Genotype {} not supported'.format(genotype)
+        assert genotype in GENOTYPES, 'Genotype {} not supported'.format(genotype)
         super(NAS, self).__init__()
 
         # Use a custom or predefined genotype
@@ -363,11 +378,8 @@ class NAS(nn.Module):
             net_ctor = NetworkImageNet
         # Construct the network
         self.net_ = net_ctor(
-            C=16,
-            num_classes=10,
-            layers=20,
-            auxiliary=False,
-            genotype=genotype)
+            C=16, num_classes=10, layers=20, auxiliary=False, genotype=genotype
+        )
         # Drop path probability (set / annealed based on epoch)
         self.net_.drop_path_prob = 0.0
 

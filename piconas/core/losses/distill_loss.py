@@ -32,8 +32,11 @@ class CC(nn.Module):
 
         for p in range(self.P_order + 1):
             corr_mat += (
-                math.exp(-2 * self.gamma) * (2 * self.gamma)**p /
-                math.factorial(p) * torch.pow(sim_mat, p))
+                math.exp(-2 * self.gamma)
+                * (2 * self.gamma) ** p
+                / math.factorial(p)
+                * torch.pow(sim_mat, p)
+            )
 
         return corr_mat
 
@@ -72,9 +75,10 @@ class KLDivergence(nn.Module):
         self.teacher_detach = teacher_detach
 
         accept_reduction = {'none', 'batchmean', 'sum', 'mean'}
-        assert reduction in accept_reduction, \
-            f'KLDivergence supports reduction {accept_reduction}, ' \
+        assert reduction in accept_reduction, (
+            f'KLDivergence supports reduction {accept_reduction}, '
             f'but gets {reduction}.'
+        )
         self.reduction = reduction
 
     def forward(self, preds_S, preds_T):
@@ -94,7 +98,8 @@ class KLDivergence(nn.Module):
         softmax_pred_T = F.softmax(preds_T / self.tau, dim=1)
         logsoftmax_preds_S = F.log_softmax(preds_S / self.tau, dim=1)
         loss = (self.tau**2) * F.kl_div(
-            logsoftmax_preds_S, softmax_pred_T, reduction=self.reduction)
+            logsoftmax_preds_S, softmax_pred_T, reduction=self.reduction
+        )
         return self.loss_weight * loss
 
 
@@ -103,8 +108,9 @@ def cosine_similarity(a, b, eps=1e-8):
 
 
 def pearson_correlation(a, b, eps=1e-8):
-    return cosine_similarity(a - a.mean(1).unsqueeze(1),
-                             b - b.mean(1).unsqueeze(1), eps)
+    return cosine_similarity(
+        a - a.mean(1).unsqueeze(1), b - b.mean(1).unsqueeze(1), eps
+    )
 
 
 def inter_class_relation(y_s, y_t):
@@ -123,11 +129,13 @@ class DIST(nn.Module):
     def __init__(self):
         super(DIST, self).__init__()
 
-    def forward(self,
-                z_s,
-                z_t,
-                beta: Union[float, Tensor] = 1.0,
-                gamma: Union[float, Tensor] = 1.0):
+    def forward(
+        self,
+        z_s,
+        z_t,
+        beta: Union[float, Tensor] = 1.0,
+        gamma: Union[float, Tensor] = 1.0,
+    ):
         y_s = z_s.softmax(dim=1)
         y_t = z_t.softmax(dim=1)
         inter_loss = inter_class_relation(y_s, y_t)

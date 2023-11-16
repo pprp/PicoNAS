@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class Ensemble(Predictor):
-
     def __init__(
         self,
         encoding_type=None,
@@ -34,10 +33,8 @@ class Ensemble(Predictor):
         self.zc_only = zc_only
 
     def get_ensemble(self):
-
         trainable_predictors = {
-            'xgb':
-            XGBoost(
+            'xgb': XGBoost(
                 ss_type=self.ss_type,
                 zc=self.zc,
                 encoding_type='adjacency_one_hot',
@@ -54,8 +51,9 @@ class Ensemble(Predictor):
         if self.ensemble is None:
             self.ensemble = self.get_ensemble()
 
-        if self.hyperparams is None and hasattr(self.ensemble[0],
-                                                'default_hyperparams'):
+        if self.hyperparams is None and hasattr(
+            self.ensemble[0], 'default_hyperparams'
+        ):
             # todo: ideally should implement get_default_hyperparams() for all predictors
             self.hyperparams = self.ensemble[0].default_hyperparams.copy()
 
@@ -92,8 +90,9 @@ class Ensemble(Predictor):
         if self.ensemble is None:
             self.ensemble = self.get_ensemble()
 
-        if self.hyperparams is None and hasattr(self.ensemble[0],
-                                                'default_hyperparams'):
+        if self.hyperparams is None and hasattr(
+            self.ensemble[0], 'default_hyperparams'
+        ):
             # todo: ideally should implement get_default_hyperparams() for all predictors
             params = self.ensemble[0].default_hyperparams.copy()
 
@@ -122,8 +121,9 @@ class Ensemble(Predictor):
             self.ensemble = self.get_ensemble()
 
         for model in self.ensemble:
-            assert hasattr(model, 'set_pre_computations'
-                           ), 'set_pre_computations() not implemented'
+            assert hasattr(
+                model, 'set_pre_computations'
+            ), 'set_pre_computations() not implemented'
             model.set_pre_computations(
                 unlabeled=unlabeled,
                 xtrain_zc_info=xtrain_zc_info,

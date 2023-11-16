@@ -28,12 +28,11 @@ dataset_api = get_dataset_api(config.search_space, config.dataset)
 if config.dataset in ['ninapro', 'svhn', 'scifar100']:
     postfix = '9x'
     with open(
-            f'./naslib/data/9x/{config.search_space}/{config.dataset}/test.json'
+        f'./naslib/data/9x/{config.search_space}/{config.dataset}/test.json'
     ) as f:
         api9x_data = json.load(f)
     api9x = {
-        translate_str(str(record['arch'])): record['accuracy']
-        for record in api9x_data
+        translate_str(str(record['arch'])): record['accuracy'] for record in api9x_data
     }
 else:
     postfix = ''
@@ -43,12 +42,11 @@ archs = [[random.randint(0, 4) for _ in range(6)] for _ in range(100)]
 
 end_index = (
     config.start_idx + config.n_models
-    if config.start_idx + config.n_models < len(archs) else len(archs))
+    if config.start_idx + config.n_models < len(archs)
+    else len(archs)
+)
 
-archs_to_evaluate = {
-    idx: archs[idx]
-    for idx in range(config.start_idx, end_index)
-}
+archs_to_evaluate = {idx: archs[idx] for idx in range(config.start_idx, end_index)}
 
 utils.set_seed(config.seed)
 train_loader = build_dataloader(dataset='cifar10', type='train')
@@ -58,8 +56,7 @@ predictor = ZeroCost(method_type=config.predictor)
 zc_scores = []
 
 for i, (idx, arch) in enumerate(archs_to_evaluate.items()):
-    logger.info(
-        f'{i} \tComputing ZC score for model id {idx} with encoding {arch}')
+    logger.info(f'{i} \tComputing ZC score for model id {idx} with encoding {arch}')
     zc_score = {}
     graph = search_space.clone()
     graph.set_spec(arch)
@@ -68,7 +65,8 @@ for i, (idx, arch) in enumerate(archs_to_evaluate.items()):
         accuracy = api9x[str(arch)]
     else:
         accuracy = graph.query(
-            Metric.VAL_ACCURACY, config.dataset, dataset_api=dataset_api)
+            Metric.VAL_ACCURACY, config.dataset, dataset_api=dataset_api
+        )
 
     # Query predictor
     start_time = timeit.default_timer()

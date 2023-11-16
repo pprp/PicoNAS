@@ -5,14 +5,12 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 
-from piconas.models.nasbench201.oneshot_nasbench201 import \
-    OneShotNASBench201Network
+from piconas.models.nasbench201.oneshot_nasbench201 import OneShotNASBench201Network
 from piconas.nas.mutators import OneShotMutator
 from piconas.predictor.pruners.measures.jacov import compute_jacob_cov
 
 
 class ToyModel(nn.Module):
-
     def __init__(self):
         super().__init__()
         current_c = random.randint(8, 20)
@@ -36,7 +34,6 @@ class ToyModel(nn.Module):
 
 
 class TestJacob(TestCase):
-
     def test_jacob_with_fixmodel(self):
         inputs = torch.randn(4, 3, 32, 32)
         targets = torch.randn(4)

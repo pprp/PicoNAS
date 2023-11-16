@@ -8,8 +8,12 @@
 
 import torch.nn as nn
 
-from .net import (complexity_batchnorm2d, complexity_conv2d,
-                  complexity_maxpool2d, init_weights)
+from .net import (
+    complexity_batchnorm2d,
+    complexity_conv2d,
+    complexity_maxpool2d,
+    init_weights,
+)
 
 
 def get_stem_fun(stem_type):
@@ -64,8 +68,7 @@ class VanillaBlock(nn.Module):
         err_str = 'Vanilla block does not support bm, gw, and se_r options'
         assert bm is None and gw is None and se_r is None, err_str
         super(VanillaBlock, self).__init__()
-        self.a = nn.Conv2d(
-            w_in, w_out, 3, stride=stride, padding=1, bias=False)
+        self.a = nn.Conv2d(w_in, w_out, 3, stride=stride, padding=1, bias=False)
         self.a_bn = nn.BatchNorm2d(w_out, eps=1e-5, momentum=0.1)
         self.a_relu = nn.ReLU(inplace=True)
         self.b = nn.Conv2d(w_out, w_out, 3, stride=1, padding=1, bias=False)
@@ -93,8 +96,7 @@ class BasicTransform(nn.Module):
 
     def __init__(self, w_in, w_out, stride):
         super(BasicTransform, self).__init__()
-        self.a = nn.Conv2d(
-            w_in, w_out, 3, stride=stride, padding=1, bias=False)
+        self.a = nn.Conv2d(w_in, w_out, 3, stride=stride, padding=1, bias=False)
         self.a_bn = nn.BatchNorm2d(w_out, eps=1e-5, momentum=0.1)
         self.a_relu = nn.ReLU(inplace=True)
         self.b = nn.Conv2d(w_out, w_out, 3, stride=1, padding=1, bias=False)
@@ -124,8 +126,7 @@ class ResBasicBlock(nn.Module):
         super(ResBasicBlock, self).__init__()
         self.proj_block = (w_in != w_out) or (stride != 1)
         if self.proj_block:
-            self.proj = nn.Conv2d(
-                w_in, w_out, 1, stride=stride, padding=0, bias=False)
+            self.proj = nn.Conv2d(w_in, w_out, 1, stride=stride, padding=0, bias=False)
             self.bn = nn.BatchNorm2d(w_out, eps=1e-5, momentum=0.1)
         self.f = BasicTransform(w_in, w_out, stride)
         self.relu = nn.ReLU(True)
@@ -188,8 +189,7 @@ class BottleneckTransform(nn.Module):
         self.a = nn.Conv2d(w_in, w_b, 1, stride=1, padding=0, bias=False)
         self.a_bn = nn.BatchNorm2d(w_b, eps=1e-5, momentum=0.1)
         self.a_relu = nn.ReLU(inplace=True)
-        self.b = nn.Conv2d(
-            w_b, w_b, 3, stride=stride, padding=1, groups=g, bias=False)
+        self.b = nn.Conv2d(w_b, w_b, 3, stride=stride, padding=1, groups=g, bias=False)
         self.b_bn = nn.BatchNorm2d(w_b, eps=1e-5, momentum=0.1)
         self.b_relu = nn.ReLU(inplace=True)
         if se_r:
@@ -228,8 +228,7 @@ class ResBottleneckBlock(nn.Module):
         # Use skip connection with projection if shape changes
         self.proj_block = (w_in != w_out) or (stride != 1)
         if self.proj_block:
-            self.proj = nn.Conv2d(
-                w_in, w_out, 1, stride=stride, padding=0, bias=False)
+            self.proj = nn.Conv2d(w_in, w_out, 1, stride=stride, padding=0, bias=False)
             self.bn = nn.BatchNorm2d(w_out, eps=1e-5, momentum=0.1)
         self.f = BottleneckTransform(w_in, w_out, stride, bm, gw, se_r)
         self.relu = nn.ReLU(True)
@@ -250,8 +249,7 @@ class ResBottleneckBlock(nn.Module):
             cx = complexity_conv2d(cx, w_in, w_out, 1, stride, 0)
             cx = complexity_batchnorm2d(cx, w_out)
             cx['h'], cx['w'] = h, w  # parallel branch
-        cx = BottleneckTransform.complexity(cx, w_in, w_out, stride, bm, gw,
-                                            se_r)
+        cx = BottleneckTransform.complexity(cx, w_in, w_out, stride, bm, gw, se_r)
         return cx
 
 
@@ -329,8 +327,7 @@ class AnyStage(nn.Module):
             b_stride = stride if i == 0 else 1
             b_w_in = w_in if i == 0 else w_out
             name = 'b{}'.format(i + 1)
-            self.add_module(name,
-                            block_fun(b_w_in, w_out, b_stride, bm, gw, se_r))
+            self.add_module(name, block_fun(b_w_in, w_out, b_stride, bm, gw, se_r))
 
     def forward(self, x):
         for block in self.children():
@@ -342,8 +339,7 @@ class AnyStage(nn.Module):
         for i in range(d):
             b_stride = stride if i == 0 else 1
             b_w_in = w_in if i == 0 else w_out
-            cx = block_fun.complexity(cx, b_w_in, w_out, b_stride, bm, gw,
-                                      se_r)
+            cx = block_fun.complexity(cx, b_w_in, w_out, b_stride, bm, gw, se_r)
         return cx
 
 
@@ -372,8 +368,7 @@ class AnyNet(nn.Module):
         self._construct(**kwargs)
         self.apply(init_weights)
 
-    def _construct(self, stem_type, stem_w, block_type, ds, ws, ss, bms, gws,
-                   se_r, nc):
+    def _construct(self, stem_type, stem_w, block_type, ds, ws, ss, bms, gws, se_r, nc):
         # Generate dummy bot muls and gs for models that do not use them
         bms = bms if bms else [None for _d in ds]
         gws = gws if gws else [None for _d in ds]
@@ -384,8 +379,7 @@ class AnyNet(nn.Module):
         prev_w = stem_w
         for i, (d, w, s, bm, gw) in enumerate(stage_params):
             name = 's{}'.format(i + 1)
-            self.add_module(name,
-                            AnyStage(prev_w, w, s, d, block_fun, bm, gw, se_r))
+            self.add_module(name, AnyStage(prev_w, w, s, d, block_fun, bm, gw, se_r))
             prev_w = w
         self.head = AnyHead(w_in=prev_w, nc=nc)
 
@@ -401,8 +395,7 @@ class AnyNet(nn.Module):
         return AnyNet._complexity(cx, **kwargs)
 
     @staticmethod
-    def _complexity(cx, stem_type, stem_w, block_type, ds, ws, ss, bms, gws,
-                    se_r, nc):
+    def _complexity(cx, stem_type, stem_w, block_type, ds, ws, ss, bms, gws, se_r, nc):
         bms = bms if bms else [None for _d in ds]
         gws = gws if gws else [None for _d in ds]
         stage_params = list(zip(ds, ws, ss, bms, gws))
@@ -411,8 +404,7 @@ class AnyNet(nn.Module):
         block_fun = get_block_fun(block_type)
         prev_w = stem_w
         for d, w, s, bm, gw in stage_params:
-            cx = AnyStage.complexity(cx, prev_w, w, s, d, block_fun, bm, gw,
-                                     se_r)
+            cx = AnyStage.complexity(cx, prev_w, w, s, d, block_fun, bm, gw, se_r)
             prev_w = w
         cx = AnyHead.complexity(cx, prev_w, nc)
         return cx

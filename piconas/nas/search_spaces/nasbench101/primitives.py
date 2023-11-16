@@ -2,7 +2,6 @@ from piconas.nas.search_spaces.core.primitives import AbstractPrimitive
 
 
 class ModelWrapper(AbstractPrimitive):
-
     def __init__(self, model):
         super().__init__(locals())
         self.model = model

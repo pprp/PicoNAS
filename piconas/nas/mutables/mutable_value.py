@@ -18,11 +18,13 @@ class MutableValue(BaseMutable[Any, Dict]):
             and `Pretrained`.
     """
 
-    def __init__(self,
-                 value_list: List[Any],
-                 default_value: Optional[Any] = None,
-                 alias: Optional[str] = None,
-                 init_cfg: Optional[Dict] = None) -> None:
+    def __init__(
+        self,
+        value_list: List[Any],
+        default_value: Optional[Any] = None,
+        alias: Optional[str] = None,
+        init_cfg: Optional[Dict] = None,
+    ) -> None:
         super().__init__(alias, init_cfg)
 
         self._check_is_same_type(value_list)
@@ -39,13 +41,13 @@ class MutableValue(BaseMutable[Any, Dict]):
             return
 
         for i in range(1, len(value_list)):
-            is_same_type = type(value_list[i - 1]) is \
-                type(value_list[i])  # noqa: E721
+            is_same_type = type(value_list[i - 1]) is type(value_list[i])  # noqa: E721
             if not is_same_type:
                 raise TypeError(
                     'All elements in `value_list` must have same '
                     f'type, but both types {type(value_list[i-1])} '
-                    f'and type {type(value_list[i])} exist.')
+                    f'and type {type(value_list[i])} exist.'
+                )
 
     @property
     def choices(self) -> List[Any]:
@@ -63,8 +65,9 @@ class MutableValue(BaseMutable[Any, Dict]):
         all_choices = chosen['all_choices']
         current_choice = chosen['current_choice']
 
-        assert all_choices == self.choices, \
-            f'Expect choices to be: {self.choices}, but got: {all_choices}'
+        assert (
+            all_choices == self.choices
+        ), f'Expect choices to be: {self.choices}, but got: {all_choices}'
         assert current_choice in self.choices
 
         self.current_choice = current_choice
@@ -75,8 +78,7 @@ class MutableValue(BaseMutable[Any, Dict]):
         Returns:
             Dict[str, Any]: Dumped information.
         """
-        return dict(
-            current_choice=self.current_choice, all_choices=self.choices)
+        return dict(current_choice=self.current_choice, all_choices=self.choices)
 
     @property
     def num_choices(self) -> int:
@@ -95,8 +97,9 @@ class MutableValue(BaseMutable[Any, Dict]):
     def current_choice(self, choice: Any) -> Any:
         """Setter of current choice."""
         if choice not in self.choices:
-            raise ValueError(f'Expected choice in: {self.choices}, '
-                             f'but got: {choice}')
+            raise ValueError(
+                f'Expected choice in: {self.choices}, ' f'but got: {choice}'
+            )
 
         self._current_choice = choice
 
