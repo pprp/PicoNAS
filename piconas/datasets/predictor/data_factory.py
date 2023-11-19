@@ -26,13 +26,13 @@ def create_dataloader(args):
         batch_size=args.train_batch_size,
         num_workers=0,
         shuffle=True,
-        drop_last=True,
+        drop_last=False,
     )
     test_loader = DataLoader(
         test_set,
         batch_size=args.eval_batch_size,
         shuffle=False,
         num_workers=0 if args.eval_split == '100' else 16,
-        drop_last=True,
+        # drop_last=False,
     )
     return train_loader, test_loader, train_set, test_set
