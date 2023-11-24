@@ -12,20 +12,20 @@ if [ ! -d "./results" ]; then
 fi
 
 # arguments
-IDX=3
+IDX=0
 Loss=pairwise
 Bench=101
-Epochs=124
+Epochs=100
 Model=ParZCBMM2
 Dataset=cifar10
 Train_batch_size=10
-Eval_batch_size=50
+Eval_batch_size=10240
 # Train_Split_List=(100 172 424 424 4236)
 # Eval_Split_List=(all all 100 all all)
-Train_Split_List=(172)
-Eval_Split_List=(all)
+Train_Split_List=(424)
+Eval_Split_List=(100)
 Script=./exps/runner/runner_pinat_rank.py
-SEED=555
+SEED=666
 
 for((t=0; t<${#Train_Split_List[*]}; t++)); do
   # set gpu and data splits

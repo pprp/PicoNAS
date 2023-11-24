@@ -21,8 +21,8 @@ parser = ArgumentParser()
 # exp and dataset
 parser.add_argument('--exp_name', type=str, default='ParZCBMM2')
 parser.add_argument('--bench', type=str, default='101')
-parser.add_argument('--train_split', type=str, default='172')
-parser.add_argument('--eval_split', type=str, default='all')
+parser.add_argument('--train_split', type=str, default='424')
+parser.add_argument('--eval_split', type=str, default='100')
 parser.add_argument('--dataset', type=str, default='cifar10')
 # training settings
 parser.add_argument('--seed', type=int, default=42)
@@ -34,7 +34,7 @@ parser.add_argument('--train_batch_size', default=20, type=int)
 parser.add_argument('--eval_batch_size', default=512, type=int)
 parser.add_argument('--train_print_freq', default=1e5, type=int)
 parser.add_argument('--eval_print_freq', default=10, type=int)
-parser.add_argument('--model_name', type=str, default='ParZCBMM2q')
+parser.add_argument('--model_name', type=str, default='ParZCBMM2')
 args = parser.parse_args()
 
 # Create a log directory if it doesn't exist
@@ -44,7 +44,7 @@ os.makedirs(log_dir, exist_ok=True)
 # initialize log info
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(
-    filename=os.path.join(log_dir, 'training_hpo_parzc_main_4nb101.log'),
+    filename=os.path.join(log_dir, 'training_hpo_parzc_main_4nb101_424_100.log'),
     level=logging.INFO,
     format=log_format,
     datefmt='%m/%d %I:%M:%S %p',

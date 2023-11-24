@@ -203,11 +203,14 @@ def train(
                     meters,
                 )
 
-        if epoch > 20 and epoch % 10 == 0:
+        if epoch > 1 and epoch % 10 == 0:
             kd_test, _, _ = evaluate(
                 test_set, test_loader, model, criterion1)
             epoch_list.append(epoch)
             kd_list.append(kd_test)
+
+            logging.info('Epoch [%d/%d] Test Kendalltau: %.6f', epoch +
+                            1, args.epochs, kd_test)
 
         lr_scheduler.step()
 
@@ -312,11 +315,12 @@ def main():
 
     # create dataloader and model
     train_loader, test_loader, train_set, test_set = create_dataloader(args)
+    # model = create_model(args)
     # model = create_ablation_model(args)
     if args.bench == '101':
         model = create_best_nb101_model()
-    elif args.bench == '201':
-        model = create_best_nb201_model()  # for nb201
+    # elif args.bench == '201':
+    #     model = create_best_nb201_model()  # for nb201
     model = model.to(device)
     print(model)
     logging.info(
