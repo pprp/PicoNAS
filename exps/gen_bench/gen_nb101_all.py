@@ -41,7 +41,7 @@ BASE = '/data2/dongpeijie/share/bench/predictor_embeddings/embedding_datasets'
 # key is (0, 1, 0, 0, ....  0, 0, 3, 4, 3, 4, 4, 1)
 # key is dict_keys(['id', 'epe_nas', 'fisher', 'flops', 'grad_norm', 'grasp', 'jacov',
 #      'l2_norm', 'nwot', 'params', 'plain', 'snip', 'synflow', 'zen', 'val_accuracy'])
-target_json_path = os.path.join(BASE, 'zc_nasbench101_layerwise_all.json')
+target_json_path = os.path.join(BASE, 'zc_nasbench101_layerwise_all_ss.json')
 # 'cifar10'
 #         index (not hash)
 #              'fisher_layerwise': [0.1, 0.2, 0.3, 0.4, 0.5, ...]
