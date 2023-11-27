@@ -15,14 +15,15 @@ from piconas.predictor.pinat.model_factory import (
     create_best_nb201_model,
     create_model,
     create_nb201_model,
+    create_best_nb101_model,
 )
 from piconas.utils.utils import AverageMeterGroup, accuracy_mse, set_seed, to_cuda
 
 parser = ArgumentParser()
 # exp and dataset
 parser.add_argument('--exp_name', type=str, default='PINAT')
-parser.add_argument('--bench', type=str, default='201')
-parser.add_argument('--train_split', type=str, default='78')
+parser.add_argument('--bench', type=str, default='101')
+parser.add_argument('--train_split', type=str, default='100')
 parser.add_argument('--eval_split', type=str, default='all')
 parser.add_argument('--dataset', type=str, default='cifar10')
 # training settings
@@ -124,7 +125,7 @@ def evaluate(test_set, test_loader, model, criterion):
     kendall_tau = kendalltau(predicts, targets)[0]
 
     # save predicts and targets to 'correlation_parzc.csv'
-    file_path = 'correlation_parzc.csv'
+    file_path = f'correlation_parzc_{args.dataset}_{args.bench}.csv'
     with open(file_path, 'w') as f:
         f.write('predicts,targets\n')
         for i in range(len(predicts)):
@@ -153,7 +154,7 @@ def evaluate(test_set, test_loader, model, criterion):
     plt.legend()
 
     # Save the figure
-    plt.savefig('scatterplot.png')
+    plt.savefig(f'scatterplot_{args.dataset}_{args.bench}.png')
     plt.close()
 
     # filter the top 10% architectures
@@ -178,7 +179,7 @@ def evaluate(test_set, test_loader, model, criterion):
     plt.legend()
 
     # Save the figure
-    plt.savefig('scatterplot_top.png')
+    plt.savefig(f'scatterplot_top_{args.dataset}_{args.bench}.png')
 
     return kendall_tau, predicts, targets
 
@@ -190,11 +191,13 @@ def main():
     train_loader, test_loader, train_set, test_set = create_dataloader(args)
     # model = create_model(args)
     # model = create_nb201_model()
-
-    model = create_best_nb201_model()
+    # model = create_best_nb201_model()
+    model = create_best_nb101_model()
 
     # load model
-    ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
+    # ckpt_dir = 'checkpoints/nasbench_201/201_cifar10_ParZCBMM_mse_t781_vall_e153_bs10_best_nb201_run2_tau0.783145_ckpt.pt'
+    # ckpt_dir = 'checkpoints/nasbench_201/201_cifar100_ParZCBMM_mse_t156_vall_e40_bs10_best_nb201_run2_tau0.743440_ckpt.pt'
+    ckpt_dir = 'checkpoints/nasbench_101/101_cifar10_ParZCBMM_mse_t4236_vall_e150_bs10_test_tau0.803595_ckpt.pt'
     model.load_state_dict(torch.load(
         ckpt_dir, map_location=torch.device('cpu')))
 
@@ -225,8 +228,8 @@ def main():
     ckpt_path = os.path.join(
         ckpt_dir, '%s_tau%.6f_ckpt.pt' % (args.exp_name, kendall_tau)
     )
-    torch.save(model.state_dict(), ckpt_path)
-    logging.info('Save model to %s' % ckpt_path)
+    # torch.save(model.state_dict(), ckpt_path)
+    # logging.info('Save model to %s' % ckpt_path)
 
     # write results
     with open('./results/preds_%s.txt' % args.bench, 'a') as f:

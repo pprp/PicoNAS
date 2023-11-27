@@ -381,3 +381,5 @@ EXP:ParZCBMM2	lr: 0.0001	train: 424	test: 100	kendall_tau: 0.749242	 spearman_rh
 EXP:ParZCBMM2	lr: 0.0001	train: 424	test: 100	kendall_tau: 0.766215	 spearman_rho: 0.923888	 pearson_rho: 0.833514
 EXP:ParZCBMM2	lr: 0.0001	train: 424	test: 100	kendall_tau: 0.727016	 spearman_rho: 0.895469	 pearson_rho: 0.799264
 EXP:ParZCBMM2	lr: 0.0001	train: 424	test: 100	kendall_tau: 0.725803	 spearman_rho: 0.902418	 pearson_rho: 0.804623
+EXP:PINAT	lr: 0.0001	train: 100	test: all	kendall_tau: 0.813783
+EXP:PINAT	lr: 0.0001	train: 100	test: all	kendall_tau: 0.815340

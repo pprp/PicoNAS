@@ -11,7 +11,7 @@ from torch.utils.data import Dataset
 
 from piconas.predictor.nas_embedding_suite.nb123.nas_bench_201.cell_201 import Cell201
 
-BASE_PATH = '/data/lujunl/pprp/bench/'
+BASE_PATH = '/data2/dongpeijie/bench/'
 
 
 class Nb201DatasetPINAT(Dataset):
@@ -25,7 +25,7 @@ class Nb201DatasetPINAT(Dataset):
             BASE_PATH + 'NAS-Bench-201-v1_1-096897.pth', verbose=False
         )
         self.nasbench201_dict = np.load(
-            '/data/lujunl/pprp/bench/nasbench201/nasbench201_dict.npy',
+            os.path.join(BASE_PATH, 'nasbench201', 'nasbench201_dict.npy'),
             allow_pickle=True,
         ).item()
 

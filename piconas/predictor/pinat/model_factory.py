@@ -148,8 +148,8 @@ def create_best_nb101_model():
         linear_hidden=708,
         n_src_vocab=5,
         d_word_vec=708,  # 80
-        d_k=48,  # 100
-        d_v=48,  # 100
+        d_k=100,  # 100 48
+        d_v=100,  # 100 48
         d_model=708,  # 80
         d_inner=530,
     )
