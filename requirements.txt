@@ -11,18 +11,17 @@ tqdm
 ConfigSpace
 einops
 timm
-# nasbench
 networkx
 xgboost
 nasbench301
 tqdm
 nas-bench-201
-nasbench
+# nasbench
 urllib3==1.26.6
 tornado
 tensorboard==1.15
 protobuf==3.20
-seaboarn
+seaborn
 torch_geometric
 pathvalidate
 torch_scatter
