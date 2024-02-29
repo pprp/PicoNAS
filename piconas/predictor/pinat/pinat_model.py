@@ -1271,8 +1271,7 @@ class Encoder7(nn.Module):
         # op emb and pos emb
         enc_output = self.src_word_emb(src_seq)
         if self.bench == '101':
-            pos_output = self.embedding_lap_pos_enc(
-                pos_seq)  # positional embedding
+            pos_output = self.embedding_lap_pos_enc(pos_seq)  # positional embedding
             enc_output += pos_output  # bs, 7, 80
             # enc_output = pos_output
             enc_output = self.dropout(enc_output)
@@ -1800,7 +1799,7 @@ class ZCEmbedder(nn.Module):
         if bench == '201':
             mid_zcp_dim = 98 * 3
         elif bench == '101':
-            mid_zcp_dim = 83 * 3
+        # mid_zcp_dim = 98 * 3 
         for zcp_emb_dim in self.zcp_embedder_dims:
             layers.append(
                 nn.Sequential(

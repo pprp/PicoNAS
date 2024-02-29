@@ -10,11 +10,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from DANN import DANN
+# from DANN import DANN
 from dataset_matrix import Dataset_Darts, Dataset_Train
 from torch.utils.data import DataLoader
 from utils import AverageMeterGroup, convert_to_genotype, get_logger, to_cuda
-
+from piconas.predictor.pinat.pinat_model import PINATModel7
 
 def normalize_adj(adj):
     # Row-normalize matrix
@@ -166,9 +166,71 @@ class DomainAdaptationPredictor(nn.Module):
                 loss = [loss]
             else:
                 raise ValueError('loss_type error!')
-            # loss += mmd.mmd_rbf_noaccelerate(source, target)
-            # if loss < 0:
-            #     print()
+
+        source = self.dropout(source)
+        source = self.fc(source).view(-1)
+
+        return source, loss
+
+    def one_hot_classification(self, K_percentile, labels):
+        def classification(label, K_percentile):
+            for j, percentile in enumerate(K_percentile):
+                if j == len(K_percentile) - 1:
+                    return j
+                if (label < K_percentile[j + 1]) and (percentile < label):
+                    return j
+
+        batch_size = labels.size()[0]
+        one_hot_label = np.zeros((batch_size, len(K_percentile)), dtype=int)
+        for i, label in enumerate(labels):
+            class_num = classification(label, K_percentile)
+            one_hot_label[i][class_num] = 1
+        return one_hot_label
+
+# TODO SUPPORT PARZC 
+class DomainAdaptationPARZCPredictor(nn.Module):
+    def __init__(self, percentile, gcn_hidden):
+        super(DomainAdaptationPARZCPredictor, self).__init__()
+        # self.NeuralPredictor = NeuralPredictor(gcn_hidden=gcn_hidden)
+        # 1st domain - nb101 
+        self.normal_predictor0 = PINATModel7(
+            bench='101', pos_enc_dim=7, adj_type='adj_lapla', 
+            n_layers=3,
+            n_head=4,
+            pine_hidden=16,
+            linear_hidden=96,
+            n_src_vocab=5,
+            d_word_vec=512,  # 80
+            d_k=64,
+            d_v=64,
+            d_model=512,  # 80
+            d_inner=512,
+        )
+        self.dropout = nn.Dropout(0.1)
+        self.fc = nn.Linear(128, 1, bias=False)
+        self.percentile = percentile
+
+    def forward(self, source, target, s_label, K, kernel_type='rbf', loss_type='lmmd'):
+        loss = 0
+        source = self.NeuralPredictor(source)
+        if self.training == True:
+            target = self.NeuralPredictor(target)
+            t_label = self.fc(target).view(-1)
+            lmmd_loss = mmd.LMMD_loss(class_num=K, kernel_type=kernel_type)
+            K_percentile = self.percentile[K - 1]
+            s_label = self.one_hot_classification(K_percentile, s_label)
+            t_label = self.one_hot_classification(K_percentile, t_label)
+            s_label = torch.from_numpy(s_label)
+            t_label = torch.from_numpy(t_label)
+
+            if loss_type == 'lmmd':
+                loss += lmmd_loss.get_loss(source, target, s_label, t_label)
+            elif loss_type == 'coral':
+                loss += coral.CORAL(source, target)
+                loss = [loss]
+            else:
+                raise ValueError('loss_type error!')
+
         source = self.dropout(source)
         source = self.fc(source).view(-1)
 
@@ -381,10 +443,7 @@ class GCN_predictor:
                     optimizer.zero_grad()
                     loss = criterion(predict, s_label)
                     lambd = 2 / (1 + math.exp(-10 * epoch / epochs)) - 1
-                    # if mmd_loss < 1e-6:
-                    #     # if mmd loss is too small, ignore it
-                    #     lambd = 0
-                    # lambd = 0
+
                     loss += lambd * mmd_loss
                     # if torch.isnan(loss):
                     #     break
@@ -446,20 +505,6 @@ class GCN_predictor:
                 loss = criterion(predict, label)
                 loss.backward()
                 optimizer.step()
-                # seconde train
-                # if i==0:
-                #     se_i = 1
-                # elif i==1:
-                #     se_i = 0
-                # elif i==2:
-                #     se_i = 3
-                # else:
-                #     se_i = 2
-                # predict, mmd_loss = net(batch_set[se_i], target, s_label, K)
-                # optimizer.zero_grad()
-                # loss = criterion(predict, label)
-                # loss.backward()
-                # optimizer.step()
                 print(epoch, loss)
 
             lr_scheduler.step()
