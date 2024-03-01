@@ -13,16 +13,16 @@ from piconas.utils.rank_consistency import kendalltau, pearson, spearman
 VISUALIZE = True
 
 # Read file
-with open('/data/lujunl/pprp/bench/zc_nasbench201_layerwise.json', 'rb') as f:
+with open('./data/zc_nasbench201_layerwise.json', 'rb') as f:
     input_dict = json.load(f)
 
 nb201_api = API(
-    '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth', verbose=False)
+    './data/NAS-Bench-201-v1_1-096897.pth', verbose=False)
 
 ds_target = 'cifar10'  # cifar100, ImageNet16-120
 input_dict = input_dict[ds_target]
 # plain_layerwise, snip_layerwise, synflow_layerwise grad_norm_layerwise fisher_layerwise l2_norm_layerwise grasp_layerwise
-zc_target = 'grad_norm_layerwise'
+zc_target = 'snip_layerwise'
 
 print('zc_target: ', zc_target)
 

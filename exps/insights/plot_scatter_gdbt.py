@@ -49,9 +49,10 @@ with plt.style.context('default'):
     color_map = dict(zip(zc_name_list, custom_colors))
 
     # Calculate the sorted order of bars based on their values
-    sorted_order = np.argsort(
-        -data_dict[zc_name_list[0]]['feature_importance_normalized']
-    )
+    # sorted_order = np.argsort(
+    #     -data_dict[zc_name_list[0]]['feature_importance_normalized']
+    # )
+
 
     # Plot the bars in the sorted order
     for i, zc_name in enumerate(zc_name_list):
