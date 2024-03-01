@@ -39,7 +39,7 @@ class NB201Evaluator(Evaluator):
         num_sample: int = 50,
         dataset: str = 'cifar10',
         type: str = 'eval_acc1es',
-        is_predictor=False,
+        is_predictor=None,
         **kwargs,
     ):
         super().__init__(trainer=trainer, dataset=dataset)
@@ -75,7 +75,7 @@ class NB201Evaluator(Evaluator):
                          eval_acc1es, cost_info
         """
         self.api = API(
-            '/data/lujunl/pprp/bench/NAS-Bench-201-v1_1-096897.pth', verbose=False
+            '/home/dongpeijie/share/bench/NAS-Bench-201-v1_1-096897.pth', verbose=False
         )
 
         if is_predictor is not None:
@@ -291,6 +291,7 @@ class NB201Evaluator(Evaluator):
             )
             generated_indicator_list.append(score)
 
+        breakpoint()
         return self.calc_simple_results(true_indicator_list, generated_indicator_list)
 
     def calc_results(
