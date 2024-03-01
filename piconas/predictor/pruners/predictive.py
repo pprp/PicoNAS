@@ -135,6 +135,15 @@ def find_measures(
             sum += torch.sum(arr[i])
         return sum.item()
 
+    def uneven_sum_arr(arr):
+        l = len(arr)
+        sum = 0.0
+        for i in range(l):
+            sum += torch.sum(arr[i]) * ((2 * i) / (l ** 2))
+            # ((3 * i * i) / (l ** 3))
+            # ((2 * i) / (l ** 2))
+        return sum.item() 
+
     if measure_names[0] in ['flops', 'params']:
         data_iterator = iter(dataloader)
         x, target = next(data_iterator)
@@ -175,6 +184,8 @@ def find_measures(
             or k == 'zico'
         ):
             measure_score = v
+        elif k == 'l2_norm':
+            measure_score = uneven_sum_arr(v)
         else:
             measure_score = sum_arr(v)
     return measure_score
