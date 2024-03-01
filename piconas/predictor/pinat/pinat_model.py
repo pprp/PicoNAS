@@ -1799,7 +1799,7 @@ class ZCEmbedder(nn.Module):
         if bench == '201':
             mid_zcp_dim = 98 * 3
         elif bench == '101':
-        # mid_zcp_dim = 98 * 3 
+            mid_zcp_dim = 98 * 3 
         for zcp_emb_dim in self.zcp_embedder_dims:
             layers.append(
                 nn.Sequential(
