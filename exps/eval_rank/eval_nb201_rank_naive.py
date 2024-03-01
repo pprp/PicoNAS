@@ -1,18 +1,52 @@
 import argparse
 import os
-import time
+import random
 
 import torch
+from tqdm import tqdm 
+from nas_201_api import NASBench201API
 
-import piconas.utils.utils as utils
-from piconas.core import build_criterion, build_optimizer, build_scheduler
 from piconas.datasets.build import build_dataloader
+from piconas.models.nasbench201.apis.utils import dict2config, get_cell_based_tiny_net
+from piconas.predictor.pruners.predictive import find_measures
+import torch.nn.functional as F
+from piconas.utils.rank_consistency import kendalltau, spearman, pearson
 
-# from piconas.datasets.build import build_dataloader
-from piconas.evaluator import NB201Evaluator
-from piconas.models import build_model
-from piconas.trainer import build_trainer
 
+nb201_api = NASBench201API(
+    file_path_or_dict='data/NAS-Bench-201-v1_1-096897.pth', verbose=False)
+
+def random_sample_and_get_gt():
+    index_range = list(range(15625))
+    choiced_index = random.choice(index_range)
+    # modelinfo is a index
+
+    arch_config = {
+        'name': 'infer.tiny',
+        'C': 16,
+        'N': 5,
+        'arch_str': nb201_api.arch(choiced_index),
+        'num_classes': 10
+    }
+    net_config = dict2config(arch_config, None)
+    model = get_cell_based_tiny_net(net_config)
+    xinfo = nb201_api.get_more_info(choiced_index, dataset='cifar10', hp='200')
+    return choiced_index, model, xinfo['test-accuracy']
+
+def index_sample_and_get_gt(choiced_index):
+    assert choiced_index < 15625
+
+    arch_config = {
+        'name': 'infer.tiny',
+        'C': 16,
+        'N': 5,
+        'arch_str': nb201_api.arch(choiced_index),
+        'num_classes': 10
+    }
+    net_config = dict2config(arch_config, None)
+    model = get_cell_based_tiny_net(net_config)
+    xinfo = nb201_api.get_more_info(choiced_index, dataset='cifar10', hp='200')
+    return choiced_index, model, xinfo['test-accuracy']
 
 def get_args():
     parser = argparse.ArgumentParser('train nb201 benchmark')
@@ -94,8 +128,6 @@ def main():
     cfg.work_dir = os.path.join(cfg.work_dir, cfg.trainer_name)
     if not os.path.exists(cfg.work_dir):
         os.makedirs(cfg.work_dir)
-    current_exp_name = f'{cfg.model_name}-{cfg.trainer_name}-{cfg.log_name}.yaml'
-    # cfg.dump(os.path.join(cfg.work_dir, current_exp_name))
 
     if torch.cuda.is_available():
         print('Train on GPU!')
@@ -106,45 +138,31 @@ def main():
     train_dataloader = build_dataloader(
         type='train', dataset=cfg.dataset, config=cfg)
 
-    # val_dataloader = build_dataloader(
-    #     type='val', dataset=cfg.dataset, config=cfg)
+    num_samples = 500
+    # 15625
+    
+    # for CIFAR10
+    dataload_info = ['random', 3, 10]
+    zc_list, gt_list = [], []
+    
+    for i in tqdm(range(num_samples)):
+        # _, model, gt = random_sample_and_get_gt()
+        _, model, gt = index_sample_and_get_gt(i)
+        zc = find_measures(
+                model,
+                train_dataloader,
+                dataload_info=dataload_info,
+                measure_names=['l2_norm'],
+                loss_fn=F.cross_entropy,
+                device=device,
+            )
+        zc_list.append(zc)
+        gt_list.append(gt)
+    
+    print(f'Kendalltau: {kendalltau(zc_list, gt_list)}')
+    print(f'Spearman: {spearman(zc_list, gt_list)}')
+    print(f'Pearson: {pearson(zc_list, gt_list)}')
 
-    model = build_model(cfg.model_name)
-
-    criterion = build_criterion(cfg.crit).to(device)
-    optimizer = build_optimizer(model, cfg)
-    scheduler = build_scheduler(cfg, optimizer)
-
-    model = model.to(device)
-
-    trainer = build_trainer(
-        cfg.trainer_name,
-        model=model,
-        mutator=None,
-        optimizer=optimizer,
-        criterion=criterion,
-        scheduler=scheduler,
-        searching=True,
-        device=device,
-        log_name=cfg.log_name,
-    )
-
-    start = time.time()
-
-    num_samples = [20, 50, 100]
-
-    for num_sample in num_samples:
-        evaluator = NB201Evaluator(
-            trainer=trainer,
-            dataset='cifar10',
-            num_sample=num_sample,
-        )
-        kt, ps, sp = evaluator.compute_rank_by_predictive(
-            dataloader=train_dataloader, measure_name=['l2_norm']
-        )
-        print(f'num_sample: {num_sample}, kt: {kt}, ps: {ps}, sp: {sp}')
-
-    utils.time_record(start)
 
 
 if __name__ == '__main__':
