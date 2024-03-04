@@ -22,7 +22,7 @@ nb201_api = API(
 ds_target = 'cifar10'  # cifar100, ImageNet16-120
 input_dict = input_dict[ds_target]
 # plain_layerwise, snip_layerwise, synflow_layerwise grad_norm_layerwise fisher_layerwise l2_norm_layerwise grasp_layerwise
-zc_target = 'snip_layerwise'
+zc_target = 'synflow_layerwise'
 
 print('zc_target: ', zc_target)
 
@@ -61,7 +61,7 @@ x_train, x_test, y_train, y_test = train_test_split(
 
 # Create a Gradient Boosting Regressor and fit it to the training data
 gbdt_model = GradientBoostingRegressor(
-    n_estimators=500, learning_rate=0.05, max_depth=3, random_state=42
+    n_estimators=5000, learning_rate=0.05, max_depth=3, random_state=42
 )
 gbdt_model.fit(x_train, y_train)
 
@@ -77,9 +77,11 @@ spearman_score = spearman(y_test, y_pred)
 pearson_score = pearson(y_test, y_pred)
 
 print(f'MSE loss: {mse_loss:.4f}')
+print('============================')
 print(f"Kendall's tau: {kendalltau_score:.4f}")
 print(f"Spearman's rho: {spearman_score:.4f}")
 print(f"Pearson's r: {pearson_score:.4f}")
+print('============================')
 
 # Compute deviance in test dataset
 test_score = np.zeros((500, 1), dtype=np.float64)
@@ -90,6 +92,32 @@ plt.figure(figsize=(15, 15))  # Increased the figure size
 
 feature_importance = gbdt_model.feature_importances_
 
+# compute kendall tau correlation
+zc_list, gt_list = [], []
+for test_item, test_label in zip(x_test, y_test):
+    zc = gbdt_model.predict([test_item])
+    zc_list.append(zc[0])
+    gt_list.append(test_label)
+
+print(f'Kendalltau: {kendalltau(zc_list, gt_list):.4f}')
+print(f'Spearman: {spearman(zc_list, gt_list):.4f}')
+print(f'Pearson: {pearson(zc_list, gt_list):.4f}')
+print('============================')
+
+
+# compute with importance score
+zc_list, gt_list = [], []
+for train_item, train_label in zip(x_train, y_train):
+    zc = np.dot(np.array(train_item), feature_importance)
+    zc_list.append(zc)
+    gt_list.append(train_label)
+
+print(f'Kendalltau: {kendalltau(zc_list, gt_list):.4f}')
+print(f'Spearman: {spearman(zc_list, gt_list):.4f}')
+print(f'Pearson: {pearson(zc_list, gt_list):.4f}')
+print('============================')
+
+# Plot feature importance
 norm = plt.Normalize(feature_importance.min(), feature_importance.max())
 cmap = plt.get_cmap('coolwarm')
 
@@ -98,7 +126,6 @@ pos = np.arange(sorted_idx.shape[0]) + 1
 colors = cmap(norm(feature_importance[sorted_idx]))
 
 # save to csv file with pos and feature_importance
-
 df = pd.DataFrame({'pos': pos, 'feature_importance': feature_importance})
 df.to_csv(f'gbdt_{zc_target}.csv', index=False)
 

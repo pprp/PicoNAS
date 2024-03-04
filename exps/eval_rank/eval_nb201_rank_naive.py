@@ -119,6 +119,33 @@ def get_args():
     return args
 
 
+def evaluate_ranking(train_dataloader, device, zc_name_list, num_samples=1000):
+    # for CIFAR10
+    
+    dataload_info = ['random', 3, 10]
+    
+    for zc_name in zc_name_list:
+        zc_list, gt_list = [], []
+        for i in tqdm(range(num_samples)):
+            # _, model, gt = random_sample_and_get_gt()
+            _, model, gt = index_sample_and_get_gt(i)
+            zc = find_measures(
+                    model,
+                    train_dataloader,
+                    dataload_info=dataload_info,
+                    measure_names=[zc_name],
+                    loss_fn=F.cross_entropy,
+                    device=device,
+                )
+            zc_list.append(zc)
+            gt_list.append(gt)
+
+        print(f'ZC: {zc_name}')
+        print(f'Kendalltau: {kendalltau(zc_list, gt_list)}')
+        print(f'Spearman: {spearman(zc_list, gt_list)}')
+        print(f'Pearson: {pearson(zc_list, gt_list)}')
+        print('-----------------------------------')
+
 def main():
     cfg = get_args()
 
@@ -138,31 +165,14 @@ def main():
     train_dataloader = build_dataloader(
         type='train', dataset=cfg.dataset, config=cfg)
 
-    num_samples = 500
-    # 15625
+    num_samples = 1000
+    # max is 15625
     
-    # for CIFAR10
-    dataload_info = ['random', 3, 10]
-    zc_list, gt_list = [], []
+    zc_name_list = [
+        'grad_norm', 'snip', 'grasp', 'fisher', 'synflow', 'l2_norm',
+    ]
     
-    for i in tqdm(range(num_samples)):
-        # _, model, gt = random_sample_and_get_gt()
-        _, model, gt = index_sample_and_get_gt(i)
-        zc = find_measures(
-                model,
-                train_dataloader,
-                dataload_info=dataload_info,
-                measure_names=['l2_norm'],
-                loss_fn=F.cross_entropy,
-                device=device,
-            )
-        zc_list.append(zc)
-        gt_list.append(gt)
-    
-    print(f'Kendalltau: {kendalltau(zc_list, gt_list)}')
-    print(f'Spearman: {spearman(zc_list, gt_list)}')
-    print(f'Pearson: {pearson(zc_list, gt_list)}')
-
+    evaluate_ranking(train_dataloader, device, zc_name_list=zc_name_list, num_samples=num_samples)
 
 
 if __name__ == '__main__':

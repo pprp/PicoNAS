@@ -184,8 +184,8 @@ def find_measures(
             or k == 'zico'
         ):
             measure_score = v
-        elif k == 'l2_norm':
-            measure_score = uneven_sum_arr(v)
+        # elif k == 'l2_norm':
+        #     measure_score = uneven_sum_arr(v)
         else:
             measure_score = sum_arr(v)
     return measure_score

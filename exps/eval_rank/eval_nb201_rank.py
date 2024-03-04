@@ -131,7 +131,7 @@ def main():
 
     start = time.time()
 
-    num_samples = [20, 50, 100]
+    num_samples = [100]
 
     for num_sample in num_samples:
         evaluator = NB201Evaluator(
