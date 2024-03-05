@@ -165,7 +165,7 @@ def main():
     train_dataloader = build_dataloader(
         type='train', dataset=cfg.dataset, config=cfg)
 
-    num_samples = 1000
+    num_samples = 50
     # max is 15625
     
     zc_name_list = [
