@@ -158,3 +158,4 @@ CUDA_VISIBLE_DEVICES=1 python exps/train_distill.py  --crit ce --lr 0.05  --log_
 
 # train a resnet56 as teacher model
 CUDA_VISIBLE_DEVICES=1 python exps/train.py  --crit ce --lr 0.05  --log_name distill_res20_res56_darts_exp2.0
+

@@ -140,16 +140,14 @@ def find_measures(
         l = len(arr)
         sum = 0.0
         for i in range(l):
-            sum += torch.sum(arr[i]) * ((-2 * i) / (l ** 2) + 2 / l) # linearly decreasing weight
-            
+            sum += torch.sum(arr[i]) * (math.sin(0.1 * i) + 1) / 2 # Sinusoidal weighting (alpha=0.5)
+            # ((-2 * i) / (l ** 2) + 2 / l) # linearly decreasing weight
             # ((3 * i * i) / (l ** 3)) # x^2 increasing weight
             # ((2 * i) / (l ** 2) + 2 / l) # linearly increasing weight 
             # (math.exp(-1 * i) / math.exp(-1 * l)) # exponential decreasing weight
             # (math.sin(alpha * i) + 1) / 2 Sinusoidal weighting
             # (1 / (1 + math.exp(-beta * (i - l/2)))) sigmoid weighting
             # ((l - i) ** 2 / l ** 2) # Quadratic decreasing weight
-
-
         return sum.item() 
 
     if measure_names[0] in ['flops', 'params']:
