@@ -105,10 +105,11 @@ def main():
     train_dataloader = build_dataloader(
         type='train', dataset=cfg.dataset, config=cfg)
 
-    zc_name_list = ['eznas-a']
+    zc_name_list = ['grad_norm', 'snip', 'synflow', 'l2_norm']
+    # ['eznas-a']
 
     nb101_api = api.NASBench(
-        '/data/lujunl/pprp/bench/nasbench_only108.tfrecord')
+        '/home/dongpeijie/share/bench/predictor_embeddings/embedding_datasets/nasbench_only108.tfrecord')
 
     for zc_name in zc_name_list:
         p_scores, gt_scores = [], []

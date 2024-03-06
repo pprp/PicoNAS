@@ -26,11 +26,11 @@ def random_sample_and_get_gt():
         'C': 16,
         'N': 5,
         'arch_str': nb201_api.arch(choiced_index),
-        'num_classes': 10
+        'num_classes': 120
     }
     net_config = dict2config(arch_config, None)
     model = get_cell_based_tiny_net(net_config)
-    xinfo = nb201_api.get_more_info(choiced_index, dataset='cifar10', hp='200')
+    xinfo = nb201_api.get_more_info(choiced_index, dataset='ImageNet16-120', hp='200')
     return choiced_index, model, xinfo['test-accuracy']
 
 def index_sample_and_get_gt(choiced_index):
@@ -41,7 +41,7 @@ def index_sample_and_get_gt(choiced_index):
         'C': 16,
         'N': 5,
         'arch_str': nb201_api.arch(choiced_index),
-        'num_classes': 10
+        'num_classes': 120
     }
     net_config = dict2config(arch_config, None)
     model = get_cell_based_tiny_net(net_config)
@@ -121,7 +121,6 @@ def get_args():
 
 def evaluate_ranking(train_dataloader, device, zc_name_list, num_samples=1000):
     # for CIFAR10
-    
     dataload_info = ['random', 3, 10]
     
     for zc_name in zc_name_list:
@@ -169,7 +168,7 @@ def main():
     # max is 15625
     
     zc_name_list = [
-        'grad_norm', 'snip', 'grasp', 'fisher', 'synflow', 'l2_norm',
+        'grad_norm', 'snip', 'synflow', 'l2_norm',
     ]
     
     evaluate_ranking(train_dataloader, device, zc_name_list=zc_name_list, num_samples=num_samples)

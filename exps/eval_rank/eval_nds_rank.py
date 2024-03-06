@@ -121,7 +121,8 @@ def main():
 
     # zc_name_list = ['fisher', 'grad_norm', 'grasp', 'l2_norm', 'plain', 'snip', 'synflow', 'epe_nas', 'jacov', 'nwot', 'zen', 'zico', 'eznas-a', 'flops', 'params']
     # zc_name_list = ['epe_nas', 'jacov', 'zen', 'zico', 'eznas-a']
-    zc_name_list = ['eznas-a']
+    zc_name_list = ['grad_norm', 'snip', 'synflow', 'l2_norm']
+    # ['eznas-a']
 
     for zc_name in zc_name_list:
         p_scores, gt_scores = [], []
